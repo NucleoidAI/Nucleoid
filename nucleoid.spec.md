@@ -303,6 +303,74 @@ operator-chain diagnostics and source positions are preserved.
   the design; the five appended literal-replacement entries specify executable
   results, Unicode boundaries, live inputs, class rules and rollback/recovery.
 
+## Python string method aliases
+
+- [NUC 110](docs/nuc-0110.md) adds Python's names for three accepted string
+  operations as methods of string receivers: `startswith`, `endswith`, and
+  `join` with the separator as the receiver. They join the accepted aliases
+  `find`, `contains`, `lower`, `upper`, `strip`, `substr` and `append`. No
+  token, keyword, syntax tree node, error type or message format is added.
+- `TEXT.startswith(prefix)` is `TEXT.startsWith(prefix)` and
+  `TEXT.endswith(suffix)` is `TEXT.endsWith(suffix)`, through the same string
+  method: the same argument evaluation, conversion and result. The first
+  argument converts to its string form, so `null` tests `"null"` and a
+  missing argument `"undefined"`. Matching is exact and case-sensitive.
+  Further arguments are evaluated and ignored, so a position changes
+  nothing: `"draft_report.csv".startswith("report", 6)` is `false`.
+- `SEPARATOR.join(ITEMS)`, on a string receiver, returns exactly what
+  `ITEMS.join(SEPARATOR)` returns when `ITEMS` evaluates to a list, or to a
+  declared class whose instances `ITEMS.join(SEPARATOR)` joins, named by the
+  class, by a variable or parameter that holds it, or by `$Name` outside a
+  class-level rule. Each item takes its ordinary string form, in list or
+  population order, and an empty list or population gives `""`. Further
+  arguments are evaluated and ignored.
+- Any other first argument keeps the accepted
+  `TypeError("<receiver>.join is not a function")`: a string, a number, a
+  boolean, an object or instance, `null`, an undefined value, a function, a
+  built-in namespace, a missing argument, and a declared class named `Math`,
+  `Number`, `String` or `Date`, whose calls reach the namespace's static
+  methods instead of its instances. So `"-".join("abc")` raises, and inside a
+  class-level rule or conditional `", ".join($Order)` raises, since `$Order`
+  is the instance there.
+- **Evaluation.** The receiver is read first, then every argument once, left
+  to right, as for every call, so `SEPARATOR.join(ITEMS)` evaluates the
+  separator before the items, the reverse of `ITEMS.join(SEPARATOR)`.
+- **Live.** A declaration or class-level rule that calls an alias depends on
+  what its receiver and arguments read, as the accepted spelling does:
+  `label = sep.join(names)` follows pushes to `names` and writes of `sep`, a
+  population argument follows new and deleted instances, and
+  `$File.table = $File.name.endswith(".csv")` follows each file's name.
+  Errors roll back through the existing transaction.
+- **Rendering.** Statements, `why`, `affects`, `--graph` and graph keys show
+  the call as written. Its dependencies are those of the accepted spelling,
+  in the order the call reads them, so `why label` after
+  `label = sep.join(names)` lists `sep` before `names`.
+- **Unchanged.** Only calls of the three names on a string receiver change;
+  each raised `TypeError("<receiver>.<name> is not a function")`. Lists,
+  numbers and every other receiver keep their results, so
+  `xs.startswith("a")` on a list still raises. Reads without a call, such as
+  `text.startswith`, stay undefined; assignments such as
+  `text.endswith = 1` keep raising `TypeError("Cannot assign 'endswith' on string")`;
+  a `null` or undefined receiver stays undefined without evaluating the
+  arguments; functions, callable object properties and instance methods named
+  `startswith`, `endswith` or `join` keep their routing; and
+  `String.startswith`, `String.endswith` and `String.join` keep raising
+  `TypeError("String.<name> is not a function")`.
+- **Python differences.** These stay as the accepted methods define them:
+  positions are ignored; a list argument converts to its string form rather
+  than testing each item as a Python tuple does, so
+  `"a.csv".endswith([".csv", ".tsv"])` tests `".csv,.tsv"` and is `false`;
+  `join` converts items that are not strings, where Python raises; `join`
+  over a string raises, where Python joins its characters; `replace`
+  replaces the first occurrence only, where Python replaces every one; and
+  `split()` without a separator returns the whole string in a list, where
+  Python splits on whitespace.
+- The three entries beginning
+  `Nucleoid tests prefixes and suffixes with startswith and endswith`
+  through `Nucleoid rolls back failed updates through Python string methods`
+  specify the executable behavior. `tests/python_string_aliases.rs` executes
+  the rest.
+
 ## Bare single-parameter named arrows
 
 A named arrow definition or method may spell `def double(amount) => amount * 2`
@@ -24648,6 +24716,78 @@ catch error:
     assert(error, "UNDO")
 [filled, big]
 # return: [[3,5,0],[5]]
+---
+# Nucleoid tests prefixes and suffixes with startswith and endswith
+
+files = ["report.csv", "notes.txt", "draft_report.csv"]
+tables = files.filter(file -> file.endswith(".csv"))
+drafts = files.filter(file -> file.startswith("draft_"))
+assert(tables, ["report.csv", "draft_report.csv"])
+assert(drafts, ["draft_report.csv"])
+assert(tables, files.filter(file -> file.endsWith(".csv")))
+assert(["Ada".startswith("A"), "Ada".startswith("a"), "Ada".endswith("")], [true, false, true])
+assert("draft_report.csv".startswith("report", 6), false)
+files.push("draft_plan.txt", "data.CSV")
+assert(drafts, ["draft_report.csv", "draft_plan.txt"])
+assert(tables, ["report.csv", "draft_report.csv"])
+files.shift()
+tables
+# return: ["draft_report.csv"]
+---
+# Nucleoid joins lists and class populations with the separator as the receiver
+
+class Tag(name):
+    this.name = name
+names = ["ada", "bo"]
+sep = ", "
+label = sep.join(names)
+shown = " | ".join(Tag.map(tag -> tag.name))
+assert([label, shown], ["ada, bo", ""])
+red = Tag("red")
+blue = Tag("blue")
+assert(shown, "red | blue")
+assert([label, "/".join(Tag)], [names.join(sep), Tag.join("/")])
+assert("-".join(["a", 1, null, true, []]), "a-1-null-true-")
+names.push("cy")
+sep = " / "
+assert(label, "ada / bo / cy")
+"".join(names)
+# return: "adabocy"
+---
+# Nucleoid rolls back failed updates through Python string methods
+
+class File(name):
+    this.name = name
+$File.table = $File.name.endswith(".csv")
+report = File("report.csv")
+notes = File("notes.txt")
+assert([report.table, notes.table], [true, false])
+notes.name = "notes.csv"
+assert(notes.table, true)
+failure = ""
+try:
+    report.name = 7
+catch error:
+    failure = error
+assert(failure, TypeError("number.endswith is not a function"))
+assert([report.name, report.table], ["report.csv", true])
+names = ["ada", "bo"]
+label = ", ".join(names)
+try:
+    names = "ada"
+catch error:
+    failure = error
+assert(failure, TypeError(", .join is not a function"))
+assert([names, label], [["ada", "bo"], "ada, bo"])
+try:
+    names.push("cy")
+    report.name = "report.txt"
+    assert([label, report.table], ["ada, bo, cy", false])
+    throw "UNDO"
+catch error:
+    assert(error, "UNDO")
+[label, report.table]
+# return: ["ada, bo",true]
 ---
 # Nucleoid flattens nested lists by one level
 

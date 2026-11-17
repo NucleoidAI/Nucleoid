@@ -3819,6 +3819,34 @@ south.readings.push(14)
   the limit. See [NUC 109](nuc-0109.md) and the
   [root contract](../nucleoid.spec.md#operator-section-arguments).
 
+## Python string method aliases
+
+**Python string methods keep an order desk's rules live**
+
+```nuc
+class Order(code, items):
+    this.code = code
+    this.items = items
+$Order.rush = $Order.code.startswith("RUSH-")
+$Order.summary = ", ".join($Order.items)
+first = Order("RUSH-1", ["tea", "jam"])
+second = Order("STD-2", ["oat"])
+assert([first.rush, second.rush, first.summary], [true, false, "tea, jam"])
+second.code = "RUSH-2"
+first.items.push("rye")
+[second.rush, first.summary]
+# return: [true,"tea, jam, rye"]
+```
+
+- Each order's two class-level rules are written as Python writes them:
+  `$Order.code.startswith("RUSH-")` is `$Order.code.startsWith("RUSH-")`,
+  and `", ".join($Order.items)`, with the separator as the receiver, is
+  `$Order.items.join(", ")`.
+- A changed code makes the second order a rush order, and a new item extends
+  the first order's summary; each rule reads only its own order. See
+  [NUC 110](nuc-0110.md) and the
+  [root contract](../nucleoid.spec.md#python-string-method-aliases).
+
 ## Reactive list flattening
 
 **Flattening keeps the dirty tiles of every room counted**

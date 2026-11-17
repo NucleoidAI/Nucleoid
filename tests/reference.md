@@ -2641,6 +2641,19 @@ stock = [4, null, 7]
 stock.map(?? 0)
 # return: [4,0,7]
 ---
+# Nucleoid spells startswith, endswith and join as Python does
+
+files = ["main.py", "test_main.py", "notes.md"]
+tests = files.filter(name -> name.startswith("test_"))
+scripts = files.filter(name -> name.endswith(".py"))
+listing = ", ".join(scripts)
+assert(tests, ["test_main.py"])
+assert(listing, "main.py, test_main.py")
+files.push("setup.py")
+assert(listing, "main.py, test_main.py, setup.py")
+listing == scripts.join(", ")
+# return: true
+---
 # Nucleoid flattens nested lists with flat
 
 pallets = [[["bolt", "nut"], ["gear"]], [["cog"]]]

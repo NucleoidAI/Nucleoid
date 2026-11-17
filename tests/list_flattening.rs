@@ -334,16 +334,16 @@ fn only_the_appended_cases_flatten_lists_and_they_run_every_assertion() {
         assert_eq!(matching, 1, "{title}");
     }
     assert_eq!(assertions, 30);
-    assert_eq!(cases, 1131);
+    assert_eq!(cases, 1137);
 }
 
 #[test]
 fn the_appended_cases_stand_before_the_cases_of_nuc_98() {
     let [(_, spec), (_, reference), (_, readme), (_, examples)] = documents();
     let titles: Vec<&str> = spec.iter().map(|case| case.title.as_str()).collect();
-    assert_eq!(titles[762..768], SPEC_TITLES);
-    assert_eq!(titles[773], "Nucleoid states class predicates with is");
-    assert_eq!(titles.len(), 778);
+    assert_eq!(titles[765..771], SPEC_TITLES);
+    assert_eq!(titles[776], "Nucleoid states class predicates with is");
+    assert_eq!(titles.len(), 781);
     for (cases, title) in [
         (&reference, REFERENCE_TITLE),
         (&readme, README_TITLE),

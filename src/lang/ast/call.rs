@@ -1,5 +1,7 @@
 //! Function, method and constructor calls.
 
+use std::mem;
+
 use indexmap::IndexMap;
 
 use crate::builtins;
@@ -206,10 +208,7 @@ impl Runtime {
                 self.call_list_method(object, items, property, arguments, scope, target)
             }
 
-            Value::String(string) => {
-                let values = self.evaluate_all(arguments, scope)?;
-                builtins::string_method(&string, property, &values)
-            }
+            Value::String(string) => self.call_string_method(&string, property, arguments, scope),
 
             Value::Date(millis) => {
                 let values = self.evaluate_all(arguments, scope)?;
@@ -237,6 +236,35 @@ impl Runtime {
                 "{}.{property} is not a function",
                 other.type_name()
             ))),
+        }
+    }
+
+    fn call_string_method(
+        &mut self,
+        text: &str,
+        property: &str,
+        arguments: &[Expr],
+        scope: &mut Scope,
+    ) -> Result<Value> {
+        let mut values = self.evaluate_all(arguments, scope)?;
+
+        if property == "join" {
+            if let Some((items, source)) = self.take_join_items(&mut values) {
+                let separator = [Value::String(text.to_string())];
+                return self.list_query(items, property, &separator, text, source);
+            }
+        }
+
+        builtins::string_method(text, property, &values)
+    }
+
+    fn take_join_items(&mut self, values: &mut [Value]) -> Option<(Vec<Value>, ListSource)> {
+        match values.first_mut()? {
+            Value::List(items) => Some((mem::take(items), ListSource::List)),
+            Value::Class(name) if Global::from_name(name).and_then(Statics::of).is_none() => {
+                Some((self.population(name)?, ListSource::Population))
+            }
+            _ => None,
         }
     }
 
@@ -298,14 +326,44 @@ impl Runtime {
         arguments: &[Expr],
         scope: &mut Scope,
     ) -> Result<Option<Value>> {
-        Ok(Some(match global {
-            Global::Math => builtins::math(property, &self.evaluate_all(arguments, scope)?)?,
-            Global::Number => builtins::number(property, &self.evaluate_all(arguments, scope)?)?,
-            Global::String => builtins::string(property, &self.evaluate_all(arguments, scope)?)?,
-            Global::Date => {
-                builtins::date::statics(property, &self.evaluate_all(arguments, scope)?)?
-            }
-            _ => return Ok(None),
+        let Some(statics) = Statics::of(global) else {
+            return Ok(None);
+        };
+
+        let values = self.evaluate_all(arguments, scope)?;
+
+        Ok(Some(match statics {
+            Statics::Math => builtins::math(property, &values)?,
+            Statics::Number => builtins::number(property, &values)?,
+            Statics::String => builtins::string(property, &values)?,
+            Statics::Date => builtins::date::statics(property, &values)?,
         }))
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Statics {
+    Math,
+    Number,
+    String,
+    Date,
+}
+
+impl Statics {
+    #[must_use]
+    fn of(global: Global) -> Option<Statics> {
+        Some(match global {
+            Global::Math => Statics::Math,
+            Global::Number => Statics::Number,
+            Global::String => Statics::String,
+            Global::Date => Statics::Date,
+            Global::Boolean
+            | Global::Object
+            | Global::Class
+            | Global::List
+            | Global::Function
+            | Global::Json
+            | Global::Regex => return None,
+        })
     }
 }

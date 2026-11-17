@@ -2299,6 +2299,33 @@ assert([filled, sevens], [[3, 7, 7, 7], 3])
   seven extends `filled` and raises `sevens`. See the
   [root contract](nucleoid.spec.md#operator-section-arguments).
 
+## Python string method aliases
+
+**Python string methods classify files and list them**
+
+```nuc
+class File(name):
+    this.name = name
+$File.table = $File.name.endswith(".csv")
+report = File("report.csv")
+notes = File("notes.txt")
+tables = ", ".join(File.filter(file -> file.table).map(file -> file.name))
+assert([report.table, notes.table, tables], [true, false, "report.csv"])
+notes.name = "notes.csv"
+assert(tables, "report.csv, notes.csv")
+```
+
+- [NUC 110](docs/nuc-0110.md) adds Python's names for three string methods:
+  `name.endswith(".csv")` is `name.endsWith(".csv")`,
+  `name.startswith("draft_")` is `name.startsWith("draft_")`, and
+  `", ".join(names)`, with the separator as the receiver, is
+  `names.join(", ")`.
+- `join` takes a list or a class's instances, so `", ".join(File)` joins
+  the files as `File.join(", ")` does. The class-level rule and the list
+  stay live: renaming the notes to a CSV file makes it a table and adds it
+  to `tables`. See the
+  [root contract](nucleoid.spec.md#python-string-method-aliases).
+
 ## Reactive list flattening
 
 **Flat turns nested lists into one live list**

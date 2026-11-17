@@ -2528,7 +2528,7 @@ Full detail: [NUC 9](nuc-0009.md), [NUC 46](nuc-0046.md).
 | `Boolean` | `Boolean(value)` |
 | `Number` | `Number.MAX_INTEGER` |
 | `Math` | `pow`, `sqrt`, `floor`, `round`, `max`, `min`, `clamp` ([NUC 21](nuc-0021.md)), `lerp` ([NUC 22](nuc-0022.md)), `saturate` ([NUC 23](nuc-0023.md)), `smoothstep(lower, upper, value)` (accepted [NUC 33](nuc-0033.md)), `smootherstep(lower, upper, value)` (accepted [NUC 35](nuc-0035.md)), `remap(start, end, targetStart, targetEnd, value)` (accepted [NUC 39](nuc-0039.md)) |
-| `String` | `String.fromCharCode`; instance `charAt`, `length`, `lower`, `replace`, `replaceAll` (accepted [NUC 42](nuc-0042.md)), `repeat`, `split` |
+| `String` | `String.fromCharCode`; instance `charAt`, `length`, `lower`, `replace`, `replaceAll` (accepted [NUC 42](nuc-0042.md)), `repeat`, `split`, and Python's `startswith`, `endswith` and `join(items)`, with the separator as the receiver ([NUC 110](nuc-0110.md)) |
 | `Date` | `Date()`, `Date(string)`, `Date(number)`, `Date.now()`, `Date.parse()`; instance `getTime`, `getYear`, `toDateString` |
 | `List` | `push`, `pop`, `filter`, `map`, `flatMap` (accepted [NUC 41](nuc-0041.md)), `flat` ([NUC 103](nuc-0103.md)), `reduce`, `find`, `some`, `every`, `slice`, `sort` (in place, [NUC 58](nuc-0058.md)), `join`, `length`, and the queries `at`, `includes`, `indexOf`, `lastIndexOf`, `findIndex`, `findLast`, `findLastIndex` and `concat` ([NUC 61](nuc-0061.md)), `sum` ([NUC 68](nuc-0068.md)), `max` and `min` ([NUC 69](nuc-0069.md)), `distinct` ([NUC 71](nuc-0071.md)), `count(predicate)` ([NUC 73](nuc-0073.md)), `mode` ([NUC 75](nuc-0075.md)), `maxBy` and `minBy` ([NUC 77](nuc-0077.md)), `average` ([NUC 80](nuc-0080.md)), `median` ([NUC 84](nuc-0084.md)), `sortBy` ([NUC 105](nuc-0105.md)), and `partition` ([NUC 108](nuc-0108.md)); `sum`, `max`, `min` and `mode` also read as `sum of list` ([NUC 75](nuc-0075.md) revision 2) |
 | `Class` | the global list of declared types; `Class.length` |
@@ -2590,6 +2590,50 @@ assert(normalized, ["given_name", "last_name"])
   [root section](../nucleoid.spec.md#reactive-literal-string-replacement) and
   its five appended entries define results, Unicode, reactivity, class rules
   and failure rollback; native regressions cover the call/coercion boundaries.
+
+### Python string method aliases
+
+```
+files = ["main.py", "test_main.py", "notes.md"]
+tests = files.filter(name -> name.startswith("test_"))
+scripts = files.filter(name -> name.endswith(".py"))
+listing = ", ".join(scripts)
+assert(tests, ["test_main.py"])
+assert(listing, "main.py, test_main.py")
+files.push("setup.py")
+assert(listing, "main.py, test_main.py, setup.py")
+listing == scripts.join(", ")
+```
+
+- [NUC 110](nuc-0110.md) adds Python's spellings of three string methods.
+  `text.startswith(prefix)` is `text.startsWith(prefix)` and
+  `text.endswith(suffix)` is `text.endsWith(suffix)`.
+- `separator.join(items)` is `items.join(separator)`, with the separator as
+  the receiver, for a list or a class's instances: `", ".join(Task)` is
+  `Task.join(", ")`. Any other argument, including a string, keeps raising
+  `TypeError("<separator>.join is not a function")`.
+- Each alias evaluates its receiver and then its arguments, as every call
+  does, and stays live like its accepted spelling: `listing` follows the new
+  script. `why` names the same dependencies, in the order the call reads
+  them.
+- Only these calls on strings change. Lists and other receivers, reads such
+  as `text.startswith` without a call, functions, properties and methods of
+  the same names, and `String.startswith` keep their behavior.
+- The accepted methods keep their meanings where Python's differ:
+  - `startswith` and `endswith` ignore a position, so
+    `"abc".startswith("b", 1)` is `false`, and take no tuple of choices: a
+    list converts to its text, so `"a.csv".endswith([".csv", ".tsv"])` is
+    `false`;
+  - `join` writes items that are not strings in their string form, so
+    `"-".join(["a", 1, null])` is `"a-1-null"`, where Python raises, and
+    raises for a string, where Python joins its characters;
+  - `replace` replaces the first occurrence only, and `split()` without a
+    separator returns `[text]` rather than splitting on whitespace.
+- This is the executable entry
+  `Nucleoid spells startswith, endswith and join as Python does` in
+  `tests/reference.md`. The
+  [root section](../nucleoid.spec.md#python-string-method-aliases) and its
+  three appended entries define the results, liveness and rollback.
 
 ### Numeric clamping keeps bounds live
 
@@ -4247,6 +4291,7 @@ Messages are exact and are part of the observable behaviour of the language.
 | Deleting an instance that still has properties | `Cannot delete object '<id>'` |
 | Using `value` as a property name | `Cannot use 'value' as a property` |
 | Calling an unknown function of a built-in or list | `<Object>.<name> is not a function` |
+| A string's `join` whose first argument is neither a list nor a declared class's instances, including a string or a missing argument | `<receiver>.join is not a function` |
 | Missing or non-function `flatMap` callback, even on an empty receiver | `flatMap expects a function` |
 | Missing or non-function `find`, `findIndex`, `findLast` or `findLastIndex` callback, even on an empty receiver | `<name> expects a function` |
 | A supplied `sum` selector that is not a function, including `null`, even on an empty receiver | `sum expects a function` |
@@ -4504,6 +4549,8 @@ items.average()  Name.average(selector) live mean: exactly items.sum() / items.l
 items.median()  Name.median(selector)  live middle value; even counts take (lower + upper) / 2 (NUC 84)
 items.sortBy(key)  Name.sortBy(key)   live new list in ascending key order; ties keep receiver order (NUC 105)
 items.partition(test)  Name.partition(test) live [kept, rest]: what filter(test) keeps, then the others (NUC 108)
+text.startswith(p)  text.endswith(s)  Python spellings: exactly text.startsWith(p), text.endsWith(s) (NUC 110)
+", ".join(items)  ", ".join(Name)      Python spelling: exactly items.join(", "), Name.join(", ") (NUC 110)
 mode of items  sum of Name.map(f)      noun query: exactly items.mode(), Name.map(f).sum() (NUC 75)
 sum of items ** 2                      a noun query applies to the whole power: sum of (items ** 2) (NUC 75)
 

@@ -19986,6 +19986,100 @@ catch error:
 # return: [[3,5,0],[5]]"#);
 }
 
+/// Nucleoid tests prefixes and suffixes with startswith and endswith
+#[rustfmt::skip]
+#[test]
+fn tests_prefixes_and_suffixes_with_startswith_and_endswith() {
+    let mut run = runner();
+    run(r#"files = ["report.csv", "notes.txt", "draft_report.csv"]"#);
+    run(r#"tables = files.filter(file -> file.endswith(".csv"))"#);
+    run(r#"drafts = files.filter(file -> file.startswith("draft_"))"#);
+    assert_eq!(run("tables"), serde_json::json!(["report.csv", "draft_report.csv"]));
+    assert_eq!(run("drafts"), serde_json::json!(["draft_report.csv"]));
+    {
+        let actual = run("tables");
+        let expected = run(r#"(files.filter(file -> file.endsWith(".csv")))"#);
+        assert_eq!(actual, expected);
+    }
+    assert_eq!(run(r#"["Ada".startswith("A"), "Ada".startswith("a"), "Ada".endswith("")]"#), serde_json::json!([true, false, true]));
+    assert_eq!(run(r#""draft_report.csv".startswith("report", 6)"#), false);
+    run(r#"files.push("draft_plan.txt", "data.CSV")"#);
+    assert_eq!(run("drafts"), serde_json::json!(["draft_report.csv", "draft_plan.txt"]));
+    assert_eq!(run("tables"), serde_json::json!(["report.csv", "draft_report.csv"]));
+    run("files.shift()");
+    run(r#"tables
+
+# return: ["draft_report.csv"]"#);
+}
+
+/// Nucleoid joins lists and class populations with the separator as the receiver
+#[rustfmt::skip]
+#[test]
+fn joins_lists_and_class_populations_with_the_separator_as_the_receiver() {
+    let mut run = runner();
+    run(r#"class Tag(name):
+    this.name = name"#);
+    run(r#"names = ["ada", "bo"]"#);
+    run(r#"sep = ", ""#);
+    run("label = sep.join(names)");
+    run(r#"shown = " | ".join(Tag.map(tag -> tag.name))"#);
+    assert_eq!(run("[label, shown]"), serde_json::json!(["ada, bo", ""]));
+    run(r#"red = Tag("red")"#);
+    run(r#"blue = Tag("blue")"#);
+    assert_eq!(run("shown"), "red | blue");
+    {
+        let actual = run(r#"[label, "/".join(Tag)]"#);
+        let expected = run(r#"([names.join(sep), Tag.join("/")])"#);
+        assert_eq!(actual, expected);
+    }
+    assert_eq!(run(r#""-".join(["a", 1, null, true, []])"#), "a-1-null-true-");
+    run(r#"names.push("cy")"#);
+    run(r#"sep = " / ""#);
+    assert_eq!(run("label"), "ada / bo / cy");
+    run(r#""".join(names)
+
+# return: "adabocy""#);
+}
+
+/// Nucleoid rolls back failed updates through Python string methods
+#[rustfmt::skip]
+#[test]
+fn rolls_back_failed_updates_through_python_string_methods() {
+    let mut run = runner();
+    run(r#"class File(name):
+    this.name = name
+$File.table = $File.name.endswith(".csv")
+report = File("report.csv")
+notes = File("notes.txt")
+assert([report.table, notes.table], [true, false])
+notes.name = "notes.csv"
+assert(notes.table, true)
+failure = ""
+try:
+    report.name = 7
+catch error:
+    failure = error
+assert(failure, TypeError("number.endswith is not a function"))
+assert([report.name, report.table], ["report.csv", true])
+names = ["ada", "bo"]
+label = ", ".join(names)
+try:
+    names = "ada"
+catch error:
+    failure = error
+assert(failure, TypeError(", .join is not a function"))
+assert([names, label], [["ada", "bo"], "ada, bo"])
+try:
+    names.push("cy")
+    report.name = "report.txt"
+    assert([label, report.table], ["ada, bo, cy", false])
+    throw "UNDO"
+catch error:
+    assert(error, "UNDO")
+[label, report.table]
+# return: ["ada, bo",true]"#);
+}
+
 /// Nucleoid flattens nested lists by one level
 #[rustfmt::skip]
 #[test]
