@@ -3675,6 +3675,174 @@ statement positions; caught values and transaction recovery are unchanged.
   `Nucleoid rolls back failed receiver assignments` specify the executable
   behavior. `tests/implicit_receivers.rs` executes the rest.
 
+## Implicit receivers in method bodies
+
+- [NUC 113](docs/nuc-0113.md) lets the code of a class read the properties
+  of its own instance with a leading dot: in a class body,
+  `def area() => .w * .h` is `def area() => this.w * this.h`, and
+  `return .total - .paid` is `return this.total - this.paid`. No token,
+  keyword, syntax tree node, error type or message is added.
+- **Where.** The receiver is `this` in the code of a class body: the methods
+  it declares with `def` or `function` in every parameter form, including
+  the `self` parameters of [Python-style self parameters](#python-style-self-parameters),
+  its `def init` and `def __init__` constructors, and the statements of its
+  own indented or same-line body, which make up its constructor. A class
+  that names its parent with `extends` or a colon reads as every class does.
+  Expression and indented bodies read in every statement and expression
+  they hold, template interpolations included.
+- **Reads.** A `.` that begins an operand, after a token in operand position
+  as [Implicit receiver properties](#implicit-receiver-properties) defines
+  it, and is directly followed by a name reads that property of `this`. The
+  operand continues with every suffix that member access takes, so
+  `.items[0]`, `.area()`, `.a.b` and `.w@first` read `this.items[0]`,
+  `this.area()`, `this.a.b` and `this.w@first`, and a keyword after the dot
+  reads its canonical spelling, as after any `.`.
+- **The innermost receiver.** A property assignment keeps the receiver of
+  [Implicit receiver properties](#implicit-receiver-properties): in a
+  method, `other.p = .q` reads `other.q` and `this.w = .h` reads `this.h`,
+  and its value keeps every rule of that section, so `this.p = (x = .a)`
+  keeps its error. The values of assignments to names, such as `x = .w`,
+  `x += .w` and `x := .w`, of label arguments such as `P(n = .w)` and of
+  destructuring declarations such as `a, b = .pair` read `this`, since no
+  target names another receiver. A computed, indexed or versioned target,
+  such as `xs[0].p`, `xs[0]` or `o.p@first`, gives its value no receiver,
+  so its dots keep their errors.
+- **Nested functions.** `this` is not defined in the functions that a
+  method's code holds, so their dots keep their accepted errors: the bodies
+  of lambdas, arrows, `function` expressions, operator sections and nested
+  `def` and `function` declarations, and the elements and conditions of
+  comprehensions. So `def twice() => [1, 2].map(i -> i * .w)` keeps
+  `SyntaxError("Unexpected '.'")`, where `i * this.w` raises
+  `ReferenceError("this is not defined")` when it runs. The source of a
+  comprehension and the condition of a quantifier are evaluated in the
+  method, so they read: `[x * 2 for x in .xs]` reads `this.xs`. A property
+  value keeps its receiver inside its functions, as
+  [Implicit receiver properties](#implicit-receiver-properties) specifies,
+  and a class declared in a function reads its own instance.
+- **Kept readings.** These dots keep their accepted readings and errors:
+  - the first token of a call argument: a whole argument `.name` is a
+    selector of [Property selector arguments](#property-selector-arguments),
+    so `[this].map(.w)` passes `v -> v.w` and `Inner(.w)` passes a
+    selector to a constructor, while `f(.w + 1)` keeps its error and
+    `f(1 + .w)` reads. The two arguments of an `assert:` statement follow
+    the same rule;
+  - every dot in the value of an `is` assignment;
+  - a dot that begins a statement or the target of an assignment, as in
+    `.count += 1`, `.items.push(x)` and `(.w = 1)`, including the first
+    statement of a same-line suite, as in `if c: .w` and
+    `suppose this.w = 5: .w * 2`;
+  - a dot after a token that is not in operand position, so `while .n > 0:`
+    keeps its accepted error while `while 0 < .n:` reads, and `x .a` stays
+    member access;
+  - every dot outside a class body: functions declared outside a class, so
+    `def f() => .a` keeps its error, object functions such as
+    `o.f = function() { return .w }`, which read `o`, and class-level rules
+    such as `$Rect.area = .w * .h`.
+- **The written-out path.** A read builds `this.NAME`, the tree of the
+  member access written out, so values, dependencies, the live updates of
+  declarations that call a method, class-level rules, rendering, `why`,
+  `affects`, `suppose`, rollback and run-time errors are those of the
+  written-out spelling. The probes that keep the juxtaposed `while` and
+  `suppose` headers of [Is assignments](#is-assignments) read the instance
+  too, so `while 1 + .n is a: b` in a method runs as the separate
+  statements of `while 1 + this.n is a: b`.
+- **Parse passes.** The reads belong to the final parse of
+  [Implicit receiver properties](#implicit-receiver-properties), its probes
+  and its interpolations, which run only after every accepted parse has
+  failed. A class body gives its code the instance wherever no property
+  value already gives it a receiver. When the final parse fails too, the
+  input reports whichever error lies further into the source, so
+  `def f() => .w +` reports the missing operand at the end of its line.
+- **Compatibility.** Only inputs that were syntax errors at the accepted
+  revision change. Each raised `SyntaxError("Unexpected '.'")` at the name
+  after a dot, or, in a method with a `self` parameter, the error of the
+  parse without receiver parameters, such as
+  `SyntaxError("Expected a parameter but found keyword 'this'")`, or the
+  error of a tentative statement that fell back, such as
+  `SyntaxError("Unexpected ','")` for `a, b = .pair`. Every input that an
+  accepted pass parses keeps its result.
+- These programs specify the behavior. `tests/method_receivers.rs` runs each
+  one, checks that every assertion runs and compares its last value with
+  its `# return:` line, and executes the rest of this section.
+
+~~~
+class Item(this.price, this.qty):
+    def total() => .price * .qty
+    def label() => `${.qty} x ${.price} = ${.total()}`
+    def discounted(rate) => .total() * (1 - rate)
+i = Item(4, 3)
+assert([i.total(), i.label()], [12, "3 x 4 = 12"])
+line = i.total()
+i.qty = 5
+assert(line, 20)
+assert(i.discounted(0.5), 10)
+i.label()
+# return: "5 x 4 = 20"
+~~~
+
+~~~
+class Tank(this.level, this.size):
+    if .level > .size:
+        this.spill = .level - .size
+class Gauge:
+    def init(low, high):
+        this.low = low
+        this.high = high
+        this.span = .high - .low
+        if .span > 10:
+            this.wide = true
+class Meter:
+    def __init__(self, reading):
+        self.reading = reading
+        if .reading < 0:
+            self.reading = 0
+t = Tank(12, 10)
+g = Gauge(5, 20)
+m = Meter(-3)
+assert([t.spill, g.span, g.wide], [2, 15, true])
+m.reading
+# return: 0
+~~~
+
+~~~
+class Tank(this.level, this.size):
+    def drain(self, step):
+        count = 0
+        while 0 < .level:
+            self.level = .level - step
+            count += 1
+        return count
+    def status():
+        if .level <= 0:
+            return "empty"
+        return `${.level} of ${.size}`
+t = Tank(12, 20)
+assert(t.drain(5), 3)
+t.status()
+# return: "empty"
+~~~
+
+~~~
+class Team(this.people, this.bonus):
+    def names() => .people.map(.name)
+    def paid() => [person.pay for person in .people]
+    def raised():
+        bonus = .bonus
+        return .people.map(person -> person.pay + bonus)
+    def promote(person):
+        raise = .bonus
+        person.pay = .pay + raise
+        return person.pay
+ada = {name: "Ada", pay: 100}
+bob = {name: "Bob", pay: 90}
+t = Team([ada, bob], 5)
+assert(t.names(), ["Ada", "Bob"])
+assert(t.paid(), [100, 90])
+assert(t.raised(), [105, 95])
+t.promote(bob)
+# return: 95
+~~~
+
 ## In-place list sorting
 
 - [NUC 58](docs/nuc-0058.md) makes `list.sort()` and `list.sort(comparator)`

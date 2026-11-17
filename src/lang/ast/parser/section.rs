@@ -67,7 +67,7 @@ impl Parser {
         debug_assert!(self.operand.is_none());
         let items = self.leave_items();
         self.operand = Some(Function::unnamed_parameter());
-        let body = self.expression_in(self.context);
+        let body = self.without_instance(|parser| parser.expression_in(parser.context));
         let unread = self.operand.take();
         self.items = items;
         let body = body?;

@@ -321,6 +321,8 @@ impl Parser {
             lists: self.lists,
             enclosed: self.enclosed,
             in_class: self.in_class,
+            dots: self.dots.probed(),
+            receiver: self.receiver.clone(),
             if_statements: self.if_statements,
             ..self.rewound()
         };

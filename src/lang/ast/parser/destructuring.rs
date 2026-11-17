@@ -55,7 +55,7 @@ impl Parser {
     }
 
     fn destructured_value(&mut self) -> Result<Expr> {
-        self.without_receiver(|parser| {
+        self.variable_value(|parser| {
             parser.nested_expression_in(ExpressionContext::Ordinary, Self::conditional)
         })
     }

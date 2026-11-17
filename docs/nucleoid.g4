@@ -733,6 +733,24 @@ atVariable
  * - It builds Expr::Member over a copy of the receiver path, the tree of
  *   'receiver DOT property'. Postfix suffixes continue it as one chain, as
  *   after '(' receiver ')' DOT property.
+ * Instance-read contract (NUC 113):
+ * - In the same final parse, the code of a classBody has the receiver THIS
+ *   wherever no assignment value gives it another: its methodDecls in every
+ *   parameter form, INIT and PYTHON_INIT included, and its constructor
+ *   statements, in subclasses too. A receiverRead there builds
+ *   Expr::Member over Expr::This, the tree of 'THIS DOT property'.
+ * - An assignment to a member path gives its value the receiver above, or
+ *   none for a computed or versioned target; an assignment to a name, a
+ *   label argument and a destructuring declaration keep THIS for their
+ *   values.
+ * - The bodies of lambdaExpression, arrowBody, FUNCTION parameters block,
+ *   sections, nested function declarations and the element and condition
+ *   of a comprehension have no THIS receiver, so their reads keep the
+ *   accepted error; a comprehension's source and a quantified condition
+ *   keep THIS. A classBody inside such a body has THIS again.
+ * - The NUC 93 probes of whileStmt and supposeStmt headers read THIS
+ *   receivers but no assignment receivers, as the accepted probes read the
+ *   written-out 'THIS DOT property'.
  */
 receiverRead
     : DOT property                      // Expr::Member over the receiver path
@@ -1082,7 +1100,8 @@ fragment REGEX_CHAR
  * (DOT, then a name or keyword, after a token in operand position or at the
  * start) or a template, one final parse reads receiverRead, with 'is'
  * comparisons when the source holds 'is' or a template and with
- * comprehensions when it holds 'for' or a template. When it fails too, its
+ * comprehensions when it holds 'for' or a template, and with the THIS
+ * receivers of the instance-read contract. When it fails too, its
  * error replaces the accepted one only when it lies further into the source.
  * Passes run and succeed or fail exactly as without the EVERY rule of the
  * spelled-class contract. When the kept pass read an EVERY spelledClass
@@ -1141,6 +1160,8 @@ fragment REGEX_CHAR
  * $C is w                  -> $C.w = true, also spelled every C is w,
  *                             any C is w and all C is w.
  * o.p = .a + .b            -> o.p = o.a + o.b, in the final parse.
+ * def m() => .a + .b       -> def m() => this.a + this.b, in a classBody's
+ *                             final parse.
  * new X(...)               -> X(...).
  * for xs:                  -> iteration with the item name "it".
  * catch without a name     -> the binding "error".
@@ -1186,6 +1207,11 @@ fragment REGEX_CHAR
  * src\lang\ast\parser.rs, receivers set in parser\expression.rs and
  * parser\statement.rs, reads in parser\primary.rs and parser\postfix.rs, and
  * the operand-position rule in src\lang\ast\lexer\token.rs.
+ * Instance receivers: parser\receiver.rs, set for class bodies in
+ * parser\class.rs, kept for variables in parser\destructuring.rs, left out
+ * of nested functions in parser\primary.rs, parser\function.rs,
+ * parser\section.rs and parser\comprehension.rs, and carried into the
+ * accepted probe in parser\statement.rs.
  * Membership tests: relationalOperator in parser\precedence.rs, the
  * expressionInput context in parser.rs and their evaluation in
  * src\lang\ast\operator.rs.

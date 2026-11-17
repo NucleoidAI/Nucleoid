@@ -77,7 +77,8 @@ impl Parser {
     }
 
     pub(super) fn function_statement(&mut self) -> Result<Stmt> {
-        self.function_declaration().map(Stmt::Function)
+        self.without_instance(Self::function_declaration)
+            .map(Stmt::Function)
     }
 
     pub(super) fn starts_function_declaration(&self) -> bool {

@@ -1398,6 +1398,28 @@ order.label
 - Because `is` is a name and `not` a keyword, `o.p = (1 is .a)` keeps its error while `o.p = (1 is not .a)` reads `o.a`, as `(1 is not o.a)`. Without grouping, `o.p = 1 is not .a` is the three statements `o.p = 1`, `is` and `not .a`, and keeps its error.
 - Receivers are read only in a final parse that runs after every accepted parse has failed, so every input the accepted grammar reads keeps its reading. See the authoritative [implicit receiver properties](../nucleoid.spec.md#implicit-receiver-properties) section.
 
+### Implicit receivers in method bodies
+
+```
+class Rect(this.w, this.h):
+    def area() => .w * .h
+    def label():
+        return `${.w}x${.h}`
+r = Rect(2, 3)
+a = r.area()
+assert([a, r.label()], [6, "2x3"])
+r.w = 5
+[a, r.label()]
+# return: [15, "5x3"]
+```
+
+- [NUC 113](nuc-0113.md) reads a `.` that begins an operand, directly followed by a name, in the code of a class body as that property of the instance, `this`: `def area() => .w * .h` is `def area() => this.w * this.h`. `tests/method_receivers.rs` runs this program, which returns `[15, "5x3"]`.
+- The code is that of the methods a class declares with `def` or `function` in every parameter form, `self` parameters included, its `def init` and `def __init__` constructors and the statements of its own body, in subclasses too, with expression and indented bodies, every statement in them and template interpolations.
+- A property assignment keeps its own receiver, so in a method `other.p = .q` reads `other.q`, while the values of variables, label arguments and destructuring declarations read `this`. Computed, indexed and versioned targets give no receiver.
+- `this` is not defined in the lambdas, arrows, `function` expressions, operator sections, nested declarations and comprehension elements and conditions of a method, so their dots keep their errors; a comprehension's source and a quantifier's condition read the instance.
+- These keep their accepted readings and errors: a call argument that starts with `.`, which is a selector or its error; `is` values; a statement or target that starts with `.`; a dot after a name; and every dot outside a class body, such as `def f() => .a`, object functions and class-level rules.
+- A read builds the written-out `this.NAME`, so values, dependencies, live updates, `why`, `affects`, rendering, rollback and errors are those of that spelling, and only inputs that were syntax errors at the accepted revision change. See the authoritative [implicit receivers in method bodies](../nucleoid.spec.md#implicit-receivers-in-method-bodies) section.
+
 ---
 
 ## 6. Class-Level Rules
@@ -4514,6 +4536,8 @@ class Name:
 class Name:
     def __init__(self, param):         Python's constructor: exactly def init(param): (NUC 107)
     def method(self, a) => a           a leading self or this receiver: exactly def method(a) => a
+class Name(this.w, this.h):
+    def area() => .w * .h              .w reads this.w in the code of a class body (NUC 113)
 
 instance = Name(param=expression)      label binding without caller assignment
 instance = Name((param=expression))    explicit positional assignment argument
