@@ -97,7 +97,7 @@ impl Parser {
     fn function_literal(&mut self) -> Result<Expr> {
         let parameters = self.parameters()?;
         let items = self.leave_items();
-        let body = self.braced();
+        let body = self.without_instance(Self::braced);
         self.items = items;
         let body = body?;
         Ok(Expr::Function(Arc::new(Function {
@@ -112,7 +112,11 @@ impl Parser {
 
         while !self.check(&Token::RightBracket) {
             let start = self.position;
-            let mut item = self.within(true, Self::item)?;
+            let mut item = if items.is_empty() {
+                self.list_head()?
+            } else {
+                self.within(true, Self::item)?
+            };
             if items.is_empty() && self.starts_comprehension() {
                 return self.comprehension(start, item);
             }
@@ -202,12 +206,15 @@ impl Parser {
 
     fn arrow_body(&mut self, parameters: Vec<Parameter>) -> Result<Expr> {
         let items = self.leave_items();
-        let body = if self.check(&Token::LeftBrace) {
-            self.braced().map(FunctionBody::Block)
-        } else {
-            self.expression_in(self.context)
-                .map(|body| FunctionBody::Expression(Box::new(body)))
-        };
+        let body = self.without_instance(|parser| {
+            if parser.check(&Token::LeftBrace) {
+                parser.braced().map(FunctionBody::Block)
+            } else {
+                parser
+                    .expression_in(parser.context)
+                    .map(|body| FunctionBody::Expression(Box::new(body)))
+            }
+        });
         self.items = items;
         let body = body?;
 
@@ -278,7 +285,7 @@ impl Parser {
         }
         self.expect(&Token::Colon)?;
         let items = self.leave_items();
-        let body = self.expression_in(self.context);
+        let body = self.without_instance(|parser| parser.expression_in(parser.context));
         self.items = items;
         let body = body?;
 

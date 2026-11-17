@@ -321,6 +321,7 @@ impl Parser {
         if let Token::Identifier(name) = self.peek() {
             let stage = match name.as_str() {
                 "diff" => Some(Stage::Diff),
+                "nodes" => Some(Stage::Nodes),
                 other => Stage::from_name(other),
             };
             if let Some(stage) = stage {

@@ -2276,6 +2276,110 @@ assert(totals, [[40, 15, 90], [25]])
   its place on the other. See the
   [root contract](nucleoid.spec.md#list-and-population-partitions).
 
+## Operator section arguments
+
+**Operator sections pass a comparison without naming a parameter**
+
+```nuc
+cells = [0, 3, 0, 7, 7]
+filled = cells.filter(!= 0)
+sevens = cells.count(== 7)
+assert([filled, sevens], [[3, 7, 7], 2])
+cells.push(7)
+assert([filled, sevens], [[3, 7, 7, 7], 3])
+```
+
+- [NUC 109](docs/nuc-0109.md) lets a call argument that begins with a
+  binary operator stand for the function that applies the operator to its
+  argument: `cells.filter(!= 0)` is `cells.filter(cell -> cell != 0)`, and
+  `cells.count(== 7)` counts the sevens.
+- The rest of the argument is read as if the item stood before the
+  operator, with the usual precedence, so `xs.map(* 2 + 1)` maps
+  `x -> x * 2 + 1`. Both declarations stay live like their lambdas: another
+  seven extends `filled` and raises `sevens`. See the
+  [root contract](nucleoid.spec.md#operator-section-arguments).
+
+## Python string method aliases
+
+**Python string methods classify files and list them**
+
+```nuc
+class File(name):
+    this.name = name
+$File.table = $File.name.endswith(".csv")
+report = File("report.csv")
+notes = File("notes.txt")
+tables = ", ".join(File.filter(file -> file.table).map(file -> file.name))
+assert([report.table, notes.table, tables], [true, false, "report.csv"])
+notes.name = "notes.csv"
+assert(tables, "report.csv, notes.csv")
+```
+
+- [NUC 110](docs/nuc-0110.md) adds Python's names for three string methods:
+  `name.endswith(".csv")` is `name.endsWith(".csv")`,
+  `name.startswith("draft_")` is `name.startsWith("draft_")`, and
+  `", ".join(names)`, with the separator as the receiver, is
+  `names.join(", ")`.
+- `join` takes a list or a class's instances, so `", ".join(File)` joins
+  the files as `File.join(", ")` does. The class-level rule and the list
+  stay live: renaming the notes to a CSV file makes it a table and adds it
+  to `tables`. See the
+  [root contract](nucleoid.spec.md#python-string-method-aliases).
+
+## Reactive string padding
+
+**Padding keeps a price list aligned as it changes**
+
+```nuc
+item = "tea"
+price = "4"
+line = item.padEnd(8, ".") + price.padStart(3)
+assert(line, "tea.....  4")
+item = "honey"
+price = "12"
+assert(line, "honey... 12")
+```
+
+- [NUC 111](docs/nuc-0111.md) adds JavaScript's `padStart` and `padEnd` to
+  strings: `price.padStart(3)` puts spaces before the price until it holds
+  three characters, and `item.padEnd(8, ".")` puts dots after the item until
+  it holds eight. A fill of several characters is cut to the gap, and text
+  that already holds the length is returned as it is.
+- `line` stays live like its `repeat` spelling,
+  `item + ".".repeat(8 - item.length)`, so a new item and price realign it.
+  See the [root contract](nucleoid.spec.md#reactive-string-padding).
+
+## Node names of reasoning selections
+
+**Nodes names the facts a heater rests on and what insulation moves**
+
+```nuc
+outside = 4
+target = 21
+insulation = 0.8
+loss = (target - outside) * insulation
+heater = loss * 2
+causes = heater |> why |> stated |> nodes
+moved = insulation |> affects |> nodes
+assert(causes, ["target", "outside", "insulation"])
+assert(moved, ["loss", "heater"])
+solar = 5
+heater = loss * 2 - solar
+assert(causes, ["solar", "target", "outside", "insulation"])
+```
+
+- [NUC 112](docs/nuc-0112.md) adds the final reasoning stage `|> nodes`,
+  which names the nodes of a selection's steps in their order.
+  `heater |> why |> stated |> nodes` names the facts the heater rests on,
+  and `insulation |> affects |> nodes` what a change of the insulation
+  reaches.
+- Both lists are the names that
+  `(heater |> why |> stated).map(step => step.node)` and
+  `(insulation |> affects).map(step => step.node)` give, and they stay live
+  the same way: once the heater also accounts for the solar gain, `solar`
+  joins the facts it rests on. See the
+  [root contract](nucleoid.spec.md#node-names-of-reasoning-selections).
+
 ## Reactive list flattening
 
 **Flat turns nested lists into one live list**

@@ -19844,6 +19844,443 @@ weights
 # return: [[9,2],[4]]"#);
 }
 
+/// Nucleoid passes comparison sections as one-parameter functions
+#[rustfmt::skip]
+#[test]
+fn passes_comparison_sections_as_one_parameter_functions() {
+    let mut run = runner();
+    run("readings = [12, 31, 7, 45, 18]");
+    run("high = readings.filter(> 20)");
+    run("low = readings.count(<= 12)");
+    run("peak = readings.find(>= 40)");
+    run("spot = readings.findIndex(< 10)");
+    run("alarm = readings.some(> 50)");
+    run("sane = readings.every(!= 0)");
+    assert_eq!(run("[high, low, peak, spot, alarm, sane]"), serde_json::json!([[31, 45], 2, 45, 2, false, true]));
+    run("readings.push(60, 0)");
+    assert_eq!(run("[high, low, peak, spot, alarm, sane]"), serde_json::json!([[31, 45, 60], 3, 45, 2, true, false]));
+    run("readings.shift()");
+    assert_eq!(run("[low, spot]"), serde_json::json!([2, 1]));
+    run(r#"high.length
+
+# return: 3"#);
+}
+
+/// Nucleoid reads the rest of a section argument with the usual precedence
+#[rustfmt::skip]
+#[test]
+fn reads_the_rest_of_a_section_argument_with_the_usual_precedence() {
+    let mut run = runner();
+    run("values = [3, 8, 1, 9]");
+    run("low = 2");
+    run("doubled = values.map(* 2 + 1)");
+    run("squares = values.map(** 2 - 1)");
+    run("evens = values.count(% 2 == 0)");
+    run("rests = values.map(% 3)");
+    run(r#"sizes = values.map(> 4 ? "big" : "small")"#);
+    run("above = values.filter(> low + 1)");
+    assert_eq!(run("[doubled, squares]"), serde_json::json!([[7, 17, 3, 19], [8, 63, 0, 80]]));
+    assert_eq!(run("[evens, rests]"), serde_json::json!([1, [0, 2, 1, 0]]));
+    assert_eq!(run("[sizes, above]"), serde_json::json!([["small", "big", "small", "big"], [8, 9]]));
+    run("low = 0");
+    run("values.push(4)");
+    assert_eq!(run("[above, evens, rests]"), serde_json::json!([[3, 8, 9, 4], 2, [0, 2, 1, 0, 1]]));
+    run(r#"sizes
+
+# return: ["small","big","small","big","small"]"#);
+}
+
+/// Nucleoid fills and combines values with nullish and logical sections
+#[rustfmt::skip]
+#[test]
+fn fills_and_combines_values_with_nullish_and_logical_sections() {
+    let mut run = runner();
+    run("scores = [7, null, 3, null]");
+    run("filled = scores.map(?? 0)");
+    run(r#"names = ["ada", "", "bo"]"#);
+    run(r#"shown = names.map(|| "anonymous")"#);
+    run("flags = [true, false, true]");
+    run(r#"labels = flags.map(&& "on")"#);
+    run("exact = flags.count(=== true)");
+    assert_eq!(run("filled"), serde_json::json!([7, 0, 3, 0]));
+    assert_eq!(run("[shown, labels, exact]"), serde_json::json!([["ada", "anonymous", "bo"], ["on", false, "on"], 2]));
+    run("scores.push(null, 5)");
+    run(r#"names.push("")"#);
+    run("flags.push(1)");
+    assert_eq!(run("filled"), serde_json::json!([7, 0, 3, 0, 0, 5]));
+    assert_eq!(run("shown"), serde_json::json!(["ada", "anonymous", "bo", "anonymous"]));
+    run(r#"[labels, exact]
+
+# return: [["on",false,"on","on"],2]"#);
+}
+
+/// Nucleoid keeps section operands live like lambda bodies
+#[rustfmt::skip]
+#[test]
+fn keeps_section_operands_live_like_lambda_bodies() {
+    let mut run = runner();
+    run("limit = 20");
+    run("readings = [12, 31, 7]");
+    run("over = readings.filter(> limit)");
+    run("alerts = over.count(>= limit * 2)");
+    assert_eq!(run("[over, alerts]"), serde_json::json!([[31], 0]));
+    run("limit = 10");
+    assert_eq!(run("[over, alerts]"), serde_json::json!([[12, 31], 1]));
+    run("readings.push(45)");
+    assert_eq!(run("[over, alerts]"), serde_json::json!([[12, 31, 45], 2]));
+    run("readings = [5, 25]");
+    assert_eq!(run("[over, alerts]"), serde_json::json!([[25], 1]));
+    run(r#"alerts
+
+# return: 1"#);
+}
+
+/// Nucleoid passes sections to functions and constructors beside other arguments
+#[rustfmt::skip]
+#[test]
+fn passes_sections_to_functions_and_constructors_beside_other_arguments() {
+    let mut run = runner();
+    run("def keep(values, test, change) => values.filter(test).map(change)");
+    run(r#"class Gate(name, test):
+    this.name = name
+    this.test = test"#);
+    run(r#"loud = Gate("loud", > 80)"#);
+    run(r#"quiet = new Gate("quiet", < 30)"#);
+    run("levels = [20, 90, 50, 85]");
+    run("heard = levels.filter(loud.test)");
+    run("scaled = keep(levels, >= 50, x -> x / 10)");
+    run("first = levels.find(> 100) ?? levels.find(quiet.test)");
+    assert_eq!(run("[heard, scaled, first]"), serde_json::json!([[90, 85], [9, 5, 8.5], 20]));
+    run("levels.push(120)");
+    assert_eq!(run("[heard, scaled, first]"), serde_json::json!([[90, 85, 120], [9, 5, 8.5, 12], 120]));
+    run(r#"quiet.name
+
+# return: "quiet""#);
+}
+
+/// Nucleoid rolls back failed updates through sections
+#[rustfmt::skip]
+#[test]
+fn rolls_back_failed_updates_through_sections() {
+    let mut run = runner();
+    run(r#"counts = [3, 5]
+filled = counts.map(?? spare())
+failure = ""
+try:
+    counts.push(null)
+catch error:
+    failure = error
+assert(failure, ReferenceError("spare is not defined"))
+assert([counts.length, filled], [2, [3, 5]])
+def spare() => 0
+counts.push(null)
+assert(filled, [3, 5, 0])
+big = filled.filter(> 4)
+try:
+    counts.push(9)
+    assert([filled, big], [[3, 5, 0, 9], [5, 9]])
+    throw "UNDO"
+catch error:
+    assert(error, "UNDO")
+[filled, big]
+# return: [[3,5,0],[5]]"#);
+}
+
+/// Nucleoid tests prefixes and suffixes with startswith and endswith
+#[rustfmt::skip]
+#[test]
+fn tests_prefixes_and_suffixes_with_startswith_and_endswith() {
+    let mut run = runner();
+    run(r#"files = ["report.csv", "notes.txt", "draft_report.csv"]"#);
+    run(r#"tables = files.filter(file -> file.endswith(".csv"))"#);
+    run(r#"drafts = files.filter(file -> file.startswith("draft_"))"#);
+    assert_eq!(run("tables"), serde_json::json!(["report.csv", "draft_report.csv"]));
+    assert_eq!(run("drafts"), serde_json::json!(["draft_report.csv"]));
+    {
+        let actual = run("tables");
+        let expected = run(r#"(files.filter(file -> file.endsWith(".csv")))"#);
+        assert_eq!(actual, expected);
+    }
+    assert_eq!(run(r#"["Ada".startswith("A"), "Ada".startswith("a"), "Ada".endswith("")]"#), serde_json::json!([true, false, true]));
+    assert_eq!(run(r#""draft_report.csv".startswith("report", 6)"#), false);
+    run(r#"files.push("draft_plan.txt", "data.CSV")"#);
+    assert_eq!(run("drafts"), serde_json::json!(["draft_report.csv", "draft_plan.txt"]));
+    assert_eq!(run("tables"), serde_json::json!(["report.csv", "draft_report.csv"]));
+    run("files.shift()");
+    run(r#"tables
+
+# return: ["draft_report.csv"]"#);
+}
+
+/// Nucleoid joins lists and class populations with the separator as the receiver
+#[rustfmt::skip]
+#[test]
+fn joins_lists_and_class_populations_with_the_separator_as_the_receiver() {
+    let mut run = runner();
+    run(r#"class Tag(name):
+    this.name = name"#);
+    run(r#"names = ["ada", "bo"]"#);
+    run(r#"sep = ", ""#);
+    run("label = sep.join(names)");
+    run(r#"shown = " | ".join(Tag.map(tag -> tag.name))"#);
+    assert_eq!(run("[label, shown]"), serde_json::json!(["ada, bo", ""]));
+    run(r#"red = Tag("red")"#);
+    run(r#"blue = Tag("blue")"#);
+    assert_eq!(run("shown"), "red | blue");
+    {
+        let actual = run(r#"[label, "/".join(Tag)]"#);
+        let expected = run(r#"([names.join(sep), Tag.join("/")])"#);
+        assert_eq!(actual, expected);
+    }
+    assert_eq!(run(r#""-".join(["a", 1, null, true, []])"#), "a-1-null-true-");
+    run(r#"names.push("cy")"#);
+    run(r#"sep = " / ""#);
+    assert_eq!(run("label"), "ada / bo / cy");
+    run(r#""".join(names)
+
+# return: "adabocy""#);
+}
+
+/// Nucleoid rolls back failed updates through Python string methods
+#[rustfmt::skip]
+#[test]
+fn rolls_back_failed_updates_through_python_string_methods() {
+    let mut run = runner();
+    run(r#"class File(name):
+    this.name = name
+$File.table = $File.name.endswith(".csv")
+report = File("report.csv")
+notes = File("notes.txt")
+assert([report.table, notes.table], [true, false])
+notes.name = "notes.csv"
+assert(notes.table, true)
+failure = ""
+try:
+    report.name = 7
+catch error:
+    failure = error
+assert(failure, TypeError("number.endswith is not a function"))
+assert([report.name, report.table], ["report.csv", true])
+names = ["ada", "bo"]
+label = ", ".join(names)
+try:
+    names = "ada"
+catch error:
+    failure = error
+assert(failure, TypeError(", .join is not a function"))
+assert([names, label], [["ada", "bo"], "ada, bo"])
+try:
+    names.push("cy")
+    report.name = "report.txt"
+    assert([label, report.table], ["ada, bo, cy", false])
+    throw "UNDO"
+catch error:
+    assert(error, "UNDO")
+[label, report.table]
+# return: ["ada, bo",true]"#);
+}
+
+/// Nucleoid pads strings at the start with padStart
+#[rustfmt::skip]
+#[test]
+fn pads_strings_at_the_start_with_padstart() {
+    let mut run = runner();
+    run(r#"ids = ["7", "42", "123", "1234"]"#);
+    run(r#"codes = ids.map(id -> id.padStart(3, "0"))"#);
+    run("h = 9");
+    run("m = 5");
+    run(r#"clock = String(h).padStart(2, "0") + ":" + String(m).padStart(2, "0")"#);
+    assert_eq!(run("codes"), serde_json::json!(["007", "042", "123", "1234"]));
+    assert_eq!(run("clock"), "09:05");
+    run(r#"ids.push("5")"#);
+    run("h = 14");
+    assert_eq!(run("codes"), serde_json::json!(["007", "042", "123", "1234", "005"]));
+    run(r#"clock
+
+# return: "14:05""#);
+}
+
+/// Nucleoid pads strings at the end with padEnd
+#[rustfmt::skip]
+#[test]
+fn pads_strings_at_the_end_with_padend() {
+    let mut run = runner();
+    run(r#"items = ["tea", "jam", "honey"]"#);
+    run("width = 6");
+    run(r#"rows = items.map(item -> item.padEnd(width) + "|")"#);
+    run(r#"title = "Total""#);
+    run(r#"rule = title.padEnd(12, ".:")"#);
+    assert_eq!(run("rows"), serde_json::json!(["tea   |", "jam   |", "honey |"]));
+    assert_eq!(run("rule"), "Total.:.:.:.");
+    run("width = 4");
+    run(r#"title = "Sum""#);
+    assert_eq!(run("rows"), serde_json::json!(["tea |", "jam |", "honey|"]));
+    run(r#"rule
+
+# return: "Sum.:.:.:.:.""#);
+}
+
+/// Nucleoid keeps padded strings live in declarations and class level rules
+#[rustfmt::skip]
+#[test]
+fn keeps_padded_strings_live_in_declarations_and_class_level_rules() {
+    let mut run = runner();
+    run(r#"label = "7""#);
+    run("width = 3");
+    run(r#"fill = "0""#);
+    run("shown = label.padStart(width, fill)");
+    assert_eq!(run("shown"), "007");
+    run(r#"label = "42""#);
+    assert_eq!(run("shown"), "042");
+    run("width = 5");
+    assert_eq!(run("shown"), "00042");
+    run(r#"fill = """#);
+    assert_eq!(run("shown"), "42");
+    run(r#"fill = "*""#);
+    assert_eq!(run("shown"), "***42");
+    run(r#"class Ticket(id):
+    this.id = id"#);
+    run(r#"$Ticket.code = "T-" + String($Ticket.id).padStart(4, "0")"#);
+    run("first = Ticket(7)");
+    run("second = Ticket(42)");
+    assert_eq!(run("[first.code, second.code]"), serde_json::json!(["T-0007", "T-0042"]));
+    run("first.id = 12345");
+    run(r#"[first.code, second.code]
+
+# return: ["T-12345","T-0042"]"#);
+}
+
+/// Nucleoid rolls back failed updates through padded strings
+#[rustfmt::skip]
+#[test]
+fn rolls_back_failed_updates_through_padded_strings() {
+    let mut run = runner();
+    run(r#"ids = []
+codes = ids.map(id -> id.padStart(size, "0"))
+failure = ""
+try:
+    ids.push("7")
+catch error:
+    failure = error
+assert(failure, ReferenceError("size is not defined"))
+assert([ids, codes], [[], []])
+size = 3
+ids.push("7", "42")
+assert(codes, ["007", "042"])
+try:
+    ids.push("5")
+    size = 2
+    assert(codes, ["07", "42", "05"])
+    throw "UNDO"
+catch error:
+    assert(error, "UNDO")
+[codes, size]
+# return: [["007","042"],3]"#);
+}
+
+/// Nucleoid names the nodes of an explanation with nodes
+#[rustfmt::skip]
+#[test]
+fn names_the_nodes_of_an_explanation_with_nodes() {
+    let mut run = runner();
+    run("price = 10");
+    run("qty = 3");
+    run("shipping = 5");
+    run("subtotal = price * qty");
+    run("total = subtotal + shipping");
+    run("steps = total |> why |> nodes");
+    run("facts = total |> why |> stated |> nodes");
+    run("rules = total |> why |> derived |> nodes");
+    assert_eq!(run("steps"), serde_json::json!(["total", "subtotal", "shipping", "price", "qty"]));
+    assert_eq!(run("[facts, rules]"), serde_json::json!([["shipping", "price", "qty"], ["total", "subtotal"]]));
+    run("base = 4");
+    run("shipping = base + 1");
+    assert_eq!(run("steps"), serde_json::json!(["total", "subtotal", "shipping", "base", "price", "qty"]));
+    assert_eq!(run("facts"), serde_json::json!(["base", "price", "qty"]));
+    run(r#"rules
+
+# return: ["total","subtotal","shipping"]"#);
+}
+
+/// Nucleoid names what a change reaches and the model with nodes
+#[rustfmt::skip]
+#[test]
+fn names_what_a_change_reaches_and_the_model_with_nodes() {
+    let mut run = runner();
+    run("rate = 0.2");
+    run("price = 10");
+    run("qty = 3");
+    run("subtotal = price * qty");
+    run("tax = subtotal * rate");
+    run("reach = price |> affects |> nodes");
+    run("known = model |> nodes");
+    assert_eq!(run("reach"), serde_json::json!(["subtotal", "tax"]));
+    assert_eq!(run("known"), serde_json::json!(["rate", "price", "qty", "subtotal", "tax"]));
+    run("total = subtotal + tax");
+    assert_eq!(run("reach"), serde_json::json!(["subtotal", "tax", "total"]));
+    assert_eq!(run("known"), serde_json::json!(["rate", "price", "qty", "subtotal", "tax", "total"]));
+    run("tax = qty * rate");
+    assert_eq!(run("reach"), serde_json::json!(["subtotal", "total"]));
+    run("delete total");
+    assert_eq!(run("known"), serde_json::json!(["rate", "price", "qty", "subtotal", "tax"]));
+    run(r#"reach
+
+# return: ["subtotal"]"#);
+}
+
+/// Nucleoid names the nodes behind class level rules with nodes
+#[rustfmt::skip]
+#[test]
+fn names_the_nodes_behind_class_level_rules_with_nodes() {
+    let mut run = runner();
+    run("fee = 2");
+    run(r#"class Order(price, qty):
+    this.price = price
+    this.qty = qty"#);
+    run("$Order.total = $Order.price * $Order.qty");
+    run("$Order.basis = $Order.total |> why |> nodes");
+    run("first = Order(10, 2)");
+    assert_eq!(run("first.basis"), serde_json::json!(["first.total", "first.price", "first.qty"]));
+    run("$Order.total = $Order.price * $Order.qty + fee");
+    run("second = Order(4, 5)");
+    assert_eq!(run("first.basis"), serde_json::json!(["first.total", "first.price", "first.qty", "fee"]));
+    assert_eq!(run("second.basis"), serde_json::json!(["second.total", "second.price", "second.qty", "fee"]));
+    run("reach = fee |> affects |> nodes");
+    assert_eq!(run("reach"), serde_json::json!(["first.total", "second.total"]));
+    run(r#"first.total |> why |> stated |> nodes
+
+# return: ["fee"]"#);
+}
+
+/// Nucleoid rolls back failed updates through node names
+#[rustfmt::skip]
+#[test]
+fn rolls_back_failed_updates_through_node_names() {
+    let mut run = runner();
+    run(r#"price = 10
+qty = 3
+subtotal = price * qty
+names = subtotal |> why |> nodes
+failure = ""
+try:
+    names = 1 |> why |> nodes
+catch error:
+    failure = error
+assert(failure, TypeError("Cannot explain 1"))
+assert(names, ["subtotal", "price", "qty"])
+try:
+    fee = 2
+    subtotal = price * qty + fee
+    assert(names, ["subtotal", "price", "qty", "fee"])
+    throw "UNDO"
+catch error:
+    assert(error, "UNDO")
+assert(names, ["subtotal", "price", "qty"])
+inputs = subtotal |> why |> stated |> nodes
+[names, inputs]
+# return: [["subtotal","price","qty"],["price","qty"]]"#);
+}
+
 /// Nucleoid flattens nested lists by one level
 #[rustfmt::skip]
 #[test]

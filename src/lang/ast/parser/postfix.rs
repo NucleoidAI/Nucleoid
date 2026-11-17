@@ -6,7 +6,10 @@ use crate::lang::ast::{Expr, Function, UnaryOp, VersionSelector};
 impl Parser {
     pub(super) fn postfix(&mut self) -> Result<Expr> {
         let mut chain = usize::from(self.reads_receiver());
-        let mut expression = self.primary()?;
+        let mut expression = match self.operand.take() {
+            Some(operand) => operand,
+            None => self.primary()?,
+        };
 
         loop {
             chain += 1;
@@ -128,6 +131,8 @@ impl Parser {
             let length = self.selector_length();
             let argument = if self.starts_selector(length) {
                 self.nested_expression(|parser| parser.selector(length))?
+            } else if self.starts_section() {
+                self.within(true, Self::section)?
             } else {
                 self.within(true, |parser| parser.argument(context))?
             };

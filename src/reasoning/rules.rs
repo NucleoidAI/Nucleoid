@@ -1,7 +1,7 @@
 use indexmap::IndexMap;
 use std::fmt;
 
-use super::Selection;
+use super::{Selection, Step};
 use crate::error::{Error, Result};
 use crate::graph::{NodeKey, NodeKind};
 use crate::lang::ast::Expr;
@@ -45,6 +45,10 @@ pub(super) fn rule_of(node: Option<&Nuc>, key: &NodeKey) -> String {
         },
         _ => key.to_string(),
     }
+}
+
+fn node_name(step: &Step) -> Value {
+    Value::string(step.node.to_string())
 }
 
 fn declaration_rule(name: &str, value: &Expr) -> String {
@@ -109,30 +113,41 @@ impl Runtime {
     }
 
     pub(crate) fn materialize(&mut self, selection: &Selection) -> Value {
-        let values = selection
-            .steps
-            .iter()
-            .map(|step| {
-                let mut properties: IndexMap<String, Value> = IndexMap::new();
-                properties.insert("node".to_string(), Value::string(step.node.to_string()));
-                properties.insert("holds".to_string(), step.value.clone());
-                properties.insert("rule".to_string(), Value::string(step.rule.clone()));
-                properties.insert("state".to_string(), Value::string(step.state.as_str()));
-                properties.insert(
-                    "from".to_string(),
-                    Value::List(
-                        step.from
-                            .iter()
-                            .map(|key| Value::string(key.to_string()))
-                            .collect(),
-                    ),
-                );
+        Value::List(
+            selection
+                .steps
+                .iter()
+                .map(|step| self.record(step))
+                .collect(),
+        )
+    }
 
-                self.create_anonymous(properties)
-            })
-            .collect();
+    pub(crate) fn node_names(&mut self, selection: &Selection) -> Value {
+        let mut names = Vec::with_capacity(selection.steps.len());
+        for step in &selection.steps {
+            let _: Value = self.record(step);
+            names.push(node_name(step));
+        }
+        Value::List(names)
+    }
 
-        Value::List(values)
+    fn record(&mut self, step: &Step) -> Value {
+        let mut properties: IndexMap<String, Value> = IndexMap::new();
+        properties.insert("node".to_string(), node_name(step));
+        properties.insert("holds".to_string(), step.value.clone());
+        properties.insert("rule".to_string(), Value::string(step.rule.clone()));
+        properties.insert("state".to_string(), Value::string(step.state.as_str()));
+        properties.insert(
+            "from".to_string(),
+            Value::List(
+                step.from
+                    .iter()
+                    .map(|key| Value::string(key.to_string()))
+                    .collect(),
+            ),
+        );
+
+        self.create_anonymous(properties)
     }
 
     pub(crate) fn reference_key(&mut self, name: &str) -> Result<NodeKey> {

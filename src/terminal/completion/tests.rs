@@ -142,6 +142,23 @@ fn completion_offers_sort_by_beside_some_on_lists_and_instance_lists() {
 }
 
 #[test]
+fn completion_offers_pad_start_and_pad_end_on_strings_only() {
+    let mut runtime = Runtime::new();
+    runtime
+        .run("code = \"7\"\nscores = [3, 1]\npadding = 1")
+        .unwrap();
+    for (prefix, expected) in [
+        ("code.pa", &["code.padEnd", "code.padStart"][..]),
+        ("code.padS", &["code.padStart"][..]),
+        ("scores.pa", &["scores.partition"][..]),
+        ("pad", &["padding"][..]),
+    ] {
+        let completion = Completion::find(&runtime, &editor::new(prefix), false).unwrap();
+        assert_eq!(completion.candidates, expected, "{prefix}");
+    }
+}
+
+#[test]
 fn completion_offers_partition_on_lists_and_instance_lists() {
     let mut runtime = Runtime::new();
     runtime

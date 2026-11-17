@@ -489,7 +489,8 @@ stage
     | AFFECTS
     | STATED
     | DERIVED
-    | DIFF                                                // Expr::Reason
+    | DIFF
+    | NODES                                               // Expr::Reason
     | DEPTH LPAREN expression RPAREN                       // Expr::Depth
     | PATH LPAREN expression RPAREN                        // Expr::Path
     | (INTERSECT | EXCEPT) LPAREN expression RPAREN        // Expr::Combine
@@ -604,11 +605,50 @@ call
 
 argument
     : selector
+    | section
     | expression
     ;
 
 selector
     : (DOT property)+
+    ;
+
+/*
+ * Section contract (NUC 109):
+ * - It applies only in the section run of the parse-pass contract, to a
+ *   whole positional argument of a call that begins with a
+ *   sectionOperator. Grouping parentheses, list items, object values,
+ *   subscripts, stage arguments, assertStmt arguments, parameter lists,
+ *   arrow and lambda bodies and the values of named arguments keep their
+ *   accepted errors.
+ * - The tokens after the operator are not a separate expression: they
+ *   continue an expression whose first operand is NUC 79's unnamed
+ *   parameter, with the usual precedence, so '* 2 + 1' is '(v * 2) + 1' and
+ *   '> 4 ? 1 : 0' is '(v > 4) ? 1 : 0'. The section ends at the COMMA or
+ *   RPAREN that ends the argument.
+ * - It builds the Expr::Function of 'v ARROW v sectionOperator ...' over
+ *   that parameter, inside the nesting guards of an argument and of an
+ *   arrowBody, and renders as 'function()'.
+ */
+section
+    : sectionOperator expression        // Expr::Function over the unnamed parameter
+    ;
+
+sectionOperator
+    : EQUAL
+    | NOT_EQUAL
+    | STRICT_EQUAL
+    | STRICT_NOT_EQUAL
+    | LESS
+    | LESS_EQUAL
+    | GREATER
+    | GREATER_EQUAL
+    | STAR
+    | PERCENT
+    | POWER
+    | AND_AND
+    | OR_OR
+    | COALESCE
     ;
 
 // A plain-name callee treats bare name=value arguments as constructor
@@ -693,6 +733,24 @@ atVariable
  * - It builds Expr::Member over a copy of the receiver path, the tree of
  *   'receiver DOT property'. Postfix suffixes continue it as one chain, as
  *   after '(' receiver ')' DOT property.
+ * Instance-read contract (NUC 113):
+ * - In the same final parse, the code of a classBody has the receiver THIS
+ *   wherever no assignment value gives it another: its methodDecls in every
+ *   parameter form, INIT and PYTHON_INIT included, and its constructor
+ *   statements, in subclasses too. A receiverRead there builds
+ *   Expr::Member over Expr::This, the tree of 'THIS DOT property'.
+ * - An assignment to a member path gives its value the receiver above, or
+ *   none for a computed or versioned target; an assignment to a name, a
+ *   label argument and a destructuring declaration keep THIS for their
+ *   values.
+ * - The bodies of lambdaExpression, arrowBody, FUNCTION parameters block,
+ *   sections, nested function declarations and the element and condition
+ *   of a comprehension have no THIS receiver, so their reads keep the
+ *   accepted error; a comprehension's source and a quantified condition
+ *   keep THIS. A classBody inside such a body has THIS again.
+ * - The NUC 93 probes of whileStmt and supposeStmt headers read THIS
+ *   receivers but no assignment receivers, as the accepted probes read the
+ *   written-out 'THIS DOT property'.
  */
 receiverRead
     : DOT property                      // Expr::Member over the receiver path
@@ -830,6 +888,7 @@ enumName
     | PATH
     | INTERSECT
     | EXCEPT
+    | NODES
     | MODEL
     | FIRST
     | LAST
@@ -915,6 +974,7 @@ DEPTH            : 'depth';
 PATH             : 'path';
 INTERSECT        : 'intersect';
 EXCEPT           : 'except';
+NODES            : 'nodes';
 MODEL            : 'model';
 FIRST            : 'first';
 LAST             : 'last';
@@ -1040,7 +1100,8 @@ fragment REGEX_CHAR
  * (DOT, then a name or keyword, after a token in operand position or at the
  * start) or a template, one final parse reads receiverRead, with 'is'
  * comparisons when the source holds 'is' or a template and with
- * comprehensions when it holds 'for' or a template. When it fails too, its
+ * comprehensions when it holds 'for' or a template, and with the THIS
+ * receivers of the instance-read contract. When it fails too, its
  * error replaces the accepted one only when it lies further into the source.
  * Passes run and succeed or fail exactly as without the EVERY rule of the
  * spelled-class contract. When the kept pass read an EVERY spelledClass
@@ -1053,6 +1114,14 @@ fragment REGEX_CHAR
  * receiverParameters of the receiver-parameter contract. Every pass, probe,
  * tentative statement and interpolation of that run reads them. When it
  * fails too, the error of the first sequence is reported unchanged.
+ * Only when all of that fails, and the tokens hold LPAREN or COMMA directly
+ * followed by a sectionOperator, or a template, the whole sequence above,
+ * the receiver-parameter run included, runs once more from a fresh parser
+ * reading section arguments of the section contract. Every pass, probe,
+ * tentative statement and interpolation of that run reads them. When it
+ * fails too, its error replaces the error above only when it lies further
+ * into the source, by line and column; an interpolation maps its errors to
+ * program positions before they are compared.
  *
  * Limits:
  * MAX_NESTING = 64, shared by statement/expression nesting:
@@ -1076,6 +1145,7 @@ fragment REGEX_CHAR
  * def __init__(self, a): s -> def init(a): s, also with 'this'.
  * lambda a, b: e           -> (a, b) => e.
  * f(.a.b)                  -> f(v => v.a.b).
+ * f(> a + 1)               -> f(v => v > a + 1), in the section run.
  * [e for x in s]           -> s.map(x => e).
  * [e for x in s if c]      -> s.filter(x => c).map(x => e).
  * a if c else b            -> c ? a : b.
@@ -1090,11 +1160,18 @@ fragment REGEX_CHAR
  * $C is w                  -> $C.w = true, also spelled every C is w,
  *                             any C is w and all C is w.
  * o.p = .a + .b            -> o.p = o.a + o.b, in the final parse.
+ * def m() => .a + .b       -> def m() => this.a + this.b, in a classBody's
+ *                             final parse.
  * new X(...)               -> X(...).
  * for xs:                  -> iteration with the item name "it".
  * catch without a name     -> the binding "error".
  * model directly before |> -> Expr::Model.
  * |> intersect(model)      -> its other selection is Expr::Model; also except.
+ * s |> nodes               -> Expr::Reason with Stage::Nodes, the node names of
+ *                             s's selection. It ends the pipeline: a stage
+ *                             after it, or an intersect, except or path
+ *                             argument that ends with it, parses and then
+ *                             raises TypeError("Cannot explain <source>").
  * An object containing spread uses Expr::SpreadObject, with later entries
  * winning; otherwise it uses Expr::ObjectLiteral. Numeric keys become text.
  *
@@ -1130,6 +1207,11 @@ fragment REGEX_CHAR
  * src\lang\ast\parser.rs, receivers set in parser\expression.rs and
  * parser\statement.rs, reads in parser\primary.rs and parser\postfix.rs, and
  * the operand-position rule in src\lang\ast\lexer\token.rs.
+ * Instance receivers: parser\receiver.rs, set for class bodies in
+ * parser\class.rs, kept for variables in parser\destructuring.rs, left out
+ * of nested functions in parser\primary.rs, parser\function.rs,
+ * parser\section.rs and parser\comprehension.rs, and carried into the
+ * accepted probe in parser\statement.rs.
  * Membership tests: relationalOperator in parser\precedence.rs, the
  * expressionInput context in parser.rs and their evaluation in
  * src\lang\ast\operator.rs.
@@ -1137,4 +1219,8 @@ fragment REGEX_CHAR
  * src\lang\ast\parser.rs, the method in parser\class.rs, the shared list
  * loop in parser\function.rs, and the mode carried into the accepted probe
  * in parser\statement.rs and into interpolations in parser\template.rs.
+ * Operator sections: parser\section.rs, with the section run started in
+ * src\lang\ast\parser.rs, the argument and the pending left operand in
+ * parser\postfix.rs, the mode carried into interpolations in
+ * parser\template.rs and the function in src\lang\ast\function.rs.
  */

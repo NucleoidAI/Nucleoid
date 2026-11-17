@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use regex::Regex;
 
-use super::text::{string_replace_all, string_replacement_buffer};
+use super::text::{string_padding_buffer, string_replace_all, string_replacement_buffer};
 use super::*;
 use crate::lang::ast::operator::binary;
 use crate::lang::ast::{BinaryOp, Expr, Function, FunctionBody};
@@ -49,6 +49,84 @@ fn replacement_buffer_accounts_for_utf8_and_shrinking_matches_exactly() {
         let output = string_replace_all(receiver, search, replacement).unwrap();
         assert_eq!(output, expected);
         assert!(output.capacity() >= output.len());
+    }
+}
+
+#[test]
+fn padding_size_arithmetic_and_reservation_fail_before_any_allocation() {
+    for (receiver, fill, whole, rest) in [
+        (0, "日", usize::MAX / 2, 0),
+        (0, "abc", usize::MAX / 3, 1),
+        (usize::MAX, "x", 1, 0),
+        (isize::MAX as usize + 1, "x", 0, 0),
+        (usize::MAX, "", 0, 0),
+    ] {
+        let error = string_padding_buffer(receiver, fill, whole, rest).unwrap_err();
+        assert_eq!(error.kind(), ErrorKind::Type);
+        assert_eq!(error.message(), "Padded string is too large");
+        assert_eq!(error.position(), None);
+    }
+}
+
+#[test]
+fn padding_buffer_reserves_exactly_the_padded_bytes() {
+    for (receiver, fill, whole, rest, bytes) in [
+        ("5", "ab", 1, 1, 4),
+        ("日", "本", 2, 0, 9),
+        ("x", "日本", 1, 1, 10),
+        ("", "0", 0, 0, 0),
+        ("ab", "é·", 0, 1, 4),
+    ] {
+        let output = string_padding_buffer(receiver.len(), fill, whole, rest).unwrap();
+        assert_eq!(output, "");
+        assert_eq!(output.capacity(), bytes, "{receiver} {fill}");
+    }
+}
+
+#[test]
+fn padded_strings_fill_their_reservation_exactly() {
+    for (receiver, name, length, fill, expected) in [
+        ("5", "padStart", 4.0, "ab", "aba5"),
+        ("5", "padEnd", 4.0, "ab", "5aba"),
+        ("日", "padStart", 3.0, "本", "本本日"),
+        ("é", "padEnd", 3.0, "·", "é··"),
+        ("x", "padStart", 4.0, "日本", "日本日x"),
+        ("😀", "padEnd", 3.0, "ab", "😀ab"),
+        ("abc", "padStart", 10.0, "123", "1231231abc"),
+    ] {
+        let arguments = [Value::Number(length), Value::String(fill.to_string())];
+        let Value::String(output) = string_method(receiver, name, &arguments).unwrap() else {
+            panic!("{receiver}.{name} returns a string");
+        };
+        assert_eq!(output, expected);
+        assert_eq!(output.capacity(), output.len(), "{expected}");
+    }
+}
+
+#[test]
+fn repeated_and_replaced_strings_fill_their_reservation_exactly() {
+    for (receiver, count, expected) in [
+        ("ab", 3.0, "ababab"),
+        ("é😀", 2.0, "é😀é😀"),
+        ("ab", 0.0, ""),
+    ] {
+        let Value::String(output) =
+            string_method(receiver, "repeat", &[Value::Number(count)]).unwrap()
+        else {
+            panic!("{receiver}.repeat returns a string");
+        };
+        assert_eq!(output, expected);
+        assert_eq!(output.capacity(), output.len(), "{receiver}.repeat");
+    }
+    for (receiver, search, replacement, expected) in [
+        ("é😀é", "é", "🦀", "🦀😀🦀"),
+        ("aaaaa", "aa", "", "a"),
+        ("é😀", "", "|", "|é|😀|"),
+        ("abc", "z", "y", "abc"),
+    ] {
+        let output = string_replace_all(receiver, search, replacement).unwrap();
+        assert_eq!(output, expected);
+        assert_eq!(output.capacity(), output.len(), "{receiver}.replaceAll");
     }
 }
 

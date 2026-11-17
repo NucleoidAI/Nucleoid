@@ -67,8 +67,8 @@ fn string_query(receiver: &str, name: &str, first: &Value) -> Option<Value> {
             }
         }
         "includes" | "contains" => Value::Bool(string_contains(receiver, first)),
-        "startsWith" => Value::Bool(receiver.starts_with(&first.to_string())),
-        "endsWith" => Value::Bool(receiver.ends_with(&first.to_string())),
+        "startsWith" | "startswith" => Value::Bool(receiver.starts_with(&first.to_string())),
+        "endsWith" | "endswith" => Value::Bool(receiver.ends_with(&first.to_string())),
         _ => return None,
     })
 }
@@ -112,6 +112,8 @@ fn string_transform(
             receiver,
             number::to_usize(first.to_number().max(0.0)),
         )?),
+        "padStart" => Value::String(string_pad(receiver, first, arguments.get(1), Side::Start)?),
+        "padEnd" => Value::String(string_pad(receiver, first, arguments.get(1), Side::End)?),
         "substring" | "slice" | "substr" => {
             let end = arguments
                 .get(1)
@@ -154,18 +156,11 @@ pub(super) fn string_replacement_buffer(
     replacement_len: usize,
     matches: usize,
 ) -> Result<String> {
-    let too_large = || Error::type_error("Replaced string is too large");
-    let removed = matches.checked_mul(search_len).ok_or_else(too_large)?;
-    let inserted = matches.checked_mul(replacement_len).ok_or_else(too_large)?;
-    let capacity = receiver_len
-        .checked_sub(removed)
-        .and_then(|remaining| remaining.checked_add(inserted))
-        .ok_or_else(too_large)?;
-    let mut output = String::new();
-    output
-        .try_reserve_exact(capacity)
-        .map_err(|_| too_large())?;
-    Ok(output)
+    let capacity = matches
+        .checked_mul(search_len)
+        .zip(matches.checked_mul(replacement_len))
+        .and_then(|(removed, inserted)| receiver_len.checked_sub(removed)?.checked_add(inserted));
+    string_buffer(capacity, "Replaced string is too large")
 }
 
 fn string_repeat(receiver: &str, count: usize) -> Result<String> {
@@ -173,19 +168,87 @@ fn string_repeat(receiver: &str, count: usize) -> Result<String> {
         return Ok(String::new());
     }
 
-    let capacity = receiver
-        .len()
-        .checked_mul(count)
-        .ok_or_else(|| Error::type_error("Repeated string is too large"))?;
-    let mut output = String::new();
-    output
-        .try_reserve_exact(capacity)
-        .map_err(|_| Error::type_error("Repeated string is too large"))?;
+    let mut output = string_buffer(
+        receiver.len().checked_mul(count),
+        "Repeated string is too large",
+    )?;
 
     for _ in 0..count {
         output.push_str(receiver);
     }
 
+    Ok(output)
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Side {
+    Start,
+    End,
+}
+
+fn string_pad(receiver: &str, length: &Value, fill: Option<&Value>, side: Side) -> Result<String> {
+    let missing =
+        number::to_usize(length.to_number().max(0.0)).saturating_sub(receiver.chars().count());
+    if missing == 0 {
+        return Ok(receiver.to_string());
+    }
+
+    let fill = match fill {
+        None | Some(Value::Undefined) => String::from(" "),
+        Some(value) => value.to_string(),
+    };
+    let fill_length = fill.chars().count();
+    if fill_length == 0 {
+        return Ok(receiver.to_string());
+    }
+
+    let whole = missing / fill_length;
+    let rest = missing % fill_length;
+    let mut output = string_padding_buffer(receiver.len(), &fill, whole, rest)?;
+    match side {
+        Side::Start => {
+            push_padding(&mut output, &fill, whole, rest);
+            output.push_str(receiver);
+        }
+        Side::End => {
+            output.push_str(receiver);
+            push_padding(&mut output, &fill, whole, rest);
+        }
+    }
+
+    Ok(output)
+}
+
+fn push_padding(output: &mut String, fill: &str, whole: usize, rest: usize) {
+    for _ in 0..whole {
+        output.push_str(fill);
+    }
+    output.extend(fill.chars().take(rest));
+}
+
+pub(super) fn string_padding_buffer(
+    receiver_len: usize,
+    fill: &str,
+    whole: usize,
+    rest: usize,
+) -> Result<String> {
+    let cut = fill
+        .char_indices()
+        .nth(rest)
+        .map_or(fill.len(), |(offset, _)| offset);
+    let capacity = whole
+        .checked_mul(fill.len())
+        .and_then(|bytes| bytes.checked_add(cut))
+        .and_then(|bytes| bytes.checked_add(receiver_len));
+    string_buffer(capacity, "Padded string is too large")
+}
+
+fn string_buffer(capacity: Option<usize>, message: &'static str) -> Result<String> {
+    let too_large = || Error::type_error(message);
+    let mut output = String::new();
+    output
+        .try_reserve_exact(capacity.ok_or_else(too_large)?)
+        .map_err(|_| too_large())?;
     Ok(output)
 }
 

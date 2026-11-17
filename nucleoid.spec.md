@@ -303,6 +303,137 @@ operator-chain diagnostics and source positions are preserved.
   the design; the five appended literal-replacement entries specify executable
   results, Unicode boundaries, live inputs, class rules and rollback/recovery.
 
+## Python string method aliases
+
+- [NUC 110](docs/nuc-0110.md) adds Python's names for three accepted string
+  operations as methods of string receivers: `startswith`, `endswith`, and
+  `join` with the separator as the receiver. They join the accepted aliases
+  `find`, `contains`, `lower`, `upper`, `strip`, `substr` and `append`. No
+  token, keyword, syntax tree node, error type or message format is added.
+- `TEXT.startswith(prefix)` is `TEXT.startsWith(prefix)` and
+  `TEXT.endswith(suffix)` is `TEXT.endsWith(suffix)`, through the same string
+  method: the same argument evaluation, conversion and result. The first
+  argument converts to its string form, so `null` tests `"null"` and a
+  missing argument `"undefined"`. Matching is exact and case-sensitive.
+  Further arguments are evaluated and ignored, so a position changes
+  nothing: `"draft_report.csv".startswith("report", 6)` is `false`.
+- `SEPARATOR.join(ITEMS)`, on a string receiver, returns exactly what
+  `ITEMS.join(SEPARATOR)` returns when `ITEMS` evaluates to a list, or to a
+  declared class whose instances `ITEMS.join(SEPARATOR)` joins, named by the
+  class, by a variable or parameter that holds it, or by `$Name` outside a
+  class-level rule. Each item takes its ordinary string form, in list or
+  population order, and an empty list or population gives `""`. Further
+  arguments are evaluated and ignored.
+- Any other first argument keeps the accepted
+  `TypeError("<receiver>.join is not a function")`: a string, a number, a
+  boolean, an object or instance, `null`, an undefined value, a function, a
+  built-in namespace, a missing argument, and a declared class named `Math`,
+  `Number`, `String` or `Date`, whose calls reach the namespace's static
+  methods instead of its instances. So `"-".join("abc")` raises, and inside a
+  class-level rule or conditional `", ".join($Order)` raises, since `$Order`
+  is the instance there.
+- **Evaluation.** The receiver is read first, then every argument once, left
+  to right, as for every call, so `SEPARATOR.join(ITEMS)` evaluates the
+  separator before the items, the reverse of `ITEMS.join(SEPARATOR)`.
+- **Live.** A declaration or class-level rule that calls an alias depends on
+  what its receiver and arguments read, as the accepted spelling does:
+  `label = sep.join(names)` follows pushes to `names` and writes of `sep`, a
+  population argument follows new and deleted instances, and
+  `$File.table = $File.name.endswith(".csv")` follows each file's name.
+  Errors roll back through the existing transaction.
+- **Rendering.** Statements, `why`, `affects`, `--graph` and graph keys show
+  the call as written. Its dependencies are those of the accepted spelling,
+  in the order the call reads them, so `why label` after
+  `label = sep.join(names)` lists `sep` before `names`.
+- **Unchanged.** Only calls of the three names on a string receiver change;
+  each raised `TypeError("<receiver>.<name> is not a function")`. Lists,
+  numbers and every other receiver keep their results, so
+  `xs.startswith("a")` on a list still raises. Reads without a call, such as
+  `text.startswith`, stay undefined; assignments such as
+  `text.endswith = 1` keep raising `TypeError("Cannot assign 'endswith' on string")`;
+  a `null` or undefined receiver stays undefined without evaluating the
+  arguments; functions, callable object properties and instance methods named
+  `startswith`, `endswith` or `join` keep their routing; and
+  `String.startswith`, `String.endswith` and `String.join` keep raising
+  `TypeError("String.<name> is not a function")`.
+- **Python differences.** These stay as the accepted methods define them:
+  positions are ignored; a list argument converts to its string form rather
+  than testing each item as a Python tuple does, so
+  `"a.csv".endswith([".csv", ".tsv"])` tests `".csv,.tsv"` and is `false`;
+  `join` converts items that are not strings, where Python raises; `join`
+  over a string raises, where Python joins its characters; `replace`
+  replaces the first occurrence only, where Python replaces every one; and
+  `split()` without a separator returns the whole string in a list, where
+  Python splits on whitespace.
+- The three entries beginning
+  `Nucleoid tests prefixes and suffixes with startswith and endswith`
+  through `Nucleoid rolls back failed updates through Python string methods`
+  specify the executable behavior. `tests/python_string_aliases.rs` executes
+  the rest.
+
+## Reactive string padding
+
+- [NUC 111](docs/nuc-0111.md) adds JavaScript's standard padding methods to
+  string receivers. `TEXT.padStart(length, fill)` puts copies of `fill`
+  before `TEXT` until the result holds `length` characters, and
+  `TEXT.padEnd(length, fill)` puts them after it, so `"7".padStart(3, "0")`
+  is `"007"` and `"ab".padEnd(4, ".")` is `"ab.."`. No token, keyword,
+  syntax tree node, error type or public item is added.
+- **Length.** The first argument converts to a number and then as the count
+  of `repeat` does: NaN and negative numbers give 0, and fractions truncate.
+  So `"3"` gives 3, `true` 1, `2.9` 2, and `null` and a missing length 0.
+- **Fill.** The second argument converts to its string form, as other string
+  arguments do, so `0` fills with `"0"` and `null` with `"null"`. A missing
+  fill, or an undefined value such as a missing property, is one space,
+  `" "`. The keyword `undefined` is `null`, so `"5".padStart(3, undefined)`
+  is `"nu5"`.
+- **Padding.** With `missing` the length minus the number of characters of
+  `TEXT`, the result is `TEXT` unchanged when `missing` is 0 or less or the
+  fill is empty. Otherwise the padding is the characters of the fill
+  repeated and cut to exactly `missing` characters, before `TEXT` for
+  `padStart` and after it for `padEnd`: `"5".padStart(4, "ab")` is
+  `"aba5"` and `"abc".padEnd(6, "123456")` is `"abc123"`. Characters are
+  Unicode scalar values, as `length`, `slice` and `repeat` count them, so
+  `"日".padStart(3, "本")` is `"本本日"`. Further arguments are evaluated and
+  ignored.
+- **Bounds.** The method sizes its whole result with checked arithmetic and
+  reserves it fallibly before writing. A result too large to represent or
+  allocate raises `TypeError("Padded string is too large")`, as `repeat`
+  raises `TypeError("Repeated string is too large")`; no arbitrary cap is
+  added.
+- **Evaluation.** The receiver is read first, then every argument once, left
+  to right, as for every call, and argument errors propagate before the
+  method runs. A `null` or undefined receiver gives undefined without
+  evaluating the arguments, and a declaration whose receiver or argument
+  reads a `null` binding holds `null` until it is defined, as for `repeat`.
+- **Live.** A declaration or class-level rule that calls a padding method
+  depends on what its receiver and arguments read:
+  `shown = label.padStart(width, fill)` follows writes of `label`, `width`
+  and `fill`, and `$Ticket.code = String($Ticket.id).padStart(4, "0")`
+  follows each ticket's `id`. Errors roll back through the existing
+  transaction.
+- **Rendering.** Statements, `why`, `affects`, `--graph` and graph keys show
+  the call as written. Its dependencies are what the call reads, in reading
+  order: the receiver, the length, then the fill.
+- **Unchanged.** Only calls of `padStart` and `padEnd` on a string receiver
+  change; each raised `TypeError("<receiver>.<name> is not a function")`.
+  Numbers, lists and every other receiver keep their results, so
+  `(5).padStart(3, "0")` still raises
+  `TypeError("number.padStart is not a function")`. Reads without a call,
+  such as `text.padStart`, stay undefined; `text.padStart = 1` keeps raising
+  `TypeError("Cannot assign 'padStart' on string")`; functions, callable
+  object properties and instance methods named `padStart` or `padEnd` keep
+  their routing; and `String.padStart` and `String.padEnd` keep raising
+  `TypeError("String.<name> is not a function")`.
+- **JavaScript differences.** Lengths count Unicode scalar values rather
+  than UTF-16 code units, the keyword `undefined` is `null`, so it fills
+  with `"null"` where JavaScript fills with spaces, and a result too large
+  raises this `TypeError` where JavaScript raises a `RangeError`.
+- The four entries beginning
+  `Nucleoid pads strings at the start with padStart` through
+  `Nucleoid rolls back failed updates through padded strings` specify the
+  executable behavior. `tests/string_padding.rs` executes the rest.
+
 ## Bare single-parameter named arrows
 
 A named arrow definition or method may spell `def double(amount) => amount * 2`
@@ -2521,6 +2652,91 @@ statement positions; caught values and transaction recovery are unchanged.
   `Nucleoid restores intersections after failed changes` specify the
   executable behavior. `tests/selection_intersections.rs` executes the rest.
 
+## Node names of reasoning selections
+
+- [NUC 112](docs/nuc-0112.md) adds the final pipeline stage
+  `SELECTION |> nodes`. It gives the `node` names of the steps that
+  `SELECTION` selects, as a list of strings in the selection's order. It is
+  exactly `(SELECTION).map(step => step.node)`, where `SELECTION` is the
+  selection that the pipeline before `nodes` denotes, read as the accepted
+  stages read their source: `total |> why |> nodes` is
+  `(why total).map(step => step.node)` and
+  `total |> why |> stated |> nodes` is
+  `(total |> why |> stated).map(step => step.node)`.
+- A reference alone denotes its own one-step selection, not its value, so
+  `total |> nodes` is `["total"]`, as
+  `(total |> why |> depth(0)).map(step => step.node)` is, while the value
+  `(total).map(step => step.node)` of a number raises
+  `TypeError("number.map is not a function")`.
+- So `total |> why |> stated |> nodes` names the facts a conclusion rests on,
+  `total |> why |> derived |> nodes` the conclusions on the way to it,
+  `price |> affects |> nodes` what a change of the price reaches, and
+  `model |> nodes` every node of the model in model order, without pending
+  nodes and reasoning observers.
+- `SELECTION` is written as the source of a pipeline is: a reference, which
+  selects its own step; `model`; a prefix stage, as in `why total |> nodes`;
+  or a pipeline of the stages `why`, `affects`, `stated`, `derived`, `depth`,
+  `path`, `intersect`, `except` and `diff`. An empty selection gives `[]`. A selection that a `depth` stage
+  with a `null` or undefined limit makes undefined gives undefined, which a
+  declaration stores as `null`, as a read from that selection does.
+- The stage ends the pipeline: its result is a list of names, not a
+  selection. A stage written after it has that list as its source, which is
+  neither a reference nor a selection, so `total |> why |> nodes |> why` and
+  `total |> why |> nodes |> depth(1)` raise
+  `TypeError("Cannot explain total|>why|>nodes")`, as the same stages after
+  `(why total).map(step => step.node)` raise for that source. An
+  `intersect`, `except` or `path` argument that ends with `nodes` raises
+  `TypeError("Cannot explain <argument>")`, such as
+  `TypeError("Cannot explain shipping|>why|>nodes")` for
+  `intersect(shipping |> why |> nodes)`. A name that holds the list is a
+  reasoning observer, which no selection holds, so after
+  `names = shipping |> why |> nodes`, `intersect(names)` keeps nothing.
+- Only `|>` followed by the name `nodes` is the stage. `nodes` remains an
+  ordinary lexer identifier: variables, parameters, properties, keys,
+  functions and methods named `nodes` keep their accepted meanings, and there
+  is no prefix form, so `nodes total` remains the two statements `nodes` and
+  `total`. `|> Nodes` and `|> node` keep their parse-time
+  `TypeError("<name> is not an operation")`, and a line break after `|>`
+  keeps `SyntaxError("Expected an operation")`.
+- A local or parameter, state variable, function or class named `nodes`
+  shadows the stage, as for `stated`, `derived`, `depth`, `diff`, `path`,
+  `intersect` and `except`: the pipeline then raises
+  `TypeError("nodes is not an operation")` at the running statement, before
+  its source is selected. A binding declared after a standing declaration
+  makes its next evaluation raise, which fails and rolls back the statement
+  that triggered it. Methods, properties and object keys named `nodes` are
+  not bindings. The accepted `why` and `affects` shadowing behavior does not
+  change.
+- An invalid source keeps its diagnostic: `1 |> nodes` raises
+  `TypeError("Cannot explain 1")`, `missing |> why |> nodes` raises
+  `ReferenceError("missing is not defined")`, and outside a `suppose` block
+  `total |> why |> diff |> nodes` raises
+  `TypeError("Cannot use 'diff' outside suppose")`. These errors are
+  positioned at the running top-level statement and roll back its
+  transaction.
+- The stage keeps every value and structural observation that its selection
+  made, including those of the steps a filter drops, so a declaration,
+  property, class-level rule, condition or quantifier that holds it
+  re-derives whenever its selection would, and an empty result still follows
+  its source. It is a reasoning observer, which walks neither select nor
+  traverse and `model` excludes. Functions, methods and lambdas evaluate it
+  in place, and class-level rules give each instance its own list. `.value`
+  snapshots it, and propagation order, `suppose` blocks and rollback behave
+  as for the accepted stages.
+- The stage builds the step records that the accepted spelling builds, so
+  the anonymous objects that later statements create are numbered as after
+  that spelling, and it reads their `node` fields without depending on them:
+  a declaration that holds it depends only on what its selection observes,
+  and gains no pending graph node for the records it reads.
+- The stage renders as `SOURCE|>nodes` in graph keys, block keys,
+  conditions, `rule` text and the errors that quote an expression, so a stage
+  and its accepted spelling are different graph keys. Programs without the
+  stage do no work for it.
+- The four appended entries from
+  `Nucleoid names the nodes of an explanation with nodes` through
+  `Nucleoid rolls back failed updates through node names` specify the
+  executable behavior. `tests/reasoning_node_names.rs` executes the rest.
+
 ## Reactive degree to radian conversion
 
 - The [NUC 50 candidate](docs/nuc-0050.md) adds only unshadowed static
@@ -3251,6 +3467,100 @@ statement positions; caught values and transaction recovery are unchanged.
   `Nucleoid tracks only the properties that selector arguments read` specify
   the executable behavior.
 
+## Operator section arguments
+
+- [NUC 109](docs/nuc-0109.md) lets a call argument that begins with a binary
+  operator stand for the one-parameter function that applies the operator to
+  its argument, an operator section: `readings.filter(> 20)` means
+  `readings.filter(x -> x > 20)`. No token, keyword, syntax tree node, error
+  type or message is added.
+- The section operators are `==`, `!=`, `===`, `!==`, `<`, `<=`, `>`, `>=`,
+  `*`, `%`, `**`, `&&`, `||` and `??`, the binary operators that cannot begin
+  an operand. `+` and `-` begin an operand as signs, so `xs.map(- 1)` still
+  passes the number `-1`; `!` is a negation; a `/` after `(` begins a
+  regular expression; and `is`, `is not`, `in`, `not in`, `and` and `or` are
+  words. None of them begins a section, and each keeps its accepted reading
+  and error.
+- A section is a whole positional argument of a parenthesized argument list,
+  where a [property selector](#property-selector-arguments) may stand: in
+  calls, method calls, constructor calls, calls written with `new` and
+  `super(...)`, at any argument position. It runs from its operator to the
+  `,` or `)` that ends the argument. Inside the parentheses line breaks,
+  indentation and comments carry no layout, and one trailing comma may
+  follow.
+- `OP REST` is exactly the anonymous function of one parameter
+  `v -> v OP REST`, whose parameter no source can name. REST is read with the
+  usual precedence as if the parameter stood before the operator, so
+  `* 2 + 1` is `v -> v * 2 + 1`, `% 2 == 0` is `v -> v % 2 == 0`,
+  `> low + 1` is `v -> v > low + 1`, `** 2 - 1` is `v -> v ** 2 - 1` and
+  `> 4 ? "big" : "small"` is `v -> v > 4 ? "big" : "small"`. The parameter is
+  only the operator's left operand: REST cannot read it, and no name in REST
+  shadows it.
+- The parser builds the tree that the lambda builds, so evaluation, reads,
+  dependencies, liveness, `.value` snapshots, class-level rules, `why`,
+  `affects`, graph and block keys, canonical rendering and rollback are those
+  of the lambda. Names in REST are read when the function is called, once per
+  item, as in the lambda's body: a standing `over = readings.filter(> limit)`
+  follows later writes of `readings` and of `limit`, and
+  `[].filter(> missing)` is `[]`. A stored declaration whose section reads a
+  `null` item settles to `null`, as with the lambda, while `?? 0` reads a
+  `null` item without settling. `typeof` gives `"Function"`, and the value
+  displays as `[function]`.
+- A section renders as `function()`, as every anonymous lambda does, so
+  `why` explains `over = readings.filter(function())`, and a section and its
+  lambda spelling are the same graph key. An error that quotes an expression
+  holding the parameter quotes it without the parameter, so `[1].map(> 4 = 1)`
+  raises `SyntaxError("Cannot assign to >4")` when it runs, where
+  `[1].map(x -> x > 4 = 1)` raises `SyntaxError("Cannot assign to x>4")`.
+- Everywhere else a section operator keeps its accepted error: `f = (> 4)`,
+  `xs.filter((> 4))`, `[> 4]`, `{a: > 4}`, the named argument `f(test= > 4)`,
+  `xs[> 4]`, a pipeline stage argument such as `b |> depth(> 1)`,
+  `assert: > 4, true`, parameter lists, and a left section such as
+  `xs.map(1 +)`. A section holds one operator before REST, so
+  `xs.filter(> 4 && < 9)` raises `SyntaxError("Unexpected '<'")` at its
+  second operator, and `xs.filter(> 4 &&)` raises
+  `SyntaxError("Unexpected ')'")`. A section without REST, such as
+  `xs.filter(>)`, fails where the accepted parse failed, so it keeps its
+  accepted `SyntaxError("Unexpected '>'")`.
+- **Parse passes.** Every input first runs the parse sequence of the accepted
+  revision exactly as before: the plain parse, the `is` and comprehension
+  retries, the final parse of
+  [Implicit receiver properties](#implicit-receiver-properties) and the
+  receiver run of [Python-style self parameters](#python-style-self-parameters).
+  Only when that whole sequence fails, and the tokens hold `(` or `,`
+  directly followed by a section operator, or a template, the same sequence
+  runs once more reading sections in every pass, probe, tentative statement
+  and template interpolation. Its first success is the result.
+- When that run fails too, the input reports whichever of the accepted error
+  and that run's error lies further into the source, by line and column, the
+  accepted one on a tie. An error inside a template interpolation is placed
+  at its line and column in the program before it leaves the interpolation,
+  as at the accepted revision, so both errors are compared as program
+  positions.
+- **Compatibility.** Only inputs that were errors at the accepted revision
+  change. Every input that an accepted pass parses keeps its result,
+  including programs, template interpolations and `parse_expression` inputs
+  whose ignored tail holds a section: `` `v ${xs.length, xs.filter(> 4)}` ``
+  stays `"v 4"`, and `parse_expression("1 if xs.some(> 4) else 2")` stays the
+  number `1`.
+- Nesting is bounded as before. Building a section passes the nesting guards
+  of an argument and of a lambda body, so nested calls raise
+  `SyntaxError("Expressions are nested too deeply")` at the depth of their
+  lambda spellings, and REST keeps the operand and part limits of every
+  expression. A Python-style condition in REST always belongs to the
+  section's body. Near the limit, a lambda spelling whose condition no
+  longer fits in its body is read with the condition around the lambda, a
+  different program; a section has no such reading. So
+  `y = f(> 1 if f(> 1 if ... c else 0) else 0)` reads 20 levels as its
+  lambda spelling does, and at 21 levels it raises
+  `SyntaxError("Expected ')' but found keyword 'if'")` at its first `if`,
+  where the lambda spelling still parses by reading its deepest conditions
+  around their lambdas.
+- The six appended entries beginning
+  `Nucleoid passes comparison sections as one-parameter functions` through
+  `Nucleoid rolls back failed updates through sections` specify the
+  executable behavior. `tests/operator_sections.rs` executes the rest.
+
 ## Implicit receiver properties
 
 - [NUC 102](docs/nuc-0102.md) lets the value of an assignment to a property
@@ -3364,6 +3674,174 @@ statement positions; caught values and transaction recovery are unchanged.
   `Nucleoid reads receiver properties in class level rules` through
   `Nucleoid rolls back failed receiver assignments` specify the executable
   behavior. `tests/implicit_receivers.rs` executes the rest.
+
+## Implicit receivers in method bodies
+
+- [NUC 113](docs/nuc-0113.md) lets the code of a class read the properties
+  of its own instance with a leading dot: in a class body,
+  `def area() => .w * .h` is `def area() => this.w * this.h`, and
+  `return .total - .paid` is `return this.total - this.paid`. No token,
+  keyword, syntax tree node, error type or message is added.
+- **Where.** The receiver is `this` in the code of a class body: the methods
+  it declares with `def` or `function` in every parameter form, including
+  the `self` parameters of [Python-style self parameters](#python-style-self-parameters),
+  its `def init` and `def __init__` constructors, and the statements of its
+  own indented or same-line body, which make up its constructor. A class
+  that names its parent with `extends` or a colon reads as every class does.
+  Expression and indented bodies read in every statement and expression
+  they hold, template interpolations included.
+- **Reads.** A `.` that begins an operand, after a token in operand position
+  as [Implicit receiver properties](#implicit-receiver-properties) defines
+  it, and is directly followed by a name reads that property of `this`. The
+  operand continues with every suffix that member access takes, so
+  `.items[0]`, `.area()`, `.a.b` and `.w@first` read `this.items[0]`,
+  `this.area()`, `this.a.b` and `this.w@first`, and a keyword after the dot
+  reads its canonical spelling, as after any `.`.
+- **The innermost receiver.** A property assignment keeps the receiver of
+  [Implicit receiver properties](#implicit-receiver-properties): in a
+  method, `other.p = .q` reads `other.q` and `this.w = .h` reads `this.h`,
+  and its value keeps every rule of that section, so `this.p = (x = .a)`
+  keeps its error. The values of assignments to names, such as `x = .w`,
+  `x += .w` and `x := .w`, of label arguments such as `P(n = .w)` and of
+  destructuring declarations such as `a, b = .pair` read `this`, since no
+  target names another receiver. A computed, indexed or versioned target,
+  such as `xs[0].p`, `xs[0]` or `o.p@first`, gives its value no receiver,
+  so its dots keep their errors.
+- **Nested functions.** `this` is not defined in the functions that a
+  method's code holds, so their dots keep their accepted errors: the bodies
+  of lambdas, arrows, `function` expressions, operator sections and nested
+  `def` and `function` declarations, and the elements and conditions of
+  comprehensions. So `def twice() => [1, 2].map(i -> i * .w)` keeps
+  `SyntaxError("Unexpected '.'")`, where `i * this.w` raises
+  `ReferenceError("this is not defined")` when it runs. The source of a
+  comprehension and the condition of a quantifier are evaluated in the
+  method, so they read: `[x * 2 for x in .xs]` reads `this.xs`. A property
+  value keeps its receiver inside its functions, as
+  [Implicit receiver properties](#implicit-receiver-properties) specifies,
+  and a class declared in a function reads its own instance.
+- **Kept readings.** These dots keep their accepted readings and errors:
+  - the first token of a call argument: a whole argument `.name` is a
+    selector of [Property selector arguments](#property-selector-arguments),
+    so `[this].map(.w)` passes `v -> v.w` and `Inner(.w)` passes a
+    selector to a constructor, while `f(.w + 1)` keeps its error and
+    `f(1 + .w)` reads. The two arguments of an `assert:` statement follow
+    the same rule;
+  - every dot in the value of an `is` assignment;
+  - a dot that begins a statement or the target of an assignment, as in
+    `.count += 1`, `.items.push(x)` and `(.w = 1)`, including the first
+    statement of a same-line suite, as in `if c: .w` and
+    `suppose this.w = 5: .w * 2`;
+  - a dot after a token that is not in operand position, so `while .n > 0:`
+    keeps its accepted error while `while 0 < .n:` reads, and `x .a` stays
+    member access;
+  - every dot outside a class body: functions declared outside a class, so
+    `def f() => .a` keeps its error, object functions such as
+    `o.f = function() { return .w }`, which read `o`, and class-level rules
+    such as `$Rect.area = .w * .h`.
+- **The written-out path.** A read builds `this.NAME`, the tree of the
+  member access written out, so values, dependencies, the live updates of
+  declarations that call a method, class-level rules, rendering, `why`,
+  `affects`, `suppose`, rollback and run-time errors are those of the
+  written-out spelling. The probes that keep the juxtaposed `while` and
+  `suppose` headers of [Is assignments](#is-assignments) read the instance
+  too, so `while 1 + .n is a: b` in a method runs as the separate
+  statements of `while 1 + this.n is a: b`.
+- **Parse passes.** The reads belong to the final parse of
+  [Implicit receiver properties](#implicit-receiver-properties), its probes
+  and its interpolations, which run only after every accepted parse has
+  failed. A class body gives its code the instance wherever no property
+  value already gives it a receiver. When the final parse fails too, the
+  input reports whichever error lies further into the source, so
+  `def f() => .w +` reports the missing operand at the end of its line.
+- **Compatibility.** Only inputs that were syntax errors at the accepted
+  revision change. Each raised `SyntaxError("Unexpected '.'")` at the name
+  after a dot, or, in a method with a `self` parameter, the error of the
+  parse without receiver parameters, such as
+  `SyntaxError("Expected a parameter but found keyword 'this'")`, or the
+  error of a tentative statement that fell back, such as
+  `SyntaxError("Unexpected ','")` for `a, b = .pair`. Every input that an
+  accepted pass parses keeps its result.
+- These programs specify the behavior. `tests/method_receivers.rs` runs each
+  one, checks that every assertion runs and compares its last value with
+  its `# return:` line, and executes the rest of this section.
+
+~~~
+class Item(this.price, this.qty):
+    def total() => .price * .qty
+    def label() => `${.qty} x ${.price} = ${.total()}`
+    def discounted(rate) => .total() * (1 - rate)
+i = Item(4, 3)
+assert([i.total(), i.label()], [12, "3 x 4 = 12"])
+line = i.total()
+i.qty = 5
+assert(line, 20)
+assert(i.discounted(0.5), 10)
+i.label()
+# return: "5 x 4 = 20"
+~~~
+
+~~~
+class Tank(this.level, this.size):
+    if .level > .size:
+        this.spill = .level - .size
+class Gauge:
+    def init(low, high):
+        this.low = low
+        this.high = high
+        this.span = .high - .low
+        if .span > 10:
+            this.wide = true
+class Meter:
+    def __init__(self, reading):
+        self.reading = reading
+        if .reading < 0:
+            self.reading = 0
+t = Tank(12, 10)
+g = Gauge(5, 20)
+m = Meter(-3)
+assert([t.spill, g.span, g.wide], [2, 15, true])
+m.reading
+# return: 0
+~~~
+
+~~~
+class Tank(this.level, this.size):
+    def drain(self, step):
+        count = 0
+        while 0 < .level:
+            self.level = .level - step
+            count += 1
+        return count
+    def status():
+        if .level <= 0:
+            return "empty"
+        return `${.level} of ${.size}`
+t = Tank(12, 20)
+assert(t.drain(5), 3)
+t.status()
+# return: "empty"
+~~~
+
+~~~
+class Team(this.people, this.bonus):
+    def names() => .people.map(.name)
+    def paid() => [person.pay for person in .people]
+    def raised():
+        bonus = .bonus
+        return .people.map(person -> person.pay + bonus)
+    def promote(person):
+        raise = .bonus
+        person.pay = .pay + raise
+        return person.pay
+ada = {name: "Ada", pay: 100}
+bob = {name: "Bob", pay: 90}
+t = Team([ada, bob], 5)
+assert(t.names(), ["Ada", "Bob"])
+assert(t.paid(), [100, 90])
+assert(t.raised(), [105, 95])
+t.promote(bob)
+# return: 95
+~~~
 
 ## In-place list sorting
 
@@ -24441,6 +24919,354 @@ catch error:
     assert(error, "UNDO")
 weights
 # return: [[9,2],[4]]
+---
+# Nucleoid passes comparison sections as one-parameter functions
+
+readings = [12, 31, 7, 45, 18]
+high = readings.filter(> 20)
+low = readings.count(<= 12)
+peak = readings.find(>= 40)
+spot = readings.findIndex(< 10)
+alarm = readings.some(> 50)
+sane = readings.every(!= 0)
+assert([high, low, peak, spot, alarm, sane], [[31, 45], 2, 45, 2, false, true])
+readings.push(60, 0)
+assert([high, low, peak, spot, alarm, sane], [[31, 45, 60], 3, 45, 2, true, false])
+readings.shift()
+assert([low, spot], [2, 1])
+high.length
+# return: 3
+---
+# Nucleoid reads the rest of a section argument with the usual precedence
+
+values = [3, 8, 1, 9]
+low = 2
+doubled = values.map(* 2 + 1)
+squares = values.map(** 2 - 1)
+evens = values.count(% 2 == 0)
+rests = values.map(% 3)
+sizes = values.map(> 4 ? "big" : "small")
+above = values.filter(> low + 1)
+assert([doubled, squares], [[7, 17, 3, 19], [8, 63, 0, 80]])
+assert([evens, rests], [1, [0, 2, 1, 0]])
+assert([sizes, above], [["small", "big", "small", "big"], [8, 9]])
+low = 0
+values.push(4)
+assert([above, evens, rests], [[3, 8, 9, 4], 2, [0, 2, 1, 0, 1]])
+sizes
+# return: ["small","big","small","big","small"]
+---
+# Nucleoid fills and combines values with nullish and logical sections
+
+scores = [7, null, 3, null]
+filled = scores.map(?? 0)
+names = ["ada", "", "bo"]
+shown = names.map(|| "anonymous")
+flags = [true, false, true]
+labels = flags.map(&& "on")
+exact = flags.count(=== true)
+assert(filled, [7, 0, 3, 0])
+assert([shown, labels, exact], [["ada", "anonymous", "bo"], ["on", false, "on"], 2])
+scores.push(null, 5)
+names.push("")
+flags.push(1)
+assert(filled, [7, 0, 3, 0, 0, 5])
+assert(shown, ["ada", "anonymous", "bo", "anonymous"])
+[labels, exact]
+# return: [["on",false,"on","on"],2]
+---
+# Nucleoid keeps section operands live like lambda bodies
+
+limit = 20
+readings = [12, 31, 7]
+over = readings.filter(> limit)
+alerts = over.count(>= limit * 2)
+assert([over, alerts], [[31], 0])
+limit = 10
+assert([over, alerts], [[12, 31], 1])
+readings.push(45)
+assert([over, alerts], [[12, 31, 45], 2])
+readings = [5, 25]
+assert([over, alerts], [[25], 1])
+alerts
+# return: 1
+---
+# Nucleoid passes sections to functions and constructors beside other arguments
+
+def keep(values, test, change) => values.filter(test).map(change)
+class Gate(name, test):
+    this.name = name
+    this.test = test
+loud = Gate("loud", > 80)
+quiet = new Gate("quiet", < 30)
+levels = [20, 90, 50, 85]
+heard = levels.filter(loud.test)
+scaled = keep(levels, >= 50, x -> x / 10)
+first = levels.find(> 100) ?? levels.find(quiet.test)
+assert([heard, scaled, first], [[90, 85], [9, 5, 8.5], 20])
+levels.push(120)
+assert([heard, scaled, first], [[90, 85, 120], [9, 5, 8.5, 12], 120])
+quiet.name
+# return: "quiet"
+---
+# Nucleoid rolls back failed updates through sections
+
+counts = [3, 5]
+filled = counts.map(?? spare())
+failure = ""
+try:
+    counts.push(null)
+catch error:
+    failure = error
+assert(failure, ReferenceError("spare is not defined"))
+assert([counts.length, filled], [2, [3, 5]])
+def spare() => 0
+counts.push(null)
+assert(filled, [3, 5, 0])
+big = filled.filter(> 4)
+try:
+    counts.push(9)
+    assert([filled, big], [[3, 5, 0, 9], [5, 9]])
+    throw "UNDO"
+catch error:
+    assert(error, "UNDO")
+[filled, big]
+# return: [[3,5,0],[5]]
+---
+# Nucleoid tests prefixes and suffixes with startswith and endswith
+
+files = ["report.csv", "notes.txt", "draft_report.csv"]
+tables = files.filter(file -> file.endswith(".csv"))
+drafts = files.filter(file -> file.startswith("draft_"))
+assert(tables, ["report.csv", "draft_report.csv"])
+assert(drafts, ["draft_report.csv"])
+assert(tables, files.filter(file -> file.endsWith(".csv")))
+assert(["Ada".startswith("A"), "Ada".startswith("a"), "Ada".endswith("")], [true, false, true])
+assert("draft_report.csv".startswith("report", 6), false)
+files.push("draft_plan.txt", "data.CSV")
+assert(drafts, ["draft_report.csv", "draft_plan.txt"])
+assert(tables, ["report.csv", "draft_report.csv"])
+files.shift()
+tables
+# return: ["draft_report.csv"]
+---
+# Nucleoid joins lists and class populations with the separator as the receiver
+
+class Tag(name):
+    this.name = name
+names = ["ada", "bo"]
+sep = ", "
+label = sep.join(names)
+shown = " | ".join(Tag.map(tag -> tag.name))
+assert([label, shown], ["ada, bo", ""])
+red = Tag("red")
+blue = Tag("blue")
+assert(shown, "red | blue")
+assert([label, "/".join(Tag)], [names.join(sep), Tag.join("/")])
+assert("-".join(["a", 1, null, true, []]), "a-1-null-true-")
+names.push("cy")
+sep = " / "
+assert(label, "ada / bo / cy")
+"".join(names)
+# return: "adabocy"
+---
+# Nucleoid rolls back failed updates through Python string methods
+
+class File(name):
+    this.name = name
+$File.table = $File.name.endswith(".csv")
+report = File("report.csv")
+notes = File("notes.txt")
+assert([report.table, notes.table], [true, false])
+notes.name = "notes.csv"
+assert(notes.table, true)
+failure = ""
+try:
+    report.name = 7
+catch error:
+    failure = error
+assert(failure, TypeError("number.endswith is not a function"))
+assert([report.name, report.table], ["report.csv", true])
+names = ["ada", "bo"]
+label = ", ".join(names)
+try:
+    names = "ada"
+catch error:
+    failure = error
+assert(failure, TypeError(", .join is not a function"))
+assert([names, label], [["ada", "bo"], "ada, bo"])
+try:
+    names.push("cy")
+    report.name = "report.txt"
+    assert([label, report.table], ["ada, bo, cy", false])
+    throw "UNDO"
+catch error:
+    assert(error, "UNDO")
+[label, report.table]
+# return: ["ada, bo",true]
+---
+# Nucleoid pads strings at the start with padStart
+
+ids = ["7", "42", "123", "1234"]
+codes = ids.map(id -> id.padStart(3, "0"))
+h = 9
+m = 5
+clock = String(h).padStart(2, "0") + ":" + String(m).padStart(2, "0")
+assert(codes, ["007", "042", "123", "1234"])
+assert(clock, "09:05")
+ids.push("5")
+h = 14
+assert(codes, ["007", "042", "123", "1234", "005"])
+clock
+# return: "14:05"
+---
+# Nucleoid pads strings at the end with padEnd
+
+items = ["tea", "jam", "honey"]
+width = 6
+rows = items.map(item -> item.padEnd(width) + "|")
+title = "Total"
+rule = title.padEnd(12, ".:")
+assert(rows, ["tea   |", "jam   |", "honey |"])
+assert(rule, "Total.:.:.:.")
+width = 4
+title = "Sum"
+assert(rows, ["tea |", "jam |", "honey|"])
+rule
+# return: "Sum.:.:.:.:."
+---
+# Nucleoid keeps padded strings live in declarations and class level rules
+
+label = "7"
+width = 3
+fill = "0"
+shown = label.padStart(width, fill)
+assert(shown, "007")
+label = "42"
+assert(shown, "042")
+width = 5
+assert(shown, "00042")
+fill = ""
+assert(shown, "42")
+fill = "*"
+assert(shown, "***42")
+class Ticket(id):
+    this.id = id
+$Ticket.code = "T-" + String($Ticket.id).padStart(4, "0")
+first = Ticket(7)
+second = Ticket(42)
+assert([first.code, second.code], ["T-0007", "T-0042"])
+first.id = 12345
+[first.code, second.code]
+# return: ["T-12345","T-0042"]
+---
+# Nucleoid rolls back failed updates through padded strings
+
+ids = []
+codes = ids.map(id -> id.padStart(size, "0"))
+failure = ""
+try:
+    ids.push("7")
+catch error:
+    failure = error
+assert(failure, ReferenceError("size is not defined"))
+assert([ids, codes], [[], []])
+size = 3
+ids.push("7", "42")
+assert(codes, ["007", "042"])
+try:
+    ids.push("5")
+    size = 2
+    assert(codes, ["07", "42", "05"])
+    throw "UNDO"
+catch error:
+    assert(error, "UNDO")
+[codes, size]
+# return: [["007","042"],3]
+---
+# Nucleoid names the nodes of an explanation with nodes
+
+price = 10
+qty = 3
+shipping = 5
+subtotal = price * qty
+total = subtotal + shipping
+steps = total |> why |> nodes
+facts = total |> why |> stated |> nodes
+rules = total |> why |> derived |> nodes
+assert(steps, ["total", "subtotal", "shipping", "price", "qty"])
+assert([facts, rules], [["shipping", "price", "qty"], ["total", "subtotal"]])
+base = 4
+shipping = base + 1
+assert(steps, ["total", "subtotal", "shipping", "base", "price", "qty"])
+assert(facts, ["base", "price", "qty"])
+rules
+# return: ["total","subtotal","shipping"]
+---
+# Nucleoid names what a change reaches and the model with nodes
+
+rate = 0.2
+price = 10
+qty = 3
+subtotal = price * qty
+tax = subtotal * rate
+reach = price |> affects |> nodes
+known = model |> nodes
+assert(reach, ["subtotal", "tax"])
+assert(known, ["rate", "price", "qty", "subtotal", "tax"])
+total = subtotal + tax
+assert(reach, ["subtotal", "tax", "total"])
+assert(known, ["rate", "price", "qty", "subtotal", "tax", "total"])
+tax = qty * rate
+assert(reach, ["subtotal", "total"])
+delete total
+assert(known, ["rate", "price", "qty", "subtotal", "tax"])
+reach
+# return: ["subtotal"]
+---
+# Nucleoid names the nodes behind class level rules with nodes
+
+fee = 2
+class Order(price, qty):
+    this.price = price
+    this.qty = qty
+$Order.total = $Order.price * $Order.qty
+$Order.basis = $Order.total |> why |> nodes
+first = Order(10, 2)
+assert(first.basis, ["first.total", "first.price", "first.qty"])
+$Order.total = $Order.price * $Order.qty + fee
+second = Order(4, 5)
+assert(first.basis, ["first.total", "first.price", "first.qty", "fee"])
+assert(second.basis, ["second.total", "second.price", "second.qty", "fee"])
+reach = fee |> affects |> nodes
+assert(reach, ["first.total", "second.total"])
+first.total |> why |> stated |> nodes
+# return: ["fee"]
+---
+# Nucleoid rolls back failed updates through node names
+
+price = 10
+qty = 3
+subtotal = price * qty
+names = subtotal |> why |> nodes
+failure = ""
+try:
+    names = 1 |> why |> nodes
+catch error:
+    failure = error
+assert(failure, TypeError("Cannot explain 1"))
+assert(names, ["subtotal", "price", "qty"])
+try:
+    fee = 2
+    subtotal = price * qty + fee
+    assert(names, ["subtotal", "price", "qty", "fee"])
+    throw "UNDO"
+catch error:
+    assert(error, "UNDO")
+assert(names, ["subtotal", "price", "qty"])
+inputs = subtotal |> why |> stated |> nodes
+[names, inputs]
+# return: [["subtotal","price","qty"],["price","qty"]]
 ---
 # Nucleoid flattens nested lists by one level
 

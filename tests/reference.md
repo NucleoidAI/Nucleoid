@@ -2626,6 +2626,62 @@ assert(scores[0], 72)
 book[1][0].who
 # return: "col"
 ---
+# Nucleoid writes one-parameter functions as operator sections
+
+prices = [12, 30, 8, 45]
+limit = 10
+picked = prices.filter(> limit)
+doubled = picked.map(* 2)
+cheap = prices.count(<= limit)
+assert(picked, [12, 30, 45])
+assert([doubled, cheap], [[24, 60, 90], 1])
+limit = 20
+assert([doubled, cheap], [[60, 90], 2])
+stock = [4, null, 7]
+stock.map(?? 0)
+# return: [4,0,7]
+---
+# Nucleoid spells startswith, endswith and join as Python does
+
+files = ["main.py", "test_main.py", "notes.md"]
+tests = files.filter(name -> name.startswith("test_"))
+scripts = files.filter(name -> name.endswith(".py"))
+listing = ", ".join(scripts)
+assert(tests, ["test_main.py"])
+assert(listing, "main.py, test_main.py")
+files.push("setup.py")
+assert(listing, "main.py, test_main.py, setup.py")
+listing == scripts.join(", ")
+# return: true
+---
+# Nucleoid pads strings with padStart and padEnd
+
+ids = ["7", "42"]
+codes = ids.map(id -> id.padStart(3, "0"))
+rows = ids.map(id -> id.padEnd(4, ".") + "|")
+assert(codes, ["007", "042"])
+assert(rows, ["7...|", "42..|"])
+ids.push("123")
+assert(codes, ["007", "042", "123"])
+rows[2]
+# return: "123.|"
+---
+# Nucleoid names the nodes of selections with nodes
+
+price = 10
+qty = 3
+shipping = 5
+subtotal = price * qty
+total = subtotal + shipping
+facts = total |> why |> stated |> nodes
+reach = price |> affects |> nodes
+assert(facts, ["shipping", "price", "qty"])
+assert(reach, ["subtotal", "total"])
+base = 4
+shipping = base + 1
+facts
+# return: ["base","price","qty"]
+---
 # Nucleoid flattens nested lists with flat
 
 pallets = [[["bolt", "nut"], ["gear"]], [["cog"]]]

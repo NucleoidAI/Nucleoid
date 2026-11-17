@@ -19,6 +19,7 @@ pub enum Stage {
     Stated,
     Derived,
     Diff,
+    Nodes,
 }
 
 impl Stage {
@@ -37,7 +38,7 @@ impl Stage {
         match self {
             Stage::Why => Some(Direction::Dependencies),
             Stage::Affects => Some(Direction::Dependents),
-            Stage::Stated | Stage::Derived | Stage::Diff => None,
+            Stage::Stated | Stage::Derived | Stage::Diff | Stage::Nodes => None,
         }
     }
 
@@ -49,6 +50,7 @@ impl Stage {
             Stage::Stated => "stated",
             Stage::Derived => "derived",
             Stage::Diff => "diff",
+            Stage::Nodes => "nodes",
         }
     }
 }
@@ -214,6 +216,7 @@ impl Runtime {
             }
             Stage::Why => self.traverse(selection, Direction::Dependencies),
             Stage::Affects => self.traverse(selection, Direction::Dependents),
+            Stage::Nodes => selection.clone(),
         })
     }
 
@@ -227,6 +230,7 @@ impl Runtime {
             }
             Stage::Why => self.walk(&ranked.selection, Direction::Dependencies),
             Stage::Affects => self.walk(&ranked.selection, Direction::Dependents),
+            Stage::Nodes => ranked,
         })
     }
 

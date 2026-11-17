@@ -3789,6 +3789,120 @@ south.shelves.push({item: "salt", have: 0, need: 1})
   [NUC 108](nuc-0108.md) and the
   [root contract](../nucleoid.spec.md#list-and-population-partitions).
 
+## Operator section arguments
+
+**Operator sections keep every sensor's alarm count live**
+
+```nuc
+class Sensor(name, readings, limit):
+    this.name = name
+    this.readings = readings
+    this.limit = limit
+$Sensor.alarms = $Sensor.readings.count(> $Sensor.limit)
+$Sensor.first = $Sensor.readings.findIndex(> $Sensor.limit)
+north = Sensor("north", [12, 31, 7], 20)
+south = Sensor("south", [5, 9], 10)
+assert([north.alarms, north.first, south.first], [1, 1, -1])
+north.limit = 10
+south.readings.push(14)
+[north.alarms, north.first, south.alarms, south.first]
+# return: [2,0,1,2]
+```
+
+- Each sensor's two class-level rules count its readings above its own
+  limit and find the first of them.
+  `$Sensor.readings.count(> $Sensor.limit)` is
+  `$Sensor.readings.count(reading -> reading > $Sensor.limit)`, so each
+  section reads `$Sensor.limit` for the sensor that its rule computes.
+- Lowering the north limit and a new south reading update the rules of the
+  sensor they touch, and `findIndex` gives `-1` while no reading is above
+  the limit. See [NUC 109](nuc-0109.md) and the
+  [root contract](../nucleoid.spec.md#operator-section-arguments).
+
+## Python string method aliases
+
+**Python string methods keep an order desk's rules live**
+
+```nuc
+class Order(code, items):
+    this.code = code
+    this.items = items
+$Order.rush = $Order.code.startswith("RUSH-")
+$Order.summary = ", ".join($Order.items)
+first = Order("RUSH-1", ["tea", "jam"])
+second = Order("STD-2", ["oat"])
+assert([first.rush, second.rush, first.summary], [true, false, "tea, jam"])
+second.code = "RUSH-2"
+first.items.push("rye")
+[second.rush, first.summary]
+# return: [true,"tea, jam, rye"]
+```
+
+- Each order's two class-level rules are written as Python writes them:
+  `$Order.code.startswith("RUSH-")` is `$Order.code.startsWith("RUSH-")`,
+  and `", ".join($Order.items)`, with the separator as the receiver, is
+  `$Order.items.join(", ")`.
+- A changed code makes the second order a rush order, and a new item extends
+  the first order's summary; each rule reads only its own order. See
+  [NUC 110](nuc-0110.md) and the
+  [root contract](../nucleoid.spec.md#python-string-method-aliases).
+
+## Reactive string padding
+
+**Padded labels follow every bin's aisle and slot**
+
+```nuc
+class Bin(aisle, slot):
+    this.aisle = aisle
+    this.slot = slot
+$Bin.label = $Bin.aisle.padEnd(3, "-") + String($Bin.slot).padStart(3, "0")
+north = Bin("N", 7)
+east = Bin("E2", 45)
+assert([north.label, east.label], ["N--007", "E2-045"])
+north.slot = 12
+east.aisle = "EAST"
+[north.label, east.label]
+# return: ["N--012","EAST045"]
+```
+
+- Each bin's class-level rule writes its label from two padded parts: the
+  aisle, padded at the end with dashes to three characters, and the slot
+  number, padded at the start with zeros to three digits.
+  `$Bin.aisle.padEnd(3, "-")` is `$Bin.aisle + "-".repeat(3 - $Bin.aisle.length)`.
+- A new slot and a renamed aisle update the label of the bin they touch. An
+  aisle that already holds three characters or more, such as `"EAST"`, is
+  not padded. See [NUC 111](nuc-0111.md) and the
+  [root contract](../nucleoid.spec.md#reactive-string-padding).
+
+## Node names of reasoning selections
+
+**Nodes names the facts and rules behind a loan decision**
+
+```nuc
+income = 5000
+debt = 1200
+score = 700
+ratio = debt / income
+approved = ratio < 0.4 && score > 650
+facts = approved |> why |> stated |> nodes
+rules = approved |> why |> derived |> nodes
+assert([facts, rules], [["score", "debt", "income"], ["approved", "ratio"]])
+years = 3
+approved = ratio < 0.4 && score > 650 && years > 2
+moved = income |> affects |> nodes
+assert(moved, ["ratio", "approved"])
+[facts, rules]
+# return: [["score","years","debt","income"],["approved","ratio"]]
+```
+
+- `approved |> why |> stated |> nodes` names the facts the decision rests
+  on and `approved |> why |> derived |> nodes` the rules it passes through,
+  each in the order of the explanation. `income |> affects |> nodes` names
+  what a change of income reaches.
+- The names follow the model: once the decision also asks for more than two
+  years of history, `years` joins the facts. See [NUC 112](nuc-0112.md) and the
+  [root contract](../nucleoid.spec.md#node-names-of-reasoning-selections).
+
 ## Reactive list flattening
 
 **Flattening keeps the dirty tiles of every room counted**

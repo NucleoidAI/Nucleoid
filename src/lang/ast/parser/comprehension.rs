@@ -29,6 +29,31 @@ impl Parser {
         self.lists == Lists::Comprehensions && self.check(&Token::Keyword(Keyword::For))
     }
 
+    pub(super) fn list_head(&mut self) -> Result<Expr> {
+        if self.holds_instance() && self.list_holds_for() {
+            return self.without_instance(|parser| parser.within(true, Self::item));
+        }
+        self.within(true, Self::item)
+    }
+
+    fn list_holds_for(&self) -> bool {
+        let mut depth = 0usize;
+        for spanned in self.tokens.iter().skip(self.position) {
+            match spanned.token {
+                Token::LeftParen | Token::LeftBracket | Token::LeftBrace => depth += 1,
+                Token::RightParen | Token::RightBracket | Token::RightBrace => {
+                    let Some(outer) = depth.checked_sub(1) else {
+                        return false;
+                    };
+                    depth = outer;
+                }
+                Token::Keyword(Keyword::For) if depth == 0 => return true,
+                _ => {}
+            }
+        }
+        false
+    }
+
     pub(super) fn comprehension(&mut self, start: usize, element: Expr) -> Result<Expr> {
         if let Some(variable) = self.at_variable_since(start) {
             return self.reject_at_variable(variable);
@@ -47,7 +72,7 @@ impl Parser {
         })?;
         let source = if self.eat_keyword(Keyword::If) {
             let items = self.leave_items();
-            let condition = self.within(true, Self::expression);
+            let condition = self.without_instance(|parser| parser.within(true, Self::expression));
             self.items = items;
             method_call(source, "filter", lambda(parameter.clone(), condition?))
         } else {

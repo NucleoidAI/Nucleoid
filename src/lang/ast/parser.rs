@@ -12,6 +12,7 @@ mod precedence;
 mod predicate;
 mod primary;
 mod receiver;
+mod section;
 mod self_parameter;
 mod statement;
 mod template;
@@ -24,6 +25,7 @@ use crate::lang::ast::{BinaryOp, Expr, LogicalOp, Parameter, ParameterDefault, S
 use at_variable::Rejection;
 use is_assignment::Items;
 use receiver::{Dots, Receiver};
+use section::Sections;
 use self_parameter::Selves;
 
 /// A parsed program: its statements, and where each top-level statement began.
@@ -122,6 +124,8 @@ struct Parser {
     dots: Dots,
     receiver: Receiver,
     selves: Selves,
+    sections: Sections,
+    operand: Option<Expr>,
     /// Python-style conditional attempts by `if` token position and nesting
     /// depth, which together decide one: the qualified condition and the
     /// position after its `else`, or `None`. A re-parse of the same source
@@ -207,6 +211,8 @@ impl Parser {
             dots: Dots::Accepted,
             receiver: Receiver::Absent,
             selves: Selves::Accepted,
+            sections: Sections::Accepted,
+            operand: None,
             python_conditions: HashMap::new(),
             variable_conditions: HashMap::new(),
             item_conditions: HashMap::new(),
@@ -223,7 +229,12 @@ impl Parser {
     }
 
     fn attempt<T>(&mut self, parse: impl Fn(&mut Self) -> Result<T>) -> Result<T> {
-        let accepted = match self.attempt_readings(&parse) {
+        self.attempt_selves(&parse)
+            .or_else(|accepted| self.attempt_sections(&parse, accepted))
+    }
+
+    fn attempt_selves<T>(&mut self, parse: &impl Fn(&mut Self) -> Result<T>) -> Result<T> {
+        let accepted = match self.attempt_readings(parse) {
             Ok(parsed) => return Ok(parsed),
             Err(error) => error,
         };
@@ -232,12 +243,9 @@ impl Parser {
         }
         *self = Parser {
             selves: Selves::Dropped,
-            ..Parser::new(std::mem::take(&mut self.tokens))
+            ..self.rewound()
         };
-        match self.attempt_readings(&parse) {
-            Ok(parsed) => Ok(parsed),
-            Err(_) => Err(accepted),
-        }
+        self.attempt_readings(parse).map_err(|_| accepted)
     }
 
     fn attempt_readings<T>(&mut self, parse: &impl Fn(&mut Self) -> Result<T>) -> Result<T> {
@@ -295,6 +303,7 @@ impl Parser {
     fn rewound(&mut self) -> Self {
         Parser {
             selves: self.selves,
+            sections: self.sections,
             ..Parser::new(std::mem::take(&mut self.tokens))
         }
     }

@@ -1398,6 +1398,28 @@ order.label
 - Because `is` is a name and `not` a keyword, `o.p = (1 is .a)` keeps its error while `o.p = (1 is not .a)` reads `o.a`, as `(1 is not o.a)`. Without grouping, `o.p = 1 is not .a` is the three statements `o.p = 1`, `is` and `not .a`, and keeps its error.
 - Receivers are read only in a final parse that runs after every accepted parse has failed, so every input the accepted grammar reads keeps its reading. See the authoritative [implicit receiver properties](../nucleoid.spec.md#implicit-receiver-properties) section.
 
+### Implicit receivers in method bodies
+
+```
+class Rect(this.w, this.h):
+    def area() => .w * .h
+    def label():
+        return `${.w}x${.h}`
+r = Rect(2, 3)
+a = r.area()
+assert([a, r.label()], [6, "2x3"])
+r.w = 5
+[a, r.label()]
+# return: [15, "5x3"]
+```
+
+- [NUC 113](nuc-0113.md) reads a `.` that begins an operand, directly followed by a name, in the code of a class body as that property of the instance, `this`: `def area() => .w * .h` is `def area() => this.w * this.h`. `tests/method_receivers.rs` runs this program, which returns `[15, "5x3"]`.
+- The code is that of the methods a class declares with `def` or `function` in every parameter form, `self` parameters included, its `def init` and `def __init__` constructors and the statements of its own body, in subclasses too, with expression and indented bodies, every statement in them and template interpolations.
+- A property assignment keeps its own receiver, so in a method `other.p = .q` reads `other.q`, while the values of variables, label arguments and destructuring declarations read `this`. Computed, indexed and versioned targets give no receiver.
+- `this` is not defined in the lambdas, arrows, `function` expressions, operator sections, nested declarations and comprehension elements and conditions of a method, so their dots keep their errors; a comprehension's source and a quantifier's condition read the instance.
+- These keep their accepted readings and errors: a call argument that starts with `.`, which is a selector or its error; `is` values; a statement or target that starts with `.`; a dot after a name; and every dot outside a class body, such as `def f() => .a`, object functions and class-level rules.
+- A read builds the written-out `this.NAME`, so values, dependencies, live updates, `why`, `affects`, rendering, rollback and errors are those of that spelling, and only inputs that were syntax errors at the accepted revision change. See the authoritative [implicit receivers in method bodies](../nucleoid.spec.md#implicit-receivers-in-method-bodies) section.
+
 ---
 
 ## 6. Class-Level Rules
@@ -2257,6 +2279,29 @@ names
 - Selectors stay live and roll back like the lambda they abbreviate. They render as written, so `why` explains `dearest = Item.max(.price)`; anonymous lambdas keep rendering as `function()`.
 - Anything else that starts with `.` keeps its error: `f(.a + 1)`, `x = .a`, `[.a]` and `assert: .a, 1` still raise `SyntaxError("Unexpected '.'")`. A selector names at most 127 properties. See the authoritative [property selector arguments](../nucleoid.spec.md#property-selector-arguments) section.
 
+### Operator section arguments
+
+```
+prices = [12, 30, 8, 45]
+limit = 10
+picked = prices.filter(> limit)
+doubled = picked.map(* 2)
+cheap = prices.count(<= limit)
+assert(picked, [12, 30, 45])
+assert([doubled, cheap], [[24, 60, 90], 1])
+limit = 20
+assert([doubled, cheap], [[60, 90], 2])
+stock = [4, null, 7]
+stock.map(?? 0)
+```
+
+- This is the complete `Nucleoid writes one-parameter functions as operator sections` program in `tests/reference.md`, without its title and expected-return metadata; it returns `[4,0,7]`.
+- [NUC 109](nuc-0109.md) lets a call argument that begins with a binary operator stand for the one-parameter function that applies the operator to its argument: `prices.filter(> limit)` is `prices.filter(price -> price > limit)`. A section is a whole argument of a parenthesized argument list, from the operator to the `,` or `)` that ends it, in any call, method call, constructor call, `new` call or `super(...)`.
+- The operators are `==`, `!=`, `===`, `!==`, `<`, `<=`, `>`, `>=`, `*`, `%`, `**`, `&&`, `||` and `??`. `+` and `-` stay signs, so `xs.map(- 1)` passes `-1`; `!`, `/` and the words `is`, `in`, `not`, `and` and `or` do not begin a section.
+- The rest of the argument is read with the usual precedence as if the parameter stood before the operator: `* 2 + 1` is `v -> v * 2 + 1` and `% 2 == 0` is `v -> v % 2 == 0`. The parameter has no name, so the rest cannot read or shadow it, and its names are read on each call, as in the lambda's body.
+- The parser builds the lambda's tree, so sections stay live, explain, render as `function()` and roll back exactly as the lambda does. Grouping parentheses, list items, object values, named arguments, subscripts and pipeline stage arguments keep their accepted errors, and `xs.filter(> 4 && < 9)` raises `SyntaxError("Unexpected '<'")` at its second operator.
+- Sections are read only in a run of the parse passes that starts after every accepted pass has failed, so every input the accepted grammar reads keeps its reading. See the authoritative [operator section arguments](../nucleoid.spec.md#operator-section-arguments) section.
+
 ### Named function declarations
 
 ```
@@ -2300,7 +2345,7 @@ picked
 - The lambda limits are inherited: the lambdas read variables and their own name but not an enclosing function's or lambda's parameters, so a nested comprehension reads only its own names, `this` inside a method's comprehension raises `ReferenceError("this is not defined")`, and `[c for c in "abc"]` raises `TypeError("abc.map is not a function")`.
 - Every input the accepted parser accepts keeps its parse: a source is parsed with comprehensions only after the accepted parse fails. See the authoritative [list comprehensions](../nucleoid.spec.md#list-comprehensions) section.
 
-Full detail: [NUC 8](nuc-0008.md), [NUC 12](nuc-0012.md), [NUC 18](nuc-0018.md), [NUC 19](nuc-0019.md), [NUC 20](nuc-0020.md), [NUC 24](nuc-0024.md), [NUC 27](nuc-0027.md), [NUC 28](nuc-0028.md), [NUC 29](nuc-0029.md), [NUC 30](nuc-0030.md), [NUC 32](nuc-0032.md), [NUC 57](nuc-0057.md), [NUC 79](nuc-0079.md), [NUC 89](nuc-0089.md), and [NUC 92](nuc-0092.md).
+Full detail: [NUC 8](nuc-0008.md), [NUC 12](nuc-0012.md), [NUC 18](nuc-0018.md), [NUC 19](nuc-0019.md), [NUC 20](nuc-0020.md), [NUC 24](nuc-0024.md), [NUC 27](nuc-0027.md), [NUC 28](nuc-0028.md), [NUC 29](nuc-0029.md), [NUC 30](nuc-0030.md), [NUC 32](nuc-0032.md), [NUC 57](nuc-0057.md), [NUC 79](nuc-0079.md), [NUC 89](nuc-0089.md), [NUC 92](nuc-0092.md), and [NUC 109](nuc-0109.md).
 
 ---
 
@@ -2505,7 +2550,7 @@ Full detail: [NUC 9](nuc-0009.md), [NUC 46](nuc-0046.md).
 | `Boolean` | `Boolean(value)` |
 | `Number` | `Number.MAX_INTEGER` |
 | `Math` | `pow`, `sqrt`, `floor`, `round`, `max`, `min`, `clamp` ([NUC 21](nuc-0021.md)), `lerp` ([NUC 22](nuc-0022.md)), `saturate` ([NUC 23](nuc-0023.md)), `smoothstep(lower, upper, value)` (accepted [NUC 33](nuc-0033.md)), `smootherstep(lower, upper, value)` (accepted [NUC 35](nuc-0035.md)), `remap(start, end, targetStart, targetEnd, value)` (accepted [NUC 39](nuc-0039.md)) |
-| `String` | `String.fromCharCode`; instance `charAt`, `length`, `lower`, `replace`, `replaceAll` (accepted [NUC 42](nuc-0042.md)), `repeat`, `split` |
+| `String` | `String.fromCharCode`; instance `charAt`, `length`, `lower`, `replace`, `replaceAll` (accepted [NUC 42](nuc-0042.md)), `repeat`, `split`, `padStart` and `padEnd` ([NUC 111](nuc-0111.md)), and Python's `startswith`, `endswith` and `join(items)`, with the separator as the receiver ([NUC 110](nuc-0110.md)) |
 | `Date` | `Date()`, `Date(string)`, `Date(number)`, `Date.now()`, `Date.parse()`; instance `getTime`, `getYear`, `toDateString` |
 | `List` | `push`, `pop`, `filter`, `map`, `flatMap` (accepted [NUC 41](nuc-0041.md)), `flat` ([NUC 103](nuc-0103.md)), `reduce`, `find`, `some`, `every`, `slice`, `sort` (in place, [NUC 58](nuc-0058.md)), `join`, `length`, and the queries `at`, `includes`, `indexOf`, `lastIndexOf`, `findIndex`, `findLast`, `findLastIndex` and `concat` ([NUC 61](nuc-0061.md)), `sum` ([NUC 68](nuc-0068.md)), `max` and `min` ([NUC 69](nuc-0069.md)), `distinct` ([NUC 71](nuc-0071.md)), `count(predicate)` ([NUC 73](nuc-0073.md)), `mode` ([NUC 75](nuc-0075.md)), `maxBy` and `minBy` ([NUC 77](nuc-0077.md)), `average` ([NUC 80](nuc-0080.md)), `median` ([NUC 84](nuc-0084.md)), `sortBy` ([NUC 105](nuc-0105.md)), and `partition` ([NUC 108](nuc-0108.md)); `sum`, `max`, `min` and `mode` also read as `sum of list` ([NUC 75](nuc-0075.md) revision 2) |
 | `Class` | the global list of declared types; `Class.length` |
@@ -2567,6 +2612,87 @@ assert(normalized, ["given_name", "last_name"])
   [root section](../nucleoid.spec.md#reactive-literal-string-replacement) and
   its five appended entries define results, Unicode, reactivity, class rules
   and failure rollback; native regressions cover the call/coercion boundaries.
+
+### Python string method aliases
+
+```
+files = ["main.py", "test_main.py", "notes.md"]
+tests = files.filter(name -> name.startswith("test_"))
+scripts = files.filter(name -> name.endswith(".py"))
+listing = ", ".join(scripts)
+assert(tests, ["test_main.py"])
+assert(listing, "main.py, test_main.py")
+files.push("setup.py")
+assert(listing, "main.py, test_main.py, setup.py")
+listing == scripts.join(", ")
+```
+
+- [NUC 110](nuc-0110.md) adds Python's spellings of three string methods.
+  `text.startswith(prefix)` is `text.startsWith(prefix)` and
+  `text.endswith(suffix)` is `text.endsWith(suffix)`.
+- `separator.join(items)` is `items.join(separator)`, with the separator as
+  the receiver, for a list or a class's instances: `", ".join(Task)` is
+  `Task.join(", ")`. Any other argument, including a string, keeps raising
+  `TypeError("<separator>.join is not a function")`.
+- Each alias evaluates its receiver and then its arguments, as every call
+  does, and stays live like its accepted spelling: `listing` follows the new
+  script. `why` names the same dependencies, in the order the call reads
+  them.
+- Only these calls on strings change. Lists and other receivers, reads such
+  as `text.startswith` without a call, functions, properties and methods of
+  the same names, and `String.startswith` keep their behavior.
+- The accepted methods keep their meanings where Python's differ:
+  - `startswith` and `endswith` ignore a position, so
+    `"abc".startswith("b", 1)` is `false`, and take no tuple of choices: a
+    list converts to its text, so `"a.csv".endswith([".csv", ".tsv"])` is
+    `false`;
+  - `join` writes items that are not strings in their string form, so
+    `"-".join(["a", 1, null])` is `"a-1-null"`, where Python raises, and
+    raises for a string, where Python joins its characters;
+  - `replace` replaces the first occurrence only, and `split()` without a
+    separator returns `[text]` rather than splitting on whitespace.
+- This is the executable entry
+  `Nucleoid spells startswith, endswith and join as Python does` in
+  `tests/reference.md`. The
+  [root section](../nucleoid.spec.md#python-string-method-aliases) and its
+  three appended entries define the results, liveness and rollback.
+
+### Reactive string padding
+
+```
+ids = ["7", "42"]
+codes = ids.map(id -> id.padStart(3, "0"))
+rows = ids.map(id -> id.padEnd(4, ".") + "|")
+assert(codes, ["007", "042"])
+assert(rows, ["7...|", "42..|"])
+ids.push("123")
+assert(codes, ["007", "042", "123"])
+rows[2]
+```
+
+- [NUC 111](nuc-0111.md) adds JavaScript's `padStart` and `padEnd` to
+  strings. `text.padStart(n, fill)` puts copies of `fill` before `text`
+  until the result holds `n` characters, and `text.padEnd(n, fill)` puts
+  them after it, so `rows[2]` is `"123.|"`.
+- `n` converts as the count of `repeat` does: a fraction truncates, and NaN
+  or a negative number is 0. `fill` converts to its string form, and a
+  missing fill, or an undefined value, is one space.
+- A fill of several characters is cut to the gap, so
+  `"5".padStart(4, "ab")` is `"aba5"`. Text that already holds `n`
+  characters, and an empty fill, give the text unchanged. Lengths count
+  characters, as `length`, `slice` and `repeat` do.
+- A result too large to allocate raises
+  `TypeError("Padded string is too large")`, without an arbitrary cap.
+- Each call reads its receiver and then its arguments, and stays live like
+  its `repeat` spelling: `codes` follows the pushed id. `why` names the
+  receiver, the length and the fill, in that order.
+- Only these calls on strings change. Numbers, lists and other receivers,
+  reads such as `text.padStart` without a call, functions, properties and
+  methods of the same names, and `String.padStart` keep their behavior.
+- This is the executable entry
+  `Nucleoid pads strings with padStart and padEnd` in `tests/reference.md`.
+  The [root section](../nucleoid.spec.md#reactive-string-padding) and its
+  four appended entries define the results, liveness and rollback.
 
 ### Numeric clamping keeps bounds live
 
@@ -3781,6 +3907,9 @@ pace
 - A selection is an ordered list of steps with `node`, `holds`, `rule`, `state`, and `from` fields.
 - `state` is `"stated"` for an independent fact or `"derived"` for a relationship or class-level rule.
 - List functions such as `map`, `find`, and `some` can inspect the steps.
+- `selection |> nodes` lists the steps' `node` names, as
+  `(selection).map(step => step.node)` does for the selection the pipeline
+  denotes ([NUC 112](nuc-0112.md)).
 
 ```
 a = 1
@@ -3992,6 +4121,58 @@ common.map(step => step.node)
   [intersect and except reasoning selections](../nucleoid.spec.md#intersect-and-except-reasoning-selections)
   section.
 
+### Node names of reasoning selections
+
+```
+price = 10
+qty = 3
+shipping = 5
+subtotal = price * qty
+total = subtotal + shipping
+facts = total |> why |> stated |> nodes
+reach = price |> affects |> nodes
+assert(facts, ["shipping", "price", "qty"])
+assert(reach, ["subtotal", "total"])
+base = 4
+shipping = base + 1
+facts
+```
+
+- This is the complete `Nucleoid names the nodes of selections with nodes`
+  program in `tests/reference.md`, without its title and expected-return
+  metadata; it returns `["base","price","qty"]`.
+- [NUC 112](nuc-0112.md) adds the final stage `selection |> nodes`. It gives
+  the `node` names of the selection's steps as a list of strings, in their
+  order, so `total |> why |> stated |> nodes` names the facts the total rests
+  on and `price |> affects |> nodes` what a change of the price reaches. It is
+  exactly `(selection).map(step => step.node)`, where `selection` is the
+  selection that the pipeline before `nodes` denotes, read as the stages read
+  their source.
+- The selection is written as a pipeline's source is: a reference, which
+  denotes its own one-step selection rather than its value, `model`, a prefix
+  stage such as `why total`, or a pipeline of any of the stages above. So
+  `total |> nodes` is `["total"]`, as
+  `(total |> why |> depth(0)).map(step => step.node)` is, while
+  `(total).map(step => step.node)` raises
+  `TypeError("number.map is not a function")`. An empty selection gives `[]`,
+  and a selection that a `depth(null)` makes undefined gives undefined.
+- The stage ends the pipeline: a stage after it, or an `intersect`, `except`
+  or `path` argument that ends with it, has a list of names rather than a
+  selection and raises `TypeError("Cannot explain <source>")`, as it does
+  after the accepted spelling.
+- Only `|>` followed by `nodes` is the stage; `nodes` stays an ordinary name
+  everywhere else, and there is no prefix form. A local or parameter,
+  variable, function or class named `nodes` shadows the stage, as bindings
+  shadow the state filters, `depth`, `diff`, `path`, `intersect` and
+  `except`: the pipeline then raises `TypeError("nodes is not an operation")`
+  before selecting its source.
+- The list stays live through every observation its selection made, and a
+  declaration that holds it is a reasoning observer. It renders as
+  `selection|>nodes`.
+- The authoritative contract is the
+  [node names of reasoning selections](../nucleoid.spec.md#node-names-of-reasoning-selections)
+  section.
+
 ### Live structure
 
 - A reasoning assignment follows both values and graph structure.
@@ -4030,8 +4211,11 @@ c = b * 2
   and its `before` and `after` fields, the [NUC 88](nuc-0088.md)
   candidate adds a `path(target)` stage that NUC 11 does not plan, and the
   [NUC 106](nuc-0106.md) candidate adds `intersect(other)` and
-  `except(other)` stages, which NUC 11 does not plan either. Other NUC 11
-  operations remain proposals, not dependencies.
+  `except(other)` stages, which NUC 11 does not plan either, and the
+  [NUC 112](nuc-0112.md) candidate adds a final `nodes` stage, which names
+  the nodes of a selection and, unlike NUC 11's operations, returns a list
+  rather than a selection. Other NUC 11 operations remain proposals, not
+  dependencies.
 
 ### Quantifiers
 
@@ -4224,6 +4408,7 @@ Messages are exact and are part of the observable behaviour of the language.
 | Deleting an instance that still has properties | `Cannot delete object '<id>'` |
 | Using `value` as a property name | `Cannot use 'value' as a property` |
 | Calling an unknown function of a built-in or list | `<Object>.<name> is not a function` |
+| A string's `join` whose first argument is neither a list nor a declared class's instances, including a string or a missing argument | `<receiver>.join is not a function` |
 | Missing or non-function `flatMap` callback, even on an empty receiver | `flatMap expects a function` |
 | Missing or non-function `find`, `findIndex`, `findLast` or `findLastIndex` callback, even on an empty receiver | `<name> expects a function` |
 | A supplied `sum` selector that is not a function, including `null`, even on an empty receiver | `sum expects a function` |
@@ -4248,6 +4433,7 @@ Messages are exact and are part of the observable behaviour of the language.
 | A `:=` declaration whose value nests lists 192 levels or more | `Maximum expression depth exceeded` |
 | Explaining something that is not a reference, such as the power in `why x ** 2` | `Cannot explain <expression>`, for example `Cannot explain x**2` |
 | Repeated string output is too large to represent or allocate | `Repeated string is too large` |
+| Padded string output of `padStart` or `padEnd` is too large to represent or allocate | `Padded string is too large` |
 | A `while` loop whose condition still holds after 100,000 iterations of one run | `Loop did not terminate` |
 | An undeclared constructor label | `Unknown constructor argument '<name>' for <class>` |
 | A repeated constructor binding, including positional plus named | `Duplicate constructor argument '<name>' for <class>` |
@@ -4350,6 +4536,8 @@ class Name:
 class Name:
     def __init__(self, param):         Python's constructor: exactly def init(param): (NUC 107)
     def method(self, a) => a           a leading self or this receiver: exactly def method(a) => a
+class Name(this.w, this.h):
+    def area() => .w * .h              .w reads this.w in the code of a class body (NUC 113)
 
 instance = Name(param=expression)      label binding without caller assignment
 instance = Name((param=expression))    explicit positional assignment argument
@@ -4424,6 +4612,7 @@ value => { statement }                 anonymous arrow with a statement body
 value -> expression                    optional spelling wherever => is accepted (NUC 57)
 lambda a, b: expression                optional lambda, exactly (a, b) => (expression) (NUC 57)
 f(.a.b)                                property selector argument, exactly f(v => v.a.b) (NUC 79)
+f(> 4)  f(* 2 + 1)                     operator section argument, exactly f(v => v > 4) (NUC 109)
 [expr for name in source]              list comprehension, exactly source.map(name => expr) (NUC 92)
 [expr for name of source if cond]      source.filter(name => cond).map(name => expr) (NUC 92)
 def name(params) => expression         single-return function
@@ -4480,6 +4669,9 @@ items.average()  Name.average(selector) live mean: exactly items.sum() / items.l
 items.median()  Name.median(selector)  live middle value; even counts take (lower + upper) / 2 (NUC 84)
 items.sortBy(key)  Name.sortBy(key)   live new list in ascending key order; ties keep receiver order (NUC 105)
 items.partition(test)  Name.partition(test) live [kept, rest]: what filter(test) keeps, then the others (NUC 108)
+text.startswith(p)  text.endswith(s)  Python spellings: exactly text.startsWith(p), text.endsWith(s) (NUC 110)
+", ".join(items)  ", ".join(Name)      Python spelling: exactly items.join(", "), Name.join(", ") (NUC 110)
+text.padStart(n, fill)  text.padEnd(n)  live text padded before or after to n characters; fill defaults to " " (NUC 111)
 mode of items  sum of Name.map(f)      noun query: exactly items.mode(), Name.map(f).sum() (NUC 75)
 sum of items ** 2                      a noun query applies to the whole power: sum of (items ** 2) (NUC 75)
 
@@ -4504,6 +4696,11 @@ why a |> except(why b)                what a rests on and b does not (NUC 106)
 affects a |> intersect(affects b)     what a and b both move (NUC 106)
 selection |> intersect(other)         steps whose node other also selects (NUC 106)
 selection |> except(other)            steps whose node other does not select (NUC 106)
+reference |> why |> nodes             the node names of an explanation, in its order (NUC 112)
+reference |> why |> stated |> nodes   the names of the facts an explanation rests on (NUC 112)
+reference |> affects |> nodes         the names of what a change of the reference reaches (NUC 112)
+model |> nodes                        the names of the current model's nodes (NUC 112)
+selection |> nodes                    the list (selection).map(step => step.node); ends the pipeline (NUC 112)
 all name in collection: condition     true when the condition holds for every member (NUC 62)
 every name in collection: condition   the same quantifier as all (NUC 98)
 any name in collection: condition     true when the condition holds for some member (NUC 62)
