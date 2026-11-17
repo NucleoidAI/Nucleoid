@@ -95,6 +95,8 @@ export async function start(puzzle_id: string = "3aa6fb7a") {
 
   const synthesized_dataset = await synthesizer.synthesize({ train_dataset });
 
+  milestone.training_dataset_synthesized({ dataset: synthesized_dataset });
+
   await visualizer.state({ declarations, test_input_matrix, input_instances });
 
   for (const input_instance of input_instances) {

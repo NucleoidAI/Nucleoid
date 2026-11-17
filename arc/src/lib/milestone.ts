@@ -14,10 +14,6 @@ function epoched(title: string, epoch): string {
     : title;
 }
 
-function signed(value: number): string {
-  return value < 0 ? `${value}` : `+${value}`;
-}
-
 export function start({ version, puzzle_id, train, test_input_matrix }) {
   terminal.header({ version, puzzle_id });
   terminal.puzzle({ train, testInput: test_input_matrix });
@@ -59,26 +55,31 @@ export function training_objects_segmented({ instances }) {
   });
 }
 
-export function training_objects_synthesized({ dataset }) {
-  const count: number = dataset.flatMap(({ instances }) => instances).length;
-  terminal.step(`${count} training objects synthesized`, {
-    key: "training_objects_synthesized",
-    loop: true,
-  });
-  dataset.forEach(({ input_matrix, output_matrix, instances }) => {
-    const { rotation, offset } = instances[0].synthesis;
-    const title: string = `${signed(rotation)}° x${signed(offset.x)} y${signed(
-      offset.y
-    )}`;
-    terminal.grid(`Input · ${title}`, input_matrix, {
-      key: "synthesized_input",
-      loop: true,
-    });
-    terminal.grid(`Output · ${title}`, output_matrix, {
-      key: "synthesized_output",
-      loop: true,
-    });
-  });
+export function training_dataset_synthesized({ dataset }) {
+  terminal.step(`${dataset.length} training pairs synthesized`);
+  dataset.forEach(
+    ({ input_max_matrix, output_max_matrix, instances }, index: number) => {
+      const pair: string = `Synthesized ${index + 1}`;
+      terminal.grid(`${pair} · Input`, input_max_matrix, {
+        key: "synthesized_input",
+        loop: true,
+      });
+      terminal.grid(`${pair} · Output`, output_max_matrix, {
+        key: "synthesized_output",
+        loop: true,
+      });
+      instances.forEach(({ input_instance_matrix, output_instance_matrix }) => {
+        terminal.grid(`${pair} · Input instance`, input_instance_matrix, {
+          key: "synthesized_input_instance",
+          loop: true,
+        });
+        terminal.grid(`${pair} · Output instance`, output_instance_matrix, {
+          key: "synthesized_output_instance",
+          loop: true,
+        });
+      });
+    }
+  );
 }
 
 export function constructing_instance({ instance_name }) {
