@@ -20281,6 +20281,126 @@ inputs = subtotal |> why |> stated |> nodes
 # return: [["subtotal","price","qty"],["price","qty"]]"#);
 }
 
+/// Nucleoid multiplies lists with product
+#[rustfmt::skip]
+#[test]
+fn multiplies_lists_with_product() {
+    let mut run = runner();
+    run("sides = [2, 3, 4]");
+    run("volume = sides.product()");
+    run("floor = sides.slice(0, 2).product()");
+    assert_eq!(run("[volume, floor]"), serde_json::json!([24, 6]));
+    run("sides.pop()");
+    run("sides.push(10)");
+    assert_eq!(run("[volume, floor]"), serde_json::json!([60, 6]));
+    run("sides = []");
+    assert_eq!(run("[volume, floor]"), serde_json::json!([1, 1]));
+    run("account = {rates: [0.1, 0.1]}");
+    run("growth = account.rates.product(rate -> 1 + rate)");
+    assert_eq!(run("growth"), 1.2100000000000002);
+    run("account.rates.push(0.1)");
+    assert_eq!(run("growth"), 1.3310000000000004);
+    run("account.rates.push(-0.5)");
+    assert_eq!(run("growth"), 0.6655000000000002);
+}
+
+/// Nucleoid multiplies class instance populations with product
+#[rustfmt::skip]
+#[test]
+fn multiplies_class_instance_populations_with_product() {
+    let mut run = runner();
+    run(r#"class Part(name, works):
+    this.name = name
+    this.works = works"#);
+    run(r#"pump = Part("pump", 0.5)"#);
+    run(r#"Part("valve", 0.75)"#);
+    run("chance = Part.product(part -> part.works)");
+    run("newest = Part[-1:].product(part -> part.works)");
+    assert_eq!(run("[chance, newest]"), serde_json::json!([0.375, 0.75]));
+    run(r#"Part("seal", 0.5)"#);
+    assert_eq!(run("[chance, newest]"), serde_json::json!([0.1875, 0.5]));
+    run("pump.works = 1");
+    assert_eq!(run("chance"), 0.375);
+    run("class Day(dry): this.dry = dry");
+    run("staysDry = Day.product(day -> day.dry)");
+    assert_eq!(run("staysDry"), 1);
+    run("Day(0.5)");
+    run("Day(0.25)");
+    assert_eq!(run("staysDry"), 0.125);
+}
+
+/// Nucleoid keeps products live in class level rules
+#[rustfmt::skip]
+#[test]
+fn keeps_products_live_in_class_level_rules() {
+    let mut run = runner();
+    run("class Box(sides): this.sides = sides");
+    run("$Box.volume = $Box.sides.product()");
+    run("crate = Box([2, 3, 4])");
+    run("cube = Box([3, 3, 3])");
+    assert_eq!(run("[crate.volume, cube.volume]"), serde_json::json!([24, 27]));
+    run("crate.sides.push(0.5)");
+    run("cube.sides = []");
+    assert_eq!(run("[crate.volume, cube.volume]"), serde_json::json!([12, 1]));
+    run("class Route(name): this.name = name");
+    run(r#"class Leg(route, onTime):
+    this.route = route
+    this.onTime = onTime"#);
+    run("$Route.chance = Leg.filter(leg -> leg.route == $Route).product(leg -> leg.onTime)");
+    run(r#"north = Route("north")"#);
+    run(r#"south = Route("south")"#);
+    run("Leg(north, 0.5)");
+    run("slow = Leg(north, 0.5)");
+    run("Leg(south, 0.75)");
+    run("network = Route.product(route -> route.chance)");
+    assert_eq!(run("[north.chance, south.chance, network]"), serde_json::json!([0.25, 0.75, 0.1875]));
+    run("slow.onTime = 1");
+    run("Leg(south, 0.5)");
+    assert_eq!(run("[north.chance, south.chance, network]"), serde_json::json!([0.5, 0.375, 0.1875]));
+    run(r#"west = Route("west")"#);
+    assert_eq!(run("[west.chance, network]"), serde_json::json!([1, 0.1875]));
+    run("Leg(west, 0.5)");
+    assert_eq!(run("network"), 0.09375);
+}
+
+/// Nucleoid rolls back failed product updates
+#[rustfmt::skip]
+#[test]
+fn rolls_back_failed_product_updates() {
+    let mut run = runner();
+    run(r#"def checked(chance):
+    if chance > 1:
+        throw "NOT_A_CHANCE"
+    return chance
+chances = [0.5, 0.5]
+both = chances.product(checked)
+failure = ""
+try:
+    chances.push(2)
+catch error:
+    failure = error
+assert([failure, chances, both], ["NOT_A_CHANCE", [0.5, 0.5], 0.25])
+try:
+    chances.push(0.5)
+    assert(both, 0.125)
+    throw "UNDO"
+catch error:
+    assert(error, "UNDO")
+assert([chances, both], [[0.5, 0.5], 0.25])
+class Stage(chance): this.chance = chance
+Stage(0.5)
+passes = Stage.product(stage -> checked(stage.chance))
+failure = ""
+try:
+    Stage(4)
+catch error:
+    failure = error
+assert([failure, Stage.length, passes], ["NOT_A_CHANCE", 1, 0.5])
+Stage(0.25)
+passes
+# return: 0.125"#);
+}
+
 /// Nucleoid flattens nested lists by one level
 #[rustfmt::skip]
 #[test]

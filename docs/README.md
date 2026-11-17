@@ -2552,7 +2552,7 @@ Full detail: [NUC 9](nuc-0009.md), [NUC 46](nuc-0046.md).
 | `Math` | `pow`, `sqrt`, `floor`, `round`, `max`, `min`, `clamp` ([NUC 21](nuc-0021.md)), `lerp` ([NUC 22](nuc-0022.md)), `saturate` ([NUC 23](nuc-0023.md)), `smoothstep(lower, upper, value)` (accepted [NUC 33](nuc-0033.md)), `smootherstep(lower, upper, value)` (accepted [NUC 35](nuc-0035.md)), `remap(start, end, targetStart, targetEnd, value)` (accepted [NUC 39](nuc-0039.md)) |
 | `String` | `String.fromCharCode`; instance `charAt`, `length`, `lower`, `replace`, `replaceAll` (accepted [NUC 42](nuc-0042.md)), `repeat`, `split`, `padStart` and `padEnd` ([NUC 111](nuc-0111.md)), and Python's `startswith`, `endswith` and `join(items)`, with the separator as the receiver ([NUC 110](nuc-0110.md)) |
 | `Date` | `Date()`, `Date(string)`, `Date(number)`, `Date.now()`, `Date.parse()`; instance `getTime`, `getYear`, `toDateString` |
-| `List` | `push`, `pop`, `filter`, `map`, `flatMap` (accepted [NUC 41](nuc-0041.md)), `flat` ([NUC 103](nuc-0103.md)), `reduce`, `find`, `some`, `every`, `slice`, `sort` (in place, [NUC 58](nuc-0058.md)), `join`, `length`, and the queries `at`, `includes`, `indexOf`, `lastIndexOf`, `findIndex`, `findLast`, `findLastIndex` and `concat` ([NUC 61](nuc-0061.md)), `sum` ([NUC 68](nuc-0068.md)), `max` and `min` ([NUC 69](nuc-0069.md)), `distinct` ([NUC 71](nuc-0071.md)), `count(predicate)` ([NUC 73](nuc-0073.md)), `mode` ([NUC 75](nuc-0075.md)), `maxBy` and `minBy` ([NUC 77](nuc-0077.md)), `average` ([NUC 80](nuc-0080.md)), `median` ([NUC 84](nuc-0084.md)), `sortBy` ([NUC 105](nuc-0105.md)), and `partition` ([NUC 108](nuc-0108.md)); `sum`, `max`, `min` and `mode` also read as `sum of list` ([NUC 75](nuc-0075.md) revision 2) |
+| `List` | `push`, `pop`, `filter`, `map`, `flatMap` (accepted [NUC 41](nuc-0041.md)), `flat` ([NUC 103](nuc-0103.md)), `reduce`, `find`, `some`, `every`, `slice`, `sort` (in place, [NUC 58](nuc-0058.md)), `join`, `length`, and the queries `at`, `includes`, `indexOf`, `lastIndexOf`, `findIndex`, `findLast`, `findLastIndex` and `concat` ([NUC 61](nuc-0061.md)), `sum` ([NUC 68](nuc-0068.md)), `max` and `min` ([NUC 69](nuc-0069.md)), `distinct` ([NUC 71](nuc-0071.md)), `count(predicate)` ([NUC 73](nuc-0073.md)), `mode` ([NUC 75](nuc-0075.md)), `maxBy` and `minBy` ([NUC 77](nuc-0077.md)), `average` ([NUC 80](nuc-0080.md)), `median` ([NUC 84](nuc-0084.md)), `sortBy` ([NUC 105](nuc-0105.md)), `partition` ([NUC 108](nuc-0108.md)), and `product` ([NUC 114](nuc-0114.md)); `sum`, `max`, `min` and `mode` also read as `sum of list` ([NUC 75](nuc-0075.md) revision 2) |
 | `Class` | the global list of declared types; `Class.length` |
 
 ```
@@ -3896,6 +3896,52 @@ pace
   [list and population medians](../nucleoid.spec.md#list-and-population-medians)
   section.
 
+### List and population products
+
+```
+sides = [2, 3, 4]
+volume = sides.product()
+class Check(name, chance):
+    this.name = name
+    this.chance = chance
+Check("lint", 0.5)
+build = Check("build", 0.75)
+green = Check.product(check -> check.chance)
+assert([volume, green], [24, 0.375])
+sides.push(0.5)
+build.chance = 1
+Check("deploy", 0.5)
+assert([volume, green], [12, 0.25])
+sides = []
+volume
+```
+
+- This is the complete
+  `Nucleoid multiplies lists and populations with product` program in
+  `tests/reference.md`, without its title and expected-return metadata; it
+  returns `1`.
+- [NUC 114](nuc-0114.md) adds `product()` and `product(selector)` to lists
+  and class instance lists. The values multiply left to right from `1` in
+  64-bit floating point, so a list of numbers multiplies bit for bit to
+  `xs.reduce((total, x) => total * x, 1)`, and an empty list or class gives
+  `1`, the empty product.
+- Values convert as `sum` converts them, so `[2, "3", true].product()` is
+  `6`. An undefined value makes the product undefined, stored as `null`. A
+  `null` item counts `0` without settling a declaration to `null`, while the
+  reads inside a selector follow the existing rules.
+- The selector is called once per item, in order, with only the item. A
+  supplied selector that is not a function, including `null`, raises
+  `TypeError("product expects a function")`, even on an empty receiver.
+- Products are read-only and live: a declaration follows the list or
+  population, the arguments and what the selector reads, in class-level rules
+  too. On a class name, `Name.product(...)` is the population query even when
+  the class declares an instance method `product`; instances keep calling the
+  method. `product` is not a noun query, so `product of xs` stays a syntax
+  error.
+- The authoritative contract is the
+  [list and population products](../nucleoid.spec.md#list-and-population-products)
+  section.
+
 ---
 
 ## 12. Reasoning Operations
@@ -4414,6 +4460,7 @@ Messages are exact and are part of the observable behaviour of the language.
 | A supplied `sum` selector that is not a function, including `null`, even on an empty receiver | `sum expects a function` |
 | A supplied `average` selector that is not a function, including `null`, even on an empty receiver | `average expects a function` |
 | A supplied `median` selector that is not a function, including `null`, even on an empty receiver | `median expects a function` |
+| A supplied `product` selector that is not a function, including `null`, even on an empty receiver | `product expects a function` |
 | A supplied `max` or `min` selector that is not a function, including `null`, even on an empty receiver | `max expects a function` or `min expects a function` |
 | A supplied `distinct` selector that is not a function, including `null`, even on an empty receiver | `distinct expects a function` |
 | Missing or non-function `count` predicate, including `null`, even on an empty receiver | `count expects a function` |
@@ -4669,6 +4716,7 @@ items.average()  Name.average(selector) live mean: exactly items.sum() / items.l
 items.median()  Name.median(selector)  live middle value; even counts take (lower + upper) / 2 (NUC 84)
 items.sortBy(key)  Name.sortBy(key)   live new list in ascending key order; ties keep receiver order (NUC 105)
 items.partition(test)  Name.partition(test) live [kept, rest]: what filter(test) keeps, then the others (NUC 108)
+items.product()  Name.product(selector) live product from 1: exactly items.reduce((t, x) => t * x, 1) (NUC 114)
 text.startswith(p)  text.endswith(s)  Python spellings: exactly text.startsWith(p), text.endsWith(s) (NUC 110)
 ", ".join(items)  ", ".join(Name)      Python spelling: exactly items.join(", "), Name.join(", ") (NUC 110)
 text.padStart(n, fill)  text.padEnd(n)  live text padded before or after to n characters; fill defaults to " " (NUC 111)

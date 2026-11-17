@@ -2682,6 +2682,25 @@ shipping = base + 1
 facts
 # return: ["base","price","qty"]
 ---
+# Nucleoid multiplies lists and populations with product
+
+sides = [2, 3, 4]
+volume = sides.product()
+class Check(name, chance):
+    this.name = name
+    this.chance = chance
+Check("lint", 0.5)
+build = Check("build", 0.75)
+green = Check.product(check -> check.chance)
+assert([volume, green], [24, 0.375])
+sides.push(0.5)
+build.chance = 1
+Check("deploy", 0.5)
+assert([volume, green], [12, 0.25])
+sides = []
+volume
+# return: 1
+---
 # Nucleoid flattens nested lists with flat
 
 pallets = [[["bolt", "nut"], ["gear"]], [["cog"]]]

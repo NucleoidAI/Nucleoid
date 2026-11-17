@@ -6106,6 +6106,59 @@ t.promote(bob)
   through `Nucleoid rolls back failed partition updates` specify the
   executable behavior. `tests/list_partitions.rs` executes the rest.
 
+## List and population products
+
+- [NUC 114](docs/nuc-0114.md) adds the read-only list query `product` to
+  lists and class instance lists. No syntax, keyword or error type is added.
+- `RECEIVER.product()` returns the product of the receiver's items and
+  `RECEIVER.product(selector)` the product of `selector(item)` for every
+  item. The values are converted to numbers and multiplied left to right,
+  starting from `1`, in 64-bit floating point, so a list of numbers
+  multiplies to exactly what `reduce((total, item) => total * item, 1)`
+  returns: `[1.1, 2.2, 3.3].product()` is `7.986000000000001`. An empty
+  receiver gives `1`.
+- The receiver is a list, however it is reached, or a class's instance list in
+  population order, named by the class, by a variable that holds the class or
+  by `$Name`. On a class name, `product` is the population query even when the
+  class declares an instance method `product`; its instances keep calling that
+  method.
+- Each value is converted with the numeric conversion of `sum`, which `*`
+  applies to its operands: `null`, `false`, an empty or whitespace-only string
+  and an empty list are `0`, `true` is `1`, a numeric string after trimming is
+  its number, a one-item list is its item's number, a date is its time in
+  milliseconds, and objects, classes, functions, regular expressions, other
+  strings and longer lists are NaN. NaN and infinities multiply as 64-bit
+  floating point, so `[1e308, 10].product()` is `Infinity` and
+  `[-1, 0].product()` is `-0`.
+- An undefined item or selector result makes the product undefined, which a
+  declaration stores as `null`; every item is still visited. `product()` reads
+  items, not bindings, so a `null` item counts `0` without settling a
+  declaration to `null`, while the reads inside a selector follow the existing
+  rules.
+- A selector is called once for every item, in order, with only the item;
+  further parameters are `null`. A supplied first argument that is not a
+  function, including `null`, raises `TypeError("product expects a function")`,
+  even on an empty receiver.
+- `product` follows the shared rules of the list queries: it reads its receiver
+  before its arguments, evaluates every supplied argument once, left to right,
+  including unused extras, and never writes the receiver. A declaration that
+  uses it depends on the list or population, on its argument expressions and
+  on whatever the selector reads, so list mutations, new and deleted instances
+  and property changes re-evaluate it, in class-level rules too. Selector
+  errors roll back through the existing transaction. A null or undefined
+  receiver yields undefined without evaluating the arguments.
+- The call keeps its ordinary rendering, so `volume = sides.product()`
+  explains as `volume = sides.product()`, and `why` lists the receiver among
+  the declaration's dependencies.
+- `product of xs` stays `SyntaxError("Unexpected keyword 'of'")`: `product` is
+  not one of the noun queries. Property reads such as `xs.product`, bindings
+  and object properties named `product`, `product(...)` without a definition,
+  `Math.product` and instance methods named `product` called on an instance
+  keep their accepted results. The four entries beginning
+  `Nucleoid multiplies lists with product` through
+  `Nucleoid rolls back failed product updates` specify the executable
+  behavior. `tests/list_products.rs` executes the rest.
+
 ## Object entry loops with ordered rollback
 
 - [NUC 72](docs/nuc-0072.md) adds loops over an object's entries:
@@ -25267,6 +25320,110 @@ assert(names, ["subtotal", "price", "qty"])
 inputs = subtotal |> why |> stated |> nodes
 [names, inputs]
 # return: [["subtotal","price","qty"],["price","qty"]]
+---
+# Nucleoid multiplies lists with product
+
+sides = [2, 3, 4]
+volume = sides.product()
+floor = sides.slice(0, 2).product()
+assert([volume, floor], [24, 6])
+sides.pop()
+sides.push(10)
+assert([volume, floor], [60, 6])
+sides = []
+assert([volume, floor], [1, 1])
+account = {rates: [0.1, 0.1]}
+growth = account.rates.product(rate -> 1 + rate)
+assert(growth, 1.2100000000000002)
+account.rates.push(0.1)
+assert(growth, 1.3310000000000004)
+account.rates.push(-0.5)
+assert(growth, 0.6655000000000002)
+---
+# Nucleoid multiplies class instance populations with product
+
+class Part(name, works):
+    this.name = name
+    this.works = works
+pump = Part("pump", 0.5)
+Part("valve", 0.75)
+chance = Part.product(part -> part.works)
+newest = Part[-1:].product(part -> part.works)
+assert([chance, newest], [0.375, 0.75])
+Part("seal", 0.5)
+assert([chance, newest], [0.1875, 0.5])
+pump.works = 1
+assert(chance, 0.375)
+class Day(dry): this.dry = dry
+staysDry = Day.product(day -> day.dry)
+assert(staysDry, 1)
+Day(0.5)
+Day(0.25)
+assert(staysDry, 0.125)
+---
+# Nucleoid keeps products live in class level rules
+
+class Box(sides): this.sides = sides
+$Box.volume = $Box.sides.product()
+crate = Box([2, 3, 4])
+cube = Box([3, 3, 3])
+assert([crate.volume, cube.volume], [24, 27])
+crate.sides.push(0.5)
+cube.sides = []
+assert([crate.volume, cube.volume], [12, 1])
+class Route(name): this.name = name
+class Leg(route, onTime):
+    this.route = route
+    this.onTime = onTime
+$Route.chance = Leg.filter(leg -> leg.route == $Route).product(leg -> leg.onTime)
+north = Route("north")
+south = Route("south")
+Leg(north, 0.5)
+slow = Leg(north, 0.5)
+Leg(south, 0.75)
+network = Route.product(route -> route.chance)
+assert([north.chance, south.chance, network], [0.25, 0.75, 0.1875])
+slow.onTime = 1
+Leg(south, 0.5)
+assert([north.chance, south.chance, network], [0.5, 0.375, 0.1875])
+west = Route("west")
+assert([west.chance, network], [1, 0.1875])
+Leg(west, 0.5)
+assert(network, 0.09375)
+---
+# Nucleoid rolls back failed product updates
+
+def checked(chance):
+    if chance > 1:
+        throw "NOT_A_CHANCE"
+    return chance
+chances = [0.5, 0.5]
+both = chances.product(checked)
+failure = ""
+try:
+    chances.push(2)
+catch error:
+    failure = error
+assert([failure, chances, both], ["NOT_A_CHANCE", [0.5, 0.5], 0.25])
+try:
+    chances.push(0.5)
+    assert(both, 0.125)
+    throw "UNDO"
+catch error:
+    assert(error, "UNDO")
+assert([chances, both], [[0.5, 0.5], 0.25])
+class Stage(chance): this.chance = chance
+Stage(0.5)
+passes = Stage.product(stage -> checked(stage.chance))
+failure = ""
+try:
+    Stage(4)
+catch error:
+    failure = error
+assert([failure, Stage.length, passes], ["NOT_A_CHANCE", 1, 0.5])
+Stage(0.25)
+passes
+# return: 0.125
 ---
 # Nucleoid flattens nested lists by one level
 

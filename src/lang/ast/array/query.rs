@@ -80,7 +80,7 @@ impl Runtime {
                 let function = expect_function(predicate, "reduce")?;
                 self.reduce_items(items, &function, arguments.get(1))
             }
-            "sum" | "average" | "median" | "max" | "min" | "distinct" | "mode" => {
+            "sum" | "product" | "average" | "median" | "max" | "min" | "distinct" | "mode" => {
                 self.aggregate_items(items, property, predicate)
             }
             "maxBy" | "minBy" => self.extreme_item(items, property, predicate),

@@ -2380,6 +2380,35 @@ assert(causes, ["solar", "target", "outside", "insulation"])
   joins the facts it rests on. See the
   [root contract](nucleoid.spec.md#node-names-of-reasoning-selections).
 
+## List and population products
+
+**Products keep the chance that a trip connects live as flights change**
+
+```nuc
+class Flight(code, onTime):
+    this.code = code
+    this.onTime = onTime
+first = Flight("AB1", 0.5)
+Flight("CD2", 0.75)
+trip = Flight.product(flight -> flight.onTime)
+assert(trip, 0.375)
+first.onTime = 0.75
+Flight("EF3", 0.5)
+assert(trip, 0.28125)
+```
+
+- [NUC 114](docs/nuc-0114.md) adds `product` to lists and class
+  populations, the multiplicative sibling of `sum`.
+  `Flight.product(flight -> flight.onTime)` multiplies the chances that
+  the flights are on time, so `trip` is the chance that all of them are,
+  when the flights are independent.
+- `trip` stays live like its `reduce` spelling,
+  `Flight.reduce((total, flight) => total * flight.onTime, 1)`: a likelier
+  first flight and a third connection both update it. Without a selector,
+  `sides.product()` multiplies the items themselves, and an empty list or
+  class gives `1`. See the
+  [root contract](nucleoid.spec.md#list-and-population-products).
+
 ## Reactive list flattening
 
 **Flat turns nested lists into one live list**

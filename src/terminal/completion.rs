@@ -63,6 +63,7 @@ const LIST_MEMBERS: &[&str] = &[
     "count",
     "reduce",
     "sum",
+    "product",
     "average",
     "median",
     "max",

@@ -3903,6 +3903,34 @@ assert(moved, ["ratio", "approved"])
   years of history, `years` joins the facts. See [NUC 112](nuc-0112.md) and the
   [root contract](../nucleoid.spec.md#node-names-of-reasoning-selections).
 
+## List and population products
+
+**Products keep every account's compounded balance live**
+
+```nuc
+class Account(start, rates):
+    this.start = start
+    this.rates = rates
+$Account.balance = $Account.start * $Account.rates.product(rate -> 1 + rate)
+saver = Account(100, [0.2, 0.1])
+opened = Account(200, [])
+assert([saver.balance, opened.balance], [132, 200])
+saver.rates.push(0.25)
+opened.rates.push(1)
+[saver.balance, opened.balance]
+# return: [165,400]
+```
+
+- Each account's class-level rule compounds its yearly rates:
+  `$Account.rates.product(rate -> 1 + rate)` multiplies `1 + rate` over
+  the account's rates, left to right from `1`, exactly as
+  `$Account.rates.reduce((total, rate) => total * (1 + rate), 1)` does, so
+  the saver's `100` grows by 20% and then 10% to `132`.
+- The new account has no rates yet, so its growth is `1`, the product of
+  nothing, and its balance is its start. A new rate on either account
+  updates only that account's balance. See [NUC 114](nuc-0114.md) and the
+  [root contract](../nucleoid.spec.md#list-and-population-products).
+
 ## Reactive list flattening
 
 **Flattening keeps the dirty tiles of every room counted**

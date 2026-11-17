@@ -210,6 +210,25 @@ fn completion_offers_the_median_query_on_lists_and_instance_lists() {
 }
 
 #[test]
+fn completion_offers_product_beside_sum_on_lists_and_instance_lists() {
+    let mut runtime = Runtime::new();
+    runtime
+        .run("sides = [3, 1]\nclass Part\nPart()\nprofit = 1")
+        .unwrap();
+    for (prefix, expected) in [
+        ("sides.pro", ["sides.product"]),
+        ("Part.pro", ["Part.product"]),
+        ("sides.su", ["sides.sum"]),
+        ("Part.su", ["Part.sum"]),
+    ] {
+        let completion = Completion::find(&runtime, &editor::new(prefix), false).unwrap();
+        assert_eq!(completion.candidates, expected, "{prefix}");
+    }
+    let completion = Completion::find(&runtime, &editor::new("pro"), false).unwrap();
+    assert_eq!(completion.candidates, ["profit"]);
+}
+
+#[test]
 fn completion_offers_suppose_beside_a_variable_of_the_same_prefix() {
     let mut runtime = Runtime::new();
     runtime.run("supply = 3").unwrap();
