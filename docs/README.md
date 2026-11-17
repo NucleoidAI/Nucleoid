@@ -2528,7 +2528,7 @@ Full detail: [NUC 9](nuc-0009.md), [NUC 46](nuc-0046.md).
 | `Boolean` | `Boolean(value)` |
 | `Number` | `Number.MAX_INTEGER` |
 | `Math` | `pow`, `sqrt`, `floor`, `round`, `max`, `min`, `clamp` ([NUC 21](nuc-0021.md)), `lerp` ([NUC 22](nuc-0022.md)), `saturate` ([NUC 23](nuc-0023.md)), `smoothstep(lower, upper, value)` (accepted [NUC 33](nuc-0033.md)), `smootherstep(lower, upper, value)` (accepted [NUC 35](nuc-0035.md)), `remap(start, end, targetStart, targetEnd, value)` (accepted [NUC 39](nuc-0039.md)) |
-| `String` | `String.fromCharCode`; instance `charAt`, `length`, `lower`, `replace`, `replaceAll` (accepted [NUC 42](nuc-0042.md)), `repeat`, `split`, and Python's `startswith`, `endswith` and `join(items)`, with the separator as the receiver ([NUC 110](nuc-0110.md)) |
+| `String` | `String.fromCharCode`; instance `charAt`, `length`, `lower`, `replace`, `replaceAll` (accepted [NUC 42](nuc-0042.md)), `repeat`, `split`, `padStart` and `padEnd` ([NUC 111](nuc-0111.md)), and Python's `startswith`, `endswith` and `join(items)`, with the separator as the receiver ([NUC 110](nuc-0110.md)) |
 | `Date` | `Date()`, `Date(string)`, `Date(number)`, `Date.now()`, `Date.parse()`; instance `getTime`, `getYear`, `toDateString` |
 | `List` | `push`, `pop`, `filter`, `map`, `flatMap` (accepted [NUC 41](nuc-0041.md)), `flat` ([NUC 103](nuc-0103.md)), `reduce`, `find`, `some`, `every`, `slice`, `sort` (in place, [NUC 58](nuc-0058.md)), `join`, `length`, and the queries `at`, `includes`, `indexOf`, `lastIndexOf`, `findIndex`, `findLast`, `findLastIndex` and `concat` ([NUC 61](nuc-0061.md)), `sum` ([NUC 68](nuc-0068.md)), `max` and `min` ([NUC 69](nuc-0069.md)), `distinct` ([NUC 71](nuc-0071.md)), `count(predicate)` ([NUC 73](nuc-0073.md)), `mode` ([NUC 75](nuc-0075.md)), `maxBy` and `minBy` ([NUC 77](nuc-0077.md)), `average` ([NUC 80](nuc-0080.md)), `median` ([NUC 84](nuc-0084.md)), `sortBy` ([NUC 105](nuc-0105.md)), and `partition` ([NUC 108](nuc-0108.md)); `sum`, `max`, `min` and `mode` also read as `sum of list` ([NUC 75](nuc-0075.md) revision 2) |
 | `Class` | the global list of declared types; `Class.length` |
@@ -2634,6 +2634,43 @@ listing == scripts.join(", ")
   `tests/reference.md`. The
   [root section](../nucleoid.spec.md#python-string-method-aliases) and its
   three appended entries define the results, liveness and rollback.
+
+### Reactive string padding
+
+```
+ids = ["7", "42"]
+codes = ids.map(id -> id.padStart(3, "0"))
+rows = ids.map(id -> id.padEnd(4, ".") + "|")
+assert(codes, ["007", "042"])
+assert(rows, ["7...|", "42..|"])
+ids.push("123")
+assert(codes, ["007", "042", "123"])
+rows[2]
+```
+
+- [NUC 111](nuc-0111.md) adds JavaScript's `padStart` and `padEnd` to
+  strings. `text.padStart(n, fill)` puts copies of `fill` before `text`
+  until the result holds `n` characters, and `text.padEnd(n, fill)` puts
+  them after it, so `rows[2]` is `"123.|"`.
+- `n` converts as the count of `repeat` does: a fraction truncates, and NaN
+  or a negative number is 0. `fill` converts to its string form, and a
+  missing fill, or an undefined value, is one space.
+- A fill of several characters is cut to the gap, so
+  `"5".padStart(4, "ab")` is `"aba5"`. Text that already holds `n`
+  characters, and an empty fill, give the text unchanged. Lengths count
+  characters, as `length`, `slice` and `repeat` do.
+- A result too large to allocate raises
+  `TypeError("Padded string is too large")`, without an arbitrary cap.
+- Each call reads its receiver and then its arguments, and stays live like
+  its `repeat` spelling: `codes` follows the pushed id. `why` names the
+  receiver, the length and the fill, in that order.
+- Only these calls on strings change. Numbers, lists and other receivers,
+  reads such as `text.padStart` without a call, functions, properties and
+  methods of the same names, and `String.padStart` keep their behavior.
+- This is the executable entry
+  `Nucleoid pads strings with padStart and padEnd` in `tests/reference.md`.
+  The [root section](../nucleoid.spec.md#reactive-string-padding) and its
+  four appended entries define the results, liveness and rollback.
 
 ### Numeric clamping keeps bounds live
 
@@ -4316,6 +4353,7 @@ Messages are exact and are part of the observable behaviour of the language.
 | A `:=` declaration whose value nests lists 192 levels or more | `Maximum expression depth exceeded` |
 | Explaining something that is not a reference, such as the power in `why x ** 2` | `Cannot explain <expression>`, for example `Cannot explain x**2` |
 | Repeated string output is too large to represent or allocate | `Repeated string is too large` |
+| Padded string output of `padStart` or `padEnd` is too large to represent or allocate | `Padded string is too large` |
 | A `while` loop whose condition still holds after 100,000 iterations of one run | `Loop did not terminate` |
 | An undeclared constructor label | `Unknown constructor argument '<name>' for <class>` |
 | A repeated constructor binding, including positional plus named | `Duplicate constructor argument '<name>' for <class>` |
@@ -4551,6 +4589,7 @@ items.sortBy(key)  Name.sortBy(key)   live new list in ascending key order; ties
 items.partition(test)  Name.partition(test) live [kept, rest]: what filter(test) keeps, then the others (NUC 108)
 text.startswith(p)  text.endswith(s)  Python spellings: exactly text.startsWith(p), text.endsWith(s) (NUC 110)
 ", ".join(items)  ", ".join(Name)      Python spelling: exactly items.join(", "), Name.join(", ") (NUC 110)
+text.padStart(n, fill)  text.padEnd(n)  live text padded before or after to n characters; fill defaults to " " (NUC 111)
 mode of items  sum of Name.map(f)      noun query: exactly items.mode(), Name.map(f).sum() (NUC 75)
 sum of items ** 2                      a noun query applies to the whole power: sum of (items ** 2) (NUC 75)
 

@@ -2654,6 +2654,18 @@ assert(listing, "main.py, test_main.py, setup.py")
 listing == scripts.join(", ")
 # return: true
 ---
+# Nucleoid pads strings with padStart and padEnd
+
+ids = ["7", "42"]
+codes = ids.map(id -> id.padStart(3, "0"))
+rows = ids.map(id -> id.padEnd(4, ".") + "|")
+assert(codes, ["007", "042"])
+assert(rows, ["7...|", "42..|"])
+ids.push("123")
+assert(codes, ["007", "042", "123"])
+rows[2]
+# return: "123.|"
+---
 # Nucleoid flattens nested lists with flat
 
 pallets = [[["bolt", "nut"], ["gear"]], [["cog"]]]

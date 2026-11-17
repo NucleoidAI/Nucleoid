@@ -2326,6 +2326,29 @@ assert(tables, "report.csv, notes.csv")
   to `tables`. See the
   [root contract](nucleoid.spec.md#python-string-method-aliases).
 
+## Reactive string padding
+
+**Padding keeps a price list aligned as it changes**
+
+```nuc
+item = "tea"
+price = "4"
+line = item.padEnd(8, ".") + price.padStart(3)
+assert(line, "tea.....  4")
+item = "honey"
+price = "12"
+assert(line, "honey... 12")
+```
+
+- [NUC 111](docs/nuc-0111.md) adds JavaScript's `padStart` and `padEnd` to
+  strings: `price.padStart(3)` puts spaces before the price until it holds
+  three characters, and `item.padEnd(8, ".")` puts dots after the item until
+  it holds eight. A fill of several characters is cut to the gap, and text
+  that already holds the length is returned as it is.
+- `line` stays live like its `repeat` spelling,
+  `item + ".".repeat(8 - item.length)`, so a new item and price realign it.
+  See the [root contract](nucleoid.spec.md#reactive-string-padding).
+
 ## Reactive list flattening
 
 **Flat turns nested lists into one live list**

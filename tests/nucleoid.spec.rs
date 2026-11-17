@@ -20080,6 +20080,104 @@ catch error:
 # return: ["ada, bo",true]"#);
 }
 
+/// Nucleoid pads strings at the start with padStart
+#[rustfmt::skip]
+#[test]
+fn pads_strings_at_the_start_with_padstart() {
+    let mut run = runner();
+    run(r#"ids = ["7", "42", "123", "1234"]"#);
+    run(r#"codes = ids.map(id -> id.padStart(3, "0"))"#);
+    run("h = 9");
+    run("m = 5");
+    run(r#"clock = String(h).padStart(2, "0") + ":" + String(m).padStart(2, "0")"#);
+    assert_eq!(run("codes"), serde_json::json!(["007", "042", "123", "1234"]));
+    assert_eq!(run("clock"), "09:05");
+    run(r#"ids.push("5")"#);
+    run("h = 14");
+    assert_eq!(run("codes"), serde_json::json!(["007", "042", "123", "1234", "005"]));
+    run(r#"clock
+
+# return: "14:05""#);
+}
+
+/// Nucleoid pads strings at the end with padEnd
+#[rustfmt::skip]
+#[test]
+fn pads_strings_at_the_end_with_padend() {
+    let mut run = runner();
+    run(r#"items = ["tea", "jam", "honey"]"#);
+    run("width = 6");
+    run(r#"rows = items.map(item -> item.padEnd(width) + "|")"#);
+    run(r#"title = "Total""#);
+    run(r#"rule = title.padEnd(12, ".:")"#);
+    assert_eq!(run("rows"), serde_json::json!(["tea   |", "jam   |", "honey |"]));
+    assert_eq!(run("rule"), "Total.:.:.:.");
+    run("width = 4");
+    run(r#"title = "Sum""#);
+    assert_eq!(run("rows"), serde_json::json!(["tea |", "jam |", "honey|"]));
+    run(r#"rule
+
+# return: "Sum.:.:.:.:.""#);
+}
+
+/// Nucleoid keeps padded strings live in declarations and class level rules
+#[rustfmt::skip]
+#[test]
+fn keeps_padded_strings_live_in_declarations_and_class_level_rules() {
+    let mut run = runner();
+    run(r#"label = "7""#);
+    run("width = 3");
+    run(r#"fill = "0""#);
+    run("shown = label.padStart(width, fill)");
+    assert_eq!(run("shown"), "007");
+    run(r#"label = "42""#);
+    assert_eq!(run("shown"), "042");
+    run("width = 5");
+    assert_eq!(run("shown"), "00042");
+    run(r#"fill = """#);
+    assert_eq!(run("shown"), "42");
+    run(r#"fill = "*""#);
+    assert_eq!(run("shown"), "***42");
+    run(r#"class Ticket(id):
+    this.id = id"#);
+    run(r#"$Ticket.code = "T-" + String($Ticket.id).padStart(4, "0")"#);
+    run("first = Ticket(7)");
+    run("second = Ticket(42)");
+    assert_eq!(run("[first.code, second.code]"), serde_json::json!(["T-0007", "T-0042"]));
+    run("first.id = 12345");
+    run(r#"[first.code, second.code]
+
+# return: ["T-12345","T-0042"]"#);
+}
+
+/// Nucleoid rolls back failed updates through padded strings
+#[rustfmt::skip]
+#[test]
+fn rolls_back_failed_updates_through_padded_strings() {
+    let mut run = runner();
+    run(r#"ids = []
+codes = ids.map(id -> id.padStart(size, "0"))
+failure = ""
+try:
+    ids.push("7")
+catch error:
+    failure = error
+assert(failure, ReferenceError("size is not defined"))
+assert([ids, codes], [[], []])
+size = 3
+ids.push("7", "42")
+assert(codes, ["007", "042"])
+try:
+    ids.push("5")
+    size = 2
+    assert(codes, ["07", "42", "05"])
+    throw "UNDO"
+catch error:
+    assert(error, "UNDO")
+[codes, size]
+# return: [["007","042"],3]"#);
+}
+
 /// Nucleoid flattens nested lists by one level
 #[rustfmt::skip]
 #[test]

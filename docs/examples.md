@@ -3847,6 +3847,33 @@ first.items.push("rye")
   [NUC 110](nuc-0110.md) and the
   [root contract](../nucleoid.spec.md#python-string-method-aliases).
 
+## Reactive string padding
+
+**Padded labels follow every bin's aisle and slot**
+
+```nuc
+class Bin(aisle, slot):
+    this.aisle = aisle
+    this.slot = slot
+$Bin.label = $Bin.aisle.padEnd(3, "-") + String($Bin.slot).padStart(3, "0")
+north = Bin("N", 7)
+east = Bin("E2", 45)
+assert([north.label, east.label], ["N--007", "E2-045"])
+north.slot = 12
+east.aisle = "EAST"
+[north.label, east.label]
+# return: ["N--012","EAST045"]
+```
+
+- Each bin's class-level rule writes its label from two padded parts: the
+  aisle, padded at the end with dashes to three characters, and the slot
+  number, padded at the start with zeros to three digits.
+  `$Bin.aisle.padEnd(3, "-")` is `$Bin.aisle + "-".repeat(3 - $Bin.aisle.length)`.
+- A new slot and a renamed aisle update the label of the bin they touch. An
+  aisle that already holds three characters or more, such as `"EAST"`, is
+  not padded. See [NUC 111](nuc-0111.md) and the
+  [root contract](../nucleoid.spec.md#reactive-string-padding).
+
 ## Reactive list flattening
 
 **Flattening keeps the dirty tiles of every room counted**

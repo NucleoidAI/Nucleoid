@@ -371,6 +371,69 @@ operator-chain diagnostics and source positions are preserved.
   specify the executable behavior. `tests/python_string_aliases.rs` executes
   the rest.
 
+## Reactive string padding
+
+- [NUC 111](docs/nuc-0111.md) adds JavaScript's standard padding methods to
+  string receivers. `TEXT.padStart(length, fill)` puts copies of `fill`
+  before `TEXT` until the result holds `length` characters, and
+  `TEXT.padEnd(length, fill)` puts them after it, so `"7".padStart(3, "0")`
+  is `"007"` and `"ab".padEnd(4, ".")` is `"ab.."`. No token, keyword,
+  syntax tree node, error type or public item is added.
+- **Length.** The first argument converts to a number and then as the count
+  of `repeat` does: NaN and negative numbers give 0, and fractions truncate.
+  So `"3"` gives 3, `true` 1, `2.9` 2, and `null` and a missing length 0.
+- **Fill.** The second argument converts to its string form, as other string
+  arguments do, so `0` fills with `"0"` and `null` with `"null"`. A missing
+  fill, or an undefined value such as a missing property, is one space,
+  `" "`. The keyword `undefined` is `null`, so `"5".padStart(3, undefined)`
+  is `"nu5"`.
+- **Padding.** With `missing` the length minus the number of characters of
+  `TEXT`, the result is `TEXT` unchanged when `missing` is 0 or less or the
+  fill is empty. Otherwise the padding is the characters of the fill
+  repeated and cut to exactly `missing` characters, before `TEXT` for
+  `padStart` and after it for `padEnd`: `"5".padStart(4, "ab")` is
+  `"aba5"` and `"abc".padEnd(6, "123456")` is `"abc123"`. Characters are
+  Unicode scalar values, as `length`, `slice` and `repeat` count them, so
+  `"日".padStart(3, "本")` is `"本本日"`. Further arguments are evaluated and
+  ignored.
+- **Bounds.** The method sizes its whole result with checked arithmetic and
+  reserves it fallibly before writing. A result too large to represent or
+  allocate raises `TypeError("Padded string is too large")`, as `repeat`
+  raises `TypeError("Repeated string is too large")`; no arbitrary cap is
+  added.
+- **Evaluation.** The receiver is read first, then every argument once, left
+  to right, as for every call, and argument errors propagate before the
+  method runs. A `null` or undefined receiver gives undefined without
+  evaluating the arguments, and a declaration whose receiver or argument
+  reads a `null` binding holds `null` until it is defined, as for `repeat`.
+- **Live.** A declaration or class-level rule that calls a padding method
+  depends on what its receiver and arguments read:
+  `shown = label.padStart(width, fill)` follows writes of `label`, `width`
+  and `fill`, and `$Ticket.code = String($Ticket.id).padStart(4, "0")`
+  follows each ticket's `id`. Errors roll back through the existing
+  transaction.
+- **Rendering.** Statements, `why`, `affects`, `--graph` and graph keys show
+  the call as written. Its dependencies are what the call reads, in reading
+  order: the receiver, the length, then the fill.
+- **Unchanged.** Only calls of `padStart` and `padEnd` on a string receiver
+  change; each raised `TypeError("<receiver>.<name> is not a function")`.
+  Numbers, lists and every other receiver keep their results, so
+  `(5).padStart(3, "0")` still raises
+  `TypeError("number.padStart is not a function")`. Reads without a call,
+  such as `text.padStart`, stay undefined; `text.padStart = 1` keeps raising
+  `TypeError("Cannot assign 'padStart' on string")`; functions, callable
+  object properties and instance methods named `padStart` or `padEnd` keep
+  their routing; and `String.padStart` and `String.padEnd` keep raising
+  `TypeError("String.<name> is not a function")`.
+- **JavaScript differences.** Lengths count Unicode scalar values rather
+  than UTF-16 code units, the keyword `undefined` is `null`, so it fills
+  with `"null"` where JavaScript fills with spaces, and a result too large
+  raises this `TypeError` where JavaScript raises a `RangeError`.
+- The four entries beginning
+  `Nucleoid pads strings at the start with padStart` through
+  `Nucleoid rolls back failed updates through padded strings` specify the
+  executable behavior. `tests/string_padding.rs` executes the rest.
+
 ## Bare single-parameter named arrows
 
 A named arrow definition or method may spell `def double(amount) => amount * 2`
@@ -24788,6 +24851,85 @@ catch error:
     assert(error, "UNDO")
 [label, report.table]
 # return: ["ada, bo",true]
+---
+# Nucleoid pads strings at the start with padStart
+
+ids = ["7", "42", "123", "1234"]
+codes = ids.map(id -> id.padStart(3, "0"))
+h = 9
+m = 5
+clock = String(h).padStart(2, "0") + ":" + String(m).padStart(2, "0")
+assert(codes, ["007", "042", "123", "1234"])
+assert(clock, "09:05")
+ids.push("5")
+h = 14
+assert(codes, ["007", "042", "123", "1234", "005"])
+clock
+# return: "14:05"
+---
+# Nucleoid pads strings at the end with padEnd
+
+items = ["tea", "jam", "honey"]
+width = 6
+rows = items.map(item -> item.padEnd(width) + "|")
+title = "Total"
+rule = title.padEnd(12, ".:")
+assert(rows, ["tea   |", "jam   |", "honey |"])
+assert(rule, "Total.:.:.:.")
+width = 4
+title = "Sum"
+assert(rows, ["tea |", "jam |", "honey|"])
+rule
+# return: "Sum.:.:.:.:."
+---
+# Nucleoid keeps padded strings live in declarations and class level rules
+
+label = "7"
+width = 3
+fill = "0"
+shown = label.padStart(width, fill)
+assert(shown, "007")
+label = "42"
+assert(shown, "042")
+width = 5
+assert(shown, "00042")
+fill = ""
+assert(shown, "42")
+fill = "*"
+assert(shown, "***42")
+class Ticket(id):
+    this.id = id
+$Ticket.code = "T-" + String($Ticket.id).padStart(4, "0")
+first = Ticket(7)
+second = Ticket(42)
+assert([first.code, second.code], ["T-0007", "T-0042"])
+first.id = 12345
+[first.code, second.code]
+# return: ["T-12345","T-0042"]
+---
+# Nucleoid rolls back failed updates through padded strings
+
+ids = []
+codes = ids.map(id -> id.padStart(size, "0"))
+failure = ""
+try:
+    ids.push("7")
+catch error:
+    failure = error
+assert(failure, ReferenceError("size is not defined"))
+assert([ids, codes], [[], []])
+size = 3
+ids.push("7", "42")
+assert(codes, ["007", "042"])
+try:
+    ids.push("5")
+    size = 2
+    assert(codes, ["07", "42", "05"])
+    throw "UNDO"
+catch error:
+    assert(error, "UNDO")
+[codes, size]
+# return: [["007","042"],3]
 ---
 # Nucleoid flattens nested lists by one level
 

@@ -267,6 +267,8 @@ fn add_members(runtime: &Runtime, owner: &str, candidates: &mut BTreeSet<String>
                 "toLowerCase",
                 "replace",
                 "replaceAll",
+                "padStart",
+                "padEnd",
             ],
             _ => &[],
         },
