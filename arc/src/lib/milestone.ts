@@ -6,14 +6,6 @@ function oriented(title: string, orientation: unknown): string {
   return direction ? `${title} · ${direction}` : title;
 }
 
-// Adds a drawing's epoch, the column and row of position (0, 0) in its grid,
-// when the drawing grew left of or above that position.
-function epoched(title: string, epoch): string {
-  return epoch && (epoch.x !== 0 || epoch.y !== 0)
-    ? `${title} · epoch x=${epoch.x} y=${epoch.y}`
-    : title;
-}
-
 export function start({ version, puzzle_id, train, test_input_matrix }) {
   terminal.header({ version, puzzle_id });
   terminal.puzzle({ train, testInput: test_input_matrix });
@@ -241,12 +233,15 @@ export function output_composed({
   );
 }
 
-export function output_placed({ instance_name, output_instance_drawing }) {
-  const { matrix, epoch } = output_instance_drawing;
-  terminal.grid(epoched(`Placed output · ${instance_name}`, epoch), matrix, {
-    key: "placed_output",
-    loop: true,
-  });
+export function output_placed({
+  instance_name,
+  output_instance_placed_matrix,
+}) {
+  terminal.grid(
+    `Placed output · ${instance_name}`,
+    output_instance_placed_matrix,
+    { key: "placed_output", loop: true }
+  );
 }
 
 export function comparison({ test_output_matrix, result_matrix }) {

@@ -183,7 +183,7 @@ export async function output_instance_matrix({
 
   milestone.output_composed(instance);
 
-  const output_instance_drawing = Matrix.draw(
+  const output_instance_placed_matrix = Matrix.draw(
     Matrix.crop(output_instance_matrix),
     test_input_matrix.length,
     test_input_matrix[0].length,
@@ -191,9 +191,9 @@ export async function output_instance_matrix({
     y
   );
 
-  milestone.output_placed({ ...instance, output_instance_drawing });
+  milestone.output_placed({ ...instance, output_instance_placed_matrix });
 
-  return { output_instance_drawing };
+  return { output_instance_matrix: output_instance_placed_matrix };
 }
 
 export async function state({

@@ -65,7 +65,7 @@ export async function start(puzzle_id: string = "3aa6fb7a") {
     test_input_matrix,
   });
 
-  let result_drawing = Matrix.draw(
+  let result_matrix = Matrix.draw(
     [],
     test_input_matrix.length,
     test_input_matrix[0].length,
@@ -100,21 +100,18 @@ export async function start(puzzle_id: string = "3aa6fb7a") {
   await visualizer.state({ declarations, test_input_matrix, input_instances });
 
   for (const input_instance of input_instances) {
-    const { output_instance_drawing } = await visualizer.output_instance_matrix(
-      {
-        test_input_matrix,
-        train_dataset,
-        instance: input_instance,
-      }
-    );
+    const { output_instance_matrix } = await visualizer.output_instance_matrix({
+      test_input_matrix,
+      train_dataset,
+      instance: input_instance,
+    });
 
-    input_instance.output_instance_matrix = output_instance_drawing.matrix;
-    input_instance.output_instance_epoch = output_instance_drawing.epoch;
+    input_instance.output_instance_matrix = output_instance_matrix;
 
-    result_drawing = Matrix.merge(result_drawing, output_instance_drawing);
+    result_matrix = Matrix.merge(result_matrix, output_instance_matrix);
   }
 
-  const result_matrix = Matrix.canvas(result_drawing.matrix, output_canvas);
+  result_matrix = Matrix.canvas(result_matrix, output_canvas);
 
   milestone.comparison({ test_output_matrix, result_matrix });
 
