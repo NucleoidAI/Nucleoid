@@ -73,58 +73,6 @@ export function silhouette(matrix) {
   );
 }
 
-// Draws the nonzero cells of each placement, a matrix whose top-left cell sits
-// at column x and row y, on a canvas of at least rows by cols cells that grows
-// right or down to cover every placement, so a later nonzero cell wins on
-// overlap.
-function compose(rows: number, cols: number, placements, action: string) {
-  let bottom: number = rows;
-  let right: number = cols;
-  for (const { matrix, x, y } of placements) {
-    const width: number = matrix[0]?.length ?? 0;
-    for (const row of matrix) {
-      if (row.length !== width) {
-        throw new Error(`Matrix must be rectangular for ${action}`);
-      }
-    }
-    right = Math.max(right, x + width);
-    bottom = Math.max(bottom, y + matrix.length);
-  }
-
-  const result = Array.from({ length: bottom }, () => Array(right).fill(0));
-  for (const { matrix, x, y } of placements) {
-    for (let i: number = 0; i < matrix.length; i++) {
-      for (let j: number = 0; j < matrix[i].length; j++) {
-        if (matrix[i][j] !== 0) {
-          result[y + i][x + j] = matrix[i][j];
-        }
-      }
-    }
-  }
-
-  return result;
-}
-
-// Draws the matrix with its top-left cell at column x and row y on a canvas of
-// at least rows by cols cells, which grows right or down to keep the whole
-// matrix.
-export function draw(matrix, rows: number, cols: number, x: number, y: number) {
-  if (![rows, cols].every((size) => Number.isInteger(size) && size >= 0)) {
-    throw new Error("Drawing dimensions must be non-negative integers");
-  }
-  if (!Number.isInteger(x) || !Number.isInteger(y)) {
-    throw new Error(
-      `Drawing position ${JSON.stringify({ x, y })} must be integers`
-    );
-  }
-  if (x < 0 || y < 0) {
-    throw new Error(
-      `Drawing position ${JSON.stringify({ x, y })} must not be negative`
-    );
-  }
-  return compose(rows, cols, [{ matrix, x, y }], "drawing");
-}
-
 export function pad(
   matrix,
   rows: number,
@@ -138,7 +86,25 @@ export function pad(
   if (left < 0 || top < 0) {
     throw new Error("Padding offsets must be non-negative");
   }
-  return compose(rows, cols, [{ matrix, x: left, y: top }], "padding");
+  const sourceRows: number = matrix.length;
+  const sourceCols: number = matrix[0]?.length ?? 0;
+  const paddedRows: number = Math.max(rows, top + sourceRows);
+  const paddedCols: number = Math.max(cols, left + sourceCols);
+  const result = Array.from({ length: paddedRows }, () =>
+    Array(paddedCols).fill(0)
+  );
+
+  for (let y: number = 0; y < sourceRows; y++) {
+    const row = matrix[y];
+    if (row.length !== sourceCols) {
+      throw new Error("Matrix must be rectangular for padding");
+    }
+    for (let x: number = 0; x < sourceCols; x++) {
+      result[y + top][x + left] = row[x];
+    }
+  }
+
+  return result;
 }
 
 // Turns the matrix clockwise by a multiple of 90 degrees, the direction in
@@ -189,19 +155,29 @@ export function move(matrix, x: number, y: number) {
   return pad(crop(matrix), matrix.length, matrix[0]?.length ?? 0, x, y);
 }
 
-// Draws the matrices over one another from their top-left cells, so zero is
-// transparent and a later nonzero cell wins on overlap. The result keeps the
-// largest height and width of its inputs.
 export function merge(...matrices) {
   if (matrices.length === 0) {
     throw new Error("At least one matrix is required for merging");
   }
-  return compose(
-    0,
-    0,
-    matrices.map((matrix) => ({ matrix, x: 0, y: 0 })),
-    "merging"
+  const numRows: number = Math.max(...matrices.map((matrix) => matrix.length));
+  const numCols: number = Math.max(
+    ...matrices.map((matrix) => matrix[0]?.length ?? 0)
   );
+
+  const result = Array.from({ length: numRows }, () => Array(numCols).fill(0));
+
+  for (const matrix of matrices) {
+    const padded = pad(matrix, numRows, numCols, 0, 0);
+    for (let i: number = 0; i < numRows; i++) {
+      for (let j: number = 0; j < numCols; j++) {
+        if (padded[i][j] !== 0) {
+          result[i][j] = padded[i][j];
+        }
+      }
+    }
+  }
+
+  return result;
 }
 
 export function canvas(matrix, type: string) {

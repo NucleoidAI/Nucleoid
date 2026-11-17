@@ -235,11 +235,11 @@ export function output_composed({
 
 export function output_placed({
   instance_name,
-  output_instance_placed_matrix,
+  output_instance_padded_matrix,
 }) {
   terminal.grid(
     `Placed output · ${instance_name}`,
-    output_instance_placed_matrix,
+    output_instance_padded_matrix,
     { key: "placed_output", loop: true }
   );
 }

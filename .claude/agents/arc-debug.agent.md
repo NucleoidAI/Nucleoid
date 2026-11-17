@@ -114,15 +114,9 @@ between that code and the log. At the time of writing, `start()` writes
 6. `visualizer.instances` (LLM): the test `input_instances[].input_instance_matrix`.
 7. `visualizer.value` (LLM, then Nucleoid): test `implementation`, `input_value`.
 8. `visualizer.state` (Nucleoid): test `output_value`.
-9. `visualizer.output_instance_matrix` (LLM): the instance's matrix, drawn by
-   `Matrix.draw` at `output_value.x` / `output_value.y` on the test input's
-   canvas: `output_instance_matrix`. Positions count from the test input's
-   top-left cell, and `Matrix.draw` rejects a negative one, which fails the
-   run. Older logs may also hold `output_instance_epoch`, the column and row
-   of position (0, 0) in a drawing that could grow left or up; a nonzero one
-   means that drawing did.
-10. `Matrix.merge` of the drawn matrices onto a zero canvas of the test input's
-    size, lined up at their top-left cells, then
+9. `visualizer.output_instance_matrix` (LLM): the instance's matrix, padded by
+   `Matrix.pad` at `output_value.x` / `output_value.y` to the test input's size.
+10. `Matrix.merge` of the test output instances, then
     `Matrix.canvas(..., output_canvas)`: `result_matrix`.
 11. `Matrix.difference(result_matrix, test_output_matrix)`: `difference`;
     `0` is an exact match.
@@ -200,13 +194,11 @@ Run every check that applies and record each result:
   unturned.
   Report those separately from the extracted instances' disagreements, which
   alone show the world model mispredicting its own training data.
-- **Test composition.** Every test `output_value` has non-negative integer `x`
-  and `y`; a negative one lies left of or above the test input, and
-  `Matrix.draw` rejects it. Every drawn `output_instance_matrix` keeps the test
-  input's shape; a larger one means the instance reached past the right or
-  bottom edge and `Matrix.draw` grew the grid that way. Recompute the drawn
-  matrices, merge and canvas and compare the result with `result_matrix`,
-  noting cells that a later instance overwrote.
+- **Test composition.** Every test `output_value` has in-range numeric `x` and
+  `y`. Every padded `output_instance_matrix` keeps the test input's shape; a
+  larger one means the instance was placed out of bounds and `Matrix.pad`
+  enlarged the grid. Recompute merge and canvas and compare the result with
+  `result_matrix`, noting cells that a later instance overwrote.
 - **Scoring (scoring-only).** Compare the shapes of `result_matrix` and
   `test_output_matrix`. Recompute the difference and compare it with the
   logged `difference`. Count the mismatched cells and give their coordinates.
