@@ -112,11 +112,11 @@ formatting exactly:
 - `declarations[0]` holds every class declaration of the world model, because
   the solver runs it alone to build input states. Existing datasets declare
   one class, `Obj(x: int, y: int, width: int, height: int, orientation: int,
-  ...)`; add another class only for a distinct kind of object the
-  transformation needs. Each class whose instances are annotated objects
+  volume: int, ...)`; add another class only for a distinct kind of object
+  the transformation needs. Each class whose instances are annotated objects
   takes the standard entries `x: int, y: int, width: int, height: int,
-  orientation: int` first, in that order, and its body assigns every
-  parameter to `this` and sets an initial tag either way: a literal,
+  orientation: int, volume: int` first, in that order, and its body assigns
+  every parameter to `this` and sets an initial tag either way: a literal,
   `this.tag = 'lNNNN'`, or a `tag: str` parameter, `this.tag = tag`, whose
   value each implementation passes, as in `dataset.27a28665.json`. Add only
   the descriptive properties the transformation needs, such as categorical
@@ -129,6 +129,12 @@ formatting exactly:
   size from the input value with `@first`, as in
   `$Obj.width = $Obj.width@first + 1`. Use them for an object's size instead
   of separate size properties such as `bar_height` or `bar_width`.
+- `volume` is the number of nonzero cells in the object's input mask, not the
+  area of its bounding box; the solver measures it with `Matrix.locate` and
+  sends it to the implementation call as `input_volume`. Like `width` and
+  `height`, it does not change when only the orientation changes. Use it for
+  an object's cell count instead of a separate property such as
+  `cell_count`.
 - The solver starts every Nucleoid program with `canvas_width` and
   `canvas_height`, the column and row counts of the pair's `input_matrix`
   (every `nucleoid.run` call in `arc/src/analyzer.ts` and
@@ -219,10 +225,11 @@ The caller decides whether to propose the feature; you never start a NUC.
   unique across all datasets
   (`node -e "console.log(require('crypto').randomBytes(6).toString('hex'))"`).
 - `implementation` is `<instance_name> = <Class>(x=<input_x>, y=<input_y>,
-  width=<width>, height=<height>, orientation=<input_orientation>, ...)`,
-  constructing the instance's class (`Obj` in existing datasets) with named
-  arguments matching its parameters, where `width` and `height` are the input
-  mask's nonzero bounding-box column and row counts.
+  width=<width>, height=<height>, orientation=<input_orientation>,
+  volume=<volume>, ...)`, constructing the instance's class (`Obj` in existing
+  datasets) with named arguments matching its parameters, where `width` and
+  `height` are the input mask's nonzero bounding-box column and row counts and
+  `volume` is its number of nonzero cells.
 - Before that code, `implementation` holds `#` comment lines that describe the
   object, as in every existing dataset: its kind and colors, then its size,
   position and, when it points, its direction, such as

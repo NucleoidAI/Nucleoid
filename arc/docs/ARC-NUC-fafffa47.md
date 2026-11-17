@@ -6,12 +6,12 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Item | Status |
 | --- | --- |
 | Puzzle | [`data/training/fafffa47.json`](../data/training/fafffa47.json) |
-| Instruction dataset | [`dataset.fafffa47.json`](../src/dataset/dataset.fafffa47.json): 5 original training pairs followed by 1 test pair, 12 whole panel-figure instances, written on 9-Nov-2026 |
+| Instruction dataset | [`dataset.fafffa47.json`](../src/dataset/dataset.fafffa47.json): 5 original training pairs followed by 1 test pair, 12 whole panel-figure instances, written on 9-Nov-2026; `volume` added as the sixth standard entry on 17-Nov-2026 |
 | Output canvas | `FIT` |
 | Nucleoid enhancements | None requested; accepted Nucleoid expresses the model. A quote-free NUC for other datasets' quotes was drafted and then withdrawn before evaluation, once the accepted [NUC 95](../../docs/nuc-0095.md) made those quotes expressible |
-| Solver changes | Suggested, not applied: an output canvas mode that frames one panel, and class declarations that stay in `declarations[0]` |
+| Solver changes | Suggested, not applied: an output canvas mode that frames one panel, and class declarations that stay in `declarations[0]`; since 17-Nov-2026 `Matrix.locate` measures each object's `volume`, which `object.implementation` receives as `input_volume` |
 | Solver runs | 1 local run on 9-Nov-2026: exit 1, a failed run, `ReferenceError: Obj is not defined` in the analysis stage; difference unknown |
-| Updated | 9-Nov-2026 |
+| Updated | 17-Nov-2026 |
 
 ## Puzzle
 
@@ -126,6 +126,31 @@ so it selected no proposal strategy.
 Every form the dataset uses was already in the
 [dataset grammar](../nucleoid.ebnf), which still derives every program in
 `src/dataset` and needs each of its forms, so the grammar did not change.
+
+### Volume
+
+On 17-Nov-2026, at the user's request, `volume` joined the standard object
+entries as the sixth, after `orientation`: the number of nonzero cells in the
+object's input mask, not the area of its bounding box. The solver's
+`init_class` in `src/lib/llm.ts` declares it, `Matrix.locate` measures it, and
+`object.implementation` receives the measured count as `input_volume`. The
+class takes `volume: int` right after `orientation: int` and sets
+`this.volume is volume` right after `this.orientation is orientation`, and
+every implementation passes it right after `orientation`:
+
+```nuc
+class Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, holes: list):
+obje25bf2e9e53d is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=7, holes=[[0, 0], [0, 1]])
+```
+
+No rule reads or changes `volume`, so each output state keeps its input volume.
+Offline, with the accepted runtime at `16ae8c2` (last runtime change
+`1612d6c`), all 12 input and 12 output snapshots of the 6 pairs replay, each
+equal to its previous snapshot with `volume` added. The grids, masks,
+positions, and instance names are unchanged, and every form the dataset uses
+was already in the [dataset grammar](../nucleoid.ebnf). No NUC was requested,
+so no proposal strategy was selected and strategy learning did not apply. No
+solver run has measured this version, so its difference is unknown, not zero.
 
 ## Quote-free NUC
 

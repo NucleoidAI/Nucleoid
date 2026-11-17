@@ -60,6 +60,7 @@ async function implementation({
   width,
   height,
   orientation,
+  volume,
 }) {
   const few_shot_function = (train_dataset) => ({
     ...train_dataset,
@@ -113,6 +114,7 @@ async function implementation({
           input_width: ${width}
           input_height: ${height}
           orientation: ${orientation}
+          input_volume: ${volume}
           json_format:
           {
             "implementation": <IMPLEMENTATION>

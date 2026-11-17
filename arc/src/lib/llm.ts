@@ -28,7 +28,7 @@ export async function generate({
     messages.unshift({
       role: "system",
       content:
-        "init_class:\nclass Obj(x: int, y: int, width: int, height: int, orientation: int):\n   this.x is x\n   this.y is y\n   this.width is width\n   this.height is height\n   this.orientation is orientation\n\n",
+        "init_class:\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int):\n   this.x is x\n   this.y is y\n   this.width is width\n   this.height is height\n   this.orientation is orientation\n   this.volume is volume\n\n",
     });
 
     messages.unshift({

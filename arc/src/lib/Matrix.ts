@@ -9,6 +9,7 @@ export function locate(matrix) {
   let bottom: number = -1;
   let left: number = cols;
   let right: number = -1;
+  let volume: number = 0;
 
   for (let y: number = 0; y < rows; y++) {
     const row = matrix[y];
@@ -18,6 +19,7 @@ export function locate(matrix) {
     for (let x: number = 0; x < cols; x++) {
       const value: number = row[x];
       if (value === 0) continue;
+      volume++;
       top = Math.min(top, y);
       bottom = y;
       left = Math.min(left, x);
@@ -25,7 +27,9 @@ export function locate(matrix) {
     }
   }
 
-  if (bottom === -1) return { matrix: [], x: 0, y: 0, width: 0, height: 0 };
+  if (bottom === -1) {
+    return { matrix: [], x: 0, y: 0, width: 0, height: 0, volume: 0 };
+  }
   return {
     matrix: matrix
       .slice(top, bottom + 1)
@@ -34,6 +38,7 @@ export function locate(matrix) {
     y: top,
     width: right - left + 1,
     height: bottom - top + 1,
+    volume,
   };
 }
 

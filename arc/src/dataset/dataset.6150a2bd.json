@@ -1,6 +1,6 @@
 {
   "declarations": [
-    "class Obj(x: int, y: int, width: int, height: int, orientation: int):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.tag is l9100",
+    "class Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.tag is l9100",
     "$Obj.orientation is ($Obj.orientation@first + 180) % 360",
     "$Obj.x is canvas_width - $Obj.x@first - $Obj.width",
     "$Obj.y is canvas_height - $Obj.y@first - $Obj.height"
@@ -31,9 +31,9 @@
             [0, 7, 3],
             [8, 3, 3]
           ],
-          "implementation": "obj0c2414cf33eb is Obj(x=0, y=0, width=3, height=3, orientation=0)",
-          "input_value": {"height":3,"id":"obj0c2414cf33eb","orientation":0,"tag":"l9100","width":3,"x":0,"y":0},
-          "output_value": {"height":3,"id":"obj0c2414cf33eb","orientation":180,"tag":"l9100","width":3,"x":0,"y":0}
+          "implementation": "obj0c2414cf33eb is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=6)",
+          "input_value": {"height":3,"id":"obj0c2414cf33eb","orientation":0,"tag":"l9100","volume":6,"width":3,"x":0,"y":0},
+          "output_value": {"height":3,"id":"obj0c2414cf33eb","orientation":180,"tag":"l9100","volume":6,"width":3,"x":0,"y":0}
         }
       ]
     },
@@ -61,9 +61,9 @@
             [0, 0, 1],
             [2, 5, 5]
           ],
-          "implementation": "obj19002ca3b8ed is Obj(x=0, y=0, width=3, height=2, orientation=315)",
-          "input_value": {"height":2,"id":"obj19002ca3b8ed","orientation":315,"tag":"l9100","width":3,"x":0,"y":0},
-          "output_value": {"height":2,"id":"obj19002ca3b8ed","orientation":135,"tag":"l9100","width":3,"x":0,"y":1}
+          "implementation": "obj19002ca3b8ed is Obj(x=0, y=0, width=3, height=2, orientation=315, volume=4)",
+          "input_value": {"height":2,"id":"obj19002ca3b8ed","orientation":315,"tag":"l9100","volume":4,"width":3,"x":0,"y":0},
+          "output_value": {"height":2,"id":"obj19002ca3b8ed","orientation":135,"tag":"l9100","volume":4,"width":3,"x":0,"y":1}
         }
       ]
     },
@@ -91,9 +91,9 @@
             [0, 8, 6],
             [5, 3, 6]
           ],
-          "implementation": "obj18d0a3065349 is Obj(x=0, y=0, width=3, height=3, orientation=0)",
-          "input_value": {"height":3,"id":"obj18d0a3065349","orientation":0,"tag":"l9100","width":3,"x":0,"y":0},
-          "output_value": {"height":3,"id":"obj18d0a3065349","orientation":180,"tag":"l9100","width":3,"x":0,"y":0}
+          "implementation": "obj18d0a3065349 is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=6)",
+          "input_value": {"height":3,"id":"obj18d0a3065349","orientation":0,"tag":"l9100","volume":6,"width":3,"x":0,"y":0},
+          "output_value": {"height":3,"id":"obj18d0a3065349","orientation":180,"tag":"l9100","volume":6,"width":3,"x":0,"y":0}
         }
       ]
     }

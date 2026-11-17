@@ -6,12 +6,12 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Item | Status |
 | --- | --- |
 | Puzzle | [`data/training/6e02f1e3.json`](../data/training/6e02f1e3.json) |
-| Instruction dataset | [`dataset.6e02f1e3.json`](../src/dataset/dataset.6e02f1e3.json): the puzzle's 5 original training pairs and its test pair, 6 mosaic instances, one per pair; committed with this record. An earlier invocation the same day verified a different model offline and did not publish it. On 6-Nov-2026 its orientation guard was respelled with `is`; shared orientation comment added on 6-Nov-2026; descriptive `implementation` comments added on 7-Nov-2026; colors written as letters on 8-Nov-2026; respelled on 8-Nov-2026 with the `is` assignments of NUC 93 and bare words, every snapshot unchanged; colors written as numbers again on 8-Nov-2026 |
+| Instruction dataset | [`dataset.6e02f1e3.json`](../src/dataset/dataset.6e02f1e3.json): the puzzle's 5 original training pairs and its test pair, 6 mosaic instances, one per pair; committed with this record. An earlier invocation the same day verified a different model offline and did not publish it. On 6-Nov-2026 its orientation guard was respelled with `is`; shared orientation comment added on 6-Nov-2026; descriptive `implementation` comments added on 7-Nov-2026; colors written as letters on 8-Nov-2026; respelled on 8-Nov-2026 with the `is` assignments of NUC 93 and bare words, every snapshot unchanged; colors written as numbers again on 8-Nov-2026; `volume` added as the sixth standard entry on 17-Nov-2026 |
 | Output canvas | `EXACT`, inferred from the training pairs |
 | Nucleoid enhancements | None requested, so no proposal strategy was selected and strategy learning did not apply; the rules use the accepted `distinct` list query of [NUC 71](../../docs/nuc-0071.md) and the accepted `is` of [NUC 86](../../docs/nuc-0086.md) |
-| Solver changes | None; suggested changes await review, not applied; since 8-Nov-2026 every respelled dataset needs `is` assignments, which `src/lib/nucleoid.ts` enabled with `--is-assignment` until `d945213` made them the default |
+| Solver changes | None; suggested changes await review, not applied; since 8-Nov-2026 every respelled dataset needs `is` assignments, which `src/lib/nucleoid.ts` enabled with `--is-assignment` until `d945213` made them the default; since 17-Nov-2026 `Matrix.locate` measures each object's `volume`, which `object.implementation` receives as `input_volume` |
 | Solver runs | 1 local run on 5-Nov-2026, exit 1 before any model call (`OPENROUTER_API_KEY is required`); difference unknown; none of the current version; none of the 8-Nov-2026 `is` version |
-| Updated | 8-Nov-2026 |
+| Updated | 17-Nov-2026 |
 
 ## Puzzle
 
@@ -350,6 +350,31 @@ calls' few-shot crops read exactly as they did with letters, because the
 counts that rank them are unchanged. No NUC was requested, so no proposal
 strategy was selected and strategy learning did not apply. No solver run has
 measured this version, so its difference is unknown, not zero.
+
+### Volume
+
+On 17-Nov-2026, at the user's request, `volume` joined the standard object
+entries as the sixth, after `orientation`: the number of nonzero cells in the
+object's input mask, not the area of its bounding box. The solver's
+`init_class` in `src/lib/llm.ts` declares it, `Matrix.locate` measures it, and
+`object.implementation` receives the measured count as `input_volume`. The
+class takes `volume: int` right after `orientation: int` and sets
+`this.volume is volume` right after `this.orientation is orientation`, and
+every implementation passes it right after `orientation`:
+
+```nuc
+class Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, parts: list):
+objf30b9a69fe75 is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=9, parts=[2, 2, 2, 3, 2, 3, 3, 3, 3])
+```
+
+No rule reads or changes `volume`, so each output state keeps its input volume.
+Offline, with the accepted runtime at `16ae8c2` (last runtime change
+`1612d6c`), all 6 input and 6 output snapshots of the 6 pairs replay, each
+equal to its previous snapshot with `volume` added. The grids, masks,
+positions, and instance names are unchanged, and every form the dataset uses
+was already in the [dataset grammar](../nucleoid.ebnf). No NUC was requested,
+so no proposal strategy was selected and strategy learning did not apply. No
+solver run has measured this version, so its difference is unknown, not zero.
 
 ## Runs
 

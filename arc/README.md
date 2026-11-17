@@ -336,11 +336,12 @@ color-9 point with its color-2 rim below and a color-4 point with its color-8
 rim above, and a vertical line that extends up from its bottom endpoint with
 a horizontal line that extends left from its right endpoint.
 Each genesis class takes the standard entries `x`, `y`, `width`, `height`,
-and `orientation` first, then its descriptive properties in their existing
-order, and every implementation passes the input shape's bounding-box
-`width` and `height`. A rule that grows a shape computes its new size from
-its first values in the branch that sets its output tag: a core corner grows
-from 2 by 2 to 3 by 3 with its outside marker, and its origin moves one
+`orientation`, and `volume` first, then its descriptive properties in their
+existing order, and every implementation passes the input shape's bounding-box
+`width` and `height` and its input mask's `volume`, its number of nonzero
+cells, which no rule changes. A rule that grows a shape computes its new size
+from its first values in the branch that sets its output tag: a core corner
+grows from 2 by 2 to 3 by 3 with its outside marker, and its origin moves one
 column left when it points west, at orientation 225 or 315, and one row up
 when it points north, at orientation 45 or 315; a curve point grows from
 1 by 1 to 3 by 2 with its rim; and a line of 3 or 4 cells grows by one cell,
@@ -373,9 +374,9 @@ Every dataset writes its assignments with `is`, the opt-in assignment of
 the comparisons of [NUC 86](../docs/nuc-0086.md). Constructors set
 `this.x is x`, class-level rules set `$Obj.height is $Obj.height@first * 2`,
 and implementations construct
-`obj0c2414cf33eb is Obj(x=0, y=0, width=3, height=3, orientation=0)`; each
-`target is value` builds exactly the syntax tree of `target = value`. When a
-whole value, or the whole right operand of an `is` comparison, is one bare
+`obj0c2414cf33eb is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=6)`;
+each `target is value` builds exactly the syntax tree of `target = value`. When
+a whole value, or the whole right operand of an `is` comparison, is one bare
 word, it reads the name of that spelling if one exists and otherwise its own
 text, so tags and directions drop their quotes there, as in
 `this.tag is l9100` and `$Obj.extension_direction is right`. No dataset
@@ -401,7 +402,7 @@ so they change no snapshot:
 ```nuc
 # A corner whose vertex and both segments are color 9,
 # 2 by 2 at x 5, y 1, pointing southeast
-obj7e96305711c2 is Obj(x=5, y=1, width=2, height=2, orientation=135, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)
+obj7e96305711c2 is Obj(x=5, y=1, width=2, height=2, orientation=135, volume=3, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)
 ```
 
 Every `input_instance_matrix` has exactly its pair's `input_matrix` row and
@@ -435,9 +436,10 @@ reproduce the second and third training outputs and the test output, whose
 periods divide the height, but not the first training output: its pattern
 repeats every four rows, so the rows added below repeat its rows 2 to 4, and
 its row 7 is 0, 2, 2 rather than 2, 2, 0. The class takes the standard entries
-`x`, `y`, `width`, `height`, and `orientation` first, in that order, where
-`width` and `height` are the column and row counts of the pattern's box, the
-nonzero bounding box of its input mask, and then `color` and `period`, the
+`x`, `y`, `width`, `height`, `orientation`, and `volume` first, in that order,
+where `width` and `height` are the column and row counts of the pattern's box,
+the nonzero bounding box of its input mask, and `volume` the number of its
+nonzero cells, and then `color` and `period`, the
 number of rows after which the pattern starts over, as scalars, with no parts
 list, canvas size, or matrix of cells. Each implementation passes `width` and
 `height` right after `y`, such as `width=3, height=6` for the first training
@@ -475,9 +477,9 @@ annotated by the same rules.
 instances in total (2, 5, 3, and 5 per pair).
 Color-1 points gain color-7 orthogonal neighbors; color-2 points gain color-4
 diagonal neighbors. Color-6 and color-8 points remain unchanged.
-The class takes the standard entries `x`, `y`, `width`, `height`, and
-`orientation`, then `vertex_color`; every point is 1 by 1, so each
-implementation passes `width=1, height=1`.
+The class takes the standard entries `x`, `y`, `width`, `height`,
+`orientation`, and `volume`, then `vertex_color`; every point is 1 by 1, so
+each implementation passes `width=1, height=1` and `volume=1`.
 The declarative rules introduce `marker_color`, which is absent before the
 rules run, and, in the same branches that shift the origin, grow each cross
 to 3 by 3 with `$Obj.width is $Obj.width@first + 2` and
@@ -512,11 +514,12 @@ third, 2 turns 6 in the first, second, and fourth and 6 turns 2 in the third,
 in the second and third and 9 turns 8 in the fourth; colors 0 and 7 do not
 appear. Colors are categorical, and no arithmetic relates the partners, whose
 differences are 4, 4, 1, and 1, so the rule consults the pairs as data.
-The class takes the standard entries `x`, `y`, `width`, `height`, and
-`orientation` first, then `color` as its only descriptive scalar,
+The class takes the standard entries `x`, `y`, `width`, `height`,
+`orientation`, and `volume` first, then `color` as its only descriptive scalar,
 with no partner color, canvas size, or matrix of cells. `width` and
-`height`, the column and row counts of the stripe's bounding box, are
-1 and 3 for every stripe. One class-level rule rewrites `color` as
+`height`, the column and row counts of the stripe's bounding box, and `volume`,
+the number of its nonzero cells, are 1, 3, and 3 for every stripe. One
+class-level rule rewrites `color` as
 `[[1, 5], [2, 6], [3, 4], [8, 9]].find(pair => pair.includes($Obj.color@first)).find(partner => partner is not $Obj.color@first)`:
 the list states each pair once, the first `find` selects the pair that
 includes the stripe's input color, and the second `find` takes the other color
@@ -561,8 +564,9 @@ that are one row tall and as wide as the canvas; the rules judge whole rows
 instead, the unit in which every output changes, since each output row is a
 single color, a choice fixed from the training pairs before the test pair was
 read. The class takes the standard entries `x`, `y`, `width`, `height`,
-and `orientation` first; `width` and `height`, the column and row
-counts of the row's bounding box, are 3 and 1 for every row. It then
+`orientation`, and `volume` first; `width` and `height`, the column and row
+counts of the row's bounding box, and `volume`, the number of its nonzero
+cells, are 3, 1, and 3 for every row. It then
 takes `parts`, the colors of the row's cells from left to right, as
 a list, such as `[4, 4, 4]` for the top row of the first training
 input, as its only descriptive property, with no color, color count, canvas
@@ -623,12 +627,13 @@ height. Rolling the canvas's rows down with wraparound would also reproduce
 every training output, because every training input's bottom row is empty;
 the rules move the whole figure instead, the unit seen first, a choice fixed
 from the training pairs before the test pairs were read. The class takes
-only the standard entries `x`, `y`, `width`, `height`, and `orientation`,
-and no descriptive property, with no color, cell list, canvas size, or
-matrix of cells, because the rule needs none: the figure's cells travel
+only the standard entries `x`, `y`, `width`, `height`, `orientation`, and
+`volume`, and no descriptive property, with no color, cell list, canvas size,
+or matrix of cells, because the rule needs none: the figure's cells travel
 unchanged in its masks. `width` and `height`, the column and row counts
 of the figure's bounding box, are 3 and 1 for the bars and 2 and 2
-for the trominoes. One unconditional class-level rule rewrites `y` as
+for the trominoes, and `volume`, the number of its nonzero cells, is 3 for
+both. One unconditional class-level rule rewrites `y` as
 `$Obj.y@first + 1`, the row below the figure's input origin, anchored with
 `@first` because the rule rewrites `y` itself. Each training grid holds a
 single figure and shows no relation between objects, so no population
@@ -681,11 +686,11 @@ with a tail each mirror only across one diagonal yet give 1 and 3; and their
 3, 5, 2, and 1 edge-connected pieces do not order the codes. Each block is
 therefore one instance whose tag names its shape, and the rules look the code
 up by that tag. The class takes the standard entries `x`, `y`, `width`,
-`height`, and `orientation`, where `width` and `height` are the column and row
-counts of the block's bounding box, 3 and 3 in every pair, and `tag` as its
-only descriptive property, such as `tag='l4262'` for the first training input,
-with no color, cell count, parts list, canvas size, or matrix of cells. Its
-constructor stores the tag it
+`height`, `orientation`, and `volume`, where `width` and `height` are the
+column and row counts of the block's bounding box and `volume` the number of
+its nonzero cells, 3, 3, and 5 in every pair, and `tag` as its only descriptive
+property, such as `tag='l4262'` for the first training input, with no color,
+parts list, canvas size, or matrix of cells. Its constructor stores the tag it
 is given instead of a fixed initial tag, so the input state names the shape
 and no input property names the code. One class serves every shape because the
 solver reads output states with `Obj[:]`, which lists no instance of a
@@ -723,9 +728,10 @@ Each shape is left-right asymmetric, so the pairs distinguish repeating from
 mirroring.
 Each output places two copies of the shape's crop side by side on a new canvas
 twice as wide as the crop: the original 3 by 6 output. The class takes the
-standard entries `x`, `y`, `width`, `height`, and `orientation` first, in that
-order, where `width` and `height` are the column and row counts of the shape's
-box, the nonzero bounding box of its input mask, 3 and 3 in every pair, and
+standard entries `x`, `y`, `width`, `height`, `orientation`, and `volume`
+first, in that order, where `width` and `height` are the column and row counts
+of the shape's box, the nonzero bounding box of its input mask, 3 and 3 in
+every pair, and `volume` the number of its nonzero cells, and
 then `color`; each implementation passes `width=3, height=3` right after `y`.
 Unconditional class-level rules hold for every instance, whatever its `color`:
 they introduce `repeat_count` (2, the total number of copies) and
@@ -755,13 +761,14 @@ turn is the only one of the square's eight turns and mirrors, the identity
 included, that reproduces any training pair: no training mosaic looks the
 same after a quarter turn, a half turn, a mirror across either center line,
 or a flip across either diagonal. The class takes only the standard
-entries `x`, `y`, `width`, `height`, and `orientation`, and no
+entries `x`, `y`, `width`, `height`, `orientation`, and `volume`, and no
 descriptive property, with no color, parts list, canvas size, or
 matrix of cells, because the rule needs none: the mosaic's cells
 travel in its masks, and its turn is its orientation. `width` and
-`height`, the column and row counts of the mosaic's bounding box, are
-3 and 3 for every mosaic. One unconditional class-level rule rewrites
-`orientation` as `($Obj.orientation@first + 180) % 360`, the half-turn rule
+`height`, the column and row counts of the mosaic's bounding box, and `volume`,
+the number of its nonzero cells, are 3, 3, and 9 for every mosaic. One
+unconditional class-level rule rewrites `orientation` as
+`($Obj.orientation@first + 180) % 360`, the half-turn rule
 of `dataset.6150a2bd.json`, anchored with `@first` because the rule rewrites
 `orientation` itself. The rules leave `x` and `y` unchanged: a mosaic that
 fills its canvas keeps its box in place under a half turn, whether about its
@@ -820,11 +827,12 @@ left-right flip of the pattern's own box. The rules flip across the canvas's
 center line, by the convention that mirror symmetry is bilateral symmetry
 across the grid's vertical axis, a choice fixed from the training pairs
 before the test pairs were read. The class takes the standard entries `x`,
-`y`, `width`, `height`, and `orientation`, where `width` and `height` are the
-column and row counts of the pattern's box, followed by `points`, the
+`y`, `width`, `height`, `orientation`, and `volume`, where `width` and `height`
+are the column and row counts of the pattern's box and `volume` the number of
+its nonzero cells, followed by `points`, the
 `[column, row]` canvas position of each of the pattern's cells in reading
 order, as a list, such as `[[0, 0], [2, 0], [1, 1], [0, 2], [2, 2]]` for the
-first training input. It takes no color, cell count, canvas size, symmetry
+first training input. It takes no color, canvas size, symmetry
 flag, output color, or matrix of cells, so no input property states the
 symmetry or the answer; the rules read the canvas's width from the solver's
 `canvas_width`, not the pattern's own `width`. Unconditional class-level rules
@@ -875,13 +883,15 @@ cells in the block: three cells in every pair, a unique maximum, giving the
 colors 4, 9, 6, and 8. The numerically largest color, 8, 9, 9, and 9, differs
 from the fill in the first and third training pairs and the test pair, so the
 rules maximize a count, not a color. The class takes the standard entries
-`x`, `y`, `width`, `height`, and `orientation` first; `width` and `height`,
-the column and row counts of the block's bounding box, are 3 and 3 for
-every block, with or without a zero cell. It then takes `parts`, a
+`x`, `y`, `width`, `height`, `orientation`, and `volume` first; `width` and
+`height`, the column and row counts of the block's bounding box, are 3 and 3
+for every block, with or without a zero cell, while `volume`, the number of its
+nonzero cells, is 8 with one and 9 without. It then takes `parts`, a
 flat list of the block's nonzero cell colors in reading order, such as
 `[4, 4, 8, 6, 4, 3, 6, 3]` for the first training input, as its only
-descriptive property, with no count, histogram, fill color, canvas size, or
-matrix of cells, so no input property names a count or the fill color.
+descriptive property, with no other count, histogram, fill color, canvas size,
+or matrix of cells, so no input property names a color's count or
+the fill color.
 Unconditional class-level rules set the output tag and introduce one property,
 `fill_color`, which is absent before the rules run, as `mode of $Obj.parts`.
 That is the noun form of `$Obj.parts.mode()`: the accepted list query `mode`
@@ -919,10 +929,11 @@ and keep their origin, 0 and 0, while the second training block's box moves
 down one row, from the top two rows to the bottom two. Redrawing the turned
 block at its input origin, a turn about its own center, would not reproduce
 that output. The class takes only the standard entries `x`, `y`, `width`,
-`height`, and `orientation`, in that order, where `width` and `height` are the
-column and row counts of the block's bounding box, the nonzero bounding box of
-its input mask, with no color, parts list, canvas size, or matrix of cells;
-each implementation passes them right after `y`, such as `width=3, height=2`
+`height`, `orientation`, and `volume`, in that order, where `width` and
+`height` are the column and row counts of the block's bounding box, the nonzero
+bounding box of its input mask, and `volume` the number of its nonzero cells,
+with no color, parts list, canvas size, or matrix of cells; each implementation
+passes `width` and `height` right after `y`, such as `width=3, height=2`
 for the second training input, and the rules read the canvas's size from the
 solver's `canvas_width` and `canvas_height`.
 Unconditional class-level rules read the block's input state with `@first`
@@ -971,14 +982,15 @@ own width give the same 6 columns in every training pair, and the rules take
 the latter, which reads only the block. These choices were fixed from the
 training pairs before the test pair was read; the test block happens to be
 left-right symmetric, and the same rules annotate it. The class takes only
-the standard entries `x`, `y`, `width`, `height`, and `orientation`, in that
-order, where `width` and `height` are the column and row counts of the
-block's box, the nonzero bounding box of its input mask, 3 and 3 in every
+the standard entries `x`, `y`, `width`, `height`, `orientation`, and `volume`,
+in that order, where `width` and `height` are the column and row counts of the
+block's box, the nonzero bounding box of its input mask, and `volume` the
+number of its nonzero cells, 3, 3, and 9 in every
 pair, with no color, parts list, canvas size, or matrix of cells, because
 the rules need none: the block's cells travel in its masks. Its declaration,
 comments included, is that of `dataset.6150a2bd.json`. Each implementation
-passes `x=0, y=0, width=3, height=3, orientation=0` after comment lines that
-name the block's colors in reading order and its box, such as
+passes `x=0, y=0, width=3, height=3, orientation=0, volume=9` after comment
+lines that name the block's colors in reading order and its box, such as
 `# The whole block of colors 6, 1 and 8,` and `# 3 by 3 at x 0, y 0` for the
 first training input. Two unconditional, commented class-level rules turn
 every block into the figure it forms with its mirror image:
@@ -1042,9 +1054,10 @@ pairs alone also fit a line of three cells on a canvas of any size; the line
 instead crosses the whole canvas, from edge to edge or corner to corner, and
 its tag names that geometry, so the rules state no length: every line keeps
 the mosaic's `width`, which spans the canvas. The class takes the standard
-entries `x`, `y`, `width`, `height`, and `orientation` first, in that order,
-where `width` and `height` are the column and row counts of the mosaic's box,
-the nonzero bounding box of its input mask, 3 and 3 in every pair, and then
+entries `x`, `y`, `width`, `height`, `orientation`, and `volume` first, in that
+order, where `width` and `height` are the column and row counts of the mosaic's
+box, the nonzero bounding box of its input mask, and `volume` the number of its
+nonzero cells, 3, 3, and 9 in every pair, and then
 `parts`, a flat list of the mosaic's cell colors in reading order, as in
 `dataset.5582e5ca.json`, such as `[2, 2, 2, 3, 2, 3, 3, 3, 3]` for the first
 training input, as its only descriptive property, with no color list, color
@@ -1126,15 +1139,16 @@ the test pair was read; the test block is neither top-bottom nor left-right
 symmetric, and the same rules annotate it. The puzzle is the top-bottom
 counterpart of `dataset.6d0aefbc.json`, which sets its block beside its
 left-right mirror image. The class takes only the standard entries `x`, `y`,
-`width`, `height`, and `orientation`, in that order, where `width` and
-`height` are the column and row counts of the block's box, the nonzero
-bounding box of its input mask, 3 and 3 in every pair, with no color, parts
+`width`, `height`, `orientation`, and `volume`, in that order, where `width`
+and `height` are the column and row counts of the block's box, the nonzero
+bounding box of its input mask, and `volume` the number of its nonzero cells,
+3, 3, and 9 in every pair, with no color, parts
 list, canvas size, or matrix of cells, because the rules need none: the
 block's cells travel in its masks. Its declaration is that of
 `dataset.6d0aefbc.json`, and each implementation passes
-`x=0, y=0, width=3, height=3, orientation=0`. Two unconditional class-level
-rules turn every block into the figure it forms with its mirror image:
-`$Obj.tag is l7511` names that geometry, and
+`x=0, y=0, width=3, height=3, orientation=0, volume=9`. Two unconditional
+class-level rules turn every block into the figure it forms with its mirror
+image: `$Obj.tag is l7511` names that geometry, and
 `$Obj.height is $Obj.height@first * 2` makes the figure twice as tall as the
 block, 6 rows, anchored with `@first` because the rule rewrites `height`
 itself. The rules leave `x`, `y`, `width`, and `orientation` unchanged,
@@ -1188,9 +1202,10 @@ diagonal, from the top-right corner to the bottom-left, reproduces none. No
 turn reproduces a training output, so `orientation`, a clockwise angle from
 north, cannot state the change: a mirror reverses the mosaic's handedness,
 which no turn does. The class takes only the standard entries `x`, `y`,
-`width`, `height`, and `orientation`, in that order, where `width` and
-`height` are the column and row counts of the mosaic's box, the nonzero
-bounding box of its input mask, 3 and 3 in every pair, so each implementation
+`width`, `height`, `orientation`, and `volume`, in that order, where `width`
+and `height` are the column and row counts of the mosaic's box, the nonzero
+bounding box of its input mask, and `volume` the number of its nonzero cells,
+3, 3, and 9 in every pair, so each implementation
 passes `width=3, height=3` right after `y`. It takes no descriptive property,
 with no color, parts list, canvas size, or matrix of cells, because the rule
 needs none: the mosaic's cells travel in its masks, and its box gives its
@@ -1268,27 +1283,27 @@ at most three cells on a canvas of any width, and any placement of a fifth
 cell; the rules let the bar span the canvas's width, read from the solver's
 `canvas_width` as in `dataset.a85d4709.json`, and give every cell beyond the
 bar to the stem, choices fixed from the training pairs before the test pairs
-were read. The class takes the standard entries `x`, `y`, `width`, `height`,
-and `orientation` first, in that order, where `width` and `height` are the
-column and row counts of the pattern's box, the nonzero bounding box of its
-input mask, from 1 by 1 to 3 by 3, and then `cell_count`, the pattern's
-number of cells, the scalar of `dataset.d631b094.json` and
-`dataset.9565186b.json`, as its only descriptive property, with no color,
-parts list, canvas size, or matrix of cells: every pattern is color 1, which
-the rules never read. Each implementation passes
+were read. The class takes only the standard entries `x`, `y`, `width`,
+`height`, `orientation`, and `volume`, in that order, where `width` and
+`height` are the column and row counts of the pattern's box, the nonzero
+bounding box of its input mask, from 1 by 1 to 3 by 3, and `volume` the
+pattern's number of cells, which the rules of `dataset.d631b094.json` and
+`dataset.9565186b.json` also read. It takes no descriptive property, with no
+color, parts list, canvas size, or matrix of cells: every pattern is color 1,
+which the rules never read. Each implementation passes
 `width` and `height` right after `y`, such as
-`x=0, y=1, width=1, height=1, orientation=0, cell_count=1` for the first
+`x=0, y=1, width=1, height=1, orientation=0, volume=1` for the first
 training input. Seven unconditional class-level rules turn the pattern into the
 tally. `$Obj.tag is l5714` names the tally, and `$Obj.fill_color is 2`
 introduces `fill_color`, which is absent before the rules run, because the
 tally is red whatever the pattern. `width` is
-`min of [$Obj.cell_count, canvas_width]`, the noun form of the list query
+`min of [$Obj.volume, canvas_width]`, the noun form of the list query
 `min` from [NUC 75](../docs/nuc-0075.md): the bar holds the first cells, up to
-the canvas's width. `height` is `1 + $Obj.cell_count - $Obj.width`: the bar's
+the canvas's width. `height` is `1 + $Obj.volume - $Obj.width`: the bar's
 one row and one row for each cell beyond the bar, which the stem holds. That
 rule reads the bar's `width` as the width rule sets it, not the pattern's
 input width, so it takes no `@first` anchor, and no rule rewrites
-`cell_count`. `orientation` is
+`volume`. `orientation` is
 `90 if $Obj.height is 1 and $Obj.width > 1 else 0`, the conditional
 expression of [NUC 59](../docs/nuc-0059.md) with the comparison `is` of
 [NUC 86](../docs/nuc-0086.md), the spelling of `==`: a tally one row high
@@ -1358,16 +1373,18 @@ reach the canvas's bottom edge. Repeating the grid below without mirroring it
 reproduces no training output, and neither does a half turn of the grid
 placed below, because no training grid is left-right symmetric. These choices
 were fixed from the training pairs before the test pair was read. The class
-takes only the standard entries `x`, `y`, `width`, `height`, and
-`orientation`, in that order, where `width` and `height` are the column and
+takes only the standard entries `x`, `y`, `width`, `height`, `orientation`, and
+`volume`, in that order, where `width` and `height` are the column and
 row counts of the pattern's box, the nonzero bounding box of its input mask:
 3 and 2 for the first and second training patterns and the test pattern, and
-1 and 2 for the third training pattern. It takes no descriptive property, with
+1 and 2 for the third training pattern; `volume` is the number of the pattern's
+cells. It takes no descriptive property, with
 no color, parts list, canvas size, or matrix of cells, because the rules need
 none: the pattern's cells travel in its masks, and the rules read the canvas's
 height from the solver's `canvas_height`. Each implementation passes `width`
 and `height` right after `y`, such as
-`x=0, y=0, width=3, height=2, orientation=0` for the first training input.
+`x=0, y=0, width=3, height=2, orientation=0, volume=5` for the first
+training input.
 Two unconditional class-level rules turn every pattern into the figure it
 forms with its mirror image. `$Obj.tag is l7511` names that geometry, and
 `$Obj.height is 2 * (canvas_height - $Obj.y@first)` grows the box down to the
@@ -1443,20 +1460,21 @@ color-8 cells, turns gray either way; the rules count each color as one region
 instead, the unit in which every output changes, since all cells of a color
 share one output color, a choice fixed from the training pairs before the
 test pair was read. The class takes the standard entries `x`, `y`, `width`,
-`height`, and `orientation` first, then `color` and `cell_count`, the region's
-number of cells, as scalars, as in `dataset.9af7a82c.json`, with no parts
+`height`, `orientation`, and `volume` first, then `color` as its only
+descriptive scalar, as in `dataset.9af7a82c.json`, with no parts
 list, histogram, rank, output color, canvas size, or matrix of cells, so no
 input property names the kept color. `width` and `height` are the column
 and row counts of the region's bounding box, from a single cell to the
-whole 3 by 3 canvas. They do not replace `cell_count`, because a region's
-box does not count its cells: the fourth training pair's two color-8 corner
-cells span a 3 by 3 box, yet that region turns gray, while the 3 cells of
-color 4, a single row, keep their color. One conditional class-level rule,
-`if any other in Obj: other.cell_count > $Obj.cell_count:` with the body
+whole 3 by 3 canvas, and `volume` is the region's number of cells. They do not
+replace `volume`, because a region's box does not count its cells: the fourth
+training pair's two color-8 corner cells span a 3 by 3 box, yet that region
+turns gray, while the 3 cells of color 4, a single row, keep their color. One
+conditional class-level rule,
+`if any other in Obj: other.volume > $Obj.volume:` with the body
 `$Obj.color is 5`, turns gray every region that another region of its pair
 outnumbers: the quantifier `any` of [NUC 62](../docs/nuc-0062.md) states the
 claim of `Obj.some(...)` directly, its binder ranges over the pair's whole
-population, and `$Obj.cell_count` reads the region the rule is evaluated for.
+population, and `$Obj.volume` reads the region the rule is evaluated for.
 The condition reads no color, so the rule rewrites `color` without an
 `@first` anchor, and a tie for the most cells, which no pair has, would keep
 every tied region's color. The rules create no property and leave `x`, `y`,
@@ -1495,12 +1513,13 @@ distinct within each pair. Each output is a histogram: the region
 with the r-th largest cell count becomes a vertical bar of its color in
 column r, starting at the top row and as tall as the region's cell count,
 giving the original 5 by 3, 6 by 4, 5 by 4, 6 by 3, and 6 by 5 outputs. The
-class takes the standard entries `x`, `y`, `width`, `height`, and
-`orientation`, where `width` and `height` are the column and row counts of the
-region's bounding box, 1 to 4 each, followed by `color` and `cell_count`, the
-region's number of cells, as scalars rather than a matrix of cells.
+class takes the standard entries `x`, `y`, `width`, `height`, `orientation`,
+and `volume`, where `width` and `height` are the column and row counts of the
+region's bounding box, 1 to 4 each, and `volume` the region's number of cells,
+followed by `color` as a scalar rather than a matrix of cells.
 Unconditional class-level rules resize every region into its bar, with `width`
-1 and `height` the cell count, move `y` to the output origin 0, and derive `x`,
+1 and `height` the cell count, as `$Obj.height is $Obj.volume` sets it, move
+`y` to the output origin 0, and derive `x`,
 the bar's column, from the pair's whole population:
 `Obj.filter(other => other.height > $Obj.height).length` counts the taller
 bars, those of the larger regions, and re-evaluates whenever an instance is
@@ -1558,9 +1577,10 @@ colors by the canvas's edges, 2 at the left edge, 3 at the right edge, and 4
 between them, because every canvas is 3 columns wide; the rules take one
 marker per row in every pair and look the color up by column instead, choices
 fixed from the training pairs before the test pair was read. The class takes
-only the standard entries `x`, `y`, `width`, `height`, and `orientation`,
-where `width` and `height` are the column and row counts of the marker's box,
-1 and 1, and no descriptive property, with no color, column list, canvas size,
+only the standard entries `x`, `y`, `width`, `height`, `orientation`, and
+`volume`, where `width` and `height` are the column and row counts of the
+marker's box and `volume` the number of its nonzero cells, each 1, and no
+descriptive property, with no color, column list, canvas size,
 or matrix of cells: every marker is gray, which the rules never read, and the
 marker's column is its `x`. Unconditional class-level rules set the output
 tag and orientation, introduce one property, `fill_color`, absent before the
@@ -1624,14 +1644,15 @@ corner is an object of its own. The figure's box is the bounding box of the
 corners that remain, not the 3 by 3 box clamped to the canvas: the third
 training point lies on the top row, so the clamped box would start at that
 row, which holds no corner, while its corners lie only in the row below. The
-class takes only the standard entries `x`, `y`, `width`, `height`, and
-`orientation`, in that order, where `width` and `height` are the column and
-row counts of the point's box, 1 and 1, and no descriptive property, with no
+class takes only the standard entries `x`, `y`, `width`, `height`,
+`orientation`, and `volume`, in that order, where `width` and `height` are the
+column and row counts of the point's box and `volume` the number of its nonzero
+cells, each 1, and no descriptive property, with no
 color, canvas size, or matrix of cells: every point has color 2, which the
 rules never read. Each implementation passes `width=1, height=1` right after
-`y`, such as `x=1, y=1, width=1, height=1, orientation=0` for the first
-training input. Six unconditional class-level rules turn every point into its
-figure. `$Obj.tag is l2898` names the figure, and
+`y`, such as `x=1, y=1, width=1, height=1, orientation=0, volume=1` for the
+first training input. Six unconditional class-level rules turn every point into
+its figure. `$Obj.tag is l2898` names the figure, and
 `$Obj.corner_colors is [[3, 6], [8, 7]]` introduces `corner_colors`, which is
 absent before the rules run: the corners' colors as they lie around the
 point, the top row's left and right corners first and then the bottom row's.
@@ -1719,16 +1740,17 @@ gray every region that is neither color 1 nor color 8; the rules take each
 color as one region, the unit in which every output changes, since all cells
 of a color share one output color, and name the one color that changes,
 choices fixed from the training pairs before the test pair was read. The
-class takes the standard entries `x`, `y`, `width`, `height`, and
-`orientation` first, then `color` as its only descriptive scalar, as in
-`dataset.0d3d703e.json`, with no cell count, parts list, output color, canvas
+class takes the standard entries `x`, `y`, `width`, `height`, `orientation`,
+and `volume` first, then `color` as its only descriptive scalar, as in
+`dataset.0d3d703e.json`, with no parts list, output color, canvas
 size, or matrix of cells, so no input property names the output color.
 `width` and `height` are the column and row counts of the region's bounding
 box, the nonzero bounding box of its input mask, from the single color-8 cell
-of the second training pair, 1 by 1, to 5 columns by 3 rows, and each
-implementation passes them right after `y`, such as
-`x=1, y=0, width=5, height=3, orientation=0, color=8` for the color-8 region
-of the first training input. One conditional class-level rule,
+of the second training pair, 1 by 1, to 5 columns by 3 rows, and `volume` is
+the region's number of cells; each implementation passes `width` and `height`
+right after `y`, such as
+`x=1, y=0, width=5, height=3, orientation=0, volume=5, color=8` for the color-8
+region of the first training input. One conditional class-level rule,
 `if $Obj.color@first is 7:` with the body `$Obj.color is 5`, turns every
 color-7 region gray. Its condition uses `is`, the spelling of `==` from
 [NUC 86](../docs/nuc-0086.md), which an `if` header reads as an operator.
@@ -1789,15 +1811,17 @@ symmetric. These choices were fixed from the training pairs before the test
 pair was read; the puzzle is the left-right counterpart of
 `dataset.8be77c9e.json`, which stacks its grid over its top-bottom mirror
 image. The class takes only the standard entries `x`, `y`, `width`,
-`height`, and `orientation`, in that order, where `width` and `height` are
-the column and row counts of the pattern's box, the nonzero bounding box of
-its input mask: 2 and 3 for the first training pattern, 2 and 1 for the
-second, 1 and 1 for the third, and 3 and 3 for the test pattern. It takes no
+`height`, `orientation`, and `volume`, in that order, where `width` and
+`height` are the column and row counts of the pattern's box, the nonzero
+bounding box of its input mask: 2 and 3 for the first training pattern, 2 and 1
+for the second, 1 and 1 for the third, and 3 and 3 for the test pattern;
+`volume` is the number of the pattern's cells. It takes no
 descriptive property, with no color, parts list, canvas size, or matrix of
 cells, because the rules need none: the pattern's cells travel in its masks,
 and the rules read the canvas's width from the solver's `canvas_width`. Each
 implementation passes `width` and `height` right after `y`, such as
-`x=1, y=0, width=2, height=3, orientation=0` for the first training input.
+`x=1, y=0, width=2, height=3, orientation=0, volume=4` for the first
+training input.
 Two unconditional class-level rules turn every pattern into the figure it
 forms with its mirror image. `$Obj.tag is l6919` names that geometry, and
 `$Obj.width is 2 * (canvas_width - $Obj.x@first)` grows the box right to the
@@ -1862,9 +1886,10 @@ listed in reading order; no two points of a pair share a column, so their bars
 never overlap. Each output extends every point downward into a vertical bar of
 its color, from the point's row to the bottom row of the canvas, so each bar is
 1 to 3 cells tall and a point on the bottom row stays a single cell. The class
-takes the standard entries `x`, `y`, `width`, `height`, and `orientation`,
-where `width` and `height` are the column and row counts of the point's box,
-1 and 1, and `color` as its only descriptive scalar, with no canvas size or
+takes the standard entries `x`, `y`, `width`, `height`, `orientation`, and
+`volume`, where `width` and `height` are the column and row counts of the
+point's box and `volume` the number of its nonzero cells, each 1, and `color`
+as its only descriptive scalar, with no canvas size or
 matrix of cells. Unconditional class-level rules set the output tag and grow
 the point's `height` into the bar's, `canvas_height - $Obj.y@first`, reading
 the canvas's height from the solver's `canvas_height`, and leave `x`, `y`, and
@@ -1898,12 +1923,13 @@ nonzero color, and all cells of that color form one region, whether or not
 they touch: 2, 3, 1, 4, and 5 cells per pair. Each output is a horizontal bar
 of the region's color, one row high and as wide as the region's cell count,
 giving the original 1 by 2, 1 by 3, 1 by 1, 1 by 4, and 1 by 5 outputs. The
-class takes the standard entries `x`, `y`, `width`, `height`, and
-`orientation`, where `width` and `height` are the column and row counts of the
-region's bounding box, 1 to 3 each, followed by `color` and `cell_count`, the
-region's number of cells, as scalars rather than a matrix of cells.
+class takes the standard entries `x`, `y`, `width`, `height`, `orientation`,
+and `volume`, where `width` and `height` are the column and row counts of the
+region's bounding box, 1 to 3 each, and `volume` the region's number of cells,
+followed by `color` as a scalar rather than a matrix of cells.
 Unconditional class-level rules resize every region into its bar, with `width`
-the cell count and `height` 1, and move `x` and `y` to the output origin 0.
+the cell count, as `$Obj.width is $Obj.volume` sets it, and `height` 1, and
+move `x` and `y` to the output origin 0.
 The bar's size is the object's own `width` and `height`, so the rules create
 no property, and input and output states share the same keys. Tags identify
 the geometry:
@@ -1943,7 +1969,8 @@ zero cells are background. Each output overlays the panels at matching panel
 coordinates and paints their union color 6, retaining a cell when either or
 both figures occupy it. Registration follows the canvas, not the figures'
 tight crops: their empty rows and columns remain aligned. The class takes
-only the standard entries `x`, `y`, `width`, `height`, and `orientation`, with
+only the standard entries `x`, `y`, `width`, `height`, `orientation`, and
+`volume`, the number of the figure's cells, with
 no color, panel index, cell list, or canvas-size parameter. Training figure
 boxes are 2 or 3 columns wide and 2 or 3 rows tall, and translation and
 recoloring leave each figure's own `width` and `height` unchanged. One
@@ -1990,16 +2017,17 @@ down; the rules take the two bars instead, the figures seen first, each of
 which keeps its color and cell count while its cells move, and the columns
 would be finer objects than the bars, choices fixed from the training pairs
 before the test pair was read. The class takes only the standard entries `x`,
-`y`, `width`, `height`, and `orientation`, in that order, where `width` and
-`height` are the column and row counts of the bar's box, the nonzero bounding
-box of its input mask, 6 and 1 for every bar. It takes no descriptive
+`y`, `width`, `height`, `orientation`, and `volume`, in that order, where
+`width` and `height` are the column and row counts of the bar's box, the
+nonzero bounding box of its input mask, and `volume` the number of its nonzero
+cells, 6, 1, and 6 for every bar. It takes no descriptive
 property, with no color, parts list, canvas size, or matrix of cells, because
 the rules need none: the bar's color travels in its masks, and its share of
 the checkerboard follows from its row. Each implementation passes
 `width=6, height=1` right after `y`, such as
-`x=0, y=1, width=6, height=1, orientation=90` for the bottom bar of the first
-training input. Five unconditional class-level rules turn every bar into its
-share of the checkerboard. `$Obj.tag is l5973` names that geometry,
+`x=0, y=1, width=6, height=1, orientation=90, volume=6` for the bottom bar of
+the first training input. Five unconditional class-level rules turn every bar
+into its share of the checkerboard. `$Obj.tag is l5973` names that geometry,
 `$Obj.orientation is 0` marks it as a pattern that points no way, and
 `$Obj.parity is $Obj.y@first % 2` introduces `parity`, which is absent before
 the rules run: the parity of the bar's input row, 0 for the top bar and 1 for
@@ -2065,13 +2093,14 @@ training pair: the third training pattern, an L symmetric across its main
 diagonal, also fits a top-bottom mirror, but the other three pairs fit only
 the quarter turn. The pattern turns as one, so each grid holds one object; the
 same rules would turn each separate piece as well. The class takes only the
-standard entries `x`, `y`, `width`, `height`, and `orientation`, in that
-order, with no color, parts list, canvas size, or matrix of cells: the
+standard entries `x`, `y`, `width`, `height`, `orientation`, and `volume`, in
+that order, with no color, parts list, canvas size, or matrix of cells: the
 pattern's cells travel in its masks, its turn is its orientation, and the
 rules read the canvas's width from the solver's `canvas_width`. `width` and
 `height` are the column and row counts of the pattern's box, the nonzero
 bounding box of its input mask, 3 and 3 for every training pattern and 3 and
-2 for the test pattern, and each implementation passes them right after `y`,
+2 for the test pattern, and `volume` is the number of the pattern's cells; each
+implementation passes `width` and `height` right after `y`,
 such as `width=3, height=3` for the first training input. Every training
 pattern's box spans its canvas, 3 by 3 from the origin, 0 and 0, before and
 after the turn, so the training pairs alone also fit turning the pattern in
@@ -2157,9 +2186,10 @@ gives the cells that neither covers. Each figure therefore carries the empty
 space of its panel, read as a stencil whose holes are its empty cells, and the
 output is the overlap of the two stencils' holes, the cells through which both
 panels are open. The class takes the standard entries `x`, `y`, `width`,
-`height`, and `orientation` first, in that order, where `width` and `height`
-are the column and row counts of the figure's box, the nonzero bounding box of
-its input mask, and then `holes`, the `[column, row]` cells of its panel that
+`height`, `orientation`, and `volume` first, in that order, where `width` and
+`height` are the column and row counts of the figure's box, the nonzero
+bounding box of its input mask, and `volume` the number of its nonzero cells,
+and then `holes`, the `[column, row]` cells of its panel that
 the figure leaves empty, counted from the panel's top-left corner in reading
 order, as a list, such as `[[0, 0], [0, 1]]` for the top figure of the first
 training input. It takes no color, cell list, panel index, canvas size, or
@@ -2184,11 +2214,12 @@ gives `x` and `$Obj.points.min(point => point[1])` gives `y`, while
 `$Obj.points.max(point => point[0]) - $Obj.x + 1` and
 `$Obj.points.max(point => point[1]) - $Obj.y + 1` give `width` and `height`,
 the box's column and row counts. Both figures of a pair thus reach the same
-output state apart from their `id` and `holes`: each becomes the shared empty
-space, and their identical masks compose to the output. The `points` rule reads
-every figure's holes, so it needs the whole world; the rules give the same
-states in either instance order, with the rules in reverse order, and with the
-rules declared after the instances. They leave `orientation` and `holes` unchanged and create no other
+output state apart from their `id`, `holes`, and `volume`: each becomes the
+shared empty space, and their identical masks compose to the output. The
+`points` rule reads every figure's holes, so it needs the whole world; the
+rules give the same states in either instance order, with the rules in reverse
+order, and with the rules declared after the instances. They leave
+`orientation` and `holes` unchanged and create no other
 property, so each output state adds `points` and `fill_color` to its input
 state's keys. Native snapshots start with the pair's `canvas_width` and
 `canvas_height`; input states run the class alone, and output states run both
@@ -2400,7 +2431,7 @@ It also infers the `output_canvas` from the training pairs.
 ```json
 {
   "declarations": [
-    "class Obj(x: int, y: int, width: int, height: int, orientation: int, vertex_color: int, vertical_segment_color: int, horizontal_segment_color: int):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.tag is l6747\n    this.vertex_color is vertex_color\n    this.vertical_segment_color is vertical_segment_color\n    this.horizontal_segment_color is horizontal_segment_color",
+    "class Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, vertex_color: int, vertical_segment_color: int, horizontal_segment_color: int):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.tag is l6747\n    this.vertex_color is vertex_color\n    this.vertical_segment_color is vertical_segment_color\n    this.horizontal_segment_color is horizontal_segment_color",
     "if $Obj.vertex_color is 9 and $Obj.vertical_segment_color is 9 and $Obj.horizontal_segment_color is 9:\n    $Obj.tag is l6624\n    $Obj.marker_color is 4\n    $Obj.x is $Obj.x@first - 1 if $Obj.orientation > 180 else $Obj.x@first\n    $Obj.y is $Obj.y@first - 1 if $Obj.orientation < 90 or $Obj.orientation > 270 else $Obj.y@first\n    $Obj.width is $Obj.width@first + 1\n    $Obj.height is $Obj.height@first + 1"
   ],
   "output_canvas": "EXACT"
@@ -2444,8 +2475,8 @@ column/row of the object's nonzero bounding-box origin within its mask; the
 orientation fields give each state's numeric angle. Core, extension, and
 line keep each object's orientation, while a curve point's rim turns it
 into a V, as the convention below describes.
-Native snapshots use `x`, `y`, `width`, `height`, and `orientation`; `tag`
-replaces `shape` with shortened identifiers such as `l6747`.
+Native snapshots use `x`, `y`, `width`, `height`, `orientation`, and `volume`;
+`tag` replaces `shape` with shortened identifiers such as `l6747`.
 Matrices already follow the canvas axes; composition does not rotate them.
 
 Angles run clockwise from north: `N = 0`, `NE = 45`, `E = 90`, `SE = 135`,
@@ -2718,7 +2749,7 @@ The LLM also represents identified instances in `nuc` lang. This step is crucial
         [0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0]
       ],
-      "implementation": "obj0 = Obj(x=5, y=1, width=2, height=2, orientation=135, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)",
+      "implementation": "obj0 = Obj(x=5, y=1, width=2, height=2, orientation=135, volume=3, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)",
       "input_value": {
         "height": 2,
         "horizontal_segment_color": 9,
@@ -2727,6 +2758,7 @@ The LLM also represents identified instances in `nuc` lang. This step is crucial
         "tag": "l6747",
         "vertex_color": 9,
         "vertical_segment_color": 9,
+        "volume": 3,
         "width": 2,
         "x": 5,
         "y": 1
@@ -2740,6 +2772,7 @@ The LLM also represents identified instances in `nuc` lang. This step is crucial
         "tag": "l6624",
         "vertex_color": 9,
         "vertical_segment_color": 9,
+        "volume": 3,
         "width": 3,
         "x": 5,
         "y": 1
@@ -2800,14 +2833,15 @@ This standalone utility does not change the full-size instance masks or return
 position metadata. Use `Matrix.locate` to retain the original position with
 the crop.
 
-`Matrix.locate(matrix)` returns `{ matrix, x, y, width, height }`, pairing the
-same tight crop with its zero-based top-left position in the original matrix
-and its size: `x` is the column, `y` is the row, `width` is the crop's column
-count and `height` is its row count. Empty and all-zero matrices return
-`{ matrix: [], x: 0, y: 0, width: 0, height: 0 }`. It uses the same validation
-as `Matrix.crop` and does not modify the input. For a located result,
-`Matrix.draw(result.matrix, rows, cols, result.x, result.y)` restores the crop
-to its original position on a canvas at least as large as the supplied
+`Matrix.locate(matrix)` returns `{ matrix, x, y, width, height, volume }`,
+pairing the same tight crop with its zero-based top-left position in the
+original matrix, its size, and its volume: `x` is the column, `y` is the row,
+`width` is the crop's column count, `height` is its row count, and `volume` is
+the number of its nonzero cells. Empty and all-zero matrices return
+`{ matrix: [], x: 0, y: 0, width: 0, height: 0, volume: 0 }`. It uses the same
+validation as `Matrix.crop` and does not modify the input. For a located
+result, `Matrix.draw(result.matrix, rows, cols, result.x, result.y)` restores
+the crop to its original position on a canvas at least as large as the supplied
 dimensions, and so does `Matrix.pad`.
 
 `Matrix.draw(matrix, rows, cols, x, y)` returns a new matrix with the top-left

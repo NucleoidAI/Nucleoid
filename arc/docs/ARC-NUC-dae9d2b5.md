@@ -6,12 +6,12 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Item | Status |
 | --- | --- |
 | Puzzle | [`data/training/dae9d2b5.json`](../data/training/dae9d2b5.json) |
-| Instruction dataset | [`dataset.dae9d2b5.json`](../src/dataset/dataset.dae9d2b5.json): 5 original training pairs followed by 2 test pairs, 14 whole panel-figure instances, written on 8-Nov-2026; colors written as numbers instead of letters on 8-Nov-2026 |
+| Instruction dataset | [`dataset.dae9d2b5.json`](../src/dataset/dataset.dae9d2b5.json): 5 original training pairs followed by 2 test pairs, 14 whole panel-figure instances, written on 8-Nov-2026; colors written as numbers instead of letters on 8-Nov-2026; `volume` added as the sixth standard entry on 17-Nov-2026 |
 | Output canvas | `FIT` |
 | Nucleoid enhancements | None; accepted Nucleoid expresses the model |
-| Solver changes | JSON-only message construction suggested in `src/lib/llm.ts`, `src/analyzer.ts`, and `src/visualizer.ts`; not applied |
+| Solver changes | JSON-only message construction suggested in `src/lib/llm.ts`, `src/analyzer.ts`, and `src/visualizer.ts`; not applied; since 17-Nov-2026 `Matrix.locate` measures each object's `volume`, which `object.implementation` receives as `input_volume` |
 | Solver runs | None; message-format and process-environment prerequisites blocked the run; difference unknown |
-| Updated | 8-Nov-2026 |
+| Updated | 17-Nov-2026 |
 
 ## Puzzle
 
@@ -121,6 +121,31 @@ orientation calls' few-shot crops read exactly as they did with letters,
 because the counts that rank them are unchanged. No NUC was requested, so no
 proposal strategy was selected and strategy learning did not apply. No solver
 run has measured this version, so its difference is unknown, not zero.
+
+### Volume
+
+On 17-Nov-2026, at the user's request, `volume` joined the standard object
+entries as the sixth, after `orientation`: the number of nonzero cells in the
+object's input mask, not the area of its bounding box. The solver's
+`init_class` in `src/lib/llm.ts` declares it, `Matrix.locate` measures it, and
+`object.implementation` receives the measured count as `input_volume`. The
+class takes `volume: int` right after `orientation: int` and sets
+`this.volume = volume` right after `this.orientation = orientation`, and every
+implementation passes it right after `orientation`:
+
+```nuc
+class Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int):
+obj9794a3111594 = Obj(x=0, y=0, width=2, height=2, orientation=315, volume=3)
+```
+
+No rule reads or changes `volume`, so each output state keeps its input volume.
+Offline, with the accepted runtime at `16ae8c2` (last runtime change
+`1612d6c`), all 14 input and 14 output snapshots of the 7 pairs replay, each
+equal to its previous snapshot with `volume` added. The grids, masks,
+positions, and instance names are unchanged, and every form the dataset uses
+was already in the [dataset grammar](../nucleoid.ebnf). No NUC was requested,
+so no proposal strategy was selected and strategy learning did not apply. No
+solver run has measured this version, so its difference is unknown, not zero.
 
 ## Runs
 

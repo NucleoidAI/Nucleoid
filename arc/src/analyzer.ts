@@ -72,7 +72,9 @@ export async function instances({ train_dataset }) {
 export async function value({ train_dataset, input_matrix, instance }) {
   milestone.constructing_instance({ instance_name: instance.instance_name });
 
-  const { x, y, width, height } = Matrix.locate(instance.input_instance_matrix);
+  const { x, y, width, height, volume } = Matrix.locate(
+    instance.input_instance_matrix
+  );
 
   const orientation = await object.orientation({ train_dataset, instance });
 
@@ -84,6 +86,7 @@ export async function value({ train_dataset, input_matrix, instance }) {
     width,
     height,
     orientation,
+    volume,
   });
 
   milestone.evaluating_rules({ instance_name: instance.instance_name });

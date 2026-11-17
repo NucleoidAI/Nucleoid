@@ -81,7 +81,7 @@ export async function value({
     input_instance_matrix,
   };
 
-  const { x, y, width, height } = Matrix.locate(input_instance_matrix);
+  const { x, y, width, height, volume } = Matrix.locate(input_instance_matrix);
 
   const orientation = await object.orientation({ train_dataset, instance });
 
@@ -94,6 +94,7 @@ export async function value({
     width,
     height,
     orientation,
+    volume,
   });
 
   milestone.instance_synthesized({

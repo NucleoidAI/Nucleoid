@@ -6,12 +6,12 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Item | Status |
 | --- | --- |
 | Puzzle | [`data/training/d037b0a7.json`](../data/training/d037b0a7.json) |
-| Instruction dataset | [`dataset.d037b0a7.json`](../src/dataset/dataset.d037b0a7.json): the puzzle's 3 original training pairs and its test pair, 11 point instances (3, 3, 2, and 3 per pair); version 2, which reads the canvas height from the solver's `canvas_height`, committed in `f771c15` and moved to the standard entries in `521aa3c`, replacing version 1, which `81c0208` committed; shared orientation comment added on 6-Nov-2026; descriptive `implementation` comments added on 7-Nov-2026; colors written as letters on 8-Nov-2026; respelled on 8-Nov-2026 with the `is` assignments of NUC 93 and bare words, every snapshot unchanged; colors written as numbers again on 8-Nov-2026 |
+| Instruction dataset | [`dataset.d037b0a7.json`](../src/dataset/dataset.d037b0a7.json): the puzzle's 3 original training pairs and its test pair, 11 point instances (3, 3, 2, and 3 per pair); version 2, which reads the canvas height from the solver's `canvas_height`, committed in `f771c15` and moved to the standard entries in `521aa3c`, replacing version 1, which `81c0208` committed; shared orientation comment added on 6-Nov-2026; descriptive `implementation` comments added on 7-Nov-2026; colors written as letters on 8-Nov-2026; respelled on 8-Nov-2026 with the `is` assignments of NUC 93 and bare words, every snapshot unchanged; colors written as numbers again on 8-Nov-2026; `volume` added as the sixth standard entry on 17-Nov-2026 |
 | Output canvas | `EXACT` |
 | Nucleoid enhancements | None requested |
-| Solver changes | On 4-Nov-2026, at the user's request, every `nucleoid.run` call in `src/analyzer.ts` and `src/visualizer.ts` declares `canvas_width` and `canvas_height` at the start of its program; one suggested change awaits review, not applied; since 8-Nov-2026 every respelled dataset needs `is` assignments, which `src/lib/nucleoid.ts` enabled with `--is-assignment` until `d945213` made them the default |
+| Solver changes | On 4-Nov-2026, at the user's request, every `nucleoid.run` call in `src/analyzer.ts` and `src/visualizer.ts` declares `canvas_width` and `canvas_height` at the start of its program; one suggested change awaits review, not applied; since 8-Nov-2026 every respelled dataset needs `is` assignments, which `src/lib/nucleoid.ts` enabled with `--is-assignment` until `d945213` made them the default; since 17-Nov-2026 `Matrix.locate` measures each object's `volume`, which `object.implementation` receives as `input_volume` |
 | Solver runs | 1 local run on 3-Nov-2026 for version 1, exit 0; version 2 not run; none of the current version; none of the 8-Nov-2026 `is` version |
-| Updated | 8-Nov-2026 |
+| Updated | 17-Nov-2026 |
 
 ## Puzzle
 
@@ -244,6 +244,31 @@ calls' few-shot crops read exactly as they did with letters, because the
 counts that rank them are unchanged. No NUC was requested, so no proposal
 strategy was selected and strategy learning did not apply. No solver run has
 measured this version, so its difference is unknown, not zero.
+
+### Volume
+
+On 17-Nov-2026, at the user's request, `volume` joined the standard object
+entries as the sixth, after `orientation`: the number of nonzero cells in the
+object's input mask, not the area of its bounding box. The solver's
+`init_class` in `src/lib/llm.ts` declares it, `Matrix.locate` measures it, and
+`object.implementation` receives the measured count as `input_volume`. The
+class takes `volume: int` right after `orientation: int` and sets
+`this.volume is volume` right after `this.orientation is orientation`, and
+every implementation passes it right after `orientation`:
+
+```nuc
+class Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, color: int):
+obj7ed0b8b9b5eb is Obj(x=2, y=0, width=1, height=1, orientation=0, volume=1, color=6)
+```
+
+No rule reads or changes `volume`, so each output state keeps its input volume.
+Offline, with the accepted runtime at `16ae8c2` (last runtime change
+`1612d6c`), all 11 input and 11 output snapshots of the 4 pairs replay, each
+equal to its previous snapshot with `volume` added. The grids, masks,
+positions, and instance names are unchanged, and every form the dataset uses
+was already in the [dataset grammar](../nucleoid.ebnf). No NUC was requested,
+so no proposal strategy was selected and strategy learning did not apply. No
+solver run has measured this version, so its difference is unknown, not zero.
 
 ## Runs
 
