@@ -1,8 +1,8 @@
-import * as nucleoid from "./lib/nucleoid";
 import * as Matrix from "./lib/Matrix";
 import * as llm from "./lib/llm";
 import * as milestone from "./lib/milestone.ts";
 import object from "./object.ts";
+import * as nucleoid from "./lib/nucleoid";
 
 export async function instances({ train_dataset, test_input_matrix }) {
   milestone.segmenting_test_input({ test_input_matrix });
@@ -195,35 +195,4 @@ export async function output_instance_matrix({
   milestone.output_placed({ ...instance, output_instance_padded_matrix });
 
   return { output_instance_matrix: output_instance_padded_matrix };
-}
-
-export async function state({
-  declarations,
-  test_input_matrix,
-  input_instances,
-}) {
-  const implementations = input_instances.map(
-    ({ implementation }) => implementation
-  );
-
-  const canvas_width: number = test_input_matrix[0].length;
-  const canvas_height: number = test_input_matrix.length;
-  const obj_list = await nucleoid.run(
-    [
-      `canvas_width = ${canvas_width}`,
-      `canvas_height = ${canvas_height}`,
-      ...declarations,
-      ...implementations,
-      "Obj[:]",
-    ].join("\n\n")
-  );
-
-  milestone.state({ phase: "visualization", obj_list });
-
-  [...obj_list].forEach((instance) => {
-    const found_instance = input_instances.find(
-      ({ instance_name }) => instance.id === instance_name
-    );
-    found_instance.output_value = instance;
-  });
 }

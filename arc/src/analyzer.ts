@@ -69,8 +69,15 @@ export async function instances({ train_dataset }) {
   return { instances };
 }
 
-export async function value({ train_dataset, input_matrix, instance }) {
-  milestone.constructing_instance({ instance_name: instance.instance_name });
+export async function value({
+  instance_name,
+  train_dataset,
+  input_matrix,
+  instance,
+}) {
+  milestone.constructing_instance({ instance_name });
+
+  instance.instance_name = instance_name;
 
   const { x, y, width, height, volume } = Matrix.locate(
     instance.input_instance_matrix
@@ -89,7 +96,7 @@ export async function value({ train_dataset, input_matrix, instance }) {
     volume,
   });
 
-  milestone.evaluating_rules({ instance_name: instance.instance_name });
+  milestone.evaluating_rules({ instance_name });
 
   const canvas_width: number = input_matrix[0].length;
   const canvas_height: number = input_matrix.length;
@@ -103,14 +110,15 @@ export async function value({ train_dataset, input_matrix, instance }) {
   );
 
   milestone.instance_constructed({
-    instance_name: instance.instance_name,
+    instance_name,
     input_instance_matrix: instance.input_instance_matrix,
     output_instance_matrix: instance.output_instance_matrix,
     implementation,
     input_value,
   });
 
-  return { implementation, input_value };
+  instance.implementation = implementation;
+  instance.input_value = input_value;
 }
 
 export async function state(train_dataset) {

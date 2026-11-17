@@ -6,6 +6,7 @@ import * as milestone from "./lib/milestone.ts";
 import arc_dataset from "./lib/arc_dataset.ts";
 import fs from "node:fs/promises";
 import synthesizer from "./synthesizer.ts";
+import object from "./object.ts";
 
 // Genesis puzzle_id: 3aa6fb7a
 export async function start(puzzle_id: string = "3aa6fb7a") {
@@ -50,13 +51,35 @@ export async function start(puzzle_id: string = "3aa6fb7a") {
     });
 
     for (const instance of instances) {
-      instance.instance_name = next_instance_name();
+      await analyzer.value({
+        instance_name: next_instance_name(),
+        train_dataset,
+        input_matrix: dataset.input_matrix,
+        instance,
+      });
     }
 
     dataset.instances = instances;
   }
 
   await analyzer.state(train_dataset);
+
+  // const synthesized_dataset = await synthesizer.synthesize({ train_dataset });
+  //
+  // for (const dataset of synthesized_dataset) {
+  //   for (const instance of dataset.instances) {
+  //     await analyzer.value({
+  //       instance_name: next_instance_name(),
+  //       train_dataset,
+  //       input_matrix: dataset.input_matrix,
+  //       instance,
+  //     });
+  //   }
+  //
+  //   train_dataset.dataset.push(dataset);
+  // }
+  //
+  // await analyzer.state(synthesized_dataset);
 
   milestone.visualization();
 
@@ -65,12 +88,8 @@ export async function start(puzzle_id: string = "3aa6fb7a") {
     test_input_matrix,
   });
 
-  let result_matrix = Matrix.draw(
-    [],
-    test_input_matrix.length,
-    test_input_matrix[0].length,
-    0,
-    0
+  let result_matrix = Array.from({ length: test_input_matrix.length }, () =>
+    Array(test_input_matrix[0].length).fill(0)
   );
 
   const input_instances = [];
@@ -93,11 +112,7 @@ export async function start(puzzle_id: string = "3aa6fb7a") {
     });
   }
 
-  const synthesized_dataset = await synthesizer.synthesize({ train_dataset });
-
-  milestone.training_dataset_synthesized({ dataset: synthesized_dataset });
-
-  await visualizer.state({ declarations, test_input_matrix, input_instances });
+  await object.state({ declarations, test_input_matrix, input_instances });
 
   for (const input_instance of input_instances) {
     const { output_instance_matrix } = await visualizer.output_instance_matrix({

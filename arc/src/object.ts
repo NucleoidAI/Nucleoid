@@ -1,5 +1,7 @@
 import * as llm from "./lib/llm.ts";
 import * as Matrix from "./lib/Matrix.ts";
+import * as nucleoid from "./lib/nucleoid";
+import * as milestone from "./lib/milestone.ts";
 
 async function orientation({ train_dataset, instance }) {
   const { orientation } = await llm.generate({
@@ -127,4 +129,31 @@ async function implementation({
   return implementation;
 }
 
-export default { orientation, implementation };
+async function state({ declarations, test_input_matrix, input_instances }) {
+  const implementations = input_instances.map(
+    ({ implementation }) => implementation
+  );
+
+  const canvas_width: number = test_input_matrix[0].length;
+  const canvas_height: number = test_input_matrix.length;
+  const obj_list = await nucleoid.run(
+    [
+      `canvas_width = ${canvas_width}`,
+      `canvas_height = ${canvas_height}`,
+      ...declarations,
+      ...implementations,
+      "Obj[:]",
+    ].join("\n\n")
+  );
+
+  milestone.state({ phase: "visualization", obj_list });
+
+  [...obj_list].forEach((instance) => {
+    const found_instance = input_instances.find(
+      ({ instance_name }) => instance.id === instance_name
+    );
+    found_instance.output_value = instance;
+  });
+}
+
+export default { orientation, implementation, state };

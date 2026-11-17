@@ -1,7 +1,7 @@
 import * as llm from "./lib/llm.ts";
 
 async function synthesize({ train_dataset }) {
-  const { dataset } = await llm.generate({
+  return await llm.generate({
     messages: [
       {
         role: "assistant",
@@ -19,8 +19,8 @@ async function synthesize({ train_dataset }) {
             output_canvas: train_dataset.output_canvas,
             dataset: [
               {
-                input_max_matrix: "<INPUT_MAX_MATRIX>",
-                output_max_matrix: "<OUTPUT_MAX_MATRIX>",
+                input_matrix: "<INPUT_MATRIX>",
+                output_matrix: "<OUTPUT_MATRIX>",
                 instances: [
                   {
                     input_instance_matrix: "<INPUT_INSTANCE_MATRIX>",
@@ -31,26 +31,22 @@ async function synthesize({ train_dataset }) {
             ],
           })}
           json_format:
-          {
-            dataset: [
-              {
-                input_max_matrix: "<INPUT_MAX_MATRIX>",
-                output_max_matrix: "<OUTPUT_MAX_MATRIX>",
-                instances: [
-                  {
-                    input_instance_matrix: "<INPUT_INSTANCE_MATRIX>",
-                    output_instance_matrix: "<OUTPUT_INSTANCE_MATRIX>",
-                  },
-                ],
-              },
-            ],
-          }
+          [
+            {
+              input_matrix: "<INPUT_MATRIX>",
+              output_matrix: "<OUTPUT_MATRIX>",
+              instances: [
+                {
+                  input_instance_matrix: "<INPUT_INSTANCE_MATRIX>",
+                  output_instance_matrix: "<OUTPUT_INSTANCE_MATRIX>",
+                },
+              ],
+            },
+          ],
           `,
       },
     ],
   });
-
-  return dataset;
 }
 
 export default { synthesize };
