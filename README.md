@@ -2501,6 +2501,33 @@ assert([oven.newest, oven.firstAlarm], [41, 41])
   nothing `null`, as their spellings do. See the
   [root contract](nucleoid.spec.md#first-and-last-element-methods).
 
+## Case conversion method aliases
+
+**Case conversion methods keep a sensor's labels normalized**
+
+```nuc
+class Sensor(label):
+    this.label = label
+$Sensor.key = $Sensor.label.to_lowercase()
+$Sensor.banner = $Sensor.label.uppercased()
+door = Sensor("Front Door")
+assert([door.key, door.banner], ["front door", "FRONT DOOR"])
+door.label = "Side Door"
+assert([door.key, door.banner], ["side door", "SIDE DOOR"])
+```
+
+- [NUC 118](docs/nuc-0118.md) adds the case conversion methods that
+  Kotlin, Rust and Swift write, as aliases of `toUpperCase()` and
+  `toLowerCase()` on strings: Kotlin's `uppercase()` and `lowercase()`,
+  Rust's `to_uppercase()` and `to_lowercase()`, and Swift's `uppercased()`
+  and `lowercased()`.
+- Each sensor's `key` and `banner` follow its own label through the
+  class-level rules, as `$Sensor.label.toLowerCase()` and
+  `$Sensor.label.toUpperCase()` would. The mapping is the full Unicode one
+  of those spellings, so `"Straße".uppercase()` is `"STRASSE"`, and other
+  values keep their errors. See the
+  [root contract](nucleoid.spec.md#case-conversion-method-aliases).
+
 ## Reactive list flattening
 
 **Flat turns nested lists into one live list**

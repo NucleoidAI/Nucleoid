@@ -81,8 +81,12 @@ fn string_transform(
     arguments: &[Value],
 ) -> Result<Option<Value>> {
     Ok(Some(match name {
-        "lower" | "toLowerCase" => Value::String(receiver.to_lowercase()),
-        "upper" | "toUpperCase" => Value::String(receiver.to_uppercase()),
+        "lower" | "toLowerCase" | "lowercase" | "to_lowercase" | "lowercased" => {
+            Value::String(receiver.to_lowercase())
+        }
+        "upper" | "toUpperCase" | "uppercase" | "to_uppercase" | "uppercased" => {
+            Value::String(receiver.to_uppercase())
+        }
         "trim" | "strip" => Value::String(receiver.trim().to_string()),
         "split" => {
             let separator = first.to_string();

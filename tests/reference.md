@@ -2747,6 +2747,22 @@ assert([head, tail], ["print", "fax"])
 [queue.first(job -> job == "copy"), [].last()]
 # return: [null,null]
 ---
+# Nucleoid converts case as Kotlin, Rust and Swift do
+
+class User(name):
+    this.name = name
+$User.handle = $User.name.lowercase()
+ada = User("Ada Lovelace")
+email = "ADA@EXAMPLE.ORG"
+inbox = email.to_lowercase()
+shown = ada.name.uppercased()
+assert([ada.handle, inbox, shown], ["ada lovelace", "ada@example.org", "ADA LOVELACE"])
+ada.name = "Ada King"
+email = "Countess@Example.org"
+assert([ada.handle, inbox, shown], ["ada king", "countess@example.org", "ADA KING"])
+["straße".to_uppercase(), "ÉCOLE".lowercased(), "ok".uppercase()]
+# return: ["STRASSE","école","OK"]
+---
 # Nucleoid flattens nested lists with flat
 
 pallets = [[["bolt", "nut"], ["gear"]], [["cog"]]]

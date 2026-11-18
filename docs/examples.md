@@ -4020,6 +4020,35 @@ assert([nextUrgent, newest], [ana, cy])
   See [NUC 117](nuc-0117.md) and the
   [root contract](../nucleoid.spec.md#first-and-last-element-methods).
 
+## Case conversion method aliases
+
+**Case conversions match badge scans to every employee**
+
+```nuc
+class Employee(name):
+    this.name = name
+$Employee.key = $Employee.name.lowercase()
+scans = ["ANA LIMA", "bo chen"]
+seen = scans.map(scan -> scan.to_lowercase())
+ana = Employee("Ana Lima")
+bo = Employee("Bo Chen")
+assert([ana.key, bo.key], ["ana lima", "bo chen"])
+present = Employee.filter(employee -> seen.includes(employee.key)).map(employee -> employee.name.uppercased())
+assert(present, ["ANA LIMA", "BO CHEN"])
+scans.pop()
+present
+# return: ["ANA LIMA"]
+```
+
+- Badge scans arrive in whatever case the reader prints, so `seen` lowers
+  each one with Rust's `to_lowercase()`, and each employee's `key` lowers
+  the name on file with Kotlin's `lowercase()`, where accepted syntax
+  writes `toLowerCase()` for both.
+- `present` matches the two sources and shows each name with Swift's
+  `uppercased()`, so withdrawing a scan leaves only the employees still
+  scanned. See [NUC 118](nuc-0118.md) and the
+  [root contract](../nucleoid.spec.md#case-conversion-method-aliases).
+
 ## Reactive list flattening
 
 **Flattening keeps the dirty tiles of every room counted**

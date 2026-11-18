@@ -532,6 +532,86 @@ operator-chain diagnostics and source positions are preserved.
   specify the executable behavior. `tests/first_and_last_methods.rs`
   executes the rest.
 
+## Case conversion method aliases
+
+- [NUC 118](docs/nuc-0118.md) adds the case conversion methods that Kotlin,
+  Rust and Swift write, as aliases of the accepted `toUpperCase` and
+  `toLowerCase` on strings. They join the accepted aliases `lower`, `upper`,
+  `strip`, `find`, `contains`, `substr`, `startswith`, `endswith`, `join`,
+  `size`, `len`, `isEmpty`, `is_empty` and `isNotEmpty`. No token, keyword,
+  syntax tree node, error type or message format is added.
+- `TEXT.uppercase()`, `TEXT.to_uppercase()` and `TEXT.uppercased()` are
+  `TEXT.toUpperCase()`, and `TEXT.lowercase()`, `TEXT.to_lowercase()` and
+  `TEXT.lowercased()` are `TEXT.toLowerCase()`: the whole string in the same
+  full Unicode case mapping, which can change its length, so
+  `"Straße".uppercase()` is `"STRASSE"`, and which lowers a word's final
+  capital sigma to `ς`, so `"ΟΔΟΣ".lowercase()` is `"οδος"`. Further
+  arguments are evaluated and ignored.
+- **Receivers.** A string however it is reached, including a literal, a
+  name, a property, a call or query result, a template, an index, a
+  `.value` snapshot and a string read from a state version.
+- **Evaluation.** The receiver is read first, then every argument once, left
+  to right, as for every call. An argument's error, such as
+  `ReferenceError("missing is not defined")`, propagates before the alias
+  runs.
+- **Live.** A declaration or class-level rule that calls an alias depends on
+  what its accepted spelling depends on: `key = label.lowercase()` follows
+  writes of `label`, `quiet = tags.map(tag -> tag.lowercased())` follows
+  pushes to `tags`, and `$Badge.login = $Badge.name.to_lowercase()` follows
+  each badge's name. Errors roll back through the existing transaction.
+- **Per evaluation.** An alias gives its spelling's result whenever its
+  receiver evaluates to a string. A later write that replaces a held
+  receiver with another kind of value re-evaluates the call on that value,
+  which reads the alias's name as it reads any other method name: after
+  `code = label.uppercase()`, writing `label = 7` raises
+  `TypeError("number.uppercase is not a function")` and rolls back, where
+  the spelling raises `TypeError("number.toUpperCase is not a function")`;
+  writing a list raises `TypeError("label.uppercase is not a function")`,
+  where the spelling names `toUpperCase`; and writing an object or instance
+  whose `uppercase` member is a function runs it, where the spelling gives
+  undefined.
+- **Rendering.** Statements, `why`, `affects`, `--graph` and graph keys show
+  the call as written. Its dependencies are those of the accepted spelling,
+  so `why key` after `key = label.lowercase()` shows `key` read from
+  `label`, as after `key = label.toLowerCase()`.
+- **Unchanged.** Only calls of the six names on a string receiver change;
+  each raised `TypeError("<text>.<name> is not a function")`, or an
+  argument's error first, which stays.
+  - Lists, class populations, numbers, booleans, functions, dates and
+    regular expressions keep their `TypeError`: `(5).uppercase()` raises
+    `TypeError("number.uppercase is not a function")`.
+  - Objects and instances keep their routing: instance methods and callable
+    properties named like the aliases keep running, a property of that name
+    that is not a function keeps its `TypeError`, and a missing member stays
+    undefined. Inside a class-level rule `$Name` is the instance, so
+    `$Name.uppercase()` there keeps calling the instance's method or giving
+    undefined.
+  - `String.uppercase()` keeps raising
+    `TypeError("String.uppercase is not a function")`, also when a class
+    named `String` is declared.
+  - A `null` or undefined receiver stays undefined without evaluating the
+    arguments. Reads without a call, such as `text.uppercase`, stay
+    undefined, and `text.uppercase = 1` keeps raising
+    `TypeError("Cannot assign 'uppercase' on string")`. Functions named like
+    the aliases keep their calls, such as `uppercase(text)`.
+- **Source-language differences.** Kotlin's `uppercase()` and `lowercase()`
+  use the invariant locale, as Nucleoid's mapping does, and Rust's
+  `to_uppercase()` and `to_lowercase()` are that mapping. A locale argument,
+  as in Kotlin's and Java's `Locale` overloads and Swift's
+  `uppercased(with:)`, is evaluated and ignored, so no locale-specific
+  mapping such as Turkish dotless `ı` applies. Kotlin's `Char.uppercase()`
+  has no counterpart, since Nucleoid has no character type. C#'s
+  `ToUpper()` and `ToLower()`, Rust's ASCII-only `to_ascii_uppercase()` and
+  `to_ascii_lowercase()`, Ruby's `upcase` and `downcase`, Python's
+  `casefold()`, `swapcase()`, `title()` and `capitalize()`, Kotlin's
+  `capitalize()` and `replaceFirstChar`, and Swift's `capitalized` are not
+  added.
+- The three entries beginning
+  `Nucleoid converts case with Kotlin, Rust and Swift spellings`
+  through `Nucleoid rolls back failed updates through case conversion aliases`
+  specify the executable behavior. `tests/case_conversion_aliases.rs`
+  executes the rest.
+
 ## Reactive string padding
 
 - [NUC 111](docs/nuc-0111.md) adds JavaScript's standard padding methods to
@@ -25927,6 +26007,79 @@ assert([door.readings, door.latest], [[18], 18])
 door.readings.push(21)
 door.latest
 # return: 21
+---
+# Nucleoid converts case with Kotlin, Rust and Swift spellings
+
+label = "Front Door"
+key = label.lowercase()
+code = label.to_uppercase()
+banner = label.uppercased()
+assert([key, code, banner], ["front door", "FRONT DOOR", "FRONT DOOR"])
+label = "Back Gate"
+assert([key, code, banner], ["back gate", "BACK GATE", "BACK GATE"])
+assert(["NORTH".to_lowercase(), "Mixed Case".lowercased(), "ok".uppercase()], ["north", "mixed case", "OK"])
+street = "Straße"
+upper = street.uppercase()
+assert([upper, upper.length, street.length], ["STRASSE", 7, 6])
+assert([street.to_uppercase(), street.uppercased(), street.toUpperCase()], [upper, upper, upper])
+assert(["ΟΔΟΣ".lowercase(), "ǅ".uppercased(), "ﬁx".to_uppercase(), "".lowercased()], ["οδος", "Ǆ", "FIX", ""])
+street = "Gasse"
+[upper, key]
+# return: ["GASSE","back gate"]
+---
+# Nucleoid keeps class-level and mapped case conversions live
+
+class Badge(name, team):
+    this.name = name
+    this.team = team
+$Badge.login = $Badge.name.to_lowercase()
+$Badge.crest = $Badge.team.uppercased()
+ana = Badge("Ana Lima", "blue")
+bo = Badge("BO CHEN", "Red")
+assert([ana.login, ana.crest, bo.login, bo.crest], ["ana lima", "BLUE", "bo chen", "RED"])
+bo.name = "Bo Chen-Wu"
+ana.team = "green"
+assert([bo.login, ana.crest], ["bo chen-wu", "GREEN"])
+tags = ["Urgent", "low"]
+shout = tags.map(tag -> tag.uppercase())
+quiet = tags.map(tag -> tag.lowercased())
+assert([shout, quiet], [["URGENT", "LOW"], ["urgent", "low"]])
+tags.push("Straße")
+assert(shout, ["URGENT", "LOW", "STRASSE"])
+quiet
+# return: ["urgent","low","straße"]
+---
+# Nucleoid rolls back failed updates through case conversion aliases
+
+label = "door"
+code = label.uppercase()
+failure = ""
+try:
+    label = 7
+catch error:
+    failure = error
+assert(failure, TypeError("number.uppercase is not a function"))
+assert([label, code], ["door", "DOOR"])
+try:
+    label = "gate"
+    assert(code, "GATE")
+    throw "UNDO"
+catch error:
+    assert(error, "UNDO")
+assert([label, code], ["door", "DOOR"])
+class Tag(name):
+    this.name = name
+$Tag.key = $Tag.name.to_lowercase()
+red = Tag("RED")
+try:
+    red.name = true
+catch error:
+    failure = error
+assert(failure, TypeError("boolean.to_lowercase is not a function"))
+assert([red.name, red.key], ["RED", "red"])
+red.name = "Crimson"
+red.key
+# return: "crimson"
 ---
 # Nucleoid flattens nested lists by one level
 

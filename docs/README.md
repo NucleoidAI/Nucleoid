@@ -2596,7 +2596,7 @@ Full detail: [NUC 9](nuc-0009.md), [NUC 46](nuc-0046.md).
 | `Boolean` | `Boolean(value)` |
 | `Number` | `Number.MAX_INTEGER` |
 | `Math` | `pow`, `sqrt`, `floor`, `round`, `max`, `min`, `clamp` ([NUC 21](nuc-0021.md)), `lerp` ([NUC 22](nuc-0022.md)), `saturate` ([NUC 23](nuc-0023.md)), `smoothstep(lower, upper, value)` (accepted [NUC 33](nuc-0033.md)), `smootherstep(lower, upper, value)` (accepted [NUC 35](nuc-0035.md)), `remap(start, end, targetStart, targetEnd, value)` (accepted [NUC 39](nuc-0039.md)) |
-| `String` | `String.fromCharCode`; instance `charAt`, `length`, `lower`, `replace`, `replaceAll` (accepted [NUC 42](nuc-0042.md)), `repeat`, `split`, `padStart` and `padEnd` ([NUC 111](nuc-0111.md)), Python's `startswith`, `endswith` and `join(items)`, with the separator as the receiver ([NUC 110](nuc-0110.md)), and the size and emptiness methods `length()`, `size()`, `len()`, `isEmpty()`, `is_empty()` and `isNotEmpty()` ([NUC 116](nuc-0116.md)) |
+| `String` | `String.fromCharCode`; instance `charAt`, `length`, `lower`, `replace`, `replaceAll` (accepted [NUC 42](nuc-0042.md)), `repeat`, `split`, `padStart` and `padEnd` ([NUC 111](nuc-0111.md)), Python's `startswith`, `endswith` and `join(items)`, with the separator as the receiver ([NUC 110](nuc-0110.md)), the size and emptiness methods `length()`, `size()`, `len()`, `isEmpty()`, `is_empty()` and `isNotEmpty()` ([NUC 116](nuc-0116.md)), and the case conversion aliases `uppercase()`, `to_uppercase()` and `uppercased()` of `toUpperCase()`, and `lowercase()`, `to_lowercase()` and `lowercased()` of `toLowerCase()` ([NUC 118](nuc-0118.md)) |
 | `Date` | `Date()`, `Date(string)`, `Date(number)`, `Date.now()`, `Date.parse()`; instance `getTime`, `getYear`, `toDateString` |
 | `List` | `push`, `pop`, `filter`, `map`, `flatMap` (accepted [NUC 41](nuc-0041.md)), `flat` ([NUC 103](nuc-0103.md)), `reduce`, `find`, `some`, `every`, `slice`, `sort` (in place, [NUC 58](nuc-0058.md)), `join`, `length`, and the queries `at`, `includes`, `indexOf`, `lastIndexOf`, `findIndex`, `findLast`, `findLastIndex` and `concat` ([NUC 61](nuc-0061.md)), `sum` ([NUC 68](nuc-0068.md)), `max` and `min` ([NUC 69](nuc-0069.md)), `distinct` ([NUC 71](nuc-0071.md)), `count(predicate)` ([NUC 73](nuc-0073.md)), `mode` ([NUC 75](nuc-0075.md)), `maxBy` and `minBy` ([NUC 77](nuc-0077.md)), `average` ([NUC 80](nuc-0080.md)), `median` ([NUC 84](nuc-0084.md)), `sortBy` ([NUC 105](nuc-0105.md)), `partition` ([NUC 108](nuc-0108.md)), `product` ([NUC 114](nuc-0114.md)), the size and emptiness aliases `size()`, `len()`, `isEmpty()`, `is_empty()` and `isNotEmpty()` ([NUC 116](nuc-0116.md)), and the first and last element aliases `first()`, `last()`, `first(predicate)` and `last(predicate)` ([NUC 117](nuc-0117.md)); `sum`, `max`, `min` and `mode` also read as `sum of list` ([NUC 75](nuc-0075.md) revision 2) |
 | `Class` | the global list of declared types; `Class.length` |
@@ -2799,6 +2799,59 @@ assert([head, tail], ["print", "fax"])
   `Nucleoid reads first and last elements as Kotlin and Rust do` in
   `tests/reference.md`. The
   [root section](../nucleoid.spec.md#first-and-last-element-methods) and its
+  three appended entries define the results, liveness and rollback.
+
+### Case conversion method aliases
+
+```
+class User(name):
+    this.name = name
+$User.handle = $User.name.lowercase()
+ada = User("Ada Lovelace")
+email = "ADA@EXAMPLE.ORG"
+inbox = email.to_lowercase()
+shown = ada.name.uppercased()
+assert([ada.handle, inbox, shown], ["ada lovelace", "ada@example.org", "ADA LOVELACE"])
+ada.name = "Ada King"
+email = "Countess@Example.org"
+assert([ada.handle, inbox, shown], ["ada king", "countess@example.org", "ADA KING"])
+["straße".to_uppercase(), "ÉCOLE".lowercased(), "ok".uppercase()]
+```
+
+- [NUC 118](nuc-0118.md) adds the case conversion methods of Kotlin, Rust
+  and Swift as aliases on strings. `uppercase()`, `to_uppercase()` and
+  `uppercased()` are `toUpperCase()`, and `lowercase()`, `to_lowercase()`
+  and `lowercased()` are `toLowerCase()`, with the same full Unicode case
+  mapping, so the last line holds `"STRASSE"`, one letter longer than
+  `"straße"`, and `"école"`.
+- Each alias evaluates its receiver and then its arguments, which it
+  ignores, and stays live like its spelling: `ada.handle`, `inbox` and
+  `shown` follow the writes of the name and the address. `why` names the
+  same dependencies.
+- An alias equals its spelling only while its receiver is a string. When a
+  later write replaces the receiver of a standing call with another kind
+  of value, the call reads the alias's name on that value: a number raises
+  `TypeError("number.uppercase is not a function")` where the spelling
+  raises `TypeError("number.toUpperCase is not a function")`, and an object
+  whose `uppercase` is a function runs it where the spelling gives
+  undefined.
+- Only calls on strings change. Lists, populations and other receivers keep
+  their errors, so `(5).uppercase()` still raises
+  `TypeError("number.uppercase is not a function")`. Reads such as
+  `text.uppercase` without a call, functions, properties and methods of the
+  same names, and `String.uppercase()` keep their behavior.
+- Kotlin's `uppercase()` and `lowercase()` use the invariant locale, as
+  these aliases do, and Rust's are the same mapping. A locale argument, as
+  in Java's and Kotlin's `Locale` overloads or Swift's
+  `uppercased(with:)`, is evaluated and ignored, so no Turkish dotless `ı`
+  mapping applies. C#'s `ToUpper()`, Rust's ASCII-only
+  `to_ascii_uppercase()`, Ruby's `upcase`, Python's `casefold()`,
+  `swapcase()`, `title()` and `capitalize()`, and Swift's `capitalized` are
+  not added.
+- This is the executable entry
+  `Nucleoid converts case as Kotlin, Rust and Swift do` in
+  `tests/reference.md`. The
+  [root section](../nucleoid.spec.md#case-conversion-method-aliases) and its
   three appended entries define the results, liveness and rollback.
 
 ### Reactive string padding
@@ -4874,6 +4927,9 @@ items.isEmpty()  items.is_empty()      exactly items.length == 0, on lists, popu
 items.isNotEmpty()                     exactly items.length > 0, on lists, populations and strings (NUC 116)
 items.first()  items.last()            exactly items.at(0) and items.at(-1); Name.last() is the latest instance (NUC 117)
 items.first(test)  items.last(test)    exactly items.find(test) and items.findLast(test), on lists and populations (NUC 117)
+text.uppercase()  text.lowercase()     Kotlin spellings: exactly text.toUpperCase(), text.toLowerCase() (NUC 118)
+text.to_uppercase()  text.to_lowercase() Rust spellings: exactly text.toUpperCase(), text.toLowerCase() (NUC 118)
+text.uppercased()  text.lowercased()   Swift spellings: exactly text.toUpperCase(), text.toLowerCase() (NUC 118)
 mode of items  sum of Name.map(f)      noun query: exactly items.mode(), Name.map(f).sum() (NUC 75)
 sum of items ** 2                      a noun query applies to the whole power: sum of (items ** 2) (NUC 75)
 

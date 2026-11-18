@@ -20705,6 +20705,97 @@ door.latest
 # return: 21"#);
 }
 
+/// Nucleoid converts case with Kotlin, Rust and Swift spellings
+#[rustfmt::skip]
+#[test]
+fn converts_case_with_kotlin_rust_and_swift_spellings() {
+    let mut run = runner();
+    run(r#"label = "Front Door""#);
+    run("key = label.lowercase()");
+    run("code = label.to_uppercase()");
+    run("banner = label.uppercased()");
+    assert_eq!(run("[key, code, banner]"), serde_json::json!(["front door", "FRONT DOOR", "FRONT DOOR"]));
+    run(r#"label = "Back Gate""#);
+    assert_eq!(run("[key, code, banner]"), serde_json::json!(["back gate", "BACK GATE", "BACK GATE"]));
+    assert_eq!(run(r#"["NORTH".to_lowercase(), "Mixed Case".lowercased(), "ok".uppercase()]"#), serde_json::json!(["north", "mixed case", "OK"]));
+    run(r#"street = "Straße""#);
+    run("upper = street.uppercase()");
+    assert_eq!(run("[upper, upper.length, street.length]"), serde_json::json!(["STRASSE", 7, 6]));
+    {
+        let actual = run("[street.to_uppercase(), street.uppercased(), street.toUpperCase()]");
+        let expected = run("([upper, upper, upper])");
+        assert_eq!(actual, expected);
+    }
+    assert_eq!(run(r#"["ΟΔΟΣ".lowercase(), "ǅ".uppercased(), "ﬁx".to_uppercase(), "".lowercased()]"#), serde_json::json!(["οδος", "Ǆ", "FIX", ""]));
+    run(r#"street = "Gasse""#);
+    run(r#"[upper, key]
+
+# return: ["GASSE","back gate"]"#);
+}
+
+/// Nucleoid keeps class-level and mapped case conversions live
+#[rustfmt::skip]
+#[test]
+fn keeps_class_level_and_mapped_case_conversions_live() {
+    let mut run = runner();
+    run(r#"class Badge(name, team):
+    this.name = name
+    this.team = team"#);
+    run("$Badge.login = $Badge.name.to_lowercase()");
+    run("$Badge.crest = $Badge.team.uppercased()");
+    run(r#"ana = Badge("Ana Lima", "blue")"#);
+    run(r#"bo = Badge("BO CHEN", "Red")"#);
+    assert_eq!(run("[ana.login, ana.crest, bo.login, bo.crest]"), serde_json::json!(["ana lima", "BLUE", "bo chen", "RED"]));
+    run(r#"bo.name = "Bo Chen-Wu""#);
+    run(r#"ana.team = "green""#);
+    assert_eq!(run("[bo.login, ana.crest]"), serde_json::json!(["bo chen-wu", "GREEN"]));
+    run(r#"tags = ["Urgent", "low"]"#);
+    run("shout = tags.map(tag -> tag.uppercase())");
+    run("quiet = tags.map(tag -> tag.lowercased())");
+    assert_eq!(run("[shout, quiet]"), serde_json::json!([["URGENT", "LOW"], ["urgent", "low"]]));
+    run(r#"tags.push("Straße")"#);
+    assert_eq!(run("shout"), serde_json::json!(["URGENT", "LOW", "STRASSE"]));
+    run(r#"quiet
+
+# return: ["urgent","low","straße"]"#);
+}
+
+/// Nucleoid rolls back failed updates through case conversion aliases
+#[rustfmt::skip]
+#[test]
+fn rolls_back_failed_updates_through_case_conversion_aliases() {
+    let mut run = runner();
+    run(r#"label = "door"
+code = label.uppercase()
+failure = ""
+try:
+    label = 7
+catch error:
+    failure = error
+assert(failure, TypeError("number.uppercase is not a function"))
+assert([label, code], ["door", "DOOR"])
+try:
+    label = "gate"
+    assert(code, "GATE")
+    throw "UNDO"
+catch error:
+    assert(error, "UNDO")
+assert([label, code], ["door", "DOOR"])
+class Tag(name):
+    this.name = name
+$Tag.key = $Tag.name.to_lowercase()
+red = Tag("RED")
+try:
+    red.name = true
+catch error:
+    failure = error
+assert(failure, TypeError("boolean.to_lowercase is not a function"))
+assert([red.name, red.key], ["RED", "red"])
+red.name = "Crimson"
+red.key
+# return: "crimson""#);
+}
+
 /// Nucleoid flattens nested lists by one level
 #[rustfmt::skip]
 #[test]
