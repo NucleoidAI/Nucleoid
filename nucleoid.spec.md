@@ -446,6 +446,92 @@ operator-chain diagnostics and source positions are preserved.
   specify the executable behavior. `tests/size_and_emptiness_aliases.rs`
   executes the rest.
 
+## First and last element methods
+
+- [NUC 117](docs/nuc-0117.md) adds the `first` and `last` methods that
+  Kotlin, Rust, Swift, Ruby and C#'s LINQ write, as aliases of the accepted
+  `at`, `find` and `findLast` on lists and class populations. They join the
+  accepted aliases `append`, `contains`, `size`, `len`, `isEmpty`,
+  `is_empty` and `isNotEmpty`. No token, keyword, syntax tree node, error
+  type or message format is added.
+- `RECEIVER.first()` is `RECEIVER.at(0)` and `RECEIVER.last()` is
+  `RECEIVER.at(-1)`: the first and last items of a list, or the first and
+  latest created instances of a class. An empty list gives undefined, which
+  a declaration stores as `null`, and a class without instances gives
+  `null`, as `at` gives them.
+- With a function, `RECEIVER.first(PREDICATE)` is `RECEIVER.find(PREDICATE)`
+  and `RECEIVER.last(PREDICATE)` is `RECEIVER.findLast(PREDICATE)`: the
+  first item the predicate accepts, searching from the front or from the
+  back, or `null` when it accepts none. Further arguments are evaluated and
+  ignored, as `find` ignores them.
+- Any other supplied first argument raises
+  `TypeError("first expects a function")` or
+  `TypeError("last expects a function")`, the error that `find` and
+  `findLast` raise for it, with the name as written: a number, a string, a
+  list, an object, a class, `null` and an undefined value among them, even
+  on an empty receiver.
+- **Receivers.** A list however it is reached, including a literal, a
+  property, a call or query result, an index or a slice, a `.value`
+  snapshot and a list read from a state version; and a declared class's
+  instances, named by the class, by a variable or parameter that holds it,
+  or by `$Name` outside a class-level rule or conditional.
+- **Evaluation.** The receiver is read first, a population's instances
+  included, then every argument once, left to right, as for every call. An
+  argument's error, such as `ReferenceError("missing is not defined")`,
+  propagates before the alias runs.
+- **Live.** A declaration or class-level rule that calls an alias depends on
+  what its accepted spelling depends on: `newest = readings.last()` follows
+  pushes, pops, shifts, sorts and replacements of `readings`,
+  `latest = Order.last()` follows new and deleted instances,
+  `open = Order.first(order -> order.open)` also follows the properties its
+  predicate reads, and `$Sensor.latest = $Sensor.readings.last()` follows
+  each sensor's readings. Errors roll back through the existing
+  transaction.
+- **Rendering.** Statements, `why`, `affects`, `--graph` and graph keys show
+  the call as written. Its dependencies are those of the accepted spelling,
+  so `why n` after `n = xs.last()` shows `n` read from `xs`, as after
+  `n = xs.at(-1)`.
+- **Unchanged.** Only calls of the two names on a list or population
+  receiver change; each raised
+  `TypeError("<receiver>.<name> is not a function")`, or an argument's error
+  first, which stays.
+  - Strings keep `TypeError("<text>.<name> is not a function")`: their
+    accepted `find` is `indexOf`, and `TEXT[0]` and `TEXT[-1]` read their
+    first and last characters.
+  - Numbers, booleans, functions, dates and regular expressions keep their
+    `TypeError`, as `(5).first()` raises
+    `TypeError("number.first is not a function")`.
+  - Objects and instances keep their routing: instance methods and callable
+    properties named `first` or `last` keep running, a property of that name
+    that is not a function keeps its `TypeError`, and a missing member stays
+    undefined. Inside a class-level rule or conditional `$Name` is the
+    instance, so `$Name.first()` there keeps calling the instance's method
+    or giving undefined.
+  - On a class name the population alias wins over an instance method of
+    the same name, and instances keep calling the method.
+  - A class declared as `Math`, `Number`, `String` or `Date` reaches that
+    namespace's static methods, so `Math.first()` keeps raising
+    `TypeError("Math.first is not a function")`. `Boolean`, `Class`,
+    `Object`, `List`, `Function`, `JSON` and `RegExp`, without a declared
+    class of that name, keep `ReferenceError("<name> is not defined")`.
+  - A `null` or undefined receiver stays undefined without evaluating the
+    arguments. Reads without a call, such as `xs.first`, stay undefined, and
+    `xs.first = 2` keeps raising `TypeError("Cannot assign 'first' on list")`.
+    Functions named `first` or `last` keep their calls, such as `first(xs)`,
+    and the state versions `xs@first` and `xs@last` keep their meaning.
+- **Source-language differences.** These stay out: Kotlin's, Java's and
+  LINQ's `first()` and `last()` throw on an empty receiver or when nothing
+  matches, where the aliases give what `at` and `find` give; Rust returns an
+  `Option`; Swift's and Dart's `first` and `last` read as properties, while
+  `xs.first` without a call stays undefined; and Ruby's `first(n)` and
+  `last(n)` take a count, which raises here as any other argument that is
+  not a function does, where `xs[:n]` and `xs[-n:]` read the ends.
+- The three entries beginning
+  `Nucleoid reads the first and last items of lists and populations`
+  through `Nucleoid rolls back failed updates through first and last aliases`
+  specify the executable behavior. `tests/first_and_last_methods.rs`
+  executes the rest.
+
 ## Reactive string padding
 
 - [NUC 111](docs/nuc-0111.md) adds JavaScript's standard padding methods to
@@ -25753,6 +25839,94 @@ assert([failure, label, shown], [TypeError("boolean.length is not a function"), 
 bin.items.pop()
 bin.empty
 # return: true
+---
+# Nucleoid reads the first and last items of lists and populations
+
+readings = [21, 23]
+oldest = readings.first()
+newest = readings.last()
+assert([oldest, newest], [21, 23])
+readings.push(25)
+assert([oldest, newest], [21, 25])
+readings.shift()
+assert([oldest, newest], [23, 25])
+class Order(item):
+    this.item = item
+queued = Order.first()
+latest = Order.last()
+assert([queued, latest], [null, null])
+tea = Order("tea")
+cake = Order("cake")
+assert([queued, latest], [tea, cake])
+assert([Order.first().item, Order.last().item], ["tea", "cake"])
+empty = []
+assert([empty.first(), empty.last(), [7].first(), [7].last()], [null, null, 7, 7])
+readings = []
+[oldest, newest]
+# return: [null,null]
+---
+# Nucleoid finds the first and last matches with first and last predicates
+
+class Order(item, open):
+    this.item = item
+    this.open = open
+tea = Order("tea", false)
+cake = Order("cake", true)
+pie = Order("pie", true)
+oldestOpen = Order.first(order -> order.open)
+newestOpen = Order.last(order -> order.open)
+assert([oldestOpen, newestOpen], [cake, pie])
+tea.open = true
+assert([oldestOpen, newestOpen], [tea, pie])
+pie.open = false
+assert(newestOpen, cake)
+prices = [12, 7, 30, 4]
+cheap = prices.first(price -> price < 10)
+pricey = prices.last(price -> price > 10)
+assert([cheap, pricey, prices.first(price -> price > 99)], [7, 30, null])
+prices.push(3, 50)
+assert([cheap, pricey], [7, 50])
+assert([prices.last(price -> price > 99, "ignored"), [].first(price -> true)], [null, null])
+[cheap, pricey]
+# return: [7,50]
+---
+# Nucleoid rolls back failed updates through first and last aliases
+
+stock = ["bolt", "nut"]
+newest = stock.last()
+failure = ""
+try:
+    stock = 7
+catch error:
+    failure = error
+assert(failure, TypeError("number.last is not a function"))
+assert([stock, newest], [["bolt", "nut"], "nut"])
+try:
+    stock.push("gear")
+    assert([stock.first(), newest], ["bolt", "gear"])
+    throw "UNDO"
+catch error:
+    assert(error, "UNDO")
+assert([stock.last(), newest], ["nut", "nut"])
+try:
+    stock.first(2)
+catch error:
+    failure = error
+assert(failure, TypeError("first expects a function"))
+class Sensor(name):
+    this.name = name
+    this.readings = [18]
+$Sensor.latest = $Sensor.readings.last()
+door = Sensor("door")
+try:
+    door.readings = 0
+catch error:
+    failure = error
+assert(failure, TypeError("number.last is not a function"))
+assert([door.readings, door.latest], [[18], 18])
+door.readings.push(21)
+door.latest
+# return: 21
 ---
 # Nucleoid flattens nested lists by one level
 

@@ -2468,6 +2468,39 @@ assert([idle, backlog, orders.length], [true, 0, 0])
   values keep their errors. See the
   [root contract](nucleoid.spec.md#size-and-emptiness-method-aliases).
 
+## First and last element methods
+
+**First and last methods keep a sensor's newest reading live**
+
+```nuc
+class Sensor(name):
+    this.name = name
+    this.readings = []
+$Sensor.newest = $Sensor.readings.last()
+$Sensor.firstAlarm = $Sensor.readings.first(reading -> reading > 40)
+oven = Sensor("oven")
+oven.readings.push(35, 52, 38)
+assert([oven.newest, oven.firstAlarm], [38, 52])
+oven.readings.push(41)
+assert([oven.newest, oven.firstAlarm], [41, 52])
+oven.readings.shift()
+oven.readings.shift()
+assert([oven.newest, oven.firstAlarm], [41, 41])
+```
+
+- [NUC 117](docs/nuc-0117.md) adds the `first` and `last` methods that
+  Kotlin, Rust, Swift, Ruby and C#'s LINQ write, as aliases on lists and
+  class populations: `first()` is `at(0)` and `last()` is `at(-1)`, and with
+  a predicate, as Kotlin writes `orders.first { it.open }`, `first(test)` is
+  `find(test)` and `last(test)` is `findLast(test)`.
+- Each sensor's `newest` and `firstAlarm` follow its own readings through
+  the class-level rules, as `$Sensor.readings.at(-1)` and
+  `$Sensor.readings.find(reading -> reading > 40)` would: a new reading
+  replaces the newest, and shifting out the old ones moves the first alarm
+  to `41`. An empty list gives undefined and a predicate that accepts
+  nothing `null`, as their spellings do. See the
+  [root contract](nucleoid.spec.md#first-and-last-element-methods).
+
 ## Reactive list flattening
 
 **Flat turns nested lists into one live list**

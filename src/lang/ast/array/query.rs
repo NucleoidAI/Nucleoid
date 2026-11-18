@@ -43,13 +43,8 @@ impl Runtime {
         let predicate = arguments.first().cloned();
 
         match property {
-            "find" | "findLast" => {
-                let function = expect_function(predicate, property)?;
-                let found = self.find_position(&function, &items, property == "findLast")?;
-                Ok(found
-                    .and_then(|position| items.into_iter().nth(position))
-                    .unwrap_or(Value::Null))
-            }
+            "find" | "findLast" => self.find_item(items, property, predicate),
+            "first" | "last" => self.first_or_last(items, property, predicate, source),
             "findIndex" | "findLastIndex" => {
                 let function = expect_function(predicate, property)?;
                 let found = self.find_position(&function, &items, property == "findLastIndex")?;
@@ -104,6 +99,35 @@ impl Runtime {
                 Error::type_error(format!("{receiver}.{property} is not a function"))
             }),
         }
+    }
+
+    fn find_item(
+        &mut self,
+        items: Vec<Value>,
+        property: &str,
+        predicate: Option<Value>,
+    ) -> Result<Value> {
+        let function = expect_function(predicate, property)?;
+        let from_end = matches!(property, "findLast" | "last");
+        let found = self.find_position(&function, &items, from_end)?;
+        Ok(found
+            .and_then(|position| items.into_iter().nth(position))
+            .unwrap_or(Value::Null))
+    }
+
+    fn first_or_last(
+        &mut self,
+        items: Vec<Value>,
+        property: &str,
+        predicate: Option<Value>,
+        source: ListSource,
+    ) -> Result<Value> {
+        if predicate.is_some() {
+            return self.find_item(items, property, predicate);
+        }
+
+        let index = if property == "last" { -1.0 } else { 0.0 };
+        Ok(list_at(items, Some(&Value::Number(index)), source))
     }
 
     fn filter_items(&mut self, items: Vec<Value>, function: &Arc<Function>) -> Result<Value> {

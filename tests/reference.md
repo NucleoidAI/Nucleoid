@@ -2729,6 +2729,24 @@ assert([pending, clear, inbox.is_empty(), Task.isNotEmpty()], [0, true, true, tr
 pending == inbox.length
 # return: true
 ---
+# Nucleoid reads first and last elements as Kotlin and Rust do
+
+class Job(name, done):
+    this.name = name
+    this.done = done
+queue = ["scan", "print"]
+head = queue.first()
+tail = queue.last()
+Job("backup", true)
+Job("deploy", false)
+pending = Job.first(job -> !job.done)
+assert([head, tail, pending.name, Job.last().name], ["scan", "print", "deploy", "deploy"])
+queue.shift()
+queue.push("fax")
+assert([head, tail], ["print", "fax"])
+[queue.first(job -> job == "copy"), [].last()]
+# return: [null,null]
+---
 # Nucleoid flattens nested lists with flat
 
 pallets = [[["bolt", "nut"], ["gear"]], [["cog"]]]

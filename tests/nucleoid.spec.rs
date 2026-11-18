@@ -20587,6 +20587,124 @@ bin.empty
 # return: true"#);
 }
 
+/// Nucleoid reads the first and last items of lists and populations
+#[rustfmt::skip]
+#[test]
+fn reads_the_first_and_last_items_of_lists_and_populations() {
+    let mut run = runner();
+    run("readings = [21, 23]");
+    run("oldest = readings.first()");
+    run("newest = readings.last()");
+    assert_eq!(run("[oldest, newest]"), serde_json::json!([21, 23]));
+    run("readings.push(25)");
+    assert_eq!(run("[oldest, newest]"), serde_json::json!([21, 25]));
+    run("readings.shift()");
+    assert_eq!(run("[oldest, newest]"), serde_json::json!([23, 25]));
+    run(r#"class Order(item):
+    this.item = item"#);
+    run("queued = Order.first()");
+    run("latest = Order.last()");
+    assert_eq!(run("[queued, latest]"), serde_json::json!([null, null]));
+    run(r#"tea = Order("tea")"#);
+    run(r#"cake = Order("cake")"#);
+    {
+        let actual = run("[queued, latest]");
+        let expected = run("([tea, cake])");
+        assert_eq!(actual, expected);
+    }
+    assert_eq!(run("[Order.first().item, Order.last().item]"), serde_json::json!(["tea", "cake"]));
+    run("empty = []");
+    assert_eq!(run("[empty.first(), empty.last(), [7].first(), [7].last()]"), serde_json::json!([null, null, 7, 7]));
+    run("readings = []");
+    run(r#"[oldest, newest]
+
+# return: [null,null]"#);
+}
+
+/// Nucleoid finds the first and last matches with first and last predicates
+#[rustfmt::skip]
+#[test]
+fn finds_the_first_and_last_matches_with_first_and_last_predicates() {
+    let mut run = runner();
+    run(r#"class Order(item, open):
+    this.item = item
+    this.open = open"#);
+    run(r#"tea = Order("tea", false)"#);
+    run(r#"cake = Order("cake", true)"#);
+    run(r#"pie = Order("pie", true)"#);
+    run("oldestOpen = Order.first(order -> order.open)");
+    run("newestOpen = Order.last(order -> order.open)");
+    {
+        let actual = run("[oldestOpen, newestOpen]");
+        let expected = run("([cake, pie])");
+        assert_eq!(actual, expected);
+    }
+    run("tea.open = true");
+    {
+        let actual = run("[oldestOpen, newestOpen]");
+        let expected = run("([tea, pie])");
+        assert_eq!(actual, expected);
+    }
+    run("pie.open = false");
+    {
+        let actual = run("newestOpen");
+        let expected = run("(cake)");
+        assert_eq!(actual, expected);
+    }
+    run("prices = [12, 7, 30, 4]");
+    run("cheap = prices.first(price -> price < 10)");
+    run("pricey = prices.last(price -> price > 10)");
+    assert_eq!(run("[cheap, pricey, prices.first(price -> price > 99)]"), serde_json::json!([7, 30, null]));
+    run("prices.push(3, 50)");
+    assert_eq!(run("[cheap, pricey]"), serde_json::json!([7, 50]));
+    assert_eq!(run(r#"[prices.last(price -> price > 99, "ignored"), [].first(price -> true)]"#), serde_json::json!([null, null]));
+    run(r#"[cheap, pricey]
+
+# return: [7,50]"#);
+}
+
+/// Nucleoid rolls back failed updates through first and last aliases
+#[rustfmt::skip]
+#[test]
+fn rolls_back_failed_updates_through_first_and_last_aliases() {
+    let mut run = runner();
+    run(r#"stock = ["bolt", "nut"]
+newest = stock.last()
+failure = ""
+try:
+    stock = 7
+catch error:
+    failure = error
+assert(failure, TypeError("number.last is not a function"))
+assert([stock, newest], [["bolt", "nut"], "nut"])
+try:
+    stock.push("gear")
+    assert([stock.first(), newest], ["bolt", "gear"])
+    throw "UNDO"
+catch error:
+    assert(error, "UNDO")
+assert([stock.last(), newest], ["nut", "nut"])
+try:
+    stock.first(2)
+catch error:
+    failure = error
+assert(failure, TypeError("first expects a function"))
+class Sensor(name):
+    this.name = name
+    this.readings = [18]
+$Sensor.latest = $Sensor.readings.last()
+door = Sensor("door")
+try:
+    door.readings = 0
+catch error:
+    failure = error
+assert(failure, TypeError("number.last is not a function"))
+assert([door.readings, door.latest], [[18], 18])
+door.readings.push(21)
+door.latest
+# return: 21"#);
+}
+
 /// Nucleoid flattens nested lists by one level
 #[rustfmt::skip]
 #[test]

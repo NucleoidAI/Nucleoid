@@ -1272,6 +1272,7 @@ counter.doubled()
 - An instance created without a variable name gets a generated `id`.
 - Instances are addressed by index `Name[0]`, by id `Name["id"]`, or by query `Name.find(...)`.
 - `Name[1:]`, `Name.at(-1)`, `Name.list()` and `Name.all()` read them by range, by position from either end, and all at once, in population order ([NUC 61](nuc-0061.md)).
+- `Name.first()` and `Name.last()` are the first and latest created instances, exactly `Name.at(0)` and `Name.at(-1)`, and `Name.first(predicate)` and `Name.last(predicate)` are `Name.find(predicate)` and `Name.findLast(predicate)` ([NUC 117](nuc-0117.md)).
 
 ### Subtypes
 
@@ -2597,7 +2598,7 @@ Full detail: [NUC 9](nuc-0009.md), [NUC 46](nuc-0046.md).
 | `Math` | `pow`, `sqrt`, `floor`, `round`, `max`, `min`, `clamp` ([NUC 21](nuc-0021.md)), `lerp` ([NUC 22](nuc-0022.md)), `saturate` ([NUC 23](nuc-0023.md)), `smoothstep(lower, upper, value)` (accepted [NUC 33](nuc-0033.md)), `smootherstep(lower, upper, value)` (accepted [NUC 35](nuc-0035.md)), `remap(start, end, targetStart, targetEnd, value)` (accepted [NUC 39](nuc-0039.md)) |
 | `String` | `String.fromCharCode`; instance `charAt`, `length`, `lower`, `replace`, `replaceAll` (accepted [NUC 42](nuc-0042.md)), `repeat`, `split`, `padStart` and `padEnd` ([NUC 111](nuc-0111.md)), Python's `startswith`, `endswith` and `join(items)`, with the separator as the receiver ([NUC 110](nuc-0110.md)), and the size and emptiness methods `length()`, `size()`, `len()`, `isEmpty()`, `is_empty()` and `isNotEmpty()` ([NUC 116](nuc-0116.md)) |
 | `Date` | `Date()`, `Date(string)`, `Date(number)`, `Date.now()`, `Date.parse()`; instance `getTime`, `getYear`, `toDateString` |
-| `List` | `push`, `pop`, `filter`, `map`, `flatMap` (accepted [NUC 41](nuc-0041.md)), `flat` ([NUC 103](nuc-0103.md)), `reduce`, `find`, `some`, `every`, `slice`, `sort` (in place, [NUC 58](nuc-0058.md)), `join`, `length`, and the queries `at`, `includes`, `indexOf`, `lastIndexOf`, `findIndex`, `findLast`, `findLastIndex` and `concat` ([NUC 61](nuc-0061.md)), `sum` ([NUC 68](nuc-0068.md)), `max` and `min` ([NUC 69](nuc-0069.md)), `distinct` ([NUC 71](nuc-0071.md)), `count(predicate)` ([NUC 73](nuc-0073.md)), `mode` ([NUC 75](nuc-0075.md)), `maxBy` and `minBy` ([NUC 77](nuc-0077.md)), `average` ([NUC 80](nuc-0080.md)), `median` ([NUC 84](nuc-0084.md)), `sortBy` ([NUC 105](nuc-0105.md)), `partition` ([NUC 108](nuc-0108.md)), `product` ([NUC 114](nuc-0114.md)), and the size and emptiness aliases `size()`, `len()`, `isEmpty()`, `is_empty()` and `isNotEmpty()` ([NUC 116](nuc-0116.md)); `sum`, `max`, `min` and `mode` also read as `sum of list` ([NUC 75](nuc-0075.md) revision 2) |
+| `List` | `push`, `pop`, `filter`, `map`, `flatMap` (accepted [NUC 41](nuc-0041.md)), `flat` ([NUC 103](nuc-0103.md)), `reduce`, `find`, `some`, `every`, `slice`, `sort` (in place, [NUC 58](nuc-0058.md)), `join`, `length`, and the queries `at`, `includes`, `indexOf`, `lastIndexOf`, `findIndex`, `findLast`, `findLastIndex` and `concat` ([NUC 61](nuc-0061.md)), `sum` ([NUC 68](nuc-0068.md)), `max` and `min` ([NUC 69](nuc-0069.md)), `distinct` ([NUC 71](nuc-0071.md)), `count(predicate)` ([NUC 73](nuc-0073.md)), `mode` ([NUC 75](nuc-0075.md)), `maxBy` and `minBy` ([NUC 77](nuc-0077.md)), `average` ([NUC 80](nuc-0080.md)), `median` ([NUC 84](nuc-0084.md)), `sortBy` ([NUC 105](nuc-0105.md)), `partition` ([NUC 108](nuc-0108.md)), `product` ([NUC 114](nuc-0114.md)), the size and emptiness aliases `size()`, `len()`, `isEmpty()`, `is_empty()` and `isNotEmpty()` ([NUC 116](nuc-0116.md)), and the first and last element aliases `first()`, `last()`, `first(predicate)` and `last(predicate)` ([NUC 117](nuc-0117.md)); `sum`, `max`, `min` and `mode` also read as `sum of list` ([NUC 75](nuc-0075.md) revision 2) |
 | `Class` | the global list of declared types; `Class.length` |
 
 ```
@@ -2743,6 +2744,62 @@ pending == inbox.length
   `tests/reference.md`. The
   [root section](../nucleoid.spec.md#size-and-emptiness-method-aliases) and
   its three appended entries define the results, liveness and rollback.
+
+### First and last element methods
+
+```
+class Job(name, done):
+    this.name = name
+    this.done = done
+queue = ["scan", "print"]
+head = queue.first()
+tail = queue.last()
+Job("backup", true)
+Job("deploy", false)
+pending = Job.first(job -> !job.done)
+assert([head, tail, pending.name, Job.last().name], ["scan", "print", "deploy", "deploy"])
+queue.shift()
+queue.push("fax")
+assert([head, tail], ["print", "fax"])
+[queue.first(job -> job == "copy"), [].last()]
+```
+
+- [NUC 117](nuc-0117.md) adds the `first` and `last` methods of Kotlin,
+  Rust, Swift, Ruby and C#'s LINQ as aliases on lists and class
+  populations. `first()` is `at(0)` and `last()` is `at(-1)`, so a class's
+  first and last instances are its first and latest created. With a
+  function, `first(test)` is `find(test)` and `last(test)` is
+  `findLast(test)`, as Kotlin's `orders.first { it.open }` and LINQ's
+  `First(predicate)` read.
+- Each alias gives what its spelling gives: undefined for an empty list,
+  `null` for a class without instances, and `null` when the predicate
+  accepts nothing, so the last line holds `null` and undefined. Any other
+  first argument raises `TypeError("first expects a function")` or
+  `TypeError("last expects a function")`, as `find` raises for it.
+- Each alias evaluates its receiver and then its arguments, and stays live
+  like its spelling: `head` and `tail` follow the shift and the push, and a
+  predicate's reads update its declaration too. `why` names the same
+  dependencies.
+- Only calls on lists and populations change. Strings, whose accepted
+  `find` is `indexOf`, and other receivers keep their errors, so
+  `"abc".first()` still raises `TypeError("abc.first is not a function")`;
+  `TEXT[0]` and `TEXT[-1]` read a string's ends. Reads such as `xs.first`
+  without a call, the state versions `xs@first` and `xs@last`, functions,
+  properties and methods of the same names, and `$Name` inside a
+  class-level rule, where it is the instance, keep their behavior. On a
+  class name the population alias wins over an instance method of the same
+  name.
+- Kotlin's, Java's and LINQ's `first()` and `last()` throw on an empty
+  receiver or when nothing matches, and Rust's return an `Option`; the
+  aliases give undefined or `null` instead. Swift's and Dart's `first` and
+  `last` are properties, and Ruby's `first(n)` takes a count, which raises
+  here, where `xs[:n]` reads the first `n` items. Kotlin's `firstOrNull`,
+  Java's `getFirst`, C++'s `front` and `back`, and `head` are not added.
+- This is the executable entry
+  `Nucleoid reads first and last elements as Kotlin and Rust do` in
+  `tests/reference.md`. The
+  [root section](../nucleoid.spec.md#first-and-last-element-methods) and its
+  three appended entries define the results, liveness and rollback.
 
 ### Reactive string padding
 
@@ -4544,6 +4601,7 @@ Messages are exact and are part of the observable behaviour of the language.
 | A string's `join` whose first argument is neither a list nor a declared class's instances, including a string or a missing argument | `<receiver>.join is not a function` |
 | Missing or non-function `flatMap` callback, even on an empty receiver | `flatMap expects a function` |
 | Missing or non-function `find`, `findIndex`, `findLast` or `findLastIndex` callback, even on an empty receiver | `<name> expects a function` |
+| A supplied `first` or `last` argument that is not a function, including `null`, even on an empty receiver | `first expects a function` or `last expects a function` |
 | A supplied `sum` selector that is not a function, including `null`, even on an empty receiver | `sum expects a function` |
 | A supplied `average` selector that is not a function, including `null`, even on an empty receiver | `average expects a function` |
 | A supplied `median` selector that is not a function, including `null`, even on an empty receiver | `median expects a function` |
@@ -4814,6 +4872,8 @@ text.padStart(n, fill)  text.padEnd(n)  live text padded before or after to n ch
 items.size()  items.len()  text.length() exactly items.length and text.length; Name.size() counts instances (NUC 116)
 items.isEmpty()  items.is_empty()      exactly items.length == 0, on lists, populations and strings (NUC 116)
 items.isNotEmpty()                     exactly items.length > 0, on lists, populations and strings (NUC 116)
+items.first()  items.last()            exactly items.at(0) and items.at(-1); Name.last() is the latest instance (NUC 117)
+items.first(test)  items.last(test)    exactly items.find(test) and items.findLast(test), on lists and populations (NUC 117)
 mode of items  sum of Name.map(f)      noun query: exactly items.mode(), Name.map(f).sum() (NUC 75)
 sum of items ** 2                      a noun query applies to the whole power: sum of (items ** 2) (NUC 75)
 

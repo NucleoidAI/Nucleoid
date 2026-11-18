@@ -3990,6 +3990,36 @@ restock
   shelf takes it to `0`. See [NUC 116](nuc-0116.md) and the
   [root contract](../nucleoid.spec.md#size-and-emptiness-method-aliases).
 
+## First and last element methods
+
+**First and last methods keep the next urgent patient live**
+
+```nuc
+class Patient(name, urgent):
+    this.name = name
+    this.urgent = urgent
+nextUrgent = Patient.first(patient -> patient.urgent)
+newest = Patient.last()
+ana = Patient("ana", false)
+bo = Patient("bo", true)
+assert([nextUrgent, newest], [bo, bo])
+cy = Patient("cy", true)
+ana.urgent = true
+assert([nextUrgent, newest], [ana, cy])
+[nextUrgent.name, newest.name]
+# return: ["ana","cy"]
+```
+
+- `nextUrgent` is the first patient, in arrival order, whose case is
+  urgent, written as Kotlin's `first` with a predicate where accepted syntax
+  writes `Patient.find(patient -> patient.urgent)`, and `newest` is the
+  latest arrival, written as `last()` where accepted syntax writes
+  `Patient.at(-1)`.
+- Both follow the population: `cy`'s arrival moves `newest`, and `ana`
+  turning urgent moves `nextUrgent` back to her, since she arrived first.
+  See [NUC 117](nuc-0117.md) and the
+  [root contract](../nucleoid.spec.md#first-and-last-element-methods).
+
 ## Reactive list flattening
 
 **Flattening keeps the dirty tiles of every room counted**
