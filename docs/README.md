@@ -1882,6 +1882,51 @@ while savings.balance < 150:
 
 Normative detail: [while loops](../nucleoid.spec.md#while-loops).
 
+### repeat
+
+```
+class Account(balance):
+    this.balance = balance
+savings = Account(100)
+years = 3
+repeat years:
+    savings.balance = savings.balance * 1.5
+assert(savings.balance, 337.5)
+years = 10
+savings.balance
+```
+
+- This is the complete
+  `Nucleoid repeats statements a counted number of times` program in
+  `tests/reference.md`, without its title and expected-return metadata; it
+  returns `337.5`, and setting `years` later does not run the loop again.
+- `repeat <count>:` runs its body `count` times, under
+  [NUC 115](nuc-0115.md). The body is an indented block, or statements on
+  the same line separated by `;`.
+- The count is evaluated once, before the first iteration. It converts to a
+  number and then as the count of the string method `repeat` does: NaN and
+  negative numbers give 0 and fractions truncate, so `2.9` runs the body
+  twice, `"3"` three times, and `0`, `-1` and `null` not at all. What the body
+  changes never changes the count.
+- The body runs as a `while` body does: once per iteration, imperatively, in
+  the enclosing scope, with no scope frame and no loop variable. A local that
+  the enclosing function or loop body assigned accumulates, where a `for`
+  loop over a string of the count's length would leave it unchanged.
+  `return` leaves the enclosing function, as from a `while` body.
+- The loop runs once, like `while`: nothing is filed in the graph, and the
+  loop does not run again when its count or its inputs change later.
+- Each run of a loop runs its body at most 100,000 times. A count that
+  converts to more than 100,000 raises
+  `TypeError("Repeat count is too large")` before the first iteration, and
+  the transaction rolls back.
+- `repeat` is not reserved. `repeat NAME: TYPE`, `repeat assert: ...`, a
+  count whose last token is a bare `lambda`, a `suppose` count, and colon-free
+  or braced headers keep their accepted readings as separate statements, and
+  names, calls and properties named `repeat` and the string method
+  `"ab".repeat(2)` keep working.
+
+Normative detail: [count-controlled repeat loops](../nucleoid.spec.md#count-controlled-repeat-loops).
+
 ---
 
 ## 9. Functions
@@ -4482,6 +4527,7 @@ Messages are exact and are part of the observable behaviour of the language.
 | Repeated string output is too large to represent or allocate | `Repeated string is too large` |
 | Padded string output of `padStart` or `padEnd` is too large to represent or allocate | `Padded string is too large` |
 | A `while` loop whose condition still holds after 100,000 iterations of one run | `Loop did not terminate` |
+| A `repeat` loop whose count converts to more than 100,000, `Infinity` included, raised before the first iteration | `Repeat count is too large` |
 | An undeclared constructor label | `Unknown constructor argument '<name>' for <class>` |
 | A repeated constructor binding, including positional plus named | `Duplicate constructor argument '<name>' for <class>` |
 | A positional constructor argument following a label | `Positional constructor argument after named arguments for <class>` |
@@ -4653,6 +4699,9 @@ for source:                            indented iteration with local it
 while condition:                       repeat while the condition holds (NUC 63)
     statement
 while condition: statement             same loop with a same-line body
+repeat count:                          run the body count times; count is read once (NUC 115)
+    statement
+repeat count: statement                same loop with a same-line body
 
 value => expression                    anonymous arrow; also (a, b) => expression
 value => { statement }                 anonymous arrow with a statement body

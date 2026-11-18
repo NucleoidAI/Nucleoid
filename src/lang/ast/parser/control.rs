@@ -100,7 +100,15 @@ impl Parser {
     }
 
     pub(super) fn while_condition(&mut self) -> Option<Expr> {
-        if !matches!(self.peek(), Token::Identifier(name) if name == "while")
+        self.loop_header("while")
+    }
+
+    pub(super) fn repeat_count(&mut self) -> Option<Expr> {
+        self.loop_header("repeat")
+    }
+
+    fn loop_header(&mut self, word: &str) -> Option<Expr> {
+        if !matches!(self.peek(), Token::Identifier(name) if name == word)
             || self.starts_colon_statement_at(1)
         {
             return None;
@@ -110,7 +118,7 @@ impl Parser {
         let outcome = if let Some(outcome) = self.while_conditions.get(&attempt) {
             outcome.clone()
         } else {
-            let outcome = self.attempt_while_condition();
+            let outcome = self.attempt_loop_header();
             self.while_conditions.insert(attempt, outcome.clone());
             outcome
         };
@@ -124,7 +132,7 @@ impl Parser {
         Some(condition)
     }
 
-    fn attempt_while_condition(&mut self) -> Option<LoopCondition> {
+    fn attempt_loop_header(&mut self) -> Option<LoopCondition> {
         let start = self.position;
         self.advance();
         let (clause, misplaced_every) = self.tentatively(Self::clause_before_colon);
@@ -138,7 +146,7 @@ impl Parser {
         self.position = start;
         let colon = outcome.as_ref()?.colon;
         if self.words
-            && self.accepted(Self::attempt_while_condition).is_none()
+            && self.accepted(Self::attempt_loop_header).is_none()
             && self.separates(start, colon)
         {
             return None;

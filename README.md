@@ -2409,6 +2409,38 @@ assert(trip, 0.28125)
   class gives `1`. See the
   [root contract](nucleoid.spec.md#list-and-population-products).
 
+## Repeat loops
+
+**Repeat loops advance a world model a counted number of steps**
+
+```nuc
+class Cup(temp):
+    this.temp = temp
+tea = Cup(90)
+room = 20
+cool = tea.temp < 40
+minutes = 3
+repeat minutes:
+    tea.temp = tea.temp - (tea.temp - room) / 2
+assert(tea.temp, 28.75)
+assert(cool, true)
+```
+
+- [NUC 115](docs/nuc-0115.md) adds `repeat COUNT:` with an indented or
+  same-line body, the count-controlled sibling of `while`. The count is read
+  once, before the first iteration, and each iteration's changes, with what
+  they propagate to standing rules such as `cool`, are live before the next
+  iteration runs.
+- Each minute the tea loses half of its difference from the room, so three
+  minutes take it from `90` to `28.75`. The loop runs once, imperatively: it
+  leaves no standing rule and does not run again when `minutes` changes
+  later. A fraction truncates, a count of zero or less runs nothing, and a
+  count of more than 100,000 iterations raises
+  `TypeError("Repeat count is too large")` before the first one.
+  `repeat` stays an ordinary name everywhere else, and `"ab".repeat(2)` is
+  still `"abab"`. See the
+  [root contract](nucleoid.spec.md#count-controlled-repeat-loops).
+
 ## Reactive list flattening
 
 **Flat turns nested lists into one live list**

@@ -22,6 +22,7 @@ pub mod expression;
 pub mod function;
 pub mod object;
 pub mod property;
+pub mod repeat;
 pub mod suppose;
 pub mod throw;
 pub mod r#try;
@@ -60,6 +61,7 @@ use function::Function;
 use r#if::If;
 use r#let::Let;
 use property::{Owner, Property};
+use repeat::Repeat;
 use r#return::Return;
 use suppose::Suppose;
 use throw::Throw;
@@ -67,6 +69,8 @@ use r#try::Try;
 use value_assign::ValueAssign;
 use variable::Variable;
 use r#while::While;
+
+const MAX_ITERATIONS: usize = 100_000;
 
 /// What [`Nuc::run`] produced: the value or `return` it ended with, and the
 /// dependency keys recorded during execution.
@@ -110,6 +114,7 @@ pub enum Nuc {
     If(If),
     For(For),
     While(While),
+    Repeat(Repeat),
     Function(Function),
     Return(Return),
     Throw(Throw),
@@ -164,6 +169,7 @@ impl Nuc {
             Stmt::While { condition, body } => {
                 Nuc::While(While::new(condition.clone(), body.clone()))
             }
+            Stmt::Repeat { count, body } => Nuc::Repeat(Repeat::new(count.clone(), body.clone())),
             Stmt::Return(value) => Nuc::Return(Return::new(value.clone())),
             Stmt::Throw(exception) => Nuc::Throw(Throw::new(exception.clone())),
             Stmt::Delete(target) => Nuc::Delete(Delete::new(target.clone())),
@@ -294,6 +300,7 @@ impl Nuc {
             Nuc::If(node) => node.run(runtime, scope),
             Nuc::For(node) => node.run(runtime, scope),
             Nuc::While(node) => node.run(runtime, scope),
+            Nuc::Repeat(node) => node.run(runtime, scope),
             Nuc::Function(node) => node.run(runtime, scope),
             Nuc::Return(node) => node.run(runtime, scope),
             Nuc::Throw(node) => node.run(runtime, scope),
@@ -349,4 +356,18 @@ impl Nuc {
             _ => Ok(()),
         }
     }
+}
+
+fn run_iteration(
+    runtime: &mut Runtime,
+    scope: &mut Scope,
+    statements: &[Stmt],
+) -> Result<Option<Outcome>> {
+    runtime.enter_imperative();
+    let result = runtime.execute_all(statements, scope);
+    runtime.leave_imperative();
+    Ok(match result? {
+        flow @ Flow::Return(_) => Some(Outcome::flow(flow)),
+        Flow::Normal(_) => None,
+    })
 }

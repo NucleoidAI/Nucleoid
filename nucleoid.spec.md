@@ -6433,6 +6433,103 @@ t.promote(bob)
   `Nucleoid rolls back a while loop that fails during an iteration` specify
   the executable behavior.
 
+## Count-controlled repeat loops
+
+- [NUC 115](docs/nuc-0115.md) adds the count-controlled loop `repeat COUNT:`
+  followed by a suite: an indented block, or statements on the same line
+  separated by `;`. The suite runs `COUNT` times. No keyword or lexer token
+  is added, and `repeat` stays an ordinary name everywhere else.
+- A statement is a repeat loop when it starts with the name `repeat` and the
+  tokens after it form one complete count immediately followed by `:`. The
+  header is recognized exactly as a `while` header is: the count is parsed
+  like an `if` header condition, so conditional expressions, quantifiers,
+  `??`, `|>`, arrows and bracketed lambdas pair their own colons, and in the
+  second reading that [NUC 86](docs/nuc-0086.md) gives programs with `is`
+  words, a header whose tokens through its colon also parse as separate
+  statements keeps that reading. At the accepted revision every repeat loop
+  statement was a `SyntaxError`.
+- The four spellings that keep their accepted readings after `while` keep
+  them after `repeat`:
+  - `repeat NAME: TYPE` before a newline, `;`, dedent or the end of input is
+    the statement `repeat` followed by the typed declaration `NAME: TYPE`, so
+    `repeat ready: tick` runs `repeat` and then declares `ready`. Executing
+    it raises `ReferenceError("repeat is not defined")`, or
+    `ReferenceError("Missing definition")` when `repeat` is defined.
+    `repeat ready: tick()` and an indented `tick` body are loops.
+  - `repeat assert: ACTUAL, EXPECTED` is `repeat` followed by the colon-led
+    assertion statement `assert: ACTUAL, EXPECTED`, so with `repeat = 1`,
+    `repeat assert: repeat, 1` runs that assertion.
+  - A count whose last token is a bare `lambda`, as in `repeat lambda: 1` or
+    `repeat x + lambda: 1`, keeps its accepted reading: `repeat` followed by
+    an expression that holds the zero-parameter lambda `lambda: 1`.
+  - A count that is the name `suppose`, or an assignment whose value is the
+    name `suppose`, keeps its accepted reading, which is usually a `suppose`
+    block: `repeat suppose: x` is `repeat` followed by the block
+    `suppose: x`, and `repeat x = suppose: x` is `repeat` followed by the
+    assigned block `x = suppose: x`. `repeat (suppose): pass` keeps its
+    accepted `SyntaxError("Unexpected ':'")`.
+- `repeat COUNT` followed by an indented block without a colon, and
+  `repeat COUNT { ... }`, keep their accepted readings as the juxtaposed
+  statements `repeat`, `COUNT` and the block. A variable, function,
+  parameter or loop variable named `repeat`, including either name of a
+  two-name `for` loop, an object key or property `repeat`, `repeat(...)`
+  calls, the value assignment `repeat := VALUE`, the declaration
+  `repeat: TYPE` and the string method `TEXT.repeat(n)` keep working.
+- The count is evaluated once, in the current state, before the first
+  iteration, and its errors propagate unchanged. It converts to a number and
+  then as the count of the string method `repeat` does: NaN and negative
+  numbers give 0, and fractions truncate. So `3` and `"3"` run the body three
+  times, `2.9` twice and `true` once, while `0`, `-1`, `null`, NaN and an
+  undefined value, such as a missing property, run no iteration. What the
+  body changes, including what the count reads, never changes how many times
+  the body runs.
+- Each run of a repeat loop runs its body at most 100,000 times, the bound of
+  `while`. A count that converts to more than 100,000, `Infinity` included,
+  raises `TypeError("Repeat count is too large")` before the first
+  iteration, positioned at the running top-level statement, and the
+  transaction rolls back. A count that converts to exactly 100,000, such as
+  `100000` or `100000.9`, runs. Each run of a nested loop has its own bound,
+  so nested loops multiply and the bound is not a cap on total work.
+- The body runs exactly as a `while` body does. Each iteration is carried out
+  imperatively, in the enclosing scope, with no scope frame and no loop
+  variable, and its assignments, and the propagation they cause, are visible
+  to the rest of the body and to the next iteration. Inside a function,
+  method, loop or block body, a local that the enclosing body assigned
+  therefore accumulates, where a `for` loop over a string of the count's
+  length would leave it unchanged. Parameters, enclosing loop variables,
+  locals, `this` and `self` otherwise behave as in `for` bodies.
+- `return` in the body leaves the enclosing function, method, block or loop,
+  as from a `while` body. At the top level it ends the program with its
+  value.
+- A completed loop yields `null`. The loop files nothing in the graph and
+  does not run again when its count's inputs, or anything its body read,
+  change later. A loop inside the body of a standing rule, such as the branch
+  of a top-level `if` or a function called from a declaration, runs again
+  whenever that rule runs.
+- A repeat statement is never kept on a class. Outside a class-level rule,
+  `$Class` in its count or body reads the declared class, and an undeclared
+  `$Name` raises `ReferenceError("Name is not defined")`. A body statement
+  that is itself a class-level declaration, such as `$Item.flag = true`, is
+  declared on the class when it runs. Inside the body of a class-level rule
+  the loop runs for each instance, and `$Class` reads that instance.
+- Errors raised by the count or the body, and thrown values, propagate
+  through the existing transaction unchanged. A caught failure restores the
+  state from before the enclosing `try` body, including every iteration that
+  already ran.
+- Canonical rendering is `repeat(COUNT){BODY}` in graph keys and
+  `repeat COUNT:` with an indented body inside default-bearing declarations.
+- The native REPL already buffers a line that ends in `:` until a blank
+  line, and the terminal workspace's indented newline indents after one, so
+  `repeat COUNT:` waits for its indented body. The workspace completes
+  `repeat` as it completes `while`.
+- Malformed loops use existing diagnostics: `repeat 3:` at the end of input
+  raises `SyntaxError("Unexpected end of input")`, and an unindented next
+  line raises `SyntaxError("Expected an indented block but found ...")`. The
+  four entries beginning
+  `Nucleoid repeats a block a counted number of times` through
+  `Nucleoid nests repeat loops and rolls back a failed iteration` specify the
+  executable behavior. `tests/repeat_loops.rs` executes the rest.
+
 ## Destructuring declarations
 
 - [NUC 67](docs/nuc-0067.md) adds destructuring declarations: object patterns
@@ -25424,6 +25521,75 @@ assert([failure, Stage.length, passes], ["NOT_A_CHANCE", 1, 0.5])
 Stage(0.25)
 passes
 # return: 0.125
+---
+# Nucleoid repeats a block a counted number of times
+
+rabbits = 2
+food = rabbits * 3
+generations = 3
+repeat generations:
+    rabbits = rabbits * 2
+assert(rabbits, 16)
+assert(food, 48)
+generations = 5
+assert(rabbits, 16)
+repeat 2: rabbits = rabbits + food
+assert([rabbits, food], [256, 768])
+---
+# Nucleoid evaluates a repeat count once and truncates it
+
+team = ["ana", "bo"]
+size = team.length
+repeat size:
+    team.push("hire")
+assert(team, ["ana", "bo", "hire", "hire"])
+assert(size, 4)
+def culture(cells, hours):
+    total = cells
+    repeat hours:
+        total = total * 2
+    return total
+assert([culture(1, 3), culture(1, 2.9), culture(1, "3"), culture(1, true)], [8, 4, 8, 2])
+assert([culture(5, 0), culture(5, -2), culture(5, null)], [5, 5, 5])
+---
+# Nucleoid runs repeat loops in constructors and methods with return
+
+class Shelf(levels):
+    this.bins = []
+    repeat levels:
+        this.bins.push(this.bins.length * 10)
+    def take(count):
+        weight = 0
+        repeat count:
+            if this.bins.length == 0:
+                return "short"
+            weight = weight + this.bins.pop()
+        return weight
+shelf = Shelf(3)
+assert(shelf.bins, [0, 10, 20])
+assert(shelf.take(2), 30)
+assert(shelf.take(2), "short")
+assert(shelf.bins, [])
+---
+# Nucleoid nests repeat loops and rolls back a failed iteration
+
+class Crate(row):
+    this.row = row
+rows = 2
+repeat rows:
+    repeat 3: Crate(rows)
+    rows = rows + 1
+assert(Crate.map(crate -> crate.row), [2, 2, 2, 3, 3, 3])
+loaded = Crate.length
+try:
+    repeat 2:
+        Crate(0)
+        if loaded > 7:
+            throw "FULL"
+catch error:
+    failure = error
+assert(failure, "FULL")
+assert([loaded, rows], [6, 4])
 ---
 # Nucleoid flattens nested lists by one level
 

@@ -59,9 +59,8 @@ pub fn generate(statement: &Stmt) -> String {
             iterable,
             ..
         } => format!("for {key},{value} of {iterable}"),
-        Stmt::While { condition, body } => {
-            format!("while({condition}){{{}}}", generate_all(body))
-        }
+        Stmt::While { condition, body } => loop_key("while", condition, body),
+        Stmt::Repeat { count, body } => loop_key("repeat", count, body),
         Stmt::Try { .. } => "try".to_string(),
         Stmt::Declaration { name, type_name } => format!("{name}:{type_name}"),
         Stmt::Pass => "pass".to_string(),
@@ -73,6 +72,14 @@ pub fn generate(statement: &Stmt) -> String {
             )
         }
     }
+}
+
+fn loop_key(word: &str, header: &Expr, body: &[Stmt]) -> String {
+    format!("{word}({header}){{{}}}", generate_all(body))
+}
+
+fn loop_suite(word: &str, header: &Expr, body: &[Stmt]) -> String {
+    format!("{word} {header}:\n{}", indent(&source_all(body)))
 }
 
 fn assignment_source(target: &Expr, value: &Expr) -> String {
@@ -184,9 +191,8 @@ fn source(statement: &Stmt) -> String {
             "for {key},{value} of {iterable}:\n{}",
             indent(&source_all(body))
         ),
-        Stmt::While { condition, body } => {
-            format!("while {condition}:\n{}", indent(&source_all(body)))
-        }
+        Stmt::While { condition, body } => loop_suite("while", condition, body),
+        Stmt::Repeat { count, body } => loop_suite("repeat", count, body),
         Stmt::Try {
             body,
             parameter,

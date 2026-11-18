@@ -27,6 +27,7 @@ const WORDS: &[&str] = &[
     "of",
     "or",
     "pass",
+    "repeat",
     "return",
     "self",
     "super",

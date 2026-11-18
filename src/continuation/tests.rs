@@ -929,3 +929,28 @@ fn membership_headers_wait_for_their_indented_body() {
         Some("ok = x not in xs\n".to_string())
     );
 }
+
+#[test]
+fn repeat_headers_buffer_through_their_suite_colon() {
+    for line in [
+        "repeat 3:",
+        "repeat years: # yearly",
+        "repeat ready ? 2 : 3:",
+        "repeat all v in xs: v > 0:",
+    ] {
+        assert!(indented_body_header(line), "{line:?}");
+        assert_eq!(next_indentation(line, true), INDENT, "{line:?}");
+    }
+    for line in [
+        "repeat 3: count = count + 1",
+        "repeat ready: tick",
+        "repeat 3",
+        "repeat = 3",
+    ] {
+        assert!(!indented_body_header(line), "{line:?}");
+    }
+    assert_eq!(
+        next_indentation("    repeat 3:", true),
+        format!("    {INDENT}")
+    );
+}

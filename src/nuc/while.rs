@@ -1,11 +1,8 @@
 use crate::error::{Error, Result};
 use crate::lang::ast::{Expr, Stmt};
-use crate::lang::evaluation::Flow;
-use crate::nuc::Outcome;
+use crate::nuc::{self, MAX_ITERATIONS, Outcome};
 use crate::runtime::Runtime;
 use crate::scope::Scope;
-
-const MAX_ITERATIONS: usize = 100_000;
 
 #[derive(Debug, Clone)]
 pub struct While {
@@ -31,12 +28,8 @@ impl While {
             }
             iterations += 1;
 
-            runtime.enter_imperative();
-            let result = runtime.execute_all(&self.statements, scope);
-            runtime.leave_imperative();
-
-            if let Flow::Return(value) = result? {
-                return Ok(Outcome::flow(Flow::Return(value)));
+            if let Some(returned) = nuc::run_iteration(runtime, scope, &self.statements)? {
+                return Ok(returned);
             }
         }
 

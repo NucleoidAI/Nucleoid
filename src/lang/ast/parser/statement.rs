@@ -159,6 +159,11 @@ impl Parser {
             return Ok(Stmt::While { condition, body });
         }
 
+        if let Some(count) = self.repeat_count() {
+            let body = self.suite()?;
+            return Ok(Stmt::Repeat { count, body });
+        }
+
         if let Some(name) = self.enum_header() {
             return self.enum_declaration(name);
         }

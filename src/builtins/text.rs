@@ -110,7 +110,7 @@ fn string_transform(
         }
         "repeat" => Value::String(string_repeat(
             receiver,
-            number::to_usize(first.to_number().max(0.0)),
+            number::repetitions(first.to_number()),
         )?),
         "padStart" => Value::String(string_pad(receiver, first, arguments.get(1), Side::Start)?),
         "padEnd" => Value::String(string_pad(receiver, first, arguments.get(1), Side::End)?),

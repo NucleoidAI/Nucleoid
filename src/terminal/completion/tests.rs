@@ -312,3 +312,12 @@ fn strings_comments_and_whitespace_do_not_trigger_automatic_completion() {
     assert!(Completion::find(&runtime, &editor::new(""), true).is_some());
     assert!(Completion::find(&runtime, &editor::new("\"#\"; Math.sq"), false).is_some());
 }
+
+#[test]
+fn completion_offers_repeat_as_it_offers_while() {
+    let mut runtime = Runtime::new();
+    runtime.run("reply = 1").unwrap();
+    let completion = Completion::find(&runtime, &editor::new("rep"), false).unwrap();
+    assert_eq!(completion.candidates, ["repeat", "reply"]);
+    assert!(Completion::find(&runtime, &editor::new("repeat"), false).is_none());
+}

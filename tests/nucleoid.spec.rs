@@ -20401,6 +20401,91 @@ passes
 # return: 0.125"#);
 }
 
+/// Nucleoid repeats a block a counted number of times
+#[rustfmt::skip]
+#[test]
+fn repeats_a_block_a_counted_number_of_times() {
+    let mut run = runner();
+    run("rabbits = 2");
+    run("food = rabbits * 3");
+    run("generations = 3");
+    run(r#"repeat generations:
+    rabbits = rabbits * 2"#);
+    assert_eq!(run("rabbits"), 16);
+    assert_eq!(run("food"), 48);
+    run("generations = 5");
+    assert_eq!(run("rabbits"), 16);
+    run("repeat 2: rabbits = rabbits + food");
+    assert_eq!(run("[rabbits, food]"), serde_json::json!([256, 768]));
+}
+
+/// Nucleoid evaluates a repeat count once and truncates it
+#[rustfmt::skip]
+#[test]
+fn evaluates_a_repeat_count_once_and_truncates_it() {
+    let mut run = runner();
+    run(r#"team = ["ana", "bo"]"#);
+    run("size = team.length");
+    run(r#"repeat size:
+    team.push("hire")"#);
+    assert_eq!(run("team"), serde_json::json!(["ana", "bo", "hire", "hire"]));
+    assert_eq!(run("size"), 4);
+    run(r#"def culture(cells, hours):
+    total = cells
+    repeat hours:
+        total = total * 2
+    return total"#);
+    assert_eq!(run(r#"[culture(1, 3), culture(1, 2.9), culture(1, "3"), culture(1, true)]"#), serde_json::json!([8, 4, 8, 2]));
+    assert_eq!(run("[culture(5, 0), culture(5, -2), culture(5, null)]"), serde_json::json!([5, 5, 5]));
+}
+
+/// Nucleoid runs repeat loops in constructors and methods with return
+#[rustfmt::skip]
+#[test]
+fn runs_repeat_loops_in_constructors_and_methods_with_return() {
+    let mut run = runner();
+    run(r#"class Shelf(levels):
+    this.bins = []
+    repeat levels:
+        this.bins.push(this.bins.length * 10)
+    def take(count):
+        weight = 0
+        repeat count:
+            if this.bins.length == 0:
+                return "short"
+            weight = weight + this.bins.pop()
+        return weight"#);
+    run("shelf = Shelf(3)");
+    assert_eq!(run("shelf.bins"), serde_json::json!([0, 10, 20]));
+    assert_eq!(run("shelf.take(2)"), 30);
+    assert_eq!(run("shelf.take(2)"), "short");
+    assert_eq!(run("shelf.bins"), serde_json::json!([]));
+}
+
+/// Nucleoid nests repeat loops and rolls back a failed iteration
+#[rustfmt::skip]
+#[test]
+fn nests_repeat_loops_and_rolls_back_a_failed_iteration() {
+    let mut run = runner();
+    run(r#"class Crate(row):
+    this.row = row
+rows = 2
+repeat rows:
+    repeat 3: Crate(rows)
+    rows = rows + 1
+assert(Crate.map(crate -> crate.row), [2, 2, 2, 3, 3, 3])
+loaded = Crate.length
+try:
+    repeat 2:
+        Crate(0)
+        if loaded > 7:
+            throw "FULL"
+catch error:
+    failure = error
+assert(failure, "FULL")
+assert([loaded, rows], [6, 4])"#);
+}
+
 /// Nucleoid flattens nested lists by one level
 #[rustfmt::skip]
 #[test]

@@ -2701,6 +2701,19 @@ sides = []
 volume
 # return: 1
 ---
+# Nucleoid repeats statements a counted number of times
+
+class Account(balance):
+    this.balance = balance
+savings = Account(100)
+years = 3
+repeat years:
+    savings.balance = savings.balance * 1.5
+assert(savings.balance, 337.5)
+years = 10
+savings.balance
+# return: 337.5
+---
 # Nucleoid flattens nested lists with flat
 
 pallets = [[["bolt", "nut"], ["gear"]], [["cog"]]]

@@ -1446,3 +1446,87 @@ fn word_headers_consult_the_accepted_grammar_without_changing_the_parser() {
         assert!(parser.while_conditions.is_empty(), "{source}");
     }
 }
+
+#[test]
+fn repeat_counts_follow_the_while_header_rule_at_every_spelling() {
+    for source in [
+        "while n < 3:\n    n = n + 1",
+        "while n < 3: n = n + 1",
+        "while (ready): pass",
+        "while -n: pass",
+        "while [n]: pass",
+        "while {}: pass",
+        "while x if y else z: pass",
+        "while all v in xs: v > 0: pass",
+        "while ready ? on : off: pass",
+        "while x => lambda + 1: pass",
+        "while [lambda: 1]: pass",
+        "while while: pass",
+        "while ready: tick()",
+        "while ready: 1",
+        "while n < 3 {\n    n = n + 1\n}",
+        "while n < 3\n    n = n + 1",
+        "while lambda: 1",
+        "while ready + lambda: 1",
+        "while not lambda: 1",
+        "while ready ? on : lambda: 1",
+        "while x => lambda: 1",
+        "while gauge.lambda: tick()",
+        "while lambda x: x",
+        "while x if y: z",
+        "while all v in xs: v",
+        "while: int",
+        "while(4)",
+        "while = 1",
+        "while",
+        "while\n    ready: int",
+        "while ready\n: tick()",
+        "while @first: tick()",
+        "while ready: tick",
+        "while ready: tick;",
+        "while assert: ready, true",
+        "while suppose: x",
+        "while x = suppose: x",
+        "while x = (suppose): x",
+        "while (a) = suppose: a",
+        "while (suppose): pass",
+        "while (x = suppose): pass",
+        "while suppose > 1: pass",
+        "while x = suppose + 1: pass",
+        "while := 1",
+        "while x := 1",
+        "while x: y := 1",
+        "while v is x: T",
+        "while f() is x: T",
+        "while v is assert: a, b",
+        "while f() is assert: a, b",
+        "while x is Y: pass",
+        "while x is not Y: pass",
+        "while ready: f(x is Y)",
+        "value = 1",
+    ] {
+        let spelled = source.replacen("while", "repeat", 1);
+        for words in [false, true] {
+            let mut accepted = Parser::new(tokenize(source).unwrap());
+            accepted.words = words;
+            let mut repeated = Parser::new(tokenize(&spelled).unwrap());
+            repeated.words = words;
+            let condition = accepted.while_condition();
+            assert_eq!(repeated.repeat_count(), condition, "{spelled}");
+            assert_eq!(repeated.position, accepted.position, "{spelled}");
+            assert_eq!(repeated.depth, 0, "{spelled}");
+            assert_eq!(
+                repeated.while_conditions.len(),
+                accepted.while_conditions.len(),
+                "{spelled}"
+            );
+            let end = repeated.position;
+            repeated.position = 0;
+            assert_eq!(repeated.repeat_count(), condition, "{spelled}");
+            assert_eq!(repeated.position, end, "{spelled}");
+        }
+        let mut repeated = Parser::new(tokenize(&spelled).unwrap());
+        assert_eq!(repeated.while_condition(), None, "{spelled}");
+        assert!(repeated.while_conditions.is_empty(), "{spelled}");
+    }
+}

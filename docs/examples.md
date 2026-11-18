@@ -3931,6 +3931,36 @@ opened.rates.push(1)
   updates only that account's balance. See [NUC 114](nuc-0114.md) and the
   [root contract](../nucleoid.spec.md#list-and-population-products).
 
+## Repeat loops
+
+**Repeat loops build the cars of every train**
+
+```nuc
+class Car(train):
+    this.train = train
+    this.seats = 40
+class Train(cars):
+    repeat cars:
+        Car(this)
+$Train.capacity = Car.filter(car -> car.train == $Train).sum(car -> car.seats)
+local = Train(2)
+express = Train(3)
+assert([local.capacity, express.capacity], [80, 120])
+Car(local)
+[local.capacity, express.capacity]
+# return: [120,120]
+```
+
+- Each train's constructor builds as many cars as it is given:
+  `repeat cars:` runs `Car(this)` that many times, and `this` is the train
+  being built. The loop needs no counter and leaves none behind, where
+  accepted syntax writes `for _ of "a".repeat(cars):` or a `while` loop that
+  counts `cars` down.
+- The class-level rule keeps each train's capacity live over its cars, so a
+  car added to the local train later updates that train alone, and the loop
+  in the constructor does not run again. See [NUC 115](nuc-0115.md) and the
+  [root contract](../nucleoid.spec.md#count-controlled-repeat-loops).
+
 ## Reactive list flattening
 
 **Flattening keeps the dirty tiles of every room counted**

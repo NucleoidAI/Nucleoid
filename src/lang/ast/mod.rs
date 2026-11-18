@@ -74,6 +74,10 @@ pub enum Stmt {
         condition: Expr,
         body: Vec<Stmt>,
     },
+    Repeat {
+        count: Expr,
+        body: Vec<Stmt>,
+    },
     Return(Option<Expr>),
     Throw(Expr),
     Delete(Expr),

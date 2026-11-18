@@ -22,6 +22,10 @@ pub(crate) fn non_negative_integer(number: f64) -> Option<usize> {
     (number >= 0.0 && equal(number.fract(), 0.0)).then(|| to_usize(number))
 }
 
+pub(crate) fn repetitions(number: f64) -> usize {
+    to_usize(number.max(0.0))
+}
+
 #[expect(clippy::float_cmp)]
 pub(crate) fn equal(left: f64, right: f64) -> bool {
     left == right
@@ -63,6 +67,19 @@ mod tests {
         assert_eq!(non_negative_integer(f64::NAN), None);
         assert_eq!(non_negative_integer(f64::INFINITY), None);
         assert_eq!(non_negative_integer(f64::NEG_INFINITY), None);
+    }
+
+    #[test]
+    fn repetitions_truncate_fractions_and_give_zero_for_nan_and_negatives() {
+        assert_eq!(repetitions(3.0), 3);
+        assert_eq!(repetitions(2.9), 2);
+        assert_eq!(repetitions(100_000.9), 100_000);
+        assert_eq!(repetitions(0.0), 0);
+        assert_eq!(repetitions(-0.0), 0);
+        assert_eq!(repetitions(-1.0), 0);
+        assert_eq!(repetitions(f64::NAN), 0);
+        assert_eq!(repetitions(f64::NEG_INFINITY), 0);
+        assert_eq!(repetitions(f64::INFINITY), usize::MAX);
     }
 
     #[test]
