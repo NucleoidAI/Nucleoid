@@ -178,6 +178,12 @@ impl Nuc {
                 parameter,
                 catch,
             } => Nuc::Try(Try::new(body.clone(), parameter.clone(), catch.clone())),
+            Stmt::TryFinally {
+                body,
+                parameter,
+                catch,
+                finally,
+            } => try_finally(body, parameter, catch, finally),
             Stmt::Declaration { .. } => Nuc::Declaration,
             Stmt::Pass => Nuc::Pass,
             Stmt::Suppose { target, body } => {
@@ -356,6 +362,13 @@ impl Nuc {
             _ => Ok(()),
         }
     }
+}
+
+fn try_finally(body: &[Stmt], parameter: &str, catch: &[Stmt], finally: &[Stmt]) -> Nuc {
+    Nuc::Try(Try {
+        finally: Some(finally.to_vec()),
+        ..Try::new(body.to_vec(), parameter.to_owned(), catch.to_vec())
+    })
 }
 
 fn run_iteration(

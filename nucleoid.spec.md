@@ -2499,6 +2499,100 @@ statement positions; caught values and transaction recovery are unchanged.
   root-level native REPL recovery. Full per-case counts are in
   [NUC 46](docs/nuc-0046.md#reference-implementation).
 
+## Finally clauses
+
+- [NUC 119](docs/nuc-0119.md) adds an optional `finally` clause to complete
+  `try`/`catch` statements: `finally:` followed by a suite, which runs
+  however the statement ends. It is the clause that Python, JavaScript,
+  TypeScript, Java, Kotlin and C# spell `finally`. No keyword, lexer token,
+  error type or message format is added, and `finally` stays an ordinary
+  name everywhere else.
+- **Syntax.** The clause is the name `finally`, immediately followed by `:`
+  and a suite: an indented block, statements on the same line separated by
+  `;`, or a braced block, as an explicit-colon catch suite takes. The name
+  starts the logical line that directly follows the catch suite, at the
+  `try` statement's own indentation; blank lines and comment lines may stand
+  between. A line indented less than the catch suite but more than the
+  `try` closes to the `try` statement's level, as the lexer closes every
+  such width, so a `finally:` there belongs to that `try`, as a `catch`
+  there does. `finally :` with a space is the same clause. Any catch header
+  form may precede it, including the colon-free headers of
+  [Colon-free indented exception suites](#colon-free-indented-exception-suites),
+  but the clause itself takes its colon.
+- **Kept readings.** Every other `finally` keeps its accepted reading:
+  - `finally: NAME` followed by a newline, `;`, dedent or the end of input
+    is the typed declaration of `finally`. Executing it raises
+    `ReferenceError("Missing definition")`, and a function whose `try`
+    returns before reaching it keeps returning that value. A suite of one
+    bare name is therefore not a clause.
+  - A `finally` on the line of an inline catch suite, as in
+    `try: x = 1 catch: x = 2 finally: x = 3`, or after a `;`, is the name
+    `finally`, and its colon raises `SyntaxError("Unexpected ':'")`; so does
+    `finally:` inside a catch suite, at a shallower indentation than the
+    `try`, or with no `try` before it.
+  - Parentheses suppress line breaks, so inside a call's parentheses, as in
+    a callback `xs.map(x => { ... })`, every statement of the callback stands
+    on one logical line and a `finally:` there keeps its
+    `SyntaxError("Unexpected ':'")`. A braced arrow assigned to a name, as
+    in `f = (x) => { ... }`, has lines and takes the clause.
+  - `try` without `catch` keeps `SyntaxError("Expected 'catch' after 'try'")`,
+    also when `finally:` follows. A bare `finally` line followed by an
+    indented block is the name `finally` followed by the block. Variables,
+    properties, object keys, functions, parameters and enums named `finally`
+    keep working.
+- **Outcomes.**
+  - The body runs as before. When it completes, normally or by `return`, the
+    `finally` suite runs, and then the statement completes as the body did.
+  - When the body fails, its changes roll back and the catch suite runs with
+    the error bound, as before. When the catch suite completes, normally or
+    by `return`, the `finally` suite runs, and then the statement completes
+    as the catch suite did.
+  - When the catch suite fails, its changes roll back, the `finally` suite
+    runs, and then the catch suite's error propagates. No suite runs on the
+    partial changes of a failed suite.
+  - A `return` in the `finally` suite replaces the pending outcome, a pending
+    `return` or a pending error, and a failure of the `finally` suite
+    propagates in its place.
+  - A pending `return` keeps the value computed when its `return` ran; a
+    later write in the `finally` suite does not change it. The statement's
+    value is the value of the suite it completes as.
+- **Transactions.** The `finally` suite's changes commit with the statement.
+  When an error leaves the statement, the enclosing rollback, of an
+  enclosing `try` or of the whole run, undoes them with the rest of the
+  statement. So a pending error that a `return` in the `finally` suite
+  replaces leaves the failed catch suite's changes rolled back.
+- **Scope.** The `finally` suite runs in the scope of the `try` statement,
+  so the catch parameter is not bound there, and its statements run as
+  those of a catch suite do: a top-level assignment is a declaration, and in
+  a function, method or loop body they run in that body.
+- **Standing rules.** A `try` statement runs when it is reached and files
+  nothing of its own. Inside the branch of a standing `if`, or a function
+  called from a declaration, it runs its `finally` suite whenever that rule
+  runs it.
+- **Rendering.** Graph keys render a `try` statement as `try`, with or
+  without the clause. Inside default-bearing declarations it renders as
+  `try:`, its body, `catch NAME:` and its catch suite, followed by
+  `finally:` and the indented `finally` suite; without the clause it renders
+  as before. `why`, `affects`, `--graph` and `--json` show the declarations
+  of a `finally` suite as they show those of a catch suite.
+- **REPL and terminal.** The native REPL buffers a `try` statement through
+  its catch suite and a following `finally` clause until a blank line. A
+  blank line commits the statement, so a `finally:` typed after it is a
+  statement of its own and raises `SyntaxError("Unexpected ':'")`, as a
+  `catch:` typed after one raises `SyntaxError("Unexpected keyword 'catch'")`.
+  The terminal workspace completes `finally`.
+- **Documents.** Programs may write `finally :` with a space, but the
+  documents spell `finally:`, because the specification exporter's statement
+  splitter groups only `finally:` with its `try`.
+- Malformed clauses use existing diagnostics: `finally:` at the end of input
+  raises `SyntaxError("Unexpected end of input")`, and an unindented next
+  line raises `SyntaxError("Expected an indented block but found ...")`. The
+  three entries beginning
+  `Nucleoid runs a finally clause however a try statement ends` through
+  `Nucleoid runs a finally clause before an error or a return leaves`
+  specify the executable behavior. `tests/finally_clauses.rs` executes the
+  rest.
+
 ## Default named constructors
 
 - An ordinary `class Student(name, age):` accepts `Student("Can", 20)`,
@@ -26080,6 +26174,96 @@ assert([red.name, red.key], ["RED", "red"])
 red.name = "Crimson"
 red.key
 # return: "crimson"
+---
+# Nucleoid runs a finally clause however a try statement ends
+
+attempts = []
+def charge(balance, amount):
+    try:
+        if amount > balance:
+            throw "DECLINED"
+        return balance - amount
+    catch reason:
+        return reason
+    finally:
+        attempts.push(amount)
+assert(charge(50, 30), 20)
+assert(charge(20, 40), "DECLINED")
+assert(attempts, [30, 40])
+log = []
+try:
+    log.push("body")
+catch:
+    log.push("catch")
+finally:
+    log.push("finally")
+try: log.push(1)
+catch: log.push(2)
+finally: log.push(3); log.push(4)
+assert(log, ["body", "finally", 1, 3, 4])
+attempts.length
+# return: 2
+---
+# Nucleoid rolls back a failed try body before its finally clause runs
+
+class Tank(level):
+    this.level = level
+tank = Tank(80)
+reading = tank.level * 2
+audit = []
+entries = audit.length
+try:
+    tank.level = 120
+    assert(reading, 240)
+    throw "OVERFLOW"
+catch alarm:
+    audit.push(alarm)
+finally:
+    audit.push(tank.level)
+assert([tank.level, reading], [80, 160])
+assert([audit, entries], [["OVERFLOW", 80], 2])
+tank.level = 90
+reading
+# return: 180
+---
+# Nucleoid runs a finally clause before an error or a return leaves
+
+log = []
+try:
+    try:
+        log.push("read")
+        throw "SENSOR"
+    catch fault:
+        log.push("retry")
+        throw fault + " DOWN"
+    finally:
+        assert(log, [])
+        log.push("cleanup")
+catch outage:
+    assert([outage, log], ["SENSOR DOWN", []])
+    log.push(outage)
+assert(log, ["SENSOR DOWN"])
+def settle(order):
+    try:
+        order.state = "paid"
+        return order.state
+    catch:
+        return "failed"
+    finally:
+        order.state = "closed"
+cart = {state: "open"}
+assert([settle(cart), cart.state], ["paid", "closed"])
+def recover(order):
+    try:
+        throw "LOST"
+    catch problem:
+        order.state = problem
+        throw problem
+    finally:
+        return order.state
+assert(recover(cart), "closed")
+cart.state
+# return: "closed"
 ---
 # Nucleoid flattens nested lists by one level
 

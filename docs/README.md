@@ -2461,7 +2461,55 @@ catch
   tokens, 603 are unchanged, and none increased. All 2,763 protected assertions
   executed and all 50 explicit expected returns matched.
 
-Full detail: [NUC 9](nuc-0009.md), [NUC 46](nuc-0046.md).
+### Finally clauses
+
+```
+visits = []
+def enter(room):
+    try:
+        if room == "vault":
+            throw "LOCKED"
+        return "open"
+    catch reason:
+        return reason
+    finally:
+        visits.push(room)
+assert([enter("hall"), enter("vault")], ["open", "LOCKED"])
+assert(visits, ["hall", "vault"])
+visits.length
+```
+
+- This is the complete
+  `Nucleoid runs finally clauses as Python, JavaScript and Java do` program
+  in `tests/reference.md`, without its title and expected-return metadata;
+  it returns `2`.
+- [NUC 119](nuc-0119.md) adds the `finally` clause of Python, JavaScript,
+  TypeScript, Java, Kotlin and C#: `finally:` and a suite, which runs
+  however a complete `try`/`catch` statement ends. `finally` stays an
+  ordinary name; the clause is the name and its colon at the start of the
+  line after the catch suite, at the `try` statement's indentation.
+- When the body or the catch suite completes, normally or by `return`, the
+  `finally` suite runs and the statement then completes as that suite did,
+  so `enter` returns `"open"` and `"LOCKED"` and records both rooms. A
+  pending `return` keeps the value it computed.
+- A failed body rolls back before the catch suite runs, as without the
+  clause. A failed catch suite rolls back too, then the `finally` suite
+  runs and the error propagates; when it leaves the statement, the enclosing
+  rollback also undoes what the `finally` suite changed.
+- A `return` in the `finally` suite replaces the pending result or error,
+  and a failure of the `finally` suite propagates in its place, as in
+  Python, JavaScript and Java. The catch parameter is not bound in the
+  `finally` suite.
+- `finally: NAME` before the end of its line stays the typed declaration of
+  `finally`, a `finally` on the catch suite's own line or inside a call's
+  parentheses keeps its `SyntaxError("Unexpected ':'")`, and `try` without
+  `catch` still raises `SyntaxError("Expected 'catch' after 'try'")`.
+- The native REPL buffers the clause with its `try` until a blank line; a
+  blank line before `finally:` commits the statement first, as it does
+  before a `catch`. See the
+  [root contract](../nucleoid.spec.md#finally-clauses).
+
+Full detail: [NUC 9](nuc-0009.md), [NUC 46](nuc-0046.md), [NUC 119](nuc-0119.md).
 
 ---
 
@@ -4892,6 +4940,12 @@ record = {amount: amount unit: "C"}    optional explicit-property comma (NUC 44)
 record = {...base, qty: 1}             copy base's entries in order; later entries win (NUC 81)
 
 throw value                            raise a value
+try:                                   run the body; a failure rolls it back
+    statement
+catch name:                            then runs this suite with the error bound
+    statement
+finally:                               runs however the statement ends (NUC 119)
+    statement
 return expression                      yield from a block or function
 assert(actual, expected)                existing equality-check helper
 assert: actual, expected                optional statement spelling (Accepted NUC 45)

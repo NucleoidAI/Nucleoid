@@ -2763,6 +2763,23 @@ assert([ada.handle, inbox, shown], ["ada king", "countess@example.org", "ADA KIN
 ["straße".to_uppercase(), "ÉCOLE".lowercased(), "ok".uppercase()]
 # return: ["STRASSE","école","OK"]
 ---
+# Nucleoid runs finally clauses as Python, JavaScript and Java do
+
+visits = []
+def enter(room):
+    try:
+        if room == "vault":
+            throw "LOCKED"
+        return "open"
+    catch reason:
+        return reason
+    finally:
+        visits.push(room)
+assert([enter("hall"), enter("vault")], ["open", "LOCKED"])
+assert(visits, ["hall", "vault"])
+visits.length
+# return: 2
+---
 # Nucleoid flattens nested lists with flat
 
 pallets = [[["bolt", "nut"], ["gear"]], [["cog"]]]

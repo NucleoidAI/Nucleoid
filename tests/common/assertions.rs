@@ -70,6 +70,16 @@ fn statement_assertions(statement: &Stmt, assertions: &mut Vec<String>) {
                 statement_assertions(statement, assertions);
             }
         }
+        Stmt::TryFinally {
+            body,
+            catch,
+            finally,
+            ..
+        } => {
+            for statement in body.iter().chain(catch).chain(finally) {
+                statement_assertions(statement, assertions);
+            }
+        }
         Stmt::Suppose { target, body } => {
             for statement in body {
                 statement_assertions(statement, assertions);

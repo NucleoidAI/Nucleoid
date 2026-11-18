@@ -274,10 +274,42 @@ impl Parser {
             self.suite_body()?
         };
 
-        Ok(Stmt::Try {
-            body,
-            parameter,
-            catch,
+        Ok(match self.finally_suite()? {
+            Some(finally) => Stmt::TryFinally {
+                body,
+                parameter,
+                catch,
+                finally,
+            },
+            None => Stmt::Try {
+                body,
+                parameter,
+                catch,
+            },
         })
+    }
+
+    fn finally_suite(&mut self) -> Result<Option<Vec<Stmt>>> {
+        let Some(offset) = self.finally_clause() else {
+            return Ok(None);
+        };
+        self.position += offset + 1;
+        self.suite().map(Some)
+    }
+
+    fn finally_clause(&self) -> Option<usize> {
+        let offset = self
+            .tokens
+            .iter()
+            .skip(self.position)
+            .take_while(|spanned| spanned.token == Token::Newline)
+            .count();
+        let starts_line = (self.position + offset)
+            .checked_sub(1)
+            .and_then(|previous| self.tokens.get(previous))
+            .is_some_and(|previous| matches!(previous.token, Token::Newline | Token::Dedent));
+        let finally = matches!(self.peek_at(offset), Token::Identifier(name) if name == "finally")
+            && self.peek_at(offset + 1) == &Token::Colon;
+        (starts_line && finally && !self.is_type_declaration_at(offset)).then_some(offset)
     }
 }

@@ -321,3 +321,14 @@ fn completion_offers_repeat_as_it_offers_while() {
     assert_eq!(completion.candidates, ["repeat", "reply"]);
     assert!(Completion::find(&runtime, &editor::new("repeat"), false).is_none());
 }
+
+#[test]
+fn completion_offers_finally_as_it_offers_catch() {
+    let mut runtime = Runtime::new();
+    runtime.run("final = 1").unwrap();
+    let completion = Completion::find(&runtime, &editor::new("fin"), false).unwrap();
+    assert_eq!(completion.candidates, ["final", "finally"]);
+    assert!(Completion::find(&runtime, &editor::new("finally"), false).is_none());
+    let completion = Completion::find(&runtime, &editor::new("cat"), false).unwrap();
+    assert_eq!(completion.candidates, ["catch"]);
+}

@@ -4049,6 +4049,41 @@ present
   scanned. See [NUC 118](nuc-0118.md) and the
   [root contract](../nucleoid.spec.md#case-conversion-method-aliases).
 
+## Finally clauses
+
+**Finally clauses log every dispatch of a driver**
+
+```nuc
+class Driver(name, shift):
+    this.name = name
+    this.shift = shift
+    this.log = []
+$Driver.busy = $Driver.log.length > 2
+def dispatch(driver, hours):
+    try:
+        if driver.shift + hours > 8:
+            throw "OVERTIME"
+        return driver.name + " goes"
+    catch reason:
+        return reason
+    finally:
+        driver.log.push(hours)
+ana = Driver("Ana", 6)
+assert(dispatch(ana, 1), "Ana goes")
+assert(dispatch(ana, 3), "OVERTIME")
+assert([ana.log, ana.busy], [[1, 3], false])
+dispatch(ana, 2)
+ana.busy
+# return: true
+```
+
+- `dispatch` sends a driver out or refuses overtime, and both paths return.
+  The `finally` suite logs the hours asked for on either path, where the
+  accepted spelling would repeat the push before each `return`.
+- Each driver's `busy` rule follows its log, so the third dispatch makes
+  Ana busy. See [NUC 119](nuc-0119.md) and the
+  [root contract](../nucleoid.spec.md#finally-clauses).
+
 ## Reactive list flattening
 
 **Flattening keeps the dirty tiles of every room counted**

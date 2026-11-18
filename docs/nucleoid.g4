@@ -308,8 +308,19 @@ repeatStmt
     : REPEAT clauseExpression suite     // Stmt::Repeat
     ;
 
+// Without finallyClause a tryStmt is Stmt::Try, with it Stmt::TryFinally.
 tryStmt
-    : TRY body lineSeparator* CATCH (LPAREN name RPAREN | name)? body
+    : TRY body lineSeparator* CATCH (LPAREN name RPAREN | name)? body finallyClause?
+    ;
+
+// FINALLY starts the logical line after the catch body, at the tryStmt's
+// layout level: only NEWLINEs follow the catch body, and the token before
+// FINALLY is a NEWLINE or the DEDENT that closes it. FINALLY on the catch
+// body's line, after ';', or inside '(' and '[', which suppress layout, keeps
+// its name reading, and so does 'FINALLY COLON name' before NEWLINE, ';',
+// DEDENT or EOF, which stays a typeDeclaration.
+finallyClause
+    : NEWLINE* FINALLY suite
     ;
 
 functionDecl
@@ -878,6 +889,7 @@ enumName
     : NAME
     | WHILE
     | REPEAT
+    | FINALLY
     | ENUM
     | EXTENDS
     | IS
@@ -962,6 +974,7 @@ TYPEOF           : 'typeof';
 
 WHILE            : 'while';
 REPEAT           : 'repeat';
+FINALLY          : 'finally';
 ENUM             : 'enum';
 EXTENDS          : 'extends';
 ASSERT           : 'assert';

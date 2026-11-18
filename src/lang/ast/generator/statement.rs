@@ -61,7 +61,7 @@ pub fn generate(statement: &Stmt) -> String {
         } => format!("for {key},{value} of {iterable}"),
         Stmt::While { condition, body } => loop_key("while", condition, body),
         Stmt::Repeat { count, body } => loop_key("repeat", count, body),
-        Stmt::Try { .. } => "try".to_string(),
+        Stmt::Try { .. } | Stmt::TryFinally { .. } => "try".to_string(),
         Stmt::Declaration { name, type_name } => format!("{name}:{type_name}"),
         Stmt::Pass => "pass".to_string(),
         Stmt::Suppose { target, body } => {
@@ -80,6 +80,18 @@ fn loop_key(word: &str, header: &Expr, body: &[Stmt]) -> String {
 
 fn loop_suite(word: &str, header: &Expr, body: &[Stmt]) -> String {
     format!("{word} {header}:\n{}", indent(&source_all(body)))
+}
+
+fn try_suite(body: &[Stmt], parameter: &str, catch: &[Stmt]) -> String {
+    format!(
+        "try:\n{}\ncatch {parameter}:\n{}",
+        indent(&source_all(body)),
+        indent(&source_all(catch))
+    )
+}
+
+fn finally_suite(attempt: &str, finally: &[Stmt]) -> String {
+    format!("{attempt}\nfinally:\n{}", indent(&source_all(finally)))
 }
 
 fn assignment_source(target: &Expr, value: &Expr) -> String {
@@ -197,11 +209,13 @@ fn source(statement: &Stmt) -> String {
             body,
             parameter,
             catch,
-        } => format!(
-            "try:\n{}\ncatch {parameter}:\n{}",
-            indent(&source_all(body)),
-            indent(&source_all(catch))
-        ),
+        } => try_suite(body, parameter, catch),
+        Stmt::TryFinally {
+            body,
+            parameter,
+            catch,
+            finally,
+        } => finally_suite(&try_suite(body, parameter, catch), finally),
         Stmt::Block(body) => format!("{{\n{}\n}}", source_all(body)),
         Stmt::Suppose { target, body } => format!(
             "{}suppose:\n{}",

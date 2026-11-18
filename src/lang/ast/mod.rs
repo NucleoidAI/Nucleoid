@@ -86,6 +86,12 @@ pub enum Stmt {
         parameter: String,
         catch: Vec<Stmt>,
     },
+    TryFinally {
+        body: Vec<Stmt>,
+        parameter: String,
+        catch: Vec<Stmt>,
+        finally: Vec<Stmt>,
+    },
     /// A declaration with a type but no definition, such as `a: int`.
     Declaration {
         name: String,

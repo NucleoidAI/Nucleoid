@@ -2528,6 +2528,37 @@ assert([door.key, door.banner], ["side door", "SIDE DOOR"])
   values keep their errors. See the
   [root contract](nucleoid.spec.md#case-conversion-method-aliases).
 
+## Finally clauses
+
+**Finally clauses record every attempt to unlock a door**
+
+```nuc
+attempts = []
+def unlock(code):
+    try:
+        if code != 1234:
+            throw "WRONG CODE"
+        return "unlocked"
+    catch reason:
+        return reason
+    finally:
+        attempts.push(code)
+assert(unlock(1111), "WRONG CODE")
+assert(unlock(1234), "unlocked")
+assert(attempts, [1111, 1234])
+```
+
+- [NUC 119](docs/nuc-0119.md) adds the `finally` clause of Python,
+  JavaScript, Java, Kotlin and C# to complete `try`/`catch` statements:
+  `finally:` and a suite, on the line after the catch suite, run however
+  the statement ends.
+- `unlock` returns from its body and from its catch suite, and the
+  `finally` suite records the attempt on both paths before the value is
+  returned. A failed body is rolled back before the catch suite runs, as
+  without the clause, and a `return` in the `finally` suite would replace
+  the pending result. See the
+  [root contract](nucleoid.spec.md#finally-clauses).
+
 ## Reactive list flattening
 
 **Flat turns nested lists into one live list**

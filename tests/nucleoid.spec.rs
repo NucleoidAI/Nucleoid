@@ -20796,6 +20796,108 @@ red.key
 # return: "crimson""#);
 }
 
+/// Nucleoid runs a finally clause however a try statement ends
+#[rustfmt::skip]
+#[test]
+fn runs_a_finally_clause_however_a_try_statement_ends() {
+    let mut run = runner();
+    run(r#"attempts = []
+def charge(balance, amount):
+    try:
+        if amount > balance:
+            throw "DECLINED"
+        return balance - amount
+    catch reason:
+        return reason
+    finally:
+        attempts.push(amount)
+assert(charge(50, 30), 20)
+assert(charge(20, 40), "DECLINED")
+assert(attempts, [30, 40])
+log = []
+try:
+    log.push("body")
+catch:
+    log.push("catch")
+finally:
+    log.push("finally")
+try: log.push(1)
+catch: log.push(2)
+finally: log.push(3); log.push(4)
+assert(log, ["body", "finally", 1, 3, 4])
+attempts.length
+# return: 2"#);
+}
+
+/// Nucleoid rolls back a failed try body before its finally clause runs
+#[rustfmt::skip]
+#[test]
+fn rolls_back_a_failed_try_body_before_its_finally_clause_runs() {
+    let mut run = runner();
+    run(r#"class Tank(level):
+    this.level = level
+tank = Tank(80)
+reading = tank.level * 2
+audit = []
+entries = audit.length
+try:
+    tank.level = 120
+    assert(reading, 240)
+    throw "OVERFLOW"
+catch alarm:
+    audit.push(alarm)
+finally:
+    audit.push(tank.level)
+assert([tank.level, reading], [80, 160])
+assert([audit, entries], [["OVERFLOW", 80], 2])
+tank.level = 90
+reading
+# return: 180"#);
+}
+
+/// Nucleoid runs a finally clause before an error or a return leaves
+#[rustfmt::skip]
+#[test]
+fn runs_a_finally_clause_before_an_error_or_a_return_leaves() {
+    let mut run = runner();
+    run(r#"log = []
+try:
+    try:
+        log.push("read")
+        throw "SENSOR"
+    catch fault:
+        log.push("retry")
+        throw fault + " DOWN"
+    finally:
+        assert(log, [])
+        log.push("cleanup")
+catch outage:
+    assert([outage, log], ["SENSOR DOWN", []])
+    log.push(outage)
+assert(log, ["SENSOR DOWN"])
+def settle(order):
+    try:
+        order.state = "paid"
+        return order.state
+    catch:
+        return "failed"
+    finally:
+        order.state = "closed"
+cart = {state: "open"}
+assert([settle(cart), cart.state], ["paid", "closed"])
+def recover(order):
+    try:
+        throw "LOST"
+    catch problem:
+        order.state = problem
+        throw problem
+    finally:
+        return order.state
+assert(recover(cart), "closed")
+cart.state
+# return: "closed""#);
+}
+
 /// Nucleoid flattens nested lists by one level
 #[rustfmt::skip]
 #[test]
