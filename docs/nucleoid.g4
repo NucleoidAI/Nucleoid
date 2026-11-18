@@ -512,6 +512,7 @@ stage
     | DEPTH LPAREN expression RPAREN                       // Expr::Depth
     | PATH LPAREN expression RPAREN                        // Expr::Path
     | (INTERSECT | EXCEPT) LPAREN expression RPAREN        // Expr::Combine
+    | UNION LPAREN expression RPAREN                       // Expr::Union
     ;
 
 logicalOr
@@ -909,6 +910,7 @@ enumName
     | PATH
     | INTERSECT
     | EXCEPT
+    | UNION
     | NODES
     | MODEL
     | FIRST
@@ -997,6 +999,7 @@ DEPTH            : 'depth';
 PATH             : 'path';
 INTERSECT        : 'intersect';
 EXCEPT           : 'except';
+UNION            : 'union';
 NODES            : 'nodes';
 MODEL            : 'model';
 FIRST            : 'first';
@@ -1189,10 +1192,16 @@ fragment REGEX_CHAR
  * for xs:                  -> iteration with the item name "it".
  * catch without a name     -> the binding "error".
  * model directly before |> -> Expr::Model.
- * |> intersect(model)      -> its other selection is Expr::Model; also except.
+ * |> intersect(model)      -> its other selection is Expr::Model; also except
+ *                             and union.
+ * s |> union(o)            -> Expr::Union: the steps of s, then the steps of o
+ *                             whose node s does not select, in o's order. A
+ *                             binding named union shadows it at run time, and
+ *                             a bare |> union stays the parse-time
+ *                             TypeError("union is not an operation").
  * s |> nodes               -> Expr::Reason with Stage::Nodes, the node names of
  *                             s's selection. It ends the pipeline: a stage
- *                             after it, or an intersect, except or path
+ *                             after it, or an intersect, except, union or path
  *                             argument that ends with it, parses and then
  *                             raises TypeError("Cannot explain <source>").
  * An object containing spread uses Expr::SpreadObject, with later entries

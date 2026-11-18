@@ -78,6 +78,7 @@ impl Expr {
             | Expr::Depth { .. }
             | Expr::Path { .. }
             | Expr::Combine { .. }
+            | Expr::Union { .. }
             | Expr::Model => true,
             Expr::Member { object, .. }
             | Expr::Index { object, .. }

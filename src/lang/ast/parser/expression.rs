@@ -356,6 +356,13 @@ impl Parser {
                 });
             }
 
+            if name == "union" && self.peek_at(1) == &Token::LeftParen {
+                return Ok(Expr::Union {
+                    source: Box::new(source),
+                    other: self.selection_argument()?,
+                });
+            }
+
             return Err(Error::type_error(format!("{name} is not an operation")));
         }
 

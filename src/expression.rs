@@ -284,9 +284,11 @@ pub(crate) fn visit_children<'a>(expression: &'a Expr, visit: &mut impl FnMut(&'
     match expression {
         Expr::Member { object, .. } => visit(object),
         Expr::Version { reference, .. } => visit(reference),
-        Expr::Reason { .. } | Expr::Depth { .. } | Expr::Path { .. } | Expr::Combine { .. } => {
-            visit_link(expression, visit);
-        }
+        Expr::Reason { .. }
+        | Expr::Depth { .. }
+        | Expr::Path { .. }
+        | Expr::Combine { .. }
+        | Expr::Union { .. } => visit_link(expression, visit),
         Expr::Index { object, index } => {
             visit(object);
             visit(index);
@@ -343,9 +345,10 @@ fn visit_link<'a>(expression: &'a Expr, visit: &mut impl FnMut(&'a Expr)) {
     visit(source);
     match link {
         Link::Stage(_) => {}
-        Link::Depth(argument) | Link::Path(argument) | Link::Combine(_, argument) => {
-            visit(argument);
-        }
+        Link::Depth(argument)
+        | Link::Path(argument)
+        | Link::Combine(_, argument)
+        | Link::Union(argument) => visit(argument),
     }
 }
 
@@ -396,6 +399,7 @@ fn visit_operands<'a>(expression: &'a Expr, visit: &mut impl FnMut(&'a Expr)) {
         | Expr::Depth { .. }
         | Expr::Path { .. }
         | Expr::Combine { .. }
+        | Expr::Union { .. }
         | Expr::Index { .. }
         | Expr::Slice { .. }
         | Expr::Call { .. }

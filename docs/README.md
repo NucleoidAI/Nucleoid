@@ -4412,6 +4412,63 @@ common.map(step => step.node)
   [intersect and except reasoning selections](../nucleoid.spec.md#intersect-and-except-reasoning-selections)
   section.
 
+### Union selections
+
+```
+price = 10
+quantity = 3
+rate = 0.2
+subtotal = price * quantity
+tax = subtotal * rate
+shipping = quantity * 2
+either = tax |> why |> union(shipping |> why)
+facts = tax |> why |> union(shipping |> why) |> stated
+assert(either.map(step => step.node), ["tax", "subtotal", "rate", "price", "quantity", "shipping"])
+assert(facts.map(step => step.node), ["rate", "price", "quantity"])
+fee = 2
+shipping = quantity * 2 + fee
+facts.map(step => step.node)
+```
+
+- This is the complete `Nucleoid joins two explanations with union` program
+  in `tests/reference.md`, without its title and expected-return metadata;
+  it returns `["rate","price","quantity","fee"]`.
+- [NUC 120](nuc-0120.md) adds the stage `selection |> union(other)`. It
+  selects the steps of `selection` in their order, followed by the steps of
+  `other` whose node `selection` does not select, in `other`'s order, with
+  their fields unchanged, so `tax |> why |> union(shipping |> why)` is
+  everything the tax or the shipping rests on, each node once. It is exactly
+  `(selection).concat(other |> except(selection))`, which names the
+  selection twice and gives a list rather than a selection.
+- `other` is written and evaluated as for `intersect` and `except`: a
+  reference, `model`, a prefix stage such as `why shipping` or a pipeline,
+  evaluated in place each time the stage applies, with steps compared by
+  their node, whatever they hold.
+- The result is a selection. `stated`, `derived`, `diff`, `intersect` and
+  `except` after it keep what they keep of each side, so
+  `tax |> why |> union(shipping |> why) |> stated` is the facts behind
+  either value, and a later `why` or `affects` walks from every step of the
+  union. Each step keeps the distance of the walk that selected it, so a
+  later `depth(n)` measures each side from its own walk, and the union keeps
+  the direction of the selection's most recent walk, which a later `path`
+  uses for every step.
+- An `other` that is undefined, because a `depth` in it has a `null` limit,
+  makes the selection undefined, where the accepted spelling appends
+  undefined as an element. An invalid `other` keeps the diagnostics of a
+  pipeline source, such as `TypeError("Cannot explain 1")`.
+- Only `|>` followed by `union` and `(` is the stage; `union` stays an
+  ordinary name everywhere else, and a bare `|> union` keeps its parse-time
+  `TypeError("union is not an operation")`. A local or parameter, variable,
+  function or class named `union` shadows the stage, as bindings shadow the
+  other stages: the stage then raises `TypeError("union is not an operation")`
+  before selecting its source.
+- The selection stays live through every observation of both selections,
+  including the steps each one drops. It renders as
+  `selection|>union(other)`.
+- The authoritative contract is the
+  [union reasoning selections](../nucleoid.spec.md#union-reasoning-selections)
+  section.
+
 ### Node names of reasoning selections
 
 ```
@@ -4447,10 +4504,10 @@ facts
   `(total).map(step => step.node)` raises
   `TypeError("number.map is not a function")`. An empty selection gives `[]`,
   and a selection that a `depth(null)` makes undefined gives undefined.
-- The stage ends the pipeline: a stage after it, or an `intersect`, `except`
-  or `path` argument that ends with it, has a list of names rather than a
-  selection and raises `TypeError("Cannot explain <source>")`, as it does
-  after the accepted spelling.
+- The stage ends the pipeline: a stage after it, or an `intersect`, `except`,
+  `union` or `path` argument that ends with it, has a list of names rather
+  than a selection and raises `TypeError("Cannot explain <source>")`, as it
+  does after the accepted spelling.
 - Only `|>` followed by `nodes` is the stage; `nodes` stays an ordinary name
   everywhere else, and there is no prefix form. A local or parameter,
   variable, function or class named `nodes` shadows the stage, as bindings
@@ -4502,11 +4559,12 @@ c = b * 2
   and its `before` and `after` fields, the [NUC 88](nuc-0088.md)
   candidate adds a `path(target)` stage that NUC 11 does not plan, and the
   [NUC 106](nuc-0106.md) candidate adds `intersect(other)` and
-  `except(other)` stages, which NUC 11 does not plan either, and the
+  `except(other)` stages, which NUC 11 does not plan either, the
   [NUC 112](nuc-0112.md) candidate adds a final `nodes` stage, which names
   the nodes of a selection and, unlike NUC 11's operations, returns a list
-  rather than a selection. Other NUC 11 operations remain proposals, not
-  dependencies.
+  rather than a selection, and the [NUC 120](nuc-0120.md) candidate adds a
+  `union(other)` stage, which NUC 11 does not plan either. Other NUC 11
+  operations remain proposals, not dependencies.
 
 ### Quantifiers
 
@@ -5008,6 +5066,10 @@ why a |> except(why b)                what a rests on and b does not (NUC 106)
 affects a |> intersect(affects b)     what a and b both move (NUC 106)
 selection |> intersect(other)         steps whose node other also selects (NUC 106)
 selection |> except(other)            steps whose node other does not select (NUC 106)
+why a |> union(why b)                 what a or b rests on, each node once (NUC 120)
+affects a |> union(affects b)         what a change of a or of b reaches (NUC 120)
+selection |> union(other)             the steps, then other's steps whose node they lack (NUC 120)
+selection |> union(other) |> stated   the stated steps of either selection (NUC 120)
 reference |> why |> nodes             the node names of an explanation, in its order (NUC 112)
 reference |> why |> stated |> nodes   the names of the facts an explanation rests on (NUC 112)
 reference |> affects |> nodes         the names of what a change of the reference reaches (NUC 112)

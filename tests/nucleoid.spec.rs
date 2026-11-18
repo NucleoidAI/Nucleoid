@@ -20898,6 +20898,108 @@ cart.state
 # return: "closed""#);
 }
 
+/// Nucleoid joins what two explanations rest on with union
+#[rustfmt::skip]
+#[test]
+fn joins_what_two_explanations_rest_on_with_union() {
+    let mut run = runner();
+    run("price = 10");
+    run("quantity = 3");
+    run("rate = 0.2");
+    run("subtotal = price * quantity");
+    run("tax = subtotal * rate");
+    run("shipping = quantity * 2");
+    run("either = tax |> why |> union(shipping |> why)");
+    run("causes = why shipping |> union(why tax)");
+    assert_eq!(run("either.map(s -> s.node)"), serde_json::json!(["tax", "subtotal", "rate", "price", "quantity", "shipping"]));
+    assert_eq!(run("causes.map(s -> s.node)"), serde_json::json!(["shipping", "quantity", "tax", "subtotal", "rate", "price"]));
+    run("fee = 2");
+    run("shipping = quantity * 2 + fee");
+    assert_eq!(run("either.map(s -> s.node)"), serde_json::json!(["tax", "subtotal", "rate", "price", "quantity", "shipping", "fee"]));
+    run("tax = subtotal * rate + fee");
+    assert_eq!(run("either.map(s -> s.node)"), serde_json::json!(["tax", "subtotal", "rate", "fee", "price", "quantity", "shipping"]));
+    assert_eq!(run("causes.map(s -> s.node)"), serde_json::json!(["shipping", "quantity", "fee", "tax", "subtotal", "rate", "price"]));
+    run("quantity = 5");
+    assert_eq!(run("either.map(s -> s.holds)"), serde_json::json!([12, 50, 0.2, 2, 10, 5, 12]));
+}
+
+/// Nucleoid narrows a union of explanations to its facts and conclusions
+#[rustfmt::skip]
+#[test]
+fn narrows_a_union_of_explanations_to_its_facts_and_conclusions() {
+    let mut run = runner();
+    run("price = 10");
+    run("quantity = 3");
+    run("rate = 0.2");
+    run("subtotal = price * quantity");
+    run("tax = subtotal * rate");
+    run("shipping = quantity * 2");
+    run("facts = why tax |> union(why shipping) |> stated");
+    run("rules = why tax |> union(why shipping) |> derived");
+    assert_eq!(run("facts.map(s -> s.node)"), serde_json::json!(["rate", "price", "quantity"]));
+    assert_eq!(run("rules.map(s -> s.node)"), serde_json::json!(["tax", "subtotal", "shipping"]));
+    run("fee = 2");
+    run("shipping = quantity * 2 + fee");
+    assert_eq!(run("facts.map(s -> s.node)"), serde_json::json!(["rate", "price", "quantity", "fee"]));
+    run("subtotal = 25");
+    assert_eq!(run("facts.map(s -> s.node)"), serde_json::json!(["subtotal", "rate", "quantity", "fee"]));
+    assert_eq!(run("rules.map(s -> s.node)"), serde_json::json!(["tax", "shipping"]));
+}
+
+/// Nucleoid joins what two changes of each instance reach with union
+#[rustfmt::skip]
+#[test]
+fn joins_what_two_changes_of_each_instance_reach_with_union() {
+    let mut run = runner();
+    run(r#"class Part(cost, weight):
+    this.cost = cost
+    this.weight = weight"#);
+    run("$Part.price = $Part.cost * 2");
+    run("$Part.freight = $Part.weight * 3");
+    run("$Part.charge = $Part.price + $Part.freight");
+    run("$Part.reach = $Part.cost |> affects |> union($Part.weight |> affects)");
+    run("bolt = Part(4, 1)");
+    run("nut = Part(2, 5)");
+    assert_eq!(run("bolt.reach.map(s -> s.node)"), serde_json::json!(["bolt.price", "bolt.charge", "bolt.freight"]));
+    assert_eq!(run("nut.reach.map(s -> s.node)"), serde_json::json!(["nut.price", "nut.charge", "nut.freight"]));
+    run("$Part.duty = $Part.weight * 0.1");
+    assert_eq!(run("nut.reach.map(s -> s.node)"), serde_json::json!(["nut.price", "nut.charge", "nut.freight", "nut.duty"]));
+    run("bolt.weight = 10");
+    assert_eq!(run("bolt.reach.map(s -> s.holds)"), serde_json::json!([8, 38, 30, 1]));
+    run(r#"nut.reach.length
+
+# return: 4"#);
+}
+
+/// Nucleoid restores unions after failed changes
+#[rustfmt::skip]
+#[test]
+fn restores_unions_after_failed_changes() {
+    let mut run = runner();
+    run(r#"price = 10
+quantity = 3
+subtotal = price * quantity
+shipping = quantity * 2
+either = why subtotal |> union(why shipping)
+failure = ""
+try:
+    either = why subtotal |> union(1)
+catch error:
+    failure = error
+assert(failure, TypeError("Cannot explain 1"))
+assert(either.map(s -> s.node), ["subtotal", "price", "quantity", "shipping"])
+try:
+    fee = 2
+    shipping = quantity * 2 + fee
+    assert(either.map(s -> s.node), ["subtotal", "price", "quantity", "shipping", "fee"])
+    throw "UNDO"
+catch error:
+    assert(error, "UNDO")
+assert(either.map(s -> s.node), ["subtotal", "price", "quantity", "shipping"])
+quantity = 6
+assert(either.map(s -> s.holds), [60, 10, 6, 12])"#);
+}
+
 /// Nucleoid flattens nested lists by one level
 #[rustfmt::skip]
 #[test]

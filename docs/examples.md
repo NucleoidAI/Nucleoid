@@ -4084,6 +4084,35 @@ ana.busy
   Ana busy. See [NUC 119](nuc-0119.md) and the
   [root contract](../nucleoid.spec.md#finally-clauses).
 
+## Union reasoning selections
+
+**Union shows every figure that a change of rent or of wages moves**
+
+```nuc
+rent = 1200
+wages = 3000
+power = 150
+overhead = rent + power
+payroll = wages * 1.2
+costs = overhead + payroll
+price = costs / 100
+moved = affects rent |> union(affects wages)
+assert(moved.map(step -> step.node), ["overhead", "costs", "price", "payroll"])
+power = rent / 8
+wages = 3500
+[moved.map(step -> step.node), price]
+# return: [["overhead","power","costs","price","payroll"],55.5]
+```
+
+- `affects rent |> union(affects wages)` is everything a change of the rent
+  or of the wages moves: what the rent moves, in its order, then what only
+  the wages move, here the payroll. The costs and the price, which both move,
+  appear once.
+- The union follows the model: once the power bill is a share of the rent,
+  it joins what the rent moves, and the price follows the new wages. See
+  [NUC 120](nuc-0120.md) and the
+  [root contract](../nucleoid.spec.md#union-reasoning-selections).
+
 ## Reactive list flattening
 
 **Flattening keeps the dirty tiles of every room counted**

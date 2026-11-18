@@ -246,6 +246,10 @@ pub enum Expr {
         source: Box<Expr>,
         other: Box<Expr>,
     },
+    Union {
+        source: Box<Expr>,
+        other: Box<Expr>,
+    },
     Model,
     Quantified {
         quantifier: Quantifier,

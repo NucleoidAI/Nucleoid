@@ -2780,6 +2780,23 @@ assert(visits, ["hall", "vault"])
 visits.length
 # return: 2
 ---
+# Nucleoid joins two explanations with union
+
+price = 10
+quantity = 3
+rate = 0.2
+subtotal = price * quantity
+tax = subtotal * rate
+shipping = quantity * 2
+either = tax |> why |> union(shipping |> why)
+facts = tax |> why |> union(shipping |> why) |> stated
+assert(either.map(step => step.node), ["tax", "subtotal", "rate", "price", "quantity", "shipping"])
+assert(facts.map(step => step.node), ["rate", "price", "quantity"])
+fee = 2
+shipping = quantity * 2 + fee
+facts.map(step => step.node)
+# return: ["rate","price","quantity","fee"]
+---
 # Nucleoid flattens nested lists with flat
 
 pallets = [[["bolt", "nut"], ["gear"]], [["cog"]]]

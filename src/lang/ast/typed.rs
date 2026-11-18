@@ -59,6 +59,7 @@ impl<'a> Ast<'a> {
             | Expr::Depth { .. }
             | Expr::Path { .. }
             | Expr::Combine { .. }
+            | Expr::Union { .. }
             | Expr::Model => Ast::Reason(reason::Reason::new(node)),
             Expr::Version { .. } => Ast::Version(version::Version::new(node)),
             Expr::Quantified { .. } => Ast::Quantified(quantified::Quantified::new(node)),

@@ -116,6 +116,12 @@ impl Selection {
         self
     }
 
+    pub(crate) fn union(mut self, other: Selection) -> Selection {
+        let added = other.combined(SetOperation::Except, &self);
+        self.steps.extend(added.steps);
+        self
+    }
+
     fn members(&self) -> HashSet<&NodeKey> {
         self.steps.iter().map(|step| &step.node).collect()
     }
@@ -149,6 +155,14 @@ impl Ranked {
     pub(crate) fn combined(self, operation: SetOperation, other: &Selection) -> Self {
         let members = other.members();
         self.retained(|step, _| operation.keeps(members.contains(&step.node)))
+    }
+
+    pub(crate) fn union(mut self, other: Ranked) -> Self {
+        debug_assert_eq!(self.selection.steps.len(), self.distances.len());
+        let added = other.combined(SetOperation::Except, &self.selection);
+        self.selection.steps.extend(added.selection.steps);
+        self.distances.extend(added.distances);
+        self
     }
 
     fn filtered(self, state: StepState) -> Self {

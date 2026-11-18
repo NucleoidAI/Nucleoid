@@ -183,6 +183,7 @@ impl<'a> Shown<'a> {
             Link::Depth(limit) => self.stage(f, source, "depth", limit),
             Link::Path(target) => self.stage(f, source, "path", target),
             Link::Combine(operation, other) => self.stage(f, source, operation.as_str(), other),
+            Link::Union(other) => self.stage(f, source, "union", other),
         }
     }
 
@@ -307,9 +308,11 @@ impl fmt::Display for Shown<'_> {
             Expr::Function(function) => write_function(f, function),
             Expr::Assign { target, value } => write!(f, "{target}={value}"),
             Expr::Delete(operand) => write!(f, "delete {}", shown.inner(operand)),
-            Expr::Reason { .. } | Expr::Depth { .. } | Expr::Path { .. } | Expr::Combine { .. } => {
-                shown.link(f)
-            }
+            Expr::Reason { .. }
+            | Expr::Depth { .. }
+            | Expr::Path { .. }
+            | Expr::Combine { .. }
+            | Expr::Union { .. } => shown.link(f),
             Expr::Model => f.write_str("model"),
             Expr::Quantified {
                 quantifier,

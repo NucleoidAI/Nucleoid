@@ -40,6 +40,7 @@ pub(crate) enum Link<'a> {
     Depth(&'a Expr),
     Path(&'a Expr),
     Combine(SetOperation, &'a Expr),
+    Union(&'a Expr),
 }
 
 impl Link<'_> {
@@ -52,7 +53,7 @@ impl Link<'_> {
     }
 
     pub(crate) fn freezes_argument(self) -> bool {
-        matches!(self, Link::Depth(_) | Link::Combine(..))
+        matches!(self, Link::Depth(_) | Link::Combine(..) | Link::Union(_))
     }
 
     fn operation(self) -> Option<&'static str> {
@@ -64,6 +65,7 @@ impl Link<'_> {
             Link::Depth(_) => Some("depth"),
             Link::Path(_) => Some("path"),
             Link::Combine(operation, _) => Some(operation.as_str()),
+            Link::Union(_) => Some("union"),
         }
     }
 }
@@ -91,6 +93,7 @@ pub(crate) fn split(expression: &Expr) -> Option<(Link<'_>, &Expr)> {
             source,
             other,
         } => Some((Link::Combine(*operation, other), source)),
+        Expr::Union { source, other } => Some((Link::Union(other), source)),
         _ => None,
     }
 }
@@ -101,14 +104,11 @@ impl Runtime {
         expression: &Expr,
         scope: &mut Scope,
     ) -> Result<Option<Selection>> {
-        let (links, base) = pipeline(expression);
-        for link in &links {
-            self.check_operation(*link, scope)?;
-        }
-
-        let selection = self.base_selection(base, scope)?;
+        let (links, selection) = self.selected(expression, scope)?;
         if links.iter().copied().any(Link::is_depth) {
-            return self.ranked(&links, selection, scope);
+            return Ok(self
+                .ranked(&links, selection, scope)?
+                .map(Ranked::into_selection));
         }
 
         let mut selection = selection;
@@ -127,10 +127,27 @@ impl Runtime {
                     Some(other) => selection = selection.combined(operation, &other),
                     None => return Ok(None),
                 },
+                Link::Union(other) => match self.other_selection(other, scope)? {
+                    Some(other) => selection = selection.union(other),
+                    None => return Ok(None),
+                },
                 Link::Depth(_) => {}
             }
         }
         Ok(Some(selection))
+    }
+
+    fn selected<'e>(
+        &mut self,
+        expression: &'e Expr,
+        scope: &mut Scope,
+    ) -> Result<(Vec<Link<'e>>, Selection)> {
+        let (links, base) = pipeline(expression);
+        for link in &links {
+            self.check_operation(*link, scope)?;
+        }
+        let selection = self.base_selection(base, scope)?;
+        Ok((links, selection))
     }
 
     fn node_names_of(&mut self, source: &Expr, scope: &mut Scope) -> Result<Value> {
@@ -142,6 +159,17 @@ impl Runtime {
     }
 
     fn other_selection(&mut self, other: &Expr, scope: &mut Scope) -> Result<Option<Selection>> {
+        self.nested(|runtime| runtime.reason(other, scope))
+    }
+
+    fn other_ranked(&mut self, other: &Expr, scope: &mut Scope) -> Result<Option<Ranked>> {
+        self.nested(|runtime| {
+            let (links, selection) = runtime.selected(other, scope)?;
+            runtime.ranked(&links, selection, scope)
+        })
+    }
+
+    fn nested<T>(&mut self, evaluate: impl FnOnce(&mut Self) -> Result<T>) -> Result<T> {
         self.depth += 1;
 
         if self.depth > MAX_DEPTH {
@@ -150,10 +178,10 @@ impl Runtime {
         }
 
         let depth = self.depth;
-        let selection = self.reason(other, scope);
+        let result = evaluate(self);
         debug_assert_eq!(self.depth, depth);
         self.depth -= 1;
-        selection
+        result
     }
 
     fn ranked(
@@ -161,7 +189,7 @@ impl Runtime {
         links: &[Link<'_>],
         selection: Selection,
         scope: &mut Scope,
-    ) -> Result<Option<Selection>> {
+    ) -> Result<Option<Ranked>> {
         let mut ranked = Ranked::unwalked(selection);
         for link in links.iter().rev() {
             ranked = match *link {
@@ -178,9 +206,13 @@ impl Runtime {
                     Some(other) => ranked.combined(operation, &other),
                     None => return Ok(None),
                 },
+                Link::Union(other) => match self.other_ranked(other, scope)? {
+                    Some(other) => ranked.union(other),
+                    None => return Ok(None),
+                },
             };
         }
-        Ok(Some(ranked.into_selection()))
+        Ok(Some(ranked))
     }
 
     fn check_operation(&self, link: Link<'_>, scope: &Scope) -> Result<()> {

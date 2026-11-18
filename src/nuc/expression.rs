@@ -62,9 +62,11 @@ impl Runtime {
             Expr::List(_) | Expr::ObjectLiteral(_) | Expr::SpreadObject(_) | Expr::Template(_) => {
                 self.freeze_collection(expression, scope)
             }
-            Expr::Reason { .. } | Expr::Depth { .. } | Expr::Path { .. } | Expr::Combine { .. } => {
-                self.freeze_pipeline(expression, scope)
-            }
+            Expr::Reason { .. }
+            | Expr::Depth { .. }
+            | Expr::Path { .. }
+            | Expr::Combine { .. }
+            | Expr::Union { .. } => self.freeze_pipeline(expression, scope),
             other => Ok(other.clone()),
         }
     }
@@ -107,6 +109,10 @@ impl Runtime {
                     source: Box::new(frozen),
                     other: Box::new(self.freeze_selection(other, scope)?),
                 },
+                Link::Union(other) => Expr::Union {
+                    source: Box::new(frozen),
+                    other: Box::new(self.freeze_selection(other, scope)?),
+                },
             };
         }
         Ok(frozen)
@@ -118,9 +124,11 @@ impl Runtime {
                 stage: Stage::Nodes,
                 ..
             } => Ok(other.clone()),
-            Expr::Reason { .. } | Expr::Depth { .. } | Expr::Path { .. } | Expr::Combine { .. } => {
-                self.freeze(other, scope)
-            }
+            Expr::Reason { .. }
+            | Expr::Depth { .. }
+            | Expr::Path { .. }
+            | Expr::Combine { .. }
+            | Expr::Union { .. } => self.freeze(other, scope),
             _ => Ok(other.clone()),
         }
     }

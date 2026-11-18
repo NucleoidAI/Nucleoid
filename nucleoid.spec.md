@@ -2987,6 +2987,121 @@ statement positions; caught values and transaction recovery are unchanged.
   `Nucleoid restores intersections after failed changes` specify the
   executable behavior. `tests/selection_intersections.rs` executes the rest.
 
+## Union reasoning selections
+
+- [NUC 120](docs/nuc-0120.md) adds the pipeline stage
+  `SELECTION |> union(OTHER)`, which selects what either of two selections
+  selects: the steps of `SELECTION` in their order, followed by the steps of
+  `OTHER` whose node `SELECTION` does not select, in `OTHER`'s order. Every
+  step keeps its `node`, `holds`, `rule`, `state` and `from` fields
+  unchanged.
+- So `tax |> why |> union(shipping |> why)` and its prefix spelling
+  `why tax |> union(why shipping)` select everything the tax or the shipping
+  rests on, each node once, and `affects price |> union(affects rate)`
+  selects everything a change of the price or of the rate reaches.
+- It is exactly the accepted `(SELECTION).concat(OTHER |> except(SELECTION))`,
+  where `SELECTION` is the selection that the pipeline before `union`
+  denotes, read as the accepted stages read their source, so a reference
+  alone denotes its own one-step selection and `model` the model's steps.
+  The accepted spelling names `SELECTION` twice and gives a list rather than
+  a selection.
+- Steps are compared by their graph node, whatever they hold, as `intersect`
+  and `except` compare them, so a node that both selections select appears
+  once, at its place in `SELECTION`. `A |> union(B)` and `B |> union(A)`
+  select the same nodes, each beginning with its own source's steps.
+- `OTHER` is written and evaluated as for `intersect` and `except`: one
+  expression in parentheses that denotes a selection, as the source of a
+  pipeline does, such as a reference, `model`, a prefix stage such as
+  `why shipping` or a pipeline, which may hold `union` too. It is evaluated
+  in place each time the stage applies, after the source selection and the
+  stages before it, and before the stages after it, even when `SELECTION`
+  is empty. A reference to a node that is not in the model, such as an
+  absent property, adds nothing until it is defined, and a name that holds a
+  selection is a reasoning observer, which no selection holds, so after
+  `causes = why shipping`, `union(causes)` adds nothing.
+- `S |> union(S)` selects what `S` selects, `S |> union(model)` selects the
+  steps of `S` followed by every other node of the model in model order, and
+  `model |> union(S)` selects the model, because every step of a selection is
+  a node of the model. Repeating a stage with the same `OTHER` changes
+  nothing, and `A |> union(B) |> union(C)` selects what
+  `A |> union(B |> union(C))` selects, in the same order.
+- The result is a selection, so further stages apply to it. `stated`,
+  `derived`, `diff`, `intersect` and `except` keep a step by a property of its
+  node, so after a union they keep what they keep of each side:
+  `S |> union(O) |> stated` is `(S |> stated).concat(O |> except(S) |> stated)`.
+  A later `why` or `affects` walks from every step of the union, and `nodes`
+  names them.
+- Each step keeps the distance of the walk that selected it: the steps of
+  `SELECTION` their own, and the steps added from `OTHER` the distances they
+  have in `OTHER`'s own selection. So `S |> union(O) |> depth(n)` is
+  `(S |> depth(n)).concat(O |> except(S) |> depth(n))`.
+- The union keeps the direction of `SELECTION`'s most recent walk, and a
+  later `path` uses it for every step. After `why x |> union(affects y)`,
+  `path(t)` keeps the steps of either side that are `t` or rest on it, as
+  after `why`; after `affects y |> union(why x)` it keeps the steps that are
+  `t` or that `t` rests on, as after `affects`.
+- A `depth` stage whose limit is `null` or undefined makes `OTHER` undefined,
+  and then the reasoning expression is undefined, as for `intersect` and
+  `except`: the stages after it are not applied and their arguments are not
+  evaluated, and a declaration stores the undefined value as `null`. The
+  accepted spelling appends the undefined value to the steps of `SELECTION`
+  as an element instead. When `SELECTION` is undefined, `OTHER` is not
+  evaluated, and the selection is undefined, as the accepted spelling's is.
+- An invalid `OTHER` keeps the diagnostics of a pipeline source. A literal, a
+  property path whose base holds no object and any other expression that is
+  neither a reference nor a selection raise `TypeError("Cannot explain <other>")`,
+  where `<other>` is its canonical source, such as
+  `TypeError("Cannot explain 1")` for `union(1)`. A name that nothing defines
+  raises `ReferenceError("<name> is not defined")`. The error is positioned
+  at the running top-level statement and rolls back its transaction.
+- Only `|>` followed by the name `union` and then a `(` token is the stage,
+  so `|> union (b)` is the stage too. `union` remains an ordinary lexer
+  identifier: variables, parameters, properties, keys, functions and methods
+  named `union` keep their accepted meanings, there is no prefix form, so
+  `union c` remains the two statements `union` and `c`, and `union(a, b)`
+  remains an ordinary call. A bare `|> union` keeps the parse-time
+  `TypeError("union is not an operation")`, and so does a line break before
+  the `(` outside parentheses and brackets. `|> union()` raises
+  `SyntaxError("Unexpected ')'")` and `|> union(a, b)` raises
+  `SyntaxError("Expected ')' but found ','")`, as the parenthesized
+  expressions `()` and `(a, b)` do.
+- A local or parameter, state variable, function or class named `union`
+  shadows the stage, as for `stated`, `derived`, `depth`, `diff`, `path`,
+  `intersect`, `except` and `nodes`: the stage then raises
+  `TypeError("union is not an operation")` at the running statement, before
+  the source is selected, and so before `OTHER` is evaluated. A binding
+  declared after a standing selection makes its next evaluation raise, which
+  fails and rolls back the statement that triggered it. Methods, properties
+  and object keys named `union` are not bindings, and a binding named
+  `except` does not shadow the union. The accepted `why` and `affects`
+  shadowing behavior does not change.
+- An invalid source keeps its diagnostic and is reported before `OTHER` is
+  evaluated: `1 |> union(missing)` raises `TypeError("Cannot explain 1")` and
+  `missing |> union(1)` raises `ReferenceError("missing is not defined")`.
+- The stage keeps every value and structural observation that `SELECTION`
+  made, including those of the steps its filters drop, and adds every
+  observation that evaluating `OTHER` makes, including those of the steps
+  `OTHER`'s own stages drop, of the steps it does not add because `SELECTION`
+  holds their node, and of model membership when `OTHER` reads `model`. A
+  standing selection therefore refreshes when either side changes, through a
+  value, a rule, a new or deleted node or a class-level rule. A declaration,
+  property, class-level rule, condition or quantifier that holds the stage is
+  a reasoning observer. Functions, methods and lambdas evaluate it in place,
+  and class-level rules give each instance its own selection. `.value`
+  snapshots it, and propagation order, `suppose` blocks and rollback behave
+  as for the accepted stages.
+- The stage renders as `SOURCE|>union(OTHER)` in graph keys, block keys,
+  conditions, `rule` text and the errors that quote an expression, with the
+  source and `OTHER` rendered once each, so a union and its accepted spelling
+  are different graph keys. One stage evaluates each selection once and adds
+  the steps of `OTHER` through a set of the nodes of `SELECTION`, in time
+  linear in the sizes of both selections. Programs without the stage do no
+  work for it.
+- The four appended entries from
+  `Nucleoid joins what two explanations rest on with union` through
+  `Nucleoid restores unions after failed changes` specify the executable
+  behavior. `tests/union_selections.rs` executes the rest.
+
 ## Node names of reasoning selections
 
 - [NUC 112](docs/nuc-0112.md) adds the final pipeline stage
@@ -3011,7 +3126,7 @@ statement positions; caught values and transaction recovery are unchanged.
 - `SELECTION` is written as the source of a pipeline is: a reference, which
   selects its own step; `model`; a prefix stage, as in `why total |> nodes`;
   or a pipeline of the stages `why`, `affects`, `stated`, `derived`, `depth`,
-  `path`, `intersect`, `except` and `diff`. An empty selection gives `[]`. A selection that a `depth` stage
+  `path`, `intersect`, `except`, `union` and `diff`. An empty selection gives `[]`. A selection that a `depth` stage
   with a `null` or undefined limit makes undefined gives undefined, which a
   declaration stores as `null`, as a read from that selection does.
 - The stage ends the pipeline: its result is a list of names, not a
@@ -3020,7 +3135,7 @@ statement positions; caught values and transaction recovery are unchanged.
   `total |> why |> nodes |> depth(1)` raise
   `TypeError("Cannot explain total|>why|>nodes")`, as the same stages after
   `(why total).map(step => step.node)` raise for that source. An
-  `intersect`, `except` or `path` argument that ends with `nodes` raises
+  `intersect`, `except`, `union` or `path` argument that ends with `nodes` raises
   `TypeError("Cannot explain <argument>")`, such as
   `TypeError("Cannot explain shipping|>why|>nodes")` for
   `intersect(shipping |> why |> nodes)`. A name that holds the list is a
@@ -26264,6 +26379,91 @@ def recover(order):
 assert(recover(cart), "closed")
 cart.state
 # return: "closed"
+---
+# Nucleoid joins what two explanations rest on with union
+
+price = 10
+quantity = 3
+rate = 0.2
+subtotal = price * quantity
+tax = subtotal * rate
+shipping = quantity * 2
+either = tax |> why |> union(shipping |> why)
+causes = why shipping |> union(why tax)
+assert(either.map(s -> s.node), ["tax", "subtotal", "rate", "price", "quantity", "shipping"])
+assert(causes.map(s -> s.node), ["shipping", "quantity", "tax", "subtotal", "rate", "price"])
+fee = 2
+shipping = quantity * 2 + fee
+assert(either.map(s -> s.node), ["tax", "subtotal", "rate", "price", "quantity", "shipping", "fee"])
+tax = subtotal * rate + fee
+assert(either.map(s -> s.node), ["tax", "subtotal", "rate", "fee", "price", "quantity", "shipping"])
+assert(causes.map(s -> s.node), ["shipping", "quantity", "fee", "tax", "subtotal", "rate", "price"])
+quantity = 5
+assert(either.map(s -> s.holds), [12, 50, 0.2, 2, 10, 5, 12])
+---
+# Nucleoid narrows a union of explanations to its facts and conclusions
+
+price = 10
+quantity = 3
+rate = 0.2
+subtotal = price * quantity
+tax = subtotal * rate
+shipping = quantity * 2
+facts = why tax |> union(why shipping) |> stated
+rules = why tax |> union(why shipping) |> derived
+assert(facts.map(s -> s.node), ["rate", "price", "quantity"])
+assert(rules.map(s -> s.node), ["tax", "subtotal", "shipping"])
+fee = 2
+shipping = quantity * 2 + fee
+assert(facts.map(s -> s.node), ["rate", "price", "quantity", "fee"])
+subtotal = 25
+assert(facts.map(s -> s.node), ["subtotal", "rate", "quantity", "fee"])
+assert(rules.map(s -> s.node), ["tax", "shipping"])
+---
+# Nucleoid joins what two changes of each instance reach with union
+
+class Part(cost, weight):
+    this.cost = cost
+    this.weight = weight
+$Part.price = $Part.cost * 2
+$Part.freight = $Part.weight * 3
+$Part.charge = $Part.price + $Part.freight
+$Part.reach = $Part.cost |> affects |> union($Part.weight |> affects)
+bolt = Part(4, 1)
+nut = Part(2, 5)
+assert(bolt.reach.map(s -> s.node), ["bolt.price", "bolt.charge", "bolt.freight"])
+assert(nut.reach.map(s -> s.node), ["nut.price", "nut.charge", "nut.freight"])
+$Part.duty = $Part.weight * 0.1
+assert(nut.reach.map(s -> s.node), ["nut.price", "nut.charge", "nut.freight", "nut.duty"])
+bolt.weight = 10
+assert(bolt.reach.map(s -> s.holds), [8, 38, 30, 1])
+nut.reach.length
+# return: 4
+---
+# Nucleoid restores unions after failed changes
+
+price = 10
+quantity = 3
+subtotal = price * quantity
+shipping = quantity * 2
+either = why subtotal |> union(why shipping)
+failure = ""
+try:
+    either = why subtotal |> union(1)
+catch error:
+    failure = error
+assert(failure, TypeError("Cannot explain 1"))
+assert(either.map(s -> s.node), ["subtotal", "price", "quantity", "shipping"])
+try:
+    fee = 2
+    shipping = quantity * 2 + fee
+    assert(either.map(s -> s.node), ["subtotal", "price", "quantity", "shipping", "fee"])
+    throw "UNDO"
+catch error:
+    assert(error, "UNDO")
+assert(either.map(s -> s.node), ["subtotal", "price", "quantity", "shipping"])
+quantity = 6
+assert(either.map(s -> s.holds), [60, 10, 6, 12])
 ---
 # Nucleoid flattens nested lists by one level
 

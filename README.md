@@ -2559,6 +2559,34 @@ assert(attempts, [1111, 1234])
   the pending result. See the
   [root contract](nucleoid.spec.md#finally-clauses).
 
+## Union reasoning selections
+
+**Union lists every fact behind either of two alarms**
+
+```nuc
+pressure = 5
+flow = 3
+temperature = 70
+strain = pressure * flow
+leak = flow > 2 && pressure > 4
+overheat = temperature + strain > 80
+inspect = why leak |> union(why overheat) |> stated
+assert(inspect.map(step -> step.node), ["flow", "pressure", "temperature"])
+valve = 1
+leak = flow > 2 && pressure > 4 && valve == 1
+assert(inspect.map(step -> step.node), ["flow", "pressure", "valve", "temperature"])
+```
+
+- [NUC 120](docs/nuc-0120.md) adds the reasoning stage `|> union(OTHER)`.
+  `why leak |> union(why overheat)` keeps the steps of the leak's
+  explanation and adds the steps of the overheat's explanation that it does
+  not hold yet, so every node that either alarm rests on appears once: the
+  flow and the pressure behind both alarms are listed with the leak's.
+- The union is still a selection, so `|> stated` narrows it to the facts to
+  inspect, and it stays live: once the leak rule also checks the valve, the
+  valve joins them. See the
+  [root contract](nucleoid.spec.md#union-reasoning-selections).
+
 ## Reactive list flattening
 
 **Flat turns nested lists into one live list**
