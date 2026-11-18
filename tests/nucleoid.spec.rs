@@ -20486,6 +20486,107 @@ assert(failure, "FULL")
 assert([loaded, rows], [6, 4])"#);
 }
 
+/// Nucleoid sizes lists, populations and strings with size and len
+#[rustfmt::skip]
+#[test]
+fn sizes_lists_populations_and_strings_with_size_and_len() {
+    let mut run = runner();
+    run(r#"queue = ["ana", "bo"]"#);
+    run("waiting = queue.size()");
+    run("served = queue.len()");
+    assert_eq!(run("[waiting, served]"), serde_json::json!([2, 2]));
+    run(r#"queue.push("cy")"#);
+    assert_eq!(run("[waiting, served, queue.length]"), serde_json::json!([3, 3, 3]));
+    run(r#"class Order(item):
+    this.item = item"#);
+    run("orders = Order.size()");
+    assert_eq!(run("[orders, Order.len()]"), serde_json::json!([0, 0]));
+    run(r#"Order("tea")"#);
+    run(r#"Order("cake")"#);
+    assert_eq!(run("[orders, Order.len(), Order.length]"), serde_json::json!([2, 2, 2]));
+    run(r#"name = "Zoë""#);
+    run("letters = name.size()");
+    assert_eq!(run("[letters, name.len(), name.length(), name.length]"), serde_json::json!([3, 3, 3, 3]));
+    run(r#"name = "Ada Lovelace""#);
+    assert_eq!(run(r#"[letters, "".size(), [].len()]"#), serde_json::json!([12, 0, 0]));
+    run("queue.shift()");
+    run(r#"[waiting, served]
+
+# return: [2,2]"#);
+}
+
+/// Nucleoid tests emptiness with isEmpty, is_empty and isNotEmpty
+#[rustfmt::skip]
+#[test]
+fn tests_emptiness_with_isempty_is_empty_and_isnotempty() {
+    let mut run = runner();
+    run("jobs = []");
+    run("idle = jobs.isEmpty()");
+    run("busy = jobs.isNotEmpty()");
+    assert_eq!(run("[idle, busy, jobs.is_empty()]"), serde_json::json!([true, false, true]));
+    run(r#"jobs.push("print", "scan")"#);
+    assert_eq!(run("[idle, busy]"), serde_json::json!([false, true]));
+    run("jobs.pop()");
+    run("jobs.pop()");
+    assert_eq!(run("[idle, busy]"), serde_json::json!([true, false]));
+    run(r#"class Sensor(name):
+    this.name = name
+    this.readings = []"#);
+    run("$Sensor.silent = $Sensor.readings.is_empty()");
+    run("$Sensor.alarm = $Sensor.readings.isNotEmpty() && $Sensor.readings.at(-1) > 40");
+    run(r#"door = Sensor("door")"#);
+    run(r#"oven = Sensor("oven")"#);
+    assert_eq!(run("[door.silent, oven.silent, oven.alarm]"), serde_json::json!([true, true, false]));
+    run("oven.readings.push(35, 52)");
+    assert_eq!(run("[oven.silent, oven.alarm, door.silent]"), serde_json::json!([false, true, true]));
+    run("oven.readings.pop()");
+    assert_eq!(run("[oven.silent, oven.alarm]"), serde_json::json!([false, false]));
+    assert_eq!(run(r#"[Sensor.isEmpty(), Sensor.isNotEmpty(), "".isEmpty(), "on".is_empty()]"#), serde_json::json!([false, true, true, false]));
+}
+
+/// Nucleoid rolls back failed updates through size and emptiness aliases
+#[rustfmt::skip]
+#[test]
+fn rolls_back_failed_updates_through_size_and_emptiness_aliases() {
+    let mut run = runner();
+    run(r#"stock = ["bolt", "nut"]
+low = stock.size() < 3
+failure = ""
+try:
+    stock = 7
+catch error:
+    failure = error
+assert(failure, TypeError("number.size is not a function"))
+assert([stock, low], [["bolt", "nut"], true])
+try:
+    stock.push("gear")
+    assert([stock.len(), low], [3, false])
+    throw "UNDO"
+catch error:
+    assert(error, "UNDO")
+assert([stock.len(), low], [2, true])
+class Bin(items):
+    this.items = items
+$Bin.empty = $Bin.items.isEmpty()
+bin = Bin(["pin"])
+try:
+    bin.items = 0
+catch error:
+    failure = error
+assert(failure, TypeError("number.isEmpty is not a function"))
+assert([bin.items, bin.empty], [["pin"], false])
+label = "ok"
+shown = label.length()
+try:
+    label = true
+catch error:
+    failure = error
+assert([failure, label, shown], [TypeError("boolean.length is not a function"), "ok", 2])
+bin.items.pop()
+bin.empty
+# return: true"#);
+}
+
 /// Nucleoid flattens nested lists by one level
 #[rustfmt::skip]
 #[test]

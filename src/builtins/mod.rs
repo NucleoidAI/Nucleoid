@@ -1,10 +1,12 @@
 pub mod date;
 mod numeric;
+mod size;
 mod text;
 
 use crate::error::{Error, Result};
 use crate::value::{Value, format_number};
 pub use numeric::{math, math_constant};
+pub(crate) use size::size_query;
 pub use text::{slice_index, string, string_method};
 pub(crate) use text::{string_contains, string_slice};
 

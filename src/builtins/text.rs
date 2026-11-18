@@ -1,3 +1,4 @@
+use super::size::size_query;
 use crate::error::{Error, Result};
 use crate::number;
 use crate::value::Value;
@@ -69,7 +70,7 @@ fn string_query(receiver: &str, name: &str, first: &Value) -> Option<Value> {
         "includes" | "contains" => Value::Bool(string_contains(receiver, first)),
         "startsWith" | "startswith" => Value::Bool(receiver.starts_with(&first.to_string())),
         "endsWith" | "endswith" => Value::Bool(receiver.ends_with(&first.to_string())),
-        _ => return None,
+        _ => return size_query(name, || receiver.chars().count()),
     })
 }
 

@@ -3961,6 +3961,35 @@ Car(local)
   in the constructor does not run again. See [NUC 115](nuc-0115.md) and the
   [root contract](../nucleoid.spec.md#count-controlled-repeat-loops).
 
+## Size and emptiness aliases
+
+**Emptiness methods keep every shelf's restock count live**
+
+```nuc
+class Shelf(aisle):
+    this.aisle = aisle
+    this.items = []
+$Shelf.empty = $Shelf.items.isEmpty()
+$Shelf.stocked = $Shelf.items.len()
+north = Shelf("north")
+south = Shelf("south")
+north.items.push("bolt", "nut")
+assert([north.empty, north.stocked, south.empty, south.stocked], [false, 2, true, 0])
+restock = Shelf.filter(shelf -> shelf.empty).size()
+assert(restock, 1)
+south.items.push("gear")
+restock
+# return: 0
+```
+
+- Each shelf's `empty` and `stocked` follow its own list through the
+  class-level rules, written as Java's `isEmpty()` and Rust's `len()` where
+  accepted syntax writes `$Shelf.items.length == 0` and
+  `$Shelf.items.length`.
+- `restock` counts the empty shelves with `size()`, so stocking the south
+  shelf takes it to `0`. See [NUC 116](nuc-0116.md) and the
+  [root contract](../nucleoid.spec.md#size-and-emptiness-method-aliases).
+
 ## Reactive list flattening
 
 **Flattening keeps the dirty tiles of every room counted**

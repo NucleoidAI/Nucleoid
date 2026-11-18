@@ -2441,6 +2441,33 @@ assert(cool, true)
   still `"abab"`. See the
   [root contract](nucleoid.spec.md#count-controlled-repeat-loops).
 
+## Size and emptiness aliases
+
+**Size and emptiness methods keep an order queue's rules live**
+
+```nuc
+orders = ["tea"]
+idle = orders.isEmpty()
+backlog = orders.size()
+orders.push("cake", "pie")
+assert([idle, backlog], [false, 3])
+orders.pop()
+orders.pop()
+orders.pop()
+assert([idle, backlog, orders.length], [true, 0, 0])
+```
+
+- [NUC 116](docs/nuc-0116.md) adds the size and emptiness methods that
+  Java, Kotlin, C++ and Rust write, as aliases of `length` on lists, class
+  populations and strings: `size()` and `len()` are `length`, `isEmpty()`
+  and `is_empty()` are `length == 0`, and `isNotEmpty()` is `length > 0`.
+  Strings also take Java's `length()`, as lists and populations do.
+- `idle` and `backlog` are standing rules, so every push and pop of the
+  queue updates them, as `orders.length == 0` and `orders.length` would.
+  Reads without a call, such as `orders.size`, stay undefined, and other
+  values keep their errors. See the
+  [root contract](nucleoid.spec.md#size-and-emptiness-method-aliases).
+
 ## Reactive list flattening
 
 **Flat turns nested lists into one live list**

@@ -2714,6 +2714,21 @@ years = 10
 savings.balance
 # return: 337.5
 ---
+# Nucleoid spells size, len and isEmpty as Java, Kotlin and Rust do
+
+class Task(title):
+    this.title = title
+inbox = ["call ana", "pay rent"]
+pending = inbox.size()
+clear = inbox.isEmpty()
+Task("plan trip")
+assert([pending, inbox.len(), Task.size(), "inbox".length()], [2, 2, 1, 5])
+inbox.pop()
+inbox.pop()
+assert([pending, clear, inbox.is_empty(), Task.isNotEmpty()], [0, true, true, true])
+pending == inbox.length
+# return: true
+---
 # Nucleoid flattens nested lists with flat
 
 pallets = [[["bolt", "nut"], ["gear"]], [["cog"]]]

@@ -3,6 +3,7 @@ use std::sync::Arc;
 use super::ListSource;
 use super::aggregate::{concat_items, join_items};
 use super::index::{list_at, position_number, slice_items};
+use crate::builtins;
 use crate::error::{Error, Result};
 use crate::graph::NodeKey;
 use crate::lang::ast::{Expr, Function};
@@ -99,10 +100,9 @@ impl Runtime {
                 Ok(Value::List(reversed))
             }
             "concat" => Ok(Value::List(concat_items(items, arguments))),
-            "length" => Ok(Value::Number(number::from_usize(items.len()))),
-            _ => Err(Error::type_error(format!(
-                "{receiver}.{property} is not a function"
-            ))),
+            _ => builtins::size_query(property, || items.len()).ok_or_else(|| {
+                Error::type_error(format!("{receiver}.{property} is not a function"))
+            }),
         }
     }
 

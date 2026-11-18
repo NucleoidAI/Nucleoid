@@ -371,6 +371,81 @@ operator-chain diagnostics and source positions are preserved.
   specify the executable behavior. `tests/python_string_aliases.rs` executes
   the rest.
 
+## Size and emptiness method aliases
+
+- [NUC 116](docs/nuc-0116.md) adds the size and emptiness methods that
+  Java, Kotlin, C++ and Rust write, as aliases of the accepted `length` on
+  lists, class populations and strings. They join the accepted aliases
+  `append`, `find`, `contains`, `lower`, `upper`, `strip`, `substr`,
+  `startswith`, `endswith` and `join`. No token, keyword, syntax tree node,
+  error type or message format is added.
+- `RECEIVER.size()` and `RECEIVER.len()` are `RECEIVER.length`,
+  `RECEIVER.isEmpty()` and `RECEIVER.is_empty()` are `RECEIVER.length == 0`,
+  and `RECEIVER.isNotEmpty()` is `RECEIVER.length > 0`. A string also takes
+  `TEXT.length()`, as lists and populations already do. A string's size
+  counts its characters, Unicode scalar values, as `TEXT.length` does, so
+  `"Zoë".size()` is `3`.
+- **Receivers.** A list however it is reached, including a literal, a
+  property, a call or query result, a `.value` snapshot and a list read from
+  a state version; a declared class's instances, named by the class, by a
+  variable or parameter that holds it, or by `$Name` outside a class-level
+  rule or conditional, where a class without instances has size `0`; and a
+  string however it is reached, including a template and the empty string.
+- **Evaluation.** The receiver is read first, then every argument once, left
+  to right, as for every call. The values are ignored, so `xs.size(1)` is
+  `xs.length`, and an argument's error, such as
+  `ReferenceError("missing is not defined")`, propagates before the alias
+  runs.
+- **Live.** A declaration or class-level rule that calls an alias depends on
+  what its receiver reads, as the accepted spelling does:
+  `idle = jobs.isEmpty()` follows pushes, pops, shifts and replacements of
+  `jobs`, `orders = Order.size()` follows new and deleted instances, and
+  `$Sensor.silent = $Sensor.readings.is_empty()` follows each sensor's
+  readings. Errors roll back through the existing transaction.
+- **Rendering.** Statements, `why`, `affects`, `--graph` and graph keys show
+  the call as written. Its dependencies are those of the accepted spelling,
+  so `why n` after `n = xs.size()` shows `n` read from `xs`, as after
+  `n = xs.length`.
+- **Unchanged.** Only calls of the six names on a list, population or
+  string receiver change; each raised
+  `TypeError("<receiver>.<name> is not a function")`, or an argument's error
+  first, which stays.
+  - Numbers, booleans, functions, dates and regular expressions keep their
+    `TypeError`, as their `length()` does, although their `length` reads
+    undefined: `(5).size()` raises `TypeError("number.size is not a function")`.
+  - Objects and instances keep their routing: instance methods and callable
+    properties named `size`, `len`, `isEmpty`, `is_empty`, `isNotEmpty` or
+    `length` keep running, a property that is not a function keeps its
+    `TypeError`, and a missing member stays undefined. Inside a class-level
+    rule or conditional `$Name` is the instance, so `$Name.size()` there
+    keeps calling the instance's method or giving undefined.
+  - On a class name the population alias wins over an instance method of
+    the same name, as `Name.length()` already does, and instances keep
+    calling the method.
+  - A class declared as `Math`, `Number`, `String` or `Date` reaches that
+    namespace's static methods, so `Math.size()` keeps raising
+    `TypeError("Math.size is not a function")`, as `Math.length()` does.
+    `Boolean`, `Class`, `Object`, `List`, `Function`, `JSON` and `RegExp`,
+    without a declared class of that name, keep
+    `ReferenceError("<name> is not defined")`, as their `length()` does.
+  - A `null` or undefined receiver stays undefined without evaluating the
+    arguments. Reads without a call, such as `xs.size`, stay undefined, and
+    `xs.size = 2` keeps raising `TypeError("Cannot assign 'size' on list")`.
+    Functions named `size`, `len`, `isEmpty`, `is_empty` or `isNotEmpty`
+    keep their calls, such as `size(xs)`.
+- **Source-language differences.** These stay out: Kotlin's `size` and
+  Swift's `isEmpty` read as properties, while `xs.size` and `xs.isEmpty`
+  without a call stay undefined; Java's `isEmpty()` on maps and other
+  objects, which keep their routing; C++'s `empty()`; and Python's
+  `len(xs)`. Every receiver counts characters, where Java counts UTF-16 code
+  units and C++ and Rust count bytes, so `"Zoë".len()` is `3` where Rust
+  gives `4`.
+- The three entries beginning
+  `Nucleoid sizes lists, populations and strings with size and len`
+  through `Nucleoid rolls back failed updates through size and emptiness aliases`
+  specify the executable behavior. `tests/size_and_emptiness_aliases.rs`
+  executes the rest.
+
 ## Reactive string padding
 
 - [NUC 111](docs/nuc-0111.md) adds JavaScript's standard padding methods to
@@ -25590,6 +25665,94 @@ catch error:
     failure = error
 assert(failure, "FULL")
 assert([loaded, rows], [6, 4])
+---
+# Nucleoid sizes lists, populations and strings with size and len
+
+queue = ["ana", "bo"]
+waiting = queue.size()
+served = queue.len()
+assert([waiting, served], [2, 2])
+queue.push("cy")
+assert([waiting, served, queue.length], [3, 3, 3])
+class Order(item):
+    this.item = item
+orders = Order.size()
+assert([orders, Order.len()], [0, 0])
+Order("tea")
+Order("cake")
+assert([orders, Order.len(), Order.length], [2, 2, 2])
+name = "Zoë"
+letters = name.size()
+assert([letters, name.len(), name.length(), name.length], [3, 3, 3, 3])
+name = "Ada Lovelace"
+assert([letters, "".size(), [].len()], [12, 0, 0])
+queue.shift()
+[waiting, served]
+# return: [2,2]
+---
+# Nucleoid tests emptiness with isEmpty, is_empty and isNotEmpty
+
+jobs = []
+idle = jobs.isEmpty()
+busy = jobs.isNotEmpty()
+assert([idle, busy, jobs.is_empty()], [true, false, true])
+jobs.push("print", "scan")
+assert([idle, busy], [false, true])
+jobs.pop()
+jobs.pop()
+assert([idle, busy], [true, false])
+class Sensor(name):
+    this.name = name
+    this.readings = []
+$Sensor.silent = $Sensor.readings.is_empty()
+$Sensor.alarm = $Sensor.readings.isNotEmpty() && $Sensor.readings.at(-1) > 40
+door = Sensor("door")
+oven = Sensor("oven")
+assert([door.silent, oven.silent, oven.alarm], [true, true, false])
+oven.readings.push(35, 52)
+assert([oven.silent, oven.alarm, door.silent], [false, true, true])
+oven.readings.pop()
+assert([oven.silent, oven.alarm], [false, false])
+assert([Sensor.isEmpty(), Sensor.isNotEmpty(), "".isEmpty(), "on".is_empty()], [false, true, true, false])
+---
+# Nucleoid rolls back failed updates through size and emptiness aliases
+
+stock = ["bolt", "nut"]
+low = stock.size() < 3
+failure = ""
+try:
+    stock = 7
+catch error:
+    failure = error
+assert(failure, TypeError("number.size is not a function"))
+assert([stock, low], [["bolt", "nut"], true])
+try:
+    stock.push("gear")
+    assert([stock.len(), low], [3, false])
+    throw "UNDO"
+catch error:
+    assert(error, "UNDO")
+assert([stock.len(), low], [2, true])
+class Bin(items):
+    this.items = items
+$Bin.empty = $Bin.items.isEmpty()
+bin = Bin(["pin"])
+try:
+    bin.items = 0
+catch error:
+    failure = error
+assert(failure, TypeError("number.isEmpty is not a function"))
+assert([bin.items, bin.empty], [["pin"], false])
+label = "ok"
+shown = label.length()
+try:
+    label = true
+catch error:
+    failure = error
+assert([failure, label, shown], [TypeError("boolean.length is not a function"), "ok", 2])
+bin.items.pop()
+bin.empty
+# return: true
 ---
 # Nucleoid flattens nested lists by one level
 

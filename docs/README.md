@@ -2595,9 +2595,9 @@ Full detail: [NUC 9](nuc-0009.md), [NUC 46](nuc-0046.md).
 | `Boolean` | `Boolean(value)` |
 | `Number` | `Number.MAX_INTEGER` |
 | `Math` | `pow`, `sqrt`, `floor`, `round`, `max`, `min`, `clamp` ([NUC 21](nuc-0021.md)), `lerp` ([NUC 22](nuc-0022.md)), `saturate` ([NUC 23](nuc-0023.md)), `smoothstep(lower, upper, value)` (accepted [NUC 33](nuc-0033.md)), `smootherstep(lower, upper, value)` (accepted [NUC 35](nuc-0035.md)), `remap(start, end, targetStart, targetEnd, value)` (accepted [NUC 39](nuc-0039.md)) |
-| `String` | `String.fromCharCode`; instance `charAt`, `length`, `lower`, `replace`, `replaceAll` (accepted [NUC 42](nuc-0042.md)), `repeat`, `split`, `padStart` and `padEnd` ([NUC 111](nuc-0111.md)), and Python's `startswith`, `endswith` and `join(items)`, with the separator as the receiver ([NUC 110](nuc-0110.md)) |
+| `String` | `String.fromCharCode`; instance `charAt`, `length`, `lower`, `replace`, `replaceAll` (accepted [NUC 42](nuc-0042.md)), `repeat`, `split`, `padStart` and `padEnd` ([NUC 111](nuc-0111.md)), Python's `startswith`, `endswith` and `join(items)`, with the separator as the receiver ([NUC 110](nuc-0110.md)), and the size and emptiness methods `length()`, `size()`, `len()`, `isEmpty()`, `is_empty()` and `isNotEmpty()` ([NUC 116](nuc-0116.md)) |
 | `Date` | `Date()`, `Date(string)`, `Date(number)`, `Date.now()`, `Date.parse()`; instance `getTime`, `getYear`, `toDateString` |
-| `List` | `push`, `pop`, `filter`, `map`, `flatMap` (accepted [NUC 41](nuc-0041.md)), `flat` ([NUC 103](nuc-0103.md)), `reduce`, `find`, `some`, `every`, `slice`, `sort` (in place, [NUC 58](nuc-0058.md)), `join`, `length`, and the queries `at`, `includes`, `indexOf`, `lastIndexOf`, `findIndex`, `findLast`, `findLastIndex` and `concat` ([NUC 61](nuc-0061.md)), `sum` ([NUC 68](nuc-0068.md)), `max` and `min` ([NUC 69](nuc-0069.md)), `distinct` ([NUC 71](nuc-0071.md)), `count(predicate)` ([NUC 73](nuc-0073.md)), `mode` ([NUC 75](nuc-0075.md)), `maxBy` and `minBy` ([NUC 77](nuc-0077.md)), `average` ([NUC 80](nuc-0080.md)), `median` ([NUC 84](nuc-0084.md)), `sortBy` ([NUC 105](nuc-0105.md)), `partition` ([NUC 108](nuc-0108.md)), and `product` ([NUC 114](nuc-0114.md)); `sum`, `max`, `min` and `mode` also read as `sum of list` ([NUC 75](nuc-0075.md) revision 2) |
+| `List` | `push`, `pop`, `filter`, `map`, `flatMap` (accepted [NUC 41](nuc-0041.md)), `flat` ([NUC 103](nuc-0103.md)), `reduce`, `find`, `some`, `every`, `slice`, `sort` (in place, [NUC 58](nuc-0058.md)), `join`, `length`, and the queries `at`, `includes`, `indexOf`, `lastIndexOf`, `findIndex`, `findLast`, `findLastIndex` and `concat` ([NUC 61](nuc-0061.md)), `sum` ([NUC 68](nuc-0068.md)), `max` and `min` ([NUC 69](nuc-0069.md)), `distinct` ([NUC 71](nuc-0071.md)), `count(predicate)` ([NUC 73](nuc-0073.md)), `mode` ([NUC 75](nuc-0075.md)), `maxBy` and `minBy` ([NUC 77](nuc-0077.md)), `average` ([NUC 80](nuc-0080.md)), `median` ([NUC 84](nuc-0084.md)), `sortBy` ([NUC 105](nuc-0105.md)), `partition` ([NUC 108](nuc-0108.md)), `product` ([NUC 114](nuc-0114.md)), and the size and emptiness aliases `size()`, `len()`, `isEmpty()`, `is_empty()` and `isNotEmpty()` ([NUC 116](nuc-0116.md)); `sum`, `max`, `min` and `mode` also read as `sum of list` ([NUC 75](nuc-0075.md) revision 2) |
 | `Class` | the global list of declared types; `Class.length` |
 
 ```
@@ -2701,6 +2701,48 @@ listing == scripts.join(", ")
   `tests/reference.md`. The
   [root section](../nucleoid.spec.md#python-string-method-aliases) and its
   three appended entries define the results, liveness and rollback.
+
+### Size and emptiness method aliases
+
+```
+class Task(title):
+    this.title = title
+inbox = ["call ana", "pay rent"]
+pending = inbox.size()
+clear = inbox.isEmpty()
+Task("plan trip")
+assert([pending, inbox.len(), Task.size(), "inbox".length()], [2, 2, 1, 5])
+inbox.pop()
+inbox.pop()
+assert([pending, clear, inbox.is_empty(), Task.isNotEmpty()], [0, true, true, true])
+pending == inbox.length
+```
+
+- [NUC 116](nuc-0116.md) adds the size and emptiness methods of Java,
+  Kotlin, C++ and Rust as aliases of `length` on lists, class populations
+  and strings. `size()` and `len()` are `length`, `isEmpty()` and
+  `is_empty()` are `length == 0`, and `isNotEmpty()` is `length > 0`.
+  Strings also take Java's `length()`, which lists and populations already
+  take, and every receiver counts characters, as `length` does.
+- Each alias evaluates its receiver and then its arguments, which it
+  ignores, and stays live like its accepted spelling: `pending` and `clear`
+  follow the pops. `why` names the same dependencies.
+- Only calls on lists, populations and strings change. Other receivers keep
+  their errors, as their `length()` does, so `(5).size()` still raises
+  `TypeError("number.size is not a function")`. Reads such as `xs.size`
+  without a call, functions, properties and methods of the same names, and
+  `$Name` inside a class-level rule, where it is the instance, keep their
+  behavior. On a class name the population alias wins over an instance
+  method of the same name, as `Name.length()` already does.
+- Kotlin's `size` and Swift's `isEmpty` read as properties, C++ writes
+  `empty()` and Python `len(xs)`; none of these is added. Java counts UTF-16
+  code units and C++ and Rust count bytes, where Nucleoid counts characters,
+  so `"Zoë".len()` is `3`, not Rust's `4`.
+- This is the executable entry
+  `Nucleoid spells size, len and isEmpty as Java, Kotlin and Rust do` in
+  `tests/reference.md`. The
+  [root section](../nucleoid.spec.md#size-and-emptiness-method-aliases) and
+  its three appended entries define the results, liveness and rollback.
 
 ### Reactive string padding
 
@@ -4769,6 +4811,9 @@ items.product()  Name.product(selector) live product from 1: exactly items.reduc
 text.startswith(p)  text.endswith(s)  Python spellings: exactly text.startsWith(p), text.endsWith(s) (NUC 110)
 ", ".join(items)  ", ".join(Name)      Python spelling: exactly items.join(", "), Name.join(", ") (NUC 110)
 text.padStart(n, fill)  text.padEnd(n)  live text padded before or after to n characters; fill defaults to " " (NUC 111)
+items.size()  items.len()  text.length() exactly items.length and text.length; Name.size() counts instances (NUC 116)
+items.isEmpty()  items.is_empty()      exactly items.length == 0, on lists, populations and strings (NUC 116)
+items.isNotEmpty()                     exactly items.length > 0, on lists, populations and strings (NUC 116)
 mode of items  sum of Name.map(f)      noun query: exactly items.mode(), Name.map(f).sum() (NUC 75)
 sum of items ** 2                      a noun query applies to the whole power: sum of (items ** 2) (NUC 75)
 
