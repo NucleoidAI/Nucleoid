@@ -64,22 +64,26 @@ export async function start(puzzle_id: string = "3aa6fb7a") {
 
   await analyzer.state(train_dataset);
 
-  // const synthesized_dataset = await synthesizer.synthesize({ train_dataset });
-  //
-  // for (const dataset of synthesized_dataset) {
-  //   for (const instance of dataset.instances) {
-  //     await analyzer.value({
-  //       instance_name: next_instance_name(),
-  //       train_dataset,
-  //       input_matrix: dataset.input_matrix,
-  //       instance,
-  //     });
-  //   }
-  //
-  //   train_dataset.dataset.push(dataset);
-  // }
-  //
-  // await analyzer.state(synthesized_dataset);
+  const synthesized_dataset = await synthesizer.synthesize({ train_dataset });
+
+  for (const dataset of synthesized_dataset) {
+    for (const instance of dataset.instances) {
+      await analyzer.value({
+        instance_name: next_instance_name(),
+        train_dataset,
+        input_matrix: dataset.input_matrix,
+        instance,
+      });
+    }
+
+    await object.state({
+      declarations,
+      input_matrix: dataset.input_matrix,
+      input_instances: dataset.instances,
+    });
+
+    train_dataset.dataset.push(dataset);
+  }
 
   milestone.visualization();
 
@@ -112,7 +116,11 @@ export async function start(puzzle_id: string = "3aa6fb7a") {
     });
   }
 
-  await object.state({ declarations, test_input_matrix, input_instances });
+  await object.state({
+    declarations,
+    input_matrix: test_input_matrix,
+    input_instances,
+  });
 
   for (const input_instance of input_instances) {
     const { output_instance_matrix } = await visualizer.output_instance_matrix({

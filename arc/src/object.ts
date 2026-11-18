@@ -129,13 +129,13 @@ async function implementation({
   return implementation;
 }
 
-async function state({ declarations, test_input_matrix, input_instances }) {
+async function state({ declarations, input_matrix, input_instances }) {
   const implementations = input_instances.map(
     ({ implementation }) => implementation
   );
 
-  const canvas_width: number = test_input_matrix[0].length;
-  const canvas_height: number = test_input_matrix.length;
+  const canvas_width: number = input_matrix[0].length;
+  const canvas_height: number = input_matrix.length;
   const obj_list = await nucleoid.run(
     [
       `canvas_width = ${canvas_width}`,

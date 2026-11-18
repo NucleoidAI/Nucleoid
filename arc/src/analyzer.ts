@@ -34,7 +34,7 @@ export async function declarations({ train_dataset }) {
 export async function instances({ train_dataset }) {
   milestone.segmenting_training_objects();
 
-  const { instances } = await llm.generate({
+  const { result: instances } = await llm.generate({
     messages: [
       {
         role: "user",
@@ -54,7 +54,7 @@ export async function instances({ train_dataset }) {
           })}
           json_format:
           {
-            "instances": [{
+            "result": [{
               "input_instance_matrix": <INPUT_INSTANCE_MATRIX>,
               "output_instance_matrix": <OUTPUT_INSTANCE_MATRIX>
             }]

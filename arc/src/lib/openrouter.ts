@@ -27,7 +27,7 @@ export async function generate({ reasoning = false, messages = [] }) {
       reasoning: { enabled: reasoning },
       response_format: { type: "json_object" },
       provider: {
-        only: ["deepinfra/bf16"],
+        only: ["deepinfra/fp8"],
         allow_fallbacks: false,
       },
     },
@@ -79,7 +79,7 @@ export async function generate({ reasoning = false, messages = [] }) {
   let jsonContent;
 
   try {
-    // console.debug(content);
+    // console.debug(JSON.stringify(JSON.parse(content), null, 2));
     jsonContent = JSON.parse(content);
   } catch (error) {
     throw new Error(
