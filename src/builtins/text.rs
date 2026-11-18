@@ -1,3 +1,4 @@
+use super::size::size_query;
 use crate::error::{Error, Result};
 use crate::number;
 use crate::value::Value;
@@ -69,7 +70,7 @@ fn string_query(receiver: &str, name: &str, first: &Value) -> Option<Value> {
         "includes" | "contains" => Value::Bool(string_contains(receiver, first)),
         "startsWith" | "startswith" => Value::Bool(receiver.starts_with(&first.to_string())),
         "endsWith" | "endswith" => Value::Bool(receiver.ends_with(&first.to_string())),
-        _ => return None,
+        _ => return size_query(name, || receiver.chars().count()),
     })
 }
 
@@ -80,8 +81,12 @@ fn string_transform(
     arguments: &[Value],
 ) -> Result<Option<Value>> {
     Ok(Some(match name {
-        "lower" | "toLowerCase" => Value::String(receiver.to_lowercase()),
-        "upper" | "toUpperCase" => Value::String(receiver.to_uppercase()),
+        "lower" | "toLowerCase" | "lowercase" | "to_lowercase" | "lowercased" => {
+            Value::String(receiver.to_lowercase())
+        }
+        "upper" | "toUpperCase" | "uppercase" | "to_uppercase" | "uppercased" => {
+            Value::String(receiver.to_uppercase())
+        }
         "trim" | "strip" => Value::String(receiver.trim().to_string()),
         "split" => {
             let separator = first.to_string();
@@ -110,7 +115,7 @@ fn string_transform(
         }
         "repeat" => Value::String(string_repeat(
             receiver,
-            number::to_usize(first.to_number().max(0.0)),
+            number::repetitions(first.to_number()),
         )?),
         "padStart" => Value::String(string_pad(receiver, first, arguments.get(1), Side::Start)?),
         "padEnd" => Value::String(string_pad(receiver, first, arguments.get(1), Side::End)?),

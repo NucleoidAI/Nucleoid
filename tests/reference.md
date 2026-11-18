@@ -2682,6 +2682,104 @@ shipping = base + 1
 facts
 # return: ["base","price","qty"]
 ---
+# Nucleoid multiplies lists and populations with product
+
+sides = [2, 3, 4]
+volume = sides.product()
+class Check(name, chance):
+    this.name = name
+    this.chance = chance
+Check("lint", 0.5)
+build = Check("build", 0.75)
+green = Check.product(check -> check.chance)
+assert([volume, green], [24, 0.375])
+sides.push(0.5)
+build.chance = 1
+Check("deploy", 0.5)
+assert([volume, green], [12, 0.25])
+sides = []
+volume
+# return: 1
+---
+# Nucleoid repeats statements a counted number of times
+
+class Account(balance):
+    this.balance = balance
+savings = Account(100)
+years = 3
+repeat years:
+    savings.balance = savings.balance * 1.5
+assert(savings.balance, 337.5)
+years = 10
+savings.balance
+# return: 337.5
+---
+# Nucleoid spells size, len and isEmpty as Java, Kotlin and Rust do
+
+class Task(title):
+    this.title = title
+inbox = ["call ana", "pay rent"]
+pending = inbox.size()
+clear = inbox.isEmpty()
+Task("plan trip")
+assert([pending, inbox.len(), Task.size(), "inbox".length()], [2, 2, 1, 5])
+inbox.pop()
+inbox.pop()
+assert([pending, clear, inbox.is_empty(), Task.isNotEmpty()], [0, true, true, true])
+pending == inbox.length
+# return: true
+---
+# Nucleoid reads first and last elements as Kotlin and Rust do
+
+class Job(name, done):
+    this.name = name
+    this.done = done
+queue = ["scan", "print"]
+head = queue.first()
+tail = queue.last()
+Job("backup", true)
+Job("deploy", false)
+pending = Job.first(job -> !job.done)
+assert([head, tail, pending.name, Job.last().name], ["scan", "print", "deploy", "deploy"])
+queue.shift()
+queue.push("fax")
+assert([head, tail], ["print", "fax"])
+[queue.first(job -> job == "copy"), [].last()]
+# return: [null,null]
+---
+# Nucleoid converts case as Kotlin, Rust and Swift do
+
+class User(name):
+    this.name = name
+$User.handle = $User.name.lowercase()
+ada = User("Ada Lovelace")
+email = "ADA@EXAMPLE.ORG"
+inbox = email.to_lowercase()
+shown = ada.name.uppercased()
+assert([ada.handle, inbox, shown], ["ada lovelace", "ada@example.org", "ADA LOVELACE"])
+ada.name = "Ada King"
+email = "Countess@Example.org"
+assert([ada.handle, inbox, shown], ["ada king", "countess@example.org", "ADA KING"])
+["straße".to_uppercase(), "ÉCOLE".lowercased(), "ok".uppercase()]
+# return: ["STRASSE","école","OK"]
+---
+# Nucleoid runs finally clauses as Python, JavaScript and Java do
+
+visits = []
+def enter(room):
+    try:
+        if room == "vault":
+            throw "LOCKED"
+        return "open"
+    catch reason:
+        return reason
+    finally:
+        visits.push(room)
+assert([enter("hall"), enter("vault")], ["open", "LOCKED"])
+assert(visits, ["hall", "vault"])
+visits.length
+# return: 2
+---
 # Nucleoid flattens nested lists with flat
 
 pallets = [[["bolt", "nut"], ["gear"]], [["cog"]]]

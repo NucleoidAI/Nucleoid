@@ -3903,6 +3903,187 @@ assert(moved, ["ratio", "approved"])
   years of history, `years` joins the facts. See [NUC 112](nuc-0112.md) and the
   [root contract](../nucleoid.spec.md#node-names-of-reasoning-selections).
 
+## List and population products
+
+**Products keep every account's compounded balance live**
+
+```nuc
+class Account(start, rates):
+    this.start = start
+    this.rates = rates
+$Account.balance = $Account.start * $Account.rates.product(rate -> 1 + rate)
+saver = Account(100, [0.2, 0.1])
+opened = Account(200, [])
+assert([saver.balance, opened.balance], [132, 200])
+saver.rates.push(0.25)
+opened.rates.push(1)
+[saver.balance, opened.balance]
+# return: [165,400]
+```
+
+- Each account's class-level rule compounds its yearly rates:
+  `$Account.rates.product(rate -> 1 + rate)` multiplies `1 + rate` over
+  the account's rates, left to right from `1`, exactly as
+  `$Account.rates.reduce((total, rate) => total * (1 + rate), 1)` does, so
+  the saver's `100` grows by 20% and then 10% to `132`.
+- The new account has no rates yet, so its growth is `1`, the product of
+  nothing, and its balance is its start. A new rate on either account
+  updates only that account's balance. See [NUC 114](nuc-0114.md) and the
+  [root contract](../nucleoid.spec.md#list-and-population-products).
+
+## Repeat loops
+
+**Repeat loops build the cars of every train**
+
+```nuc
+class Car(train):
+    this.train = train
+    this.seats = 40
+class Train(cars):
+    repeat cars:
+        Car(this)
+$Train.capacity = Car.filter(car -> car.train == $Train).sum(car -> car.seats)
+local = Train(2)
+express = Train(3)
+assert([local.capacity, express.capacity], [80, 120])
+Car(local)
+[local.capacity, express.capacity]
+# return: [120,120]
+```
+
+- Each train's constructor builds as many cars as it is given:
+  `repeat cars:` runs `Car(this)` that many times, and `this` is the train
+  being built. The loop needs no counter and leaves none behind, where
+  accepted syntax writes `for _ of "a".repeat(cars):` or a `while` loop that
+  counts `cars` down.
+- The class-level rule keeps each train's capacity live over its cars, so a
+  car added to the local train later updates that train alone, and the loop
+  in the constructor does not run again. See [NUC 115](nuc-0115.md) and the
+  [root contract](../nucleoid.spec.md#count-controlled-repeat-loops).
+
+## Size and emptiness aliases
+
+**Emptiness methods keep every shelf's restock count live**
+
+```nuc
+class Shelf(aisle):
+    this.aisle = aisle
+    this.items = []
+$Shelf.empty = $Shelf.items.isEmpty()
+$Shelf.stocked = $Shelf.items.len()
+north = Shelf("north")
+south = Shelf("south")
+north.items.push("bolt", "nut")
+assert([north.empty, north.stocked, south.empty, south.stocked], [false, 2, true, 0])
+restock = Shelf.filter(shelf -> shelf.empty).size()
+assert(restock, 1)
+south.items.push("gear")
+restock
+# return: 0
+```
+
+- Each shelf's `empty` and `stocked` follow its own list through the
+  class-level rules, written as Java's `isEmpty()` and Rust's `len()` where
+  accepted syntax writes `$Shelf.items.length == 0` and
+  `$Shelf.items.length`.
+- `restock` counts the empty shelves with `size()`, so stocking the south
+  shelf takes it to `0`. See [NUC 116](nuc-0116.md) and the
+  [root contract](../nucleoid.spec.md#size-and-emptiness-method-aliases).
+
+## First and last element methods
+
+**First and last methods keep the next urgent patient live**
+
+```nuc
+class Patient(name, urgent):
+    this.name = name
+    this.urgent = urgent
+nextUrgent = Patient.first(patient -> patient.urgent)
+newest = Patient.last()
+ana = Patient("ana", false)
+bo = Patient("bo", true)
+assert([nextUrgent, newest], [bo, bo])
+cy = Patient("cy", true)
+ana.urgent = true
+assert([nextUrgent, newest], [ana, cy])
+[nextUrgent.name, newest.name]
+# return: ["ana","cy"]
+```
+
+- `nextUrgent` is the first patient, in arrival order, whose case is
+  urgent, written as Kotlin's `first` with a predicate where accepted syntax
+  writes `Patient.find(patient -> patient.urgent)`, and `newest` is the
+  latest arrival, written as `last()` where accepted syntax writes
+  `Patient.at(-1)`.
+- Both follow the population: `cy`'s arrival moves `newest`, and `ana`
+  turning urgent moves `nextUrgent` back to her, since she arrived first.
+  See [NUC 117](nuc-0117.md) and the
+  [root contract](../nucleoid.spec.md#first-and-last-element-methods).
+
+## Case conversion method aliases
+
+**Case conversions match badge scans to every employee**
+
+```nuc
+class Employee(name):
+    this.name = name
+$Employee.key = $Employee.name.lowercase()
+scans = ["ANA LIMA", "bo chen"]
+seen = scans.map(scan -> scan.to_lowercase())
+ana = Employee("Ana Lima")
+bo = Employee("Bo Chen")
+assert([ana.key, bo.key], ["ana lima", "bo chen"])
+present = Employee.filter(employee -> seen.includes(employee.key)).map(employee -> employee.name.uppercased())
+assert(present, ["ANA LIMA", "BO CHEN"])
+scans.pop()
+present
+# return: ["ANA LIMA"]
+```
+
+- Badge scans arrive in whatever case the reader prints, so `seen` lowers
+  each one with Rust's `to_lowercase()`, and each employee's `key` lowers
+  the name on file with Kotlin's `lowercase()`, where accepted syntax
+  writes `toLowerCase()` for both.
+- `present` matches the two sources and shows each name with Swift's
+  `uppercased()`, so withdrawing a scan leaves only the employees still
+  scanned. See [NUC 118](nuc-0118.md) and the
+  [root contract](../nucleoid.spec.md#case-conversion-method-aliases).
+
+## Finally clauses
+
+**Finally clauses log every dispatch of a driver**
+
+```nuc
+class Driver(name, shift):
+    this.name = name
+    this.shift = shift
+    this.log = []
+$Driver.busy = $Driver.log.length > 2
+def dispatch(driver, hours):
+    try:
+        if driver.shift + hours > 8:
+            throw "OVERTIME"
+        return driver.name + " goes"
+    catch reason:
+        return reason
+    finally:
+        driver.log.push(hours)
+ana = Driver("Ana", 6)
+assert(dispatch(ana, 1), "Ana goes")
+assert(dispatch(ana, 3), "OVERTIME")
+assert([ana.log, ana.busy], [[1, 3], false])
+dispatch(ana, 2)
+ana.busy
+# return: true
+```
+
+- `dispatch` sends a driver out or refuses overtime, and both paths return.
+  The `finally` suite logs the hours asked for on either path, where the
+  accepted spelling would repeat the push before each `return`.
+- Each driver's `busy` rule follows its log, so the third dispatch makes
+  Ana busy. See [NUC 119](nuc-0119.md) and the
+  [root contract](../nucleoid.spec.md#finally-clauses).
+
 ## Reactive list flattening
 
 **Flattening keeps the dirty tiles of every room counted**

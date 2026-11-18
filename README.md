@@ -2380,6 +2380,185 @@ assert(causes, ["solar", "target", "outside", "insulation"])
   joins the facts it rests on. See the
   [root contract](nucleoid.spec.md#node-names-of-reasoning-selections).
 
+## List and population products
+
+**Products keep the chance that a trip connects live as flights change**
+
+```nuc
+class Flight(code, onTime):
+    this.code = code
+    this.onTime = onTime
+first = Flight("AB1", 0.5)
+Flight("CD2", 0.75)
+trip = Flight.product(flight -> flight.onTime)
+assert(trip, 0.375)
+first.onTime = 0.75
+Flight("EF3", 0.5)
+assert(trip, 0.28125)
+```
+
+- [NUC 114](docs/nuc-0114.md) adds `product` to lists and class
+  populations, the multiplicative sibling of `sum`.
+  `Flight.product(flight -> flight.onTime)` multiplies the chances that
+  the flights are on time, so `trip` is the chance that all of them are,
+  when the flights are independent.
+- `trip` stays live like its `reduce` spelling,
+  `Flight.reduce((total, flight) => total * flight.onTime, 1)`: a likelier
+  first flight and a third connection both update it. Without a selector,
+  `sides.product()` multiplies the items themselves, and an empty list or
+  class gives `1`. See the
+  [root contract](nucleoid.spec.md#list-and-population-products).
+
+## Repeat loops
+
+**Repeat loops advance a world model a counted number of steps**
+
+```nuc
+class Cup(temp):
+    this.temp = temp
+tea = Cup(90)
+room = 20
+cool = tea.temp < 40
+minutes = 3
+repeat minutes:
+    tea.temp = tea.temp - (tea.temp - room) / 2
+assert(tea.temp, 28.75)
+assert(cool, true)
+```
+
+- [NUC 115](docs/nuc-0115.md) adds `repeat COUNT:` with an indented or
+  same-line body, the count-controlled sibling of `while`. The count is read
+  once, before the first iteration, and each iteration's changes, with what
+  they propagate to standing rules such as `cool`, are live before the next
+  iteration runs.
+- Each minute the tea loses half of its difference from the room, so three
+  minutes take it from `90` to `28.75`. The loop runs once, imperatively: it
+  leaves no standing rule and does not run again when `minutes` changes
+  later. A fraction truncates, a count of zero or less runs nothing, and a
+  count of more than 100,000 iterations raises
+  `TypeError("Repeat count is too large")` before the first one.
+  `repeat` stays an ordinary name everywhere else, and `"ab".repeat(2)` is
+  still `"abab"`. See the
+  [root contract](nucleoid.spec.md#count-controlled-repeat-loops).
+
+## Size and emptiness aliases
+
+**Size and emptiness methods keep an order queue's rules live**
+
+```nuc
+orders = ["tea"]
+idle = orders.isEmpty()
+backlog = orders.size()
+orders.push("cake", "pie")
+assert([idle, backlog], [false, 3])
+orders.pop()
+orders.pop()
+orders.pop()
+assert([idle, backlog, orders.length], [true, 0, 0])
+```
+
+- [NUC 116](docs/nuc-0116.md) adds the size and emptiness methods that
+  Java, Kotlin, C++ and Rust write, as aliases of `length` on lists, class
+  populations and strings: `size()` and `len()` are `length`, `isEmpty()`
+  and `is_empty()` are `length == 0`, and `isNotEmpty()` is `length > 0`.
+  Strings also take Java's `length()`, as lists and populations do.
+- `idle` and `backlog` are standing rules, so every push and pop of the
+  queue updates them, as `orders.length == 0` and `orders.length` would.
+  Reads without a call, such as `orders.size`, stay undefined, and other
+  values keep their errors. See the
+  [root contract](nucleoid.spec.md#size-and-emptiness-method-aliases).
+
+## First and last element methods
+
+**First and last methods keep a sensor's newest reading live**
+
+```nuc
+class Sensor(name):
+    this.name = name
+    this.readings = []
+$Sensor.newest = $Sensor.readings.last()
+$Sensor.firstAlarm = $Sensor.readings.first(reading -> reading > 40)
+oven = Sensor("oven")
+oven.readings.push(35, 52, 38)
+assert([oven.newest, oven.firstAlarm], [38, 52])
+oven.readings.push(41)
+assert([oven.newest, oven.firstAlarm], [41, 52])
+oven.readings.shift()
+oven.readings.shift()
+assert([oven.newest, oven.firstAlarm], [41, 41])
+```
+
+- [NUC 117](docs/nuc-0117.md) adds the `first` and `last` methods that
+  Kotlin, Rust, Swift, Ruby and C#'s LINQ write, as aliases on lists and
+  class populations: `first()` is `at(0)` and `last()` is `at(-1)`, and with
+  a predicate, as Kotlin writes `orders.first { it.open }`, `first(test)` is
+  `find(test)` and `last(test)` is `findLast(test)`.
+- Each sensor's `newest` and `firstAlarm` follow its own readings through
+  the class-level rules, as `$Sensor.readings.at(-1)` and
+  `$Sensor.readings.find(reading -> reading > 40)` would: a new reading
+  replaces the newest, and shifting out the old ones moves the first alarm
+  to `41`. An empty list gives undefined and a predicate that accepts
+  nothing `null`, as their spellings do. See the
+  [root contract](nucleoid.spec.md#first-and-last-element-methods).
+
+## Case conversion method aliases
+
+**Case conversion methods keep a sensor's labels normalized**
+
+```nuc
+class Sensor(label):
+    this.label = label
+$Sensor.key = $Sensor.label.to_lowercase()
+$Sensor.banner = $Sensor.label.uppercased()
+door = Sensor("Front Door")
+assert([door.key, door.banner], ["front door", "FRONT DOOR"])
+door.label = "Side Door"
+assert([door.key, door.banner], ["side door", "SIDE DOOR"])
+```
+
+- [NUC 118](docs/nuc-0118.md) adds the case conversion methods that
+  Kotlin, Rust and Swift write, as aliases of `toUpperCase()` and
+  `toLowerCase()` on strings: Kotlin's `uppercase()` and `lowercase()`,
+  Rust's `to_uppercase()` and `to_lowercase()`, and Swift's `uppercased()`
+  and `lowercased()`.
+- Each sensor's `key` and `banner` follow its own label through the
+  class-level rules, as `$Sensor.label.toLowerCase()` and
+  `$Sensor.label.toUpperCase()` would. The mapping is the full Unicode one
+  of those spellings, so `"Straße".uppercase()` is `"STRASSE"`, and other
+  values keep their errors. See the
+  [root contract](nucleoid.spec.md#case-conversion-method-aliases).
+
+## Finally clauses
+
+**Finally clauses record every attempt to unlock a door**
+
+```nuc
+attempts = []
+def unlock(code):
+    try:
+        if code != 1234:
+            throw "WRONG CODE"
+        return "unlocked"
+    catch reason:
+        return reason
+    finally:
+        attempts.push(code)
+assert(unlock(1111), "WRONG CODE")
+assert(unlock(1234), "unlocked")
+assert(attempts, [1111, 1234])
+```
+
+- [NUC 119](docs/nuc-0119.md) adds the `finally` clause of Python,
+  JavaScript, Java, Kotlin and C# to complete `try`/`catch` statements:
+  `finally:` and a suite, on the line after the catch suite, run however
+  the statement ends.
+- `unlock` returns from its body and from its catch suite, and the
+  `finally` suite records the attempt on both paths before the value is
+  returned. A failed body is rolled back before the catch suite runs, as
+  without the clause, and a `return` in the `finally` suite would replace
+  the pending result. See the
+  [root contract](nucleoid.spec.md#finally-clauses).
+
 ## Reactive list flattening
 
 **Flat turns nested lists into one live list**

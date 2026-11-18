@@ -371,6 +371,247 @@ operator-chain diagnostics and source positions are preserved.
   specify the executable behavior. `tests/python_string_aliases.rs` executes
   the rest.
 
+## Size and emptiness method aliases
+
+- [NUC 116](docs/nuc-0116.md) adds the size and emptiness methods that
+  Java, Kotlin, C++ and Rust write, as aliases of the accepted `length` on
+  lists, class populations and strings. They join the accepted aliases
+  `append`, `find`, `contains`, `lower`, `upper`, `strip`, `substr`,
+  `startswith`, `endswith` and `join`. No token, keyword, syntax tree node,
+  error type or message format is added.
+- `RECEIVER.size()` and `RECEIVER.len()` are `RECEIVER.length`,
+  `RECEIVER.isEmpty()` and `RECEIVER.is_empty()` are `RECEIVER.length == 0`,
+  and `RECEIVER.isNotEmpty()` is `RECEIVER.length > 0`. A string also takes
+  `TEXT.length()`, as lists and populations already do. A string's size
+  counts its characters, Unicode scalar values, as `TEXT.length` does, so
+  `"Zoë".size()` is `3`.
+- **Receivers.** A list however it is reached, including a literal, a
+  property, a call or query result, a `.value` snapshot and a list read from
+  a state version; a declared class's instances, named by the class, by a
+  variable or parameter that holds it, or by `$Name` outside a class-level
+  rule or conditional, where a class without instances has size `0`; and a
+  string however it is reached, including a template and the empty string.
+- **Evaluation.** The receiver is read first, then every argument once, left
+  to right, as for every call. The values are ignored, so `xs.size(1)` is
+  `xs.length`, and an argument's error, such as
+  `ReferenceError("missing is not defined")`, propagates before the alias
+  runs.
+- **Live.** A declaration or class-level rule that calls an alias depends on
+  what its receiver reads, as the accepted spelling does:
+  `idle = jobs.isEmpty()` follows pushes, pops, shifts and replacements of
+  `jobs`, `orders = Order.size()` follows new and deleted instances, and
+  `$Sensor.silent = $Sensor.readings.is_empty()` follows each sensor's
+  readings. Errors roll back through the existing transaction.
+- **Rendering.** Statements, `why`, `affects`, `--graph` and graph keys show
+  the call as written. Its dependencies are those of the accepted spelling,
+  so `why n` after `n = xs.size()` shows `n` read from `xs`, as after
+  `n = xs.length`.
+- **Unchanged.** Only calls of the six names on a list, population or
+  string receiver change; each raised
+  `TypeError("<receiver>.<name> is not a function")`, or an argument's error
+  first, which stays.
+  - Numbers, booleans, functions, dates and regular expressions keep their
+    `TypeError`, as their `length()` does, although their `length` reads
+    undefined: `(5).size()` raises `TypeError("number.size is not a function")`.
+  - Objects and instances keep their routing: instance methods and callable
+    properties named `size`, `len`, `isEmpty`, `is_empty`, `isNotEmpty` or
+    `length` keep running, a property that is not a function keeps its
+    `TypeError`, and a missing member stays undefined. Inside a class-level
+    rule or conditional `$Name` is the instance, so `$Name.size()` there
+    keeps calling the instance's method or giving undefined.
+  - On a class name the population alias wins over an instance method of
+    the same name, as `Name.length()` already does, and instances keep
+    calling the method.
+  - A class declared as `Math`, `Number`, `String` or `Date` reaches that
+    namespace's static methods, so `Math.size()` keeps raising
+    `TypeError("Math.size is not a function")`, as `Math.length()` does.
+    `Boolean`, `Class`, `Object`, `List`, `Function`, `JSON` and `RegExp`,
+    without a declared class of that name, keep
+    `ReferenceError("<name> is not defined")`, as their `length()` does.
+  - A `null` or undefined receiver stays undefined without evaluating the
+    arguments. Reads without a call, such as `xs.size`, stay undefined, and
+    `xs.size = 2` keeps raising `TypeError("Cannot assign 'size' on list")`.
+    Functions named `size`, `len`, `isEmpty`, `is_empty` or `isNotEmpty`
+    keep their calls, such as `size(xs)`.
+- **Source-language differences.** These stay out: Kotlin's `size` and
+  Swift's `isEmpty` read as properties, while `xs.size` and `xs.isEmpty`
+  without a call stay undefined; Java's `isEmpty()` on maps and other
+  objects, which keep their routing; C++'s `empty()`; and Python's
+  `len(xs)`. Every receiver counts characters, where Java counts UTF-16 code
+  units and C++ and Rust count bytes, so `"Zoë".len()` is `3` where Rust
+  gives `4`.
+- The three entries beginning
+  `Nucleoid sizes lists, populations and strings with size and len`
+  through `Nucleoid rolls back failed updates through size and emptiness aliases`
+  specify the executable behavior. `tests/size_and_emptiness_aliases.rs`
+  executes the rest.
+
+## First and last element methods
+
+- [NUC 117](docs/nuc-0117.md) adds the `first` and `last` methods that
+  Kotlin, Rust, Swift, Ruby and C#'s LINQ write, as aliases of the accepted
+  `at`, `find` and `findLast` on lists and class populations. They join the
+  accepted aliases `append`, `contains`, `size`, `len`, `isEmpty`,
+  `is_empty` and `isNotEmpty`. No token, keyword, syntax tree node, error
+  type or message format is added.
+- `RECEIVER.first()` is `RECEIVER.at(0)` and `RECEIVER.last()` is
+  `RECEIVER.at(-1)`: the first and last items of a list, or the first and
+  latest created instances of a class. An empty list gives undefined, which
+  a declaration stores as `null`, and a class without instances gives
+  `null`, as `at` gives them.
+- With a function, `RECEIVER.first(PREDICATE)` is `RECEIVER.find(PREDICATE)`
+  and `RECEIVER.last(PREDICATE)` is `RECEIVER.findLast(PREDICATE)`: the
+  first item the predicate accepts, searching from the front or from the
+  back, or `null` when it accepts none. Further arguments are evaluated and
+  ignored, as `find` ignores them.
+- Any other supplied first argument raises
+  `TypeError("first expects a function")` or
+  `TypeError("last expects a function")`, the error that `find` and
+  `findLast` raise for it, with the name as written: a number, a string, a
+  list, an object, a class, `null` and an undefined value among them, even
+  on an empty receiver.
+- **Receivers.** A list however it is reached, including a literal, a
+  property, a call or query result, an index or a slice, a `.value`
+  snapshot and a list read from a state version; and a declared class's
+  instances, named by the class, by a variable or parameter that holds it,
+  or by `$Name` outside a class-level rule or conditional.
+- **Evaluation.** The receiver is read first, a population's instances
+  included, then every argument once, left to right, as for every call. An
+  argument's error, such as `ReferenceError("missing is not defined")`,
+  propagates before the alias runs.
+- **Live.** A declaration or class-level rule that calls an alias depends on
+  what its accepted spelling depends on: `newest = readings.last()` follows
+  pushes, pops, shifts, sorts and replacements of `readings`,
+  `latest = Order.last()` follows new and deleted instances,
+  `open = Order.first(order -> order.open)` also follows the properties its
+  predicate reads, and `$Sensor.latest = $Sensor.readings.last()` follows
+  each sensor's readings. Errors roll back through the existing
+  transaction.
+- **Rendering.** Statements, `why`, `affects`, `--graph` and graph keys show
+  the call as written. Its dependencies are those of the accepted spelling,
+  so `why n` after `n = xs.last()` shows `n` read from `xs`, as after
+  `n = xs.at(-1)`.
+- **Unchanged.** Only calls of the two names on a list or population
+  receiver change; each raised
+  `TypeError("<receiver>.<name> is not a function")`, or an argument's error
+  first, which stays.
+  - Strings keep `TypeError("<text>.<name> is not a function")`: their
+    accepted `find` is `indexOf`, and `TEXT[0]` and `TEXT[-1]` read their
+    first and last characters.
+  - Numbers, booleans, functions, dates and regular expressions keep their
+    `TypeError`, as `(5).first()` raises
+    `TypeError("number.first is not a function")`.
+  - Objects and instances keep their routing: instance methods and callable
+    properties named `first` or `last` keep running, a property of that name
+    that is not a function keeps its `TypeError`, and a missing member stays
+    undefined. Inside a class-level rule or conditional `$Name` is the
+    instance, so `$Name.first()` there keeps calling the instance's method
+    or giving undefined.
+  - On a class name the population alias wins over an instance method of
+    the same name, and instances keep calling the method.
+  - A class declared as `Math`, `Number`, `String` or `Date` reaches that
+    namespace's static methods, so `Math.first()` keeps raising
+    `TypeError("Math.first is not a function")`. `Boolean`, `Class`,
+    `Object`, `List`, `Function`, `JSON` and `RegExp`, without a declared
+    class of that name, keep `ReferenceError("<name> is not defined")`.
+  - A `null` or undefined receiver stays undefined without evaluating the
+    arguments. Reads without a call, such as `xs.first`, stay undefined, and
+    `xs.first = 2` keeps raising `TypeError("Cannot assign 'first' on list")`.
+    Functions named `first` or `last` keep their calls, such as `first(xs)`,
+    and the state versions `xs@first` and `xs@last` keep their meaning.
+- **Source-language differences.** These stay out: Kotlin's, Java's and
+  LINQ's `first()` and `last()` throw on an empty receiver or when nothing
+  matches, where the aliases give what `at` and `find` give; Rust returns an
+  `Option`; Swift's and Dart's `first` and `last` read as properties, while
+  `xs.first` without a call stays undefined; and Ruby's `first(n)` and
+  `last(n)` take a count, which raises here as any other argument that is
+  not a function does, where `xs[:n]` and `xs[-n:]` read the ends.
+- The three entries beginning
+  `Nucleoid reads the first and last items of lists and populations`
+  through `Nucleoid rolls back failed updates through first and last aliases`
+  specify the executable behavior. `tests/first_and_last_methods.rs`
+  executes the rest.
+
+## Case conversion method aliases
+
+- [NUC 118](docs/nuc-0118.md) adds the case conversion methods that Kotlin,
+  Rust and Swift write, as aliases of the accepted `toUpperCase` and
+  `toLowerCase` on strings. They join the accepted aliases `lower`, `upper`,
+  `strip`, `find`, `contains`, `substr`, `startswith`, `endswith`, `join`,
+  `size`, `len`, `isEmpty`, `is_empty` and `isNotEmpty`. No token, keyword,
+  syntax tree node, error type or message format is added.
+- `TEXT.uppercase()`, `TEXT.to_uppercase()` and `TEXT.uppercased()` are
+  `TEXT.toUpperCase()`, and `TEXT.lowercase()`, `TEXT.to_lowercase()` and
+  `TEXT.lowercased()` are `TEXT.toLowerCase()`: the whole string in the same
+  full Unicode case mapping, which can change its length, so
+  `"Straße".uppercase()` is `"STRASSE"`, and which lowers a word's final
+  capital sigma to `ς`, so `"ΟΔΟΣ".lowercase()` is `"οδος"`. Further
+  arguments are evaluated and ignored.
+- **Receivers.** A string however it is reached, including a literal, a
+  name, a property, a call or query result, a template, an index, a
+  `.value` snapshot and a string read from a state version.
+- **Evaluation.** The receiver is read first, then every argument once, left
+  to right, as for every call. An argument's error, such as
+  `ReferenceError("missing is not defined")`, propagates before the alias
+  runs.
+- **Live.** A declaration or class-level rule that calls an alias depends on
+  what its accepted spelling depends on: `key = label.lowercase()` follows
+  writes of `label`, `quiet = tags.map(tag -> tag.lowercased())` follows
+  pushes to `tags`, and `$Badge.login = $Badge.name.to_lowercase()` follows
+  each badge's name. Errors roll back through the existing transaction.
+- **Per evaluation.** An alias gives its spelling's result whenever its
+  receiver evaluates to a string. A later write that replaces a held
+  receiver with another kind of value re-evaluates the call on that value,
+  which reads the alias's name as it reads any other method name: after
+  `code = label.uppercase()`, writing `label = 7` raises
+  `TypeError("number.uppercase is not a function")` and rolls back, where
+  the spelling raises `TypeError("number.toUpperCase is not a function")`;
+  writing a list raises `TypeError("label.uppercase is not a function")`,
+  where the spelling names `toUpperCase`; and writing an object or instance
+  whose `uppercase` member is a function runs it, where the spelling gives
+  undefined.
+- **Rendering.** Statements, `why`, `affects`, `--graph` and graph keys show
+  the call as written. Its dependencies are those of the accepted spelling,
+  so `why key` after `key = label.lowercase()` shows `key` read from
+  `label`, as after `key = label.toLowerCase()`.
+- **Unchanged.** Only calls of the six names on a string receiver change;
+  each raised `TypeError("<text>.<name> is not a function")`, or an
+  argument's error first, which stays.
+  - Lists, class populations, numbers, booleans, functions, dates and
+    regular expressions keep their `TypeError`: `(5).uppercase()` raises
+    `TypeError("number.uppercase is not a function")`.
+  - Objects and instances keep their routing: instance methods and callable
+    properties named like the aliases keep running, a property of that name
+    that is not a function keeps its `TypeError`, and a missing member stays
+    undefined. Inside a class-level rule `$Name` is the instance, so
+    `$Name.uppercase()` there keeps calling the instance's method or giving
+    undefined.
+  - `String.uppercase()` keeps raising
+    `TypeError("String.uppercase is not a function")`, also when a class
+    named `String` is declared.
+  - A `null` or undefined receiver stays undefined without evaluating the
+    arguments. Reads without a call, such as `text.uppercase`, stay
+    undefined, and `text.uppercase = 1` keeps raising
+    `TypeError("Cannot assign 'uppercase' on string")`. Functions named like
+    the aliases keep their calls, such as `uppercase(text)`.
+- **Source-language differences.** Kotlin's `uppercase()` and `lowercase()`
+  use the invariant locale, as Nucleoid's mapping does, and Rust's
+  `to_uppercase()` and `to_lowercase()` are that mapping. A locale argument,
+  as in Kotlin's and Java's `Locale` overloads and Swift's
+  `uppercased(with:)`, is evaluated and ignored, so no locale-specific
+  mapping such as Turkish dotless `ı` applies. Kotlin's `Char.uppercase()`
+  has no counterpart, since Nucleoid has no character type. C#'s
+  `ToUpper()` and `ToLower()`, Rust's ASCII-only `to_ascii_uppercase()` and
+  `to_ascii_lowercase()`, Ruby's `upcase` and `downcase`, Python's
+  `casefold()`, `swapcase()`, `title()` and `capitalize()`, Kotlin's
+  `capitalize()` and `replaceFirstChar`, and Swift's `capitalized` are not
+  added.
+- The three entries beginning
+  `Nucleoid converts case with Kotlin, Rust and Swift spellings`
+  through `Nucleoid rolls back failed updates through case conversion aliases`
+  specify the executable behavior. `tests/case_conversion_aliases.rs`
+  executes the rest.
+
 ## Reactive string padding
 
 - [NUC 111](docs/nuc-0111.md) adds JavaScript's standard padding methods to
@@ -2257,6 +2498,100 @@ statement positions; caught values and transaction recovery are unchanged.
   ordered ASTs, positions, canonical assertions and actual coverage, including
   root-level native REPL recovery. Full per-case counts are in
   [NUC 46](docs/nuc-0046.md#reference-implementation).
+
+## Finally clauses
+
+- [NUC 119](docs/nuc-0119.md) adds an optional `finally` clause to complete
+  `try`/`catch` statements: `finally:` followed by a suite, which runs
+  however the statement ends. It is the clause that Python, JavaScript,
+  TypeScript, Java, Kotlin and C# spell `finally`. No keyword, lexer token,
+  error type or message format is added, and `finally` stays an ordinary
+  name everywhere else.
+- **Syntax.** The clause is the name `finally`, immediately followed by `:`
+  and a suite: an indented block, statements on the same line separated by
+  `;`, or a braced block, as an explicit-colon catch suite takes. The name
+  starts the logical line that directly follows the catch suite, at the
+  `try` statement's own indentation; blank lines and comment lines may stand
+  between. A line indented less than the catch suite but more than the
+  `try` closes to the `try` statement's level, as the lexer closes every
+  such width, so a `finally:` there belongs to that `try`, as a `catch`
+  there does. `finally :` with a space is the same clause. Any catch header
+  form may precede it, including the colon-free headers of
+  [Colon-free indented exception suites](#colon-free-indented-exception-suites),
+  but the clause itself takes its colon.
+- **Kept readings.** Every other `finally` keeps its accepted reading:
+  - `finally: NAME` followed by a newline, `;`, dedent or the end of input
+    is the typed declaration of `finally`. Executing it raises
+    `ReferenceError("Missing definition")`, and a function whose `try`
+    returns before reaching it keeps returning that value. A suite of one
+    bare name is therefore not a clause.
+  - A `finally` on the line of an inline catch suite, as in
+    `try: x = 1 catch: x = 2 finally: x = 3`, or after a `;`, is the name
+    `finally`, and its colon raises `SyntaxError("Unexpected ':'")`; so does
+    `finally:` inside a catch suite, at a shallower indentation than the
+    `try`, or with no `try` before it.
+  - Parentheses suppress line breaks, so inside a call's parentheses, as in
+    a callback `xs.map(x => { ... })`, every statement of the callback stands
+    on one logical line and a `finally:` there keeps its
+    `SyntaxError("Unexpected ':'")`. A braced arrow assigned to a name, as
+    in `f = (x) => { ... }`, has lines and takes the clause.
+  - `try` without `catch` keeps `SyntaxError("Expected 'catch' after 'try'")`,
+    also when `finally:` follows. A bare `finally` line followed by an
+    indented block is the name `finally` followed by the block. Variables,
+    properties, object keys, functions, parameters and enums named `finally`
+    keep working.
+- **Outcomes.**
+  - The body runs as before. When it completes, normally or by `return`, the
+    `finally` suite runs, and then the statement completes as the body did.
+  - When the body fails, its changes roll back and the catch suite runs with
+    the error bound, as before. When the catch suite completes, normally or
+    by `return`, the `finally` suite runs, and then the statement completes
+    as the catch suite did.
+  - When the catch suite fails, its changes roll back, the `finally` suite
+    runs, and then the catch suite's error propagates. No suite runs on the
+    partial changes of a failed suite.
+  - A `return` in the `finally` suite replaces the pending outcome, a pending
+    `return` or a pending error, and a failure of the `finally` suite
+    propagates in its place.
+  - A pending `return` keeps the value computed when its `return` ran; a
+    later write in the `finally` suite does not change it. The statement's
+    value is the value of the suite it completes as.
+- **Transactions.** The `finally` suite's changes commit with the statement.
+  When an error leaves the statement, the enclosing rollback, of an
+  enclosing `try` or of the whole run, undoes them with the rest of the
+  statement. So a pending error that a `return` in the `finally` suite
+  replaces leaves the failed catch suite's changes rolled back.
+- **Scope.** The `finally` suite runs in the scope of the `try` statement,
+  so the catch parameter is not bound there, and its statements run as
+  those of a catch suite do: a top-level assignment is a declaration, and in
+  a function, method or loop body they run in that body.
+- **Standing rules.** A `try` statement runs when it is reached and files
+  nothing of its own. Inside the branch of a standing `if`, or a function
+  called from a declaration, it runs its `finally` suite whenever that rule
+  runs it.
+- **Rendering.** Graph keys render a `try` statement as `try`, with or
+  without the clause. Inside default-bearing declarations it renders as
+  `try:`, its body, `catch NAME:` and its catch suite, followed by
+  `finally:` and the indented `finally` suite; without the clause it renders
+  as before. `why`, `affects`, `--graph` and `--json` show the declarations
+  of a `finally` suite as they show those of a catch suite.
+- **REPL and terminal.** The native REPL buffers a `try` statement through
+  its catch suite and a following `finally` clause until a blank line. A
+  blank line commits the statement, so a `finally:` typed after it is a
+  statement of its own and raises `SyntaxError("Unexpected ':'")`, as a
+  `catch:` typed after one raises `SyntaxError("Unexpected keyword 'catch'")`.
+  The terminal workspace completes `finally`.
+- **Documents.** Programs may write `finally :` with a space, but the
+  documents spell `finally:`, because the specification exporter's statement
+  splitter groups only `finally:` with its `try`.
+- Malformed clauses use existing diagnostics: `finally:` at the end of input
+  raises `SyntaxError("Unexpected end of input")`, and an unindented next
+  line raises `SyntaxError("Expected an indented block but found ...")`. The
+  three entries beginning
+  `Nucleoid runs a finally clause however a try statement ends` through
+  `Nucleoid runs a finally clause before an error or a return leaves`
+  specify the executable behavior. `tests/finally_clauses.rs` executes the
+  rest.
 
 ## Default named constructors
 
@@ -6106,6 +6441,59 @@ t.promote(bob)
   through `Nucleoid rolls back failed partition updates` specify the
   executable behavior. `tests/list_partitions.rs` executes the rest.
 
+## List and population products
+
+- [NUC 114](docs/nuc-0114.md) adds the read-only list query `product` to
+  lists and class instance lists. No syntax, keyword or error type is added.
+- `RECEIVER.product()` returns the product of the receiver's items and
+  `RECEIVER.product(selector)` the product of `selector(item)` for every
+  item. The values are converted to numbers and multiplied left to right,
+  starting from `1`, in 64-bit floating point, so a list of numbers
+  multiplies to exactly what `reduce((total, item) => total * item, 1)`
+  returns: `[1.1, 2.2, 3.3].product()` is `7.986000000000001`. An empty
+  receiver gives `1`.
+- The receiver is a list, however it is reached, or a class's instance list in
+  population order, named by the class, by a variable that holds the class or
+  by `$Name`. On a class name, `product` is the population query even when the
+  class declares an instance method `product`; its instances keep calling that
+  method.
+- Each value is converted with the numeric conversion of `sum`, which `*`
+  applies to its operands: `null`, `false`, an empty or whitespace-only string
+  and an empty list are `0`, `true` is `1`, a numeric string after trimming is
+  its number, a one-item list is its item's number, a date is its time in
+  milliseconds, and objects, classes, functions, regular expressions, other
+  strings and longer lists are NaN. NaN and infinities multiply as 64-bit
+  floating point, so `[1e308, 10].product()` is `Infinity` and
+  `[-1, 0].product()` is `-0`.
+- An undefined item or selector result makes the product undefined, which a
+  declaration stores as `null`; every item is still visited. `product()` reads
+  items, not bindings, so a `null` item counts `0` without settling a
+  declaration to `null`, while the reads inside a selector follow the existing
+  rules.
+- A selector is called once for every item, in order, with only the item;
+  further parameters are `null`. A supplied first argument that is not a
+  function, including `null`, raises `TypeError("product expects a function")`,
+  even on an empty receiver.
+- `product` follows the shared rules of the list queries: it reads its receiver
+  before its arguments, evaluates every supplied argument once, left to right,
+  including unused extras, and never writes the receiver. A declaration that
+  uses it depends on the list or population, on its argument expressions and
+  on whatever the selector reads, so list mutations, new and deleted instances
+  and property changes re-evaluate it, in class-level rules too. Selector
+  errors roll back through the existing transaction. A null or undefined
+  receiver yields undefined without evaluating the arguments.
+- The call keeps its ordinary rendering, so `volume = sides.product()`
+  explains as `volume = sides.product()`, and `why` lists the receiver among
+  the declaration's dependencies.
+- `product of xs` stays `SyntaxError("Unexpected keyword 'of'")`: `product` is
+  not one of the noun queries. Property reads such as `xs.product`, bindings
+  and object properties named `product`, `product(...)` without a definition,
+  `Math.product` and instance methods named `product` called on an instance
+  keep their accepted results. The four entries beginning
+  `Nucleoid multiplies lists with product` through
+  `Nucleoid rolls back failed product updates` specify the executable
+  behavior. `tests/list_products.rs` executes the rest.
+
 ## Object entry loops with ordered rollback
 
 - [NUC 72](docs/nuc-0072.md) adds loops over an object's entries:
@@ -6379,6 +6767,103 @@ t.promote(bob)
   `Nucleoid repeats a while loop until its condition fails` through
   `Nucleoid rolls back a while loop that fails during an iteration` specify
   the executable behavior.
+
+## Count-controlled repeat loops
+
+- [NUC 115](docs/nuc-0115.md) adds the count-controlled loop `repeat COUNT:`
+  followed by a suite: an indented block, or statements on the same line
+  separated by `;`. The suite runs `COUNT` times. No keyword or lexer token
+  is added, and `repeat` stays an ordinary name everywhere else.
+- A statement is a repeat loop when it starts with the name `repeat` and the
+  tokens after it form one complete count immediately followed by `:`. The
+  header is recognized exactly as a `while` header is: the count is parsed
+  like an `if` header condition, so conditional expressions, quantifiers,
+  `??`, `|>`, arrows and bracketed lambdas pair their own colons, and in the
+  second reading that [NUC 86](docs/nuc-0086.md) gives programs with `is`
+  words, a header whose tokens through its colon also parse as separate
+  statements keeps that reading. At the accepted revision every repeat loop
+  statement was a `SyntaxError`.
+- The four spellings that keep their accepted readings after `while` keep
+  them after `repeat`:
+  - `repeat NAME: TYPE` before a newline, `;`, dedent or the end of input is
+    the statement `repeat` followed by the typed declaration `NAME: TYPE`, so
+    `repeat ready: tick` runs `repeat` and then declares `ready`. Executing
+    it raises `ReferenceError("repeat is not defined")`, or
+    `ReferenceError("Missing definition")` when `repeat` is defined.
+    `repeat ready: tick()` and an indented `tick` body are loops.
+  - `repeat assert: ACTUAL, EXPECTED` is `repeat` followed by the colon-led
+    assertion statement `assert: ACTUAL, EXPECTED`, so with `repeat = 1`,
+    `repeat assert: repeat, 1` runs that assertion.
+  - A count whose last token is a bare `lambda`, as in `repeat lambda: 1` or
+    `repeat x + lambda: 1`, keeps its accepted reading: `repeat` followed by
+    an expression that holds the zero-parameter lambda `lambda: 1`.
+  - A count that is the name `suppose`, or an assignment whose value is the
+    name `suppose`, keeps its accepted reading, which is usually a `suppose`
+    block: `repeat suppose: x` is `repeat` followed by the block
+    `suppose: x`, and `repeat x = suppose: x` is `repeat` followed by the
+    assigned block `x = suppose: x`. `repeat (suppose): pass` keeps its
+    accepted `SyntaxError("Unexpected ':'")`.
+- `repeat COUNT` followed by an indented block without a colon, and
+  `repeat COUNT { ... }`, keep their accepted readings as the juxtaposed
+  statements `repeat`, `COUNT` and the block. A variable, function,
+  parameter or loop variable named `repeat`, including either name of a
+  two-name `for` loop, an object key or property `repeat`, `repeat(...)`
+  calls, the value assignment `repeat := VALUE`, the declaration
+  `repeat: TYPE` and the string method `TEXT.repeat(n)` keep working.
+- The count is evaluated once, in the current state, before the first
+  iteration, and its errors propagate unchanged. It converts to a number and
+  then as the count of the string method `repeat` does: NaN and negative
+  numbers give 0, and fractions truncate. So `3` and `"3"` run the body three
+  times, `2.9` twice and `true` once, while `0`, `-1`, `null`, NaN and an
+  undefined value, such as a missing property, run no iteration. What the
+  body changes, including what the count reads, never changes how many times
+  the body runs.
+- Each run of a repeat loop runs its body at most 100,000 times, the bound of
+  `while`. A count that converts to more than 100,000, `Infinity` included,
+  raises `TypeError("Repeat count is too large")` before the first
+  iteration, positioned at the running top-level statement, and the
+  transaction rolls back. A count that converts to exactly 100,000, such as
+  `100000` or `100000.9`, runs. Each run of a nested loop has its own bound,
+  so nested loops multiply and the bound is not a cap on total work.
+- The body runs exactly as a `while` body does. Each iteration is carried out
+  imperatively, in the enclosing scope, with no scope frame and no loop
+  variable, and its assignments, and the propagation they cause, are visible
+  to the rest of the body and to the next iteration. Inside a function,
+  method, loop or block body, a local that the enclosing body assigned
+  therefore accumulates, where a `for` loop over a string of the count's
+  length would leave it unchanged. Parameters, enclosing loop variables,
+  locals, `this` and `self` otherwise behave as in `for` bodies.
+- `return` in the body leaves the enclosing function, method, block or loop,
+  as from a `while` body. At the top level it ends the program with its
+  value.
+- A completed loop yields `null`. The loop files nothing in the graph and
+  does not run again when its count's inputs, or anything its body read,
+  change later. A loop inside the body of a standing rule, such as the branch
+  of a top-level `if` or a function called from a declaration, runs again
+  whenever that rule runs.
+- A repeat statement is never kept on a class. Outside a class-level rule,
+  `$Class` in its count or body reads the declared class, and an undeclared
+  `$Name` raises `ReferenceError("Name is not defined")`. A body statement
+  that is itself a class-level declaration, such as `$Item.flag = true`, is
+  declared on the class when it runs. Inside the body of a class-level rule
+  the loop runs for each instance, and `$Class` reads that instance.
+- Errors raised by the count or the body, and thrown values, propagate
+  through the existing transaction unchanged. A caught failure restores the
+  state from before the enclosing `try` body, including every iteration that
+  already ran.
+- Canonical rendering is `repeat(COUNT){BODY}` in graph keys and
+  `repeat COUNT:` with an indented body inside default-bearing declarations.
+- The native REPL already buffers a line that ends in `:` until a blank
+  line, and the terminal workspace's indented newline indents after one, so
+  `repeat COUNT:` waits for its indented body. The workspace completes
+  `repeat` as it completes `while`.
+- Malformed loops use existing diagnostics: `repeat 3:` at the end of input
+  raises `SyntaxError("Unexpected end of input")`, and an unindented next
+  line raises `SyntaxError("Expected an indented block but found ...")`. The
+  four entries beginning
+  `Nucleoid repeats a block a counted number of times` through
+  `Nucleoid nests repeat loops and rolls back a failed iteration` specify the
+  executable behavior. `tests/repeat_loops.rs` executes the rest.
 
 ## Destructuring declarations
 
@@ -25267,6 +25752,518 @@ assert(names, ["subtotal", "price", "qty"])
 inputs = subtotal |> why |> stated |> nodes
 [names, inputs]
 # return: [["subtotal","price","qty"],["price","qty"]]
+---
+# Nucleoid multiplies lists with product
+
+sides = [2, 3, 4]
+volume = sides.product()
+floor = sides.slice(0, 2).product()
+assert([volume, floor], [24, 6])
+sides.pop()
+sides.push(10)
+assert([volume, floor], [60, 6])
+sides = []
+assert([volume, floor], [1, 1])
+account = {rates: [0.1, 0.1]}
+growth = account.rates.product(rate -> 1 + rate)
+assert(growth, 1.2100000000000002)
+account.rates.push(0.1)
+assert(growth, 1.3310000000000004)
+account.rates.push(-0.5)
+assert(growth, 0.6655000000000002)
+---
+# Nucleoid multiplies class instance populations with product
+
+class Part(name, works):
+    this.name = name
+    this.works = works
+pump = Part("pump", 0.5)
+Part("valve", 0.75)
+chance = Part.product(part -> part.works)
+newest = Part[-1:].product(part -> part.works)
+assert([chance, newest], [0.375, 0.75])
+Part("seal", 0.5)
+assert([chance, newest], [0.1875, 0.5])
+pump.works = 1
+assert(chance, 0.375)
+class Day(dry): this.dry = dry
+staysDry = Day.product(day -> day.dry)
+assert(staysDry, 1)
+Day(0.5)
+Day(0.25)
+assert(staysDry, 0.125)
+---
+# Nucleoid keeps products live in class level rules
+
+class Box(sides): this.sides = sides
+$Box.volume = $Box.sides.product()
+crate = Box([2, 3, 4])
+cube = Box([3, 3, 3])
+assert([crate.volume, cube.volume], [24, 27])
+crate.sides.push(0.5)
+cube.sides = []
+assert([crate.volume, cube.volume], [12, 1])
+class Route(name): this.name = name
+class Leg(route, onTime):
+    this.route = route
+    this.onTime = onTime
+$Route.chance = Leg.filter(leg -> leg.route == $Route).product(leg -> leg.onTime)
+north = Route("north")
+south = Route("south")
+Leg(north, 0.5)
+slow = Leg(north, 0.5)
+Leg(south, 0.75)
+network = Route.product(route -> route.chance)
+assert([north.chance, south.chance, network], [0.25, 0.75, 0.1875])
+slow.onTime = 1
+Leg(south, 0.5)
+assert([north.chance, south.chance, network], [0.5, 0.375, 0.1875])
+west = Route("west")
+assert([west.chance, network], [1, 0.1875])
+Leg(west, 0.5)
+assert(network, 0.09375)
+---
+# Nucleoid rolls back failed product updates
+
+def checked(chance):
+    if chance > 1:
+        throw "NOT_A_CHANCE"
+    return chance
+chances = [0.5, 0.5]
+both = chances.product(checked)
+failure = ""
+try:
+    chances.push(2)
+catch error:
+    failure = error
+assert([failure, chances, both], ["NOT_A_CHANCE", [0.5, 0.5], 0.25])
+try:
+    chances.push(0.5)
+    assert(both, 0.125)
+    throw "UNDO"
+catch error:
+    assert(error, "UNDO")
+assert([chances, both], [[0.5, 0.5], 0.25])
+class Stage(chance): this.chance = chance
+Stage(0.5)
+passes = Stage.product(stage -> checked(stage.chance))
+failure = ""
+try:
+    Stage(4)
+catch error:
+    failure = error
+assert([failure, Stage.length, passes], ["NOT_A_CHANCE", 1, 0.5])
+Stage(0.25)
+passes
+# return: 0.125
+---
+# Nucleoid repeats a block a counted number of times
+
+rabbits = 2
+food = rabbits * 3
+generations = 3
+repeat generations:
+    rabbits = rabbits * 2
+assert(rabbits, 16)
+assert(food, 48)
+generations = 5
+assert(rabbits, 16)
+repeat 2: rabbits = rabbits + food
+assert([rabbits, food], [256, 768])
+---
+# Nucleoid evaluates a repeat count once and truncates it
+
+team = ["ana", "bo"]
+size = team.length
+repeat size:
+    team.push("hire")
+assert(team, ["ana", "bo", "hire", "hire"])
+assert(size, 4)
+def culture(cells, hours):
+    total = cells
+    repeat hours:
+        total = total * 2
+    return total
+assert([culture(1, 3), culture(1, 2.9), culture(1, "3"), culture(1, true)], [8, 4, 8, 2])
+assert([culture(5, 0), culture(5, -2), culture(5, null)], [5, 5, 5])
+---
+# Nucleoid runs repeat loops in constructors and methods with return
+
+class Shelf(levels):
+    this.bins = []
+    repeat levels:
+        this.bins.push(this.bins.length * 10)
+    def take(count):
+        weight = 0
+        repeat count:
+            if this.bins.length == 0:
+                return "short"
+            weight = weight + this.bins.pop()
+        return weight
+shelf = Shelf(3)
+assert(shelf.bins, [0, 10, 20])
+assert(shelf.take(2), 30)
+assert(shelf.take(2), "short")
+assert(shelf.bins, [])
+---
+# Nucleoid nests repeat loops and rolls back a failed iteration
+
+class Crate(row):
+    this.row = row
+rows = 2
+repeat rows:
+    repeat 3: Crate(rows)
+    rows = rows + 1
+assert(Crate.map(crate -> crate.row), [2, 2, 2, 3, 3, 3])
+loaded = Crate.length
+try:
+    repeat 2:
+        Crate(0)
+        if loaded > 7:
+            throw "FULL"
+catch error:
+    failure = error
+assert(failure, "FULL")
+assert([loaded, rows], [6, 4])
+---
+# Nucleoid sizes lists, populations and strings with size and len
+
+queue = ["ana", "bo"]
+waiting = queue.size()
+served = queue.len()
+assert([waiting, served], [2, 2])
+queue.push("cy")
+assert([waiting, served, queue.length], [3, 3, 3])
+class Order(item):
+    this.item = item
+orders = Order.size()
+assert([orders, Order.len()], [0, 0])
+Order("tea")
+Order("cake")
+assert([orders, Order.len(), Order.length], [2, 2, 2])
+name = "Zoë"
+letters = name.size()
+assert([letters, name.len(), name.length(), name.length], [3, 3, 3, 3])
+name = "Ada Lovelace"
+assert([letters, "".size(), [].len()], [12, 0, 0])
+queue.shift()
+[waiting, served]
+# return: [2,2]
+---
+# Nucleoid tests emptiness with isEmpty, is_empty and isNotEmpty
+
+jobs = []
+idle = jobs.isEmpty()
+busy = jobs.isNotEmpty()
+assert([idle, busy, jobs.is_empty()], [true, false, true])
+jobs.push("print", "scan")
+assert([idle, busy], [false, true])
+jobs.pop()
+jobs.pop()
+assert([idle, busy], [true, false])
+class Sensor(name):
+    this.name = name
+    this.readings = []
+$Sensor.silent = $Sensor.readings.is_empty()
+$Sensor.alarm = $Sensor.readings.isNotEmpty() && $Sensor.readings.at(-1) > 40
+door = Sensor("door")
+oven = Sensor("oven")
+assert([door.silent, oven.silent, oven.alarm], [true, true, false])
+oven.readings.push(35, 52)
+assert([oven.silent, oven.alarm, door.silent], [false, true, true])
+oven.readings.pop()
+assert([oven.silent, oven.alarm], [false, false])
+assert([Sensor.isEmpty(), Sensor.isNotEmpty(), "".isEmpty(), "on".is_empty()], [false, true, true, false])
+---
+# Nucleoid rolls back failed updates through size and emptiness aliases
+
+stock = ["bolt", "nut"]
+low = stock.size() < 3
+failure = ""
+try:
+    stock = 7
+catch error:
+    failure = error
+assert(failure, TypeError("number.size is not a function"))
+assert([stock, low], [["bolt", "nut"], true])
+try:
+    stock.push("gear")
+    assert([stock.len(), low], [3, false])
+    throw "UNDO"
+catch error:
+    assert(error, "UNDO")
+assert([stock.len(), low], [2, true])
+class Bin(items):
+    this.items = items
+$Bin.empty = $Bin.items.isEmpty()
+bin = Bin(["pin"])
+try:
+    bin.items = 0
+catch error:
+    failure = error
+assert(failure, TypeError("number.isEmpty is not a function"))
+assert([bin.items, bin.empty], [["pin"], false])
+label = "ok"
+shown = label.length()
+try:
+    label = true
+catch error:
+    failure = error
+assert([failure, label, shown], [TypeError("boolean.length is not a function"), "ok", 2])
+bin.items.pop()
+bin.empty
+# return: true
+---
+# Nucleoid reads the first and last items of lists and populations
+
+readings = [21, 23]
+oldest = readings.first()
+newest = readings.last()
+assert([oldest, newest], [21, 23])
+readings.push(25)
+assert([oldest, newest], [21, 25])
+readings.shift()
+assert([oldest, newest], [23, 25])
+class Order(item):
+    this.item = item
+queued = Order.first()
+latest = Order.last()
+assert([queued, latest], [null, null])
+tea = Order("tea")
+cake = Order("cake")
+assert([queued, latest], [tea, cake])
+assert([Order.first().item, Order.last().item], ["tea", "cake"])
+empty = []
+assert([empty.first(), empty.last(), [7].first(), [7].last()], [null, null, 7, 7])
+readings = []
+[oldest, newest]
+# return: [null,null]
+---
+# Nucleoid finds the first and last matches with first and last predicates
+
+class Order(item, open):
+    this.item = item
+    this.open = open
+tea = Order("tea", false)
+cake = Order("cake", true)
+pie = Order("pie", true)
+oldestOpen = Order.first(order -> order.open)
+newestOpen = Order.last(order -> order.open)
+assert([oldestOpen, newestOpen], [cake, pie])
+tea.open = true
+assert([oldestOpen, newestOpen], [tea, pie])
+pie.open = false
+assert(newestOpen, cake)
+prices = [12, 7, 30, 4]
+cheap = prices.first(price -> price < 10)
+pricey = prices.last(price -> price > 10)
+assert([cheap, pricey, prices.first(price -> price > 99)], [7, 30, null])
+prices.push(3, 50)
+assert([cheap, pricey], [7, 50])
+assert([prices.last(price -> price > 99, "ignored"), [].first(price -> true)], [null, null])
+[cheap, pricey]
+# return: [7,50]
+---
+# Nucleoid rolls back failed updates through first and last aliases
+
+stock = ["bolt", "nut"]
+newest = stock.last()
+failure = ""
+try:
+    stock = 7
+catch error:
+    failure = error
+assert(failure, TypeError("number.last is not a function"))
+assert([stock, newest], [["bolt", "nut"], "nut"])
+try:
+    stock.push("gear")
+    assert([stock.first(), newest], ["bolt", "gear"])
+    throw "UNDO"
+catch error:
+    assert(error, "UNDO")
+assert([stock.last(), newest], ["nut", "nut"])
+try:
+    stock.first(2)
+catch error:
+    failure = error
+assert(failure, TypeError("first expects a function"))
+class Sensor(name):
+    this.name = name
+    this.readings = [18]
+$Sensor.latest = $Sensor.readings.last()
+door = Sensor("door")
+try:
+    door.readings = 0
+catch error:
+    failure = error
+assert(failure, TypeError("number.last is not a function"))
+assert([door.readings, door.latest], [[18], 18])
+door.readings.push(21)
+door.latest
+# return: 21
+---
+# Nucleoid converts case with Kotlin, Rust and Swift spellings
+
+label = "Front Door"
+key = label.lowercase()
+code = label.to_uppercase()
+banner = label.uppercased()
+assert([key, code, banner], ["front door", "FRONT DOOR", "FRONT DOOR"])
+label = "Back Gate"
+assert([key, code, banner], ["back gate", "BACK GATE", "BACK GATE"])
+assert(["NORTH".to_lowercase(), "Mixed Case".lowercased(), "ok".uppercase()], ["north", "mixed case", "OK"])
+street = "Straße"
+upper = street.uppercase()
+assert([upper, upper.length, street.length], ["STRASSE", 7, 6])
+assert([street.to_uppercase(), street.uppercased(), street.toUpperCase()], [upper, upper, upper])
+assert(["ΟΔΟΣ".lowercase(), "ǅ".uppercased(), "ﬁx".to_uppercase(), "".lowercased()], ["οδος", "Ǆ", "FIX", ""])
+street = "Gasse"
+[upper, key]
+# return: ["GASSE","back gate"]
+---
+# Nucleoid keeps class-level and mapped case conversions live
+
+class Badge(name, team):
+    this.name = name
+    this.team = team
+$Badge.login = $Badge.name.to_lowercase()
+$Badge.crest = $Badge.team.uppercased()
+ana = Badge("Ana Lima", "blue")
+bo = Badge("BO CHEN", "Red")
+assert([ana.login, ana.crest, bo.login, bo.crest], ["ana lima", "BLUE", "bo chen", "RED"])
+bo.name = "Bo Chen-Wu"
+ana.team = "green"
+assert([bo.login, ana.crest], ["bo chen-wu", "GREEN"])
+tags = ["Urgent", "low"]
+shout = tags.map(tag -> tag.uppercase())
+quiet = tags.map(tag -> tag.lowercased())
+assert([shout, quiet], [["URGENT", "LOW"], ["urgent", "low"]])
+tags.push("Straße")
+assert(shout, ["URGENT", "LOW", "STRASSE"])
+quiet
+# return: ["urgent","low","straße"]
+---
+# Nucleoid rolls back failed updates through case conversion aliases
+
+label = "door"
+code = label.uppercase()
+failure = ""
+try:
+    label = 7
+catch error:
+    failure = error
+assert(failure, TypeError("number.uppercase is not a function"))
+assert([label, code], ["door", "DOOR"])
+try:
+    label = "gate"
+    assert(code, "GATE")
+    throw "UNDO"
+catch error:
+    assert(error, "UNDO")
+assert([label, code], ["door", "DOOR"])
+class Tag(name):
+    this.name = name
+$Tag.key = $Tag.name.to_lowercase()
+red = Tag("RED")
+try:
+    red.name = true
+catch error:
+    failure = error
+assert(failure, TypeError("boolean.to_lowercase is not a function"))
+assert([red.name, red.key], ["RED", "red"])
+red.name = "Crimson"
+red.key
+# return: "crimson"
+---
+# Nucleoid runs a finally clause however a try statement ends
+
+attempts = []
+def charge(balance, amount):
+    try:
+        if amount > balance:
+            throw "DECLINED"
+        return balance - amount
+    catch reason:
+        return reason
+    finally:
+        attempts.push(amount)
+assert(charge(50, 30), 20)
+assert(charge(20, 40), "DECLINED")
+assert(attempts, [30, 40])
+log = []
+try:
+    log.push("body")
+catch:
+    log.push("catch")
+finally:
+    log.push("finally")
+try: log.push(1)
+catch: log.push(2)
+finally: log.push(3); log.push(4)
+assert(log, ["body", "finally", 1, 3, 4])
+attempts.length
+# return: 2
+---
+# Nucleoid rolls back a failed try body before its finally clause runs
+
+class Tank(level):
+    this.level = level
+tank = Tank(80)
+reading = tank.level * 2
+audit = []
+entries = audit.length
+try:
+    tank.level = 120
+    assert(reading, 240)
+    throw "OVERFLOW"
+catch alarm:
+    audit.push(alarm)
+finally:
+    audit.push(tank.level)
+assert([tank.level, reading], [80, 160])
+assert([audit, entries], [["OVERFLOW", 80], 2])
+tank.level = 90
+reading
+# return: 180
+---
+# Nucleoid runs a finally clause before an error or a return leaves
+
+log = []
+try:
+    try:
+        log.push("read")
+        throw "SENSOR"
+    catch fault:
+        log.push("retry")
+        throw fault + " DOWN"
+    finally:
+        assert(log, [])
+        log.push("cleanup")
+catch outage:
+    assert([outage, log], ["SENSOR DOWN", []])
+    log.push(outage)
+assert(log, ["SENSOR DOWN"])
+def settle(order):
+    try:
+        order.state = "paid"
+        return order.state
+    catch:
+        return "failed"
+    finally:
+        order.state = "closed"
+cart = {state: "open"}
+assert([settle(cart), cart.state], ["paid", "closed"])
+def recover(order):
+    try:
+        throw "LOST"
+    catch problem:
+        order.state = problem
+        throw problem
+    finally:
+        return order.state
+assert(recover(cart), "closed")
+cart.state
+# return: "closed"
 ---
 # Nucleoid flattens nested lists by one level
 

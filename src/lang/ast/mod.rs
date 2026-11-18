@@ -74,6 +74,10 @@ pub enum Stmt {
         condition: Expr,
         body: Vec<Stmt>,
     },
+    Repeat {
+        count: Expr,
+        body: Vec<Stmt>,
+    },
     Return(Option<Expr>),
     Throw(Expr),
     Delete(Expr),
@@ -81,6 +85,12 @@ pub enum Stmt {
         body: Vec<Stmt>,
         parameter: String,
         catch: Vec<Stmt>,
+    },
+    TryFinally {
+        body: Vec<Stmt>,
+        parameter: String,
+        catch: Vec<Stmt>,
+        finally: Vec<Stmt>,
     },
     /// A declaration with a type but no definition, such as `a: int`.
     Declaration {

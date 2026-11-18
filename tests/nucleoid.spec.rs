@@ -20281,6 +20281,623 @@ inputs = subtotal |> why |> stated |> nodes
 # return: [["subtotal","price","qty"],["price","qty"]]"#);
 }
 
+/// Nucleoid multiplies lists with product
+#[rustfmt::skip]
+#[test]
+fn multiplies_lists_with_product() {
+    let mut run = runner();
+    run("sides = [2, 3, 4]");
+    run("volume = sides.product()");
+    run("floor = sides.slice(0, 2).product()");
+    assert_eq!(run("[volume, floor]"), serde_json::json!([24, 6]));
+    run("sides.pop()");
+    run("sides.push(10)");
+    assert_eq!(run("[volume, floor]"), serde_json::json!([60, 6]));
+    run("sides = []");
+    assert_eq!(run("[volume, floor]"), serde_json::json!([1, 1]));
+    run("account = {rates: [0.1, 0.1]}");
+    run("growth = account.rates.product(rate -> 1 + rate)");
+    assert_eq!(run("growth"), 1.2100000000000002);
+    run("account.rates.push(0.1)");
+    assert_eq!(run("growth"), 1.3310000000000004);
+    run("account.rates.push(-0.5)");
+    assert_eq!(run("growth"), 0.6655000000000002);
+}
+
+/// Nucleoid multiplies class instance populations with product
+#[rustfmt::skip]
+#[test]
+fn multiplies_class_instance_populations_with_product() {
+    let mut run = runner();
+    run(r#"class Part(name, works):
+    this.name = name
+    this.works = works"#);
+    run(r#"pump = Part("pump", 0.5)"#);
+    run(r#"Part("valve", 0.75)"#);
+    run("chance = Part.product(part -> part.works)");
+    run("newest = Part[-1:].product(part -> part.works)");
+    assert_eq!(run("[chance, newest]"), serde_json::json!([0.375, 0.75]));
+    run(r#"Part("seal", 0.5)"#);
+    assert_eq!(run("[chance, newest]"), serde_json::json!([0.1875, 0.5]));
+    run("pump.works = 1");
+    assert_eq!(run("chance"), 0.375);
+    run("class Day(dry): this.dry = dry");
+    run("staysDry = Day.product(day -> day.dry)");
+    assert_eq!(run("staysDry"), 1);
+    run("Day(0.5)");
+    run("Day(0.25)");
+    assert_eq!(run("staysDry"), 0.125);
+}
+
+/// Nucleoid keeps products live in class level rules
+#[rustfmt::skip]
+#[test]
+fn keeps_products_live_in_class_level_rules() {
+    let mut run = runner();
+    run("class Box(sides): this.sides = sides");
+    run("$Box.volume = $Box.sides.product()");
+    run("crate = Box([2, 3, 4])");
+    run("cube = Box([3, 3, 3])");
+    assert_eq!(run("[crate.volume, cube.volume]"), serde_json::json!([24, 27]));
+    run("crate.sides.push(0.5)");
+    run("cube.sides = []");
+    assert_eq!(run("[crate.volume, cube.volume]"), serde_json::json!([12, 1]));
+    run("class Route(name): this.name = name");
+    run(r#"class Leg(route, onTime):
+    this.route = route
+    this.onTime = onTime"#);
+    run("$Route.chance = Leg.filter(leg -> leg.route == $Route).product(leg -> leg.onTime)");
+    run(r#"north = Route("north")"#);
+    run(r#"south = Route("south")"#);
+    run("Leg(north, 0.5)");
+    run("slow = Leg(north, 0.5)");
+    run("Leg(south, 0.75)");
+    run("network = Route.product(route -> route.chance)");
+    assert_eq!(run("[north.chance, south.chance, network]"), serde_json::json!([0.25, 0.75, 0.1875]));
+    run("slow.onTime = 1");
+    run("Leg(south, 0.5)");
+    assert_eq!(run("[north.chance, south.chance, network]"), serde_json::json!([0.5, 0.375, 0.1875]));
+    run(r#"west = Route("west")"#);
+    assert_eq!(run("[west.chance, network]"), serde_json::json!([1, 0.1875]));
+    run("Leg(west, 0.5)");
+    assert_eq!(run("network"), 0.09375);
+}
+
+/// Nucleoid rolls back failed product updates
+#[rustfmt::skip]
+#[test]
+fn rolls_back_failed_product_updates() {
+    let mut run = runner();
+    run(r#"def checked(chance):
+    if chance > 1:
+        throw "NOT_A_CHANCE"
+    return chance
+chances = [0.5, 0.5]
+both = chances.product(checked)
+failure = ""
+try:
+    chances.push(2)
+catch error:
+    failure = error
+assert([failure, chances, both], ["NOT_A_CHANCE", [0.5, 0.5], 0.25])
+try:
+    chances.push(0.5)
+    assert(both, 0.125)
+    throw "UNDO"
+catch error:
+    assert(error, "UNDO")
+assert([chances, both], [[0.5, 0.5], 0.25])
+class Stage(chance): this.chance = chance
+Stage(0.5)
+passes = Stage.product(stage -> checked(stage.chance))
+failure = ""
+try:
+    Stage(4)
+catch error:
+    failure = error
+assert([failure, Stage.length, passes], ["NOT_A_CHANCE", 1, 0.5])
+Stage(0.25)
+passes
+# return: 0.125"#);
+}
+
+/// Nucleoid repeats a block a counted number of times
+#[rustfmt::skip]
+#[test]
+fn repeats_a_block_a_counted_number_of_times() {
+    let mut run = runner();
+    run("rabbits = 2");
+    run("food = rabbits * 3");
+    run("generations = 3");
+    run(r#"repeat generations:
+    rabbits = rabbits * 2"#);
+    assert_eq!(run("rabbits"), 16);
+    assert_eq!(run("food"), 48);
+    run("generations = 5");
+    assert_eq!(run("rabbits"), 16);
+    run("repeat 2: rabbits = rabbits + food");
+    assert_eq!(run("[rabbits, food]"), serde_json::json!([256, 768]));
+}
+
+/// Nucleoid evaluates a repeat count once and truncates it
+#[rustfmt::skip]
+#[test]
+fn evaluates_a_repeat_count_once_and_truncates_it() {
+    let mut run = runner();
+    run(r#"team = ["ana", "bo"]"#);
+    run("size = team.length");
+    run(r#"repeat size:
+    team.push("hire")"#);
+    assert_eq!(run("team"), serde_json::json!(["ana", "bo", "hire", "hire"]));
+    assert_eq!(run("size"), 4);
+    run(r#"def culture(cells, hours):
+    total = cells
+    repeat hours:
+        total = total * 2
+    return total"#);
+    assert_eq!(run(r#"[culture(1, 3), culture(1, 2.9), culture(1, "3"), culture(1, true)]"#), serde_json::json!([8, 4, 8, 2]));
+    assert_eq!(run("[culture(5, 0), culture(5, -2), culture(5, null)]"), serde_json::json!([5, 5, 5]));
+}
+
+/// Nucleoid runs repeat loops in constructors and methods with return
+#[rustfmt::skip]
+#[test]
+fn runs_repeat_loops_in_constructors_and_methods_with_return() {
+    let mut run = runner();
+    run(r#"class Shelf(levels):
+    this.bins = []
+    repeat levels:
+        this.bins.push(this.bins.length * 10)
+    def take(count):
+        weight = 0
+        repeat count:
+            if this.bins.length == 0:
+                return "short"
+            weight = weight + this.bins.pop()
+        return weight"#);
+    run("shelf = Shelf(3)");
+    assert_eq!(run("shelf.bins"), serde_json::json!([0, 10, 20]));
+    assert_eq!(run("shelf.take(2)"), 30);
+    assert_eq!(run("shelf.take(2)"), "short");
+    assert_eq!(run("shelf.bins"), serde_json::json!([]));
+}
+
+/// Nucleoid nests repeat loops and rolls back a failed iteration
+#[rustfmt::skip]
+#[test]
+fn nests_repeat_loops_and_rolls_back_a_failed_iteration() {
+    let mut run = runner();
+    run(r#"class Crate(row):
+    this.row = row
+rows = 2
+repeat rows:
+    repeat 3: Crate(rows)
+    rows = rows + 1
+assert(Crate.map(crate -> crate.row), [2, 2, 2, 3, 3, 3])
+loaded = Crate.length
+try:
+    repeat 2:
+        Crate(0)
+        if loaded > 7:
+            throw "FULL"
+catch error:
+    failure = error
+assert(failure, "FULL")
+assert([loaded, rows], [6, 4])"#);
+}
+
+/// Nucleoid sizes lists, populations and strings with size and len
+#[rustfmt::skip]
+#[test]
+fn sizes_lists_populations_and_strings_with_size_and_len() {
+    let mut run = runner();
+    run(r#"queue = ["ana", "bo"]"#);
+    run("waiting = queue.size()");
+    run("served = queue.len()");
+    assert_eq!(run("[waiting, served]"), serde_json::json!([2, 2]));
+    run(r#"queue.push("cy")"#);
+    assert_eq!(run("[waiting, served, queue.length]"), serde_json::json!([3, 3, 3]));
+    run(r#"class Order(item):
+    this.item = item"#);
+    run("orders = Order.size()");
+    assert_eq!(run("[orders, Order.len()]"), serde_json::json!([0, 0]));
+    run(r#"Order("tea")"#);
+    run(r#"Order("cake")"#);
+    assert_eq!(run("[orders, Order.len(), Order.length]"), serde_json::json!([2, 2, 2]));
+    run(r#"name = "Zoë""#);
+    run("letters = name.size()");
+    assert_eq!(run("[letters, name.len(), name.length(), name.length]"), serde_json::json!([3, 3, 3, 3]));
+    run(r#"name = "Ada Lovelace""#);
+    assert_eq!(run(r#"[letters, "".size(), [].len()]"#), serde_json::json!([12, 0, 0]));
+    run("queue.shift()");
+    run(r#"[waiting, served]
+
+# return: [2,2]"#);
+}
+
+/// Nucleoid tests emptiness with isEmpty, is_empty and isNotEmpty
+#[rustfmt::skip]
+#[test]
+fn tests_emptiness_with_isempty_is_empty_and_isnotempty() {
+    let mut run = runner();
+    run("jobs = []");
+    run("idle = jobs.isEmpty()");
+    run("busy = jobs.isNotEmpty()");
+    assert_eq!(run("[idle, busy, jobs.is_empty()]"), serde_json::json!([true, false, true]));
+    run(r#"jobs.push("print", "scan")"#);
+    assert_eq!(run("[idle, busy]"), serde_json::json!([false, true]));
+    run("jobs.pop()");
+    run("jobs.pop()");
+    assert_eq!(run("[idle, busy]"), serde_json::json!([true, false]));
+    run(r#"class Sensor(name):
+    this.name = name
+    this.readings = []"#);
+    run("$Sensor.silent = $Sensor.readings.is_empty()");
+    run("$Sensor.alarm = $Sensor.readings.isNotEmpty() && $Sensor.readings.at(-1) > 40");
+    run(r#"door = Sensor("door")"#);
+    run(r#"oven = Sensor("oven")"#);
+    assert_eq!(run("[door.silent, oven.silent, oven.alarm]"), serde_json::json!([true, true, false]));
+    run("oven.readings.push(35, 52)");
+    assert_eq!(run("[oven.silent, oven.alarm, door.silent]"), serde_json::json!([false, true, true]));
+    run("oven.readings.pop()");
+    assert_eq!(run("[oven.silent, oven.alarm]"), serde_json::json!([false, false]));
+    assert_eq!(run(r#"[Sensor.isEmpty(), Sensor.isNotEmpty(), "".isEmpty(), "on".is_empty()]"#), serde_json::json!([false, true, true, false]));
+}
+
+/// Nucleoid rolls back failed updates through size and emptiness aliases
+#[rustfmt::skip]
+#[test]
+fn rolls_back_failed_updates_through_size_and_emptiness_aliases() {
+    let mut run = runner();
+    run(r#"stock = ["bolt", "nut"]
+low = stock.size() < 3
+failure = ""
+try:
+    stock = 7
+catch error:
+    failure = error
+assert(failure, TypeError("number.size is not a function"))
+assert([stock, low], [["bolt", "nut"], true])
+try:
+    stock.push("gear")
+    assert([stock.len(), low], [3, false])
+    throw "UNDO"
+catch error:
+    assert(error, "UNDO")
+assert([stock.len(), low], [2, true])
+class Bin(items):
+    this.items = items
+$Bin.empty = $Bin.items.isEmpty()
+bin = Bin(["pin"])
+try:
+    bin.items = 0
+catch error:
+    failure = error
+assert(failure, TypeError("number.isEmpty is not a function"))
+assert([bin.items, bin.empty], [["pin"], false])
+label = "ok"
+shown = label.length()
+try:
+    label = true
+catch error:
+    failure = error
+assert([failure, label, shown], [TypeError("boolean.length is not a function"), "ok", 2])
+bin.items.pop()
+bin.empty
+# return: true"#);
+}
+
+/// Nucleoid reads the first and last items of lists and populations
+#[rustfmt::skip]
+#[test]
+fn reads_the_first_and_last_items_of_lists_and_populations() {
+    let mut run = runner();
+    run("readings = [21, 23]");
+    run("oldest = readings.first()");
+    run("newest = readings.last()");
+    assert_eq!(run("[oldest, newest]"), serde_json::json!([21, 23]));
+    run("readings.push(25)");
+    assert_eq!(run("[oldest, newest]"), serde_json::json!([21, 25]));
+    run("readings.shift()");
+    assert_eq!(run("[oldest, newest]"), serde_json::json!([23, 25]));
+    run(r#"class Order(item):
+    this.item = item"#);
+    run("queued = Order.first()");
+    run("latest = Order.last()");
+    assert_eq!(run("[queued, latest]"), serde_json::json!([null, null]));
+    run(r#"tea = Order("tea")"#);
+    run(r#"cake = Order("cake")"#);
+    {
+        let actual = run("[queued, latest]");
+        let expected = run("([tea, cake])");
+        assert_eq!(actual, expected);
+    }
+    assert_eq!(run("[Order.first().item, Order.last().item]"), serde_json::json!(["tea", "cake"]));
+    run("empty = []");
+    assert_eq!(run("[empty.first(), empty.last(), [7].first(), [7].last()]"), serde_json::json!([null, null, 7, 7]));
+    run("readings = []");
+    run(r#"[oldest, newest]
+
+# return: [null,null]"#);
+}
+
+/// Nucleoid finds the first and last matches with first and last predicates
+#[rustfmt::skip]
+#[test]
+fn finds_the_first_and_last_matches_with_first_and_last_predicates() {
+    let mut run = runner();
+    run(r#"class Order(item, open):
+    this.item = item
+    this.open = open"#);
+    run(r#"tea = Order("tea", false)"#);
+    run(r#"cake = Order("cake", true)"#);
+    run(r#"pie = Order("pie", true)"#);
+    run("oldestOpen = Order.first(order -> order.open)");
+    run("newestOpen = Order.last(order -> order.open)");
+    {
+        let actual = run("[oldestOpen, newestOpen]");
+        let expected = run("([cake, pie])");
+        assert_eq!(actual, expected);
+    }
+    run("tea.open = true");
+    {
+        let actual = run("[oldestOpen, newestOpen]");
+        let expected = run("([tea, pie])");
+        assert_eq!(actual, expected);
+    }
+    run("pie.open = false");
+    {
+        let actual = run("newestOpen");
+        let expected = run("(cake)");
+        assert_eq!(actual, expected);
+    }
+    run("prices = [12, 7, 30, 4]");
+    run("cheap = prices.first(price -> price < 10)");
+    run("pricey = prices.last(price -> price > 10)");
+    assert_eq!(run("[cheap, pricey, prices.first(price -> price > 99)]"), serde_json::json!([7, 30, null]));
+    run("prices.push(3, 50)");
+    assert_eq!(run("[cheap, pricey]"), serde_json::json!([7, 50]));
+    assert_eq!(run(r#"[prices.last(price -> price > 99, "ignored"), [].first(price -> true)]"#), serde_json::json!([null, null]));
+    run(r#"[cheap, pricey]
+
+# return: [7,50]"#);
+}
+
+/// Nucleoid rolls back failed updates through first and last aliases
+#[rustfmt::skip]
+#[test]
+fn rolls_back_failed_updates_through_first_and_last_aliases() {
+    let mut run = runner();
+    run(r#"stock = ["bolt", "nut"]
+newest = stock.last()
+failure = ""
+try:
+    stock = 7
+catch error:
+    failure = error
+assert(failure, TypeError("number.last is not a function"))
+assert([stock, newest], [["bolt", "nut"], "nut"])
+try:
+    stock.push("gear")
+    assert([stock.first(), newest], ["bolt", "gear"])
+    throw "UNDO"
+catch error:
+    assert(error, "UNDO")
+assert([stock.last(), newest], ["nut", "nut"])
+try:
+    stock.first(2)
+catch error:
+    failure = error
+assert(failure, TypeError("first expects a function"))
+class Sensor(name):
+    this.name = name
+    this.readings = [18]
+$Sensor.latest = $Sensor.readings.last()
+door = Sensor("door")
+try:
+    door.readings = 0
+catch error:
+    failure = error
+assert(failure, TypeError("number.last is not a function"))
+assert([door.readings, door.latest], [[18], 18])
+door.readings.push(21)
+door.latest
+# return: 21"#);
+}
+
+/// Nucleoid converts case with Kotlin, Rust and Swift spellings
+#[rustfmt::skip]
+#[test]
+fn converts_case_with_kotlin_rust_and_swift_spellings() {
+    let mut run = runner();
+    run(r#"label = "Front Door""#);
+    run("key = label.lowercase()");
+    run("code = label.to_uppercase()");
+    run("banner = label.uppercased()");
+    assert_eq!(run("[key, code, banner]"), serde_json::json!(["front door", "FRONT DOOR", "FRONT DOOR"]));
+    run(r#"label = "Back Gate""#);
+    assert_eq!(run("[key, code, banner]"), serde_json::json!(["back gate", "BACK GATE", "BACK GATE"]));
+    assert_eq!(run(r#"["NORTH".to_lowercase(), "Mixed Case".lowercased(), "ok".uppercase()]"#), serde_json::json!(["north", "mixed case", "OK"]));
+    run(r#"street = "Straße""#);
+    run("upper = street.uppercase()");
+    assert_eq!(run("[upper, upper.length, street.length]"), serde_json::json!(["STRASSE", 7, 6]));
+    {
+        let actual = run("[street.to_uppercase(), street.uppercased(), street.toUpperCase()]");
+        let expected = run("([upper, upper, upper])");
+        assert_eq!(actual, expected);
+    }
+    assert_eq!(run(r#"["ΟΔΟΣ".lowercase(), "ǅ".uppercased(), "ﬁx".to_uppercase(), "".lowercased()]"#), serde_json::json!(["οδος", "Ǆ", "FIX", ""]));
+    run(r#"street = "Gasse""#);
+    run(r#"[upper, key]
+
+# return: ["GASSE","back gate"]"#);
+}
+
+/// Nucleoid keeps class-level and mapped case conversions live
+#[rustfmt::skip]
+#[test]
+fn keeps_class_level_and_mapped_case_conversions_live() {
+    let mut run = runner();
+    run(r#"class Badge(name, team):
+    this.name = name
+    this.team = team"#);
+    run("$Badge.login = $Badge.name.to_lowercase()");
+    run("$Badge.crest = $Badge.team.uppercased()");
+    run(r#"ana = Badge("Ana Lima", "blue")"#);
+    run(r#"bo = Badge("BO CHEN", "Red")"#);
+    assert_eq!(run("[ana.login, ana.crest, bo.login, bo.crest]"), serde_json::json!(["ana lima", "BLUE", "bo chen", "RED"]));
+    run(r#"bo.name = "Bo Chen-Wu""#);
+    run(r#"ana.team = "green""#);
+    assert_eq!(run("[bo.login, ana.crest]"), serde_json::json!(["bo chen-wu", "GREEN"]));
+    run(r#"tags = ["Urgent", "low"]"#);
+    run("shout = tags.map(tag -> tag.uppercase())");
+    run("quiet = tags.map(tag -> tag.lowercased())");
+    assert_eq!(run("[shout, quiet]"), serde_json::json!([["URGENT", "LOW"], ["urgent", "low"]]));
+    run(r#"tags.push("Straße")"#);
+    assert_eq!(run("shout"), serde_json::json!(["URGENT", "LOW", "STRASSE"]));
+    run(r#"quiet
+
+# return: ["urgent","low","straße"]"#);
+}
+
+/// Nucleoid rolls back failed updates through case conversion aliases
+#[rustfmt::skip]
+#[test]
+fn rolls_back_failed_updates_through_case_conversion_aliases() {
+    let mut run = runner();
+    run(r#"label = "door"
+code = label.uppercase()
+failure = ""
+try:
+    label = 7
+catch error:
+    failure = error
+assert(failure, TypeError("number.uppercase is not a function"))
+assert([label, code], ["door", "DOOR"])
+try:
+    label = "gate"
+    assert(code, "GATE")
+    throw "UNDO"
+catch error:
+    assert(error, "UNDO")
+assert([label, code], ["door", "DOOR"])
+class Tag(name):
+    this.name = name
+$Tag.key = $Tag.name.to_lowercase()
+red = Tag("RED")
+try:
+    red.name = true
+catch error:
+    failure = error
+assert(failure, TypeError("boolean.to_lowercase is not a function"))
+assert([red.name, red.key], ["RED", "red"])
+red.name = "Crimson"
+red.key
+# return: "crimson""#);
+}
+
+/// Nucleoid runs a finally clause however a try statement ends
+#[rustfmt::skip]
+#[test]
+fn runs_a_finally_clause_however_a_try_statement_ends() {
+    let mut run = runner();
+    run(r#"attempts = []
+def charge(balance, amount):
+    try:
+        if amount > balance:
+            throw "DECLINED"
+        return balance - amount
+    catch reason:
+        return reason
+    finally:
+        attempts.push(amount)
+assert(charge(50, 30), 20)
+assert(charge(20, 40), "DECLINED")
+assert(attempts, [30, 40])
+log = []
+try:
+    log.push("body")
+catch:
+    log.push("catch")
+finally:
+    log.push("finally")
+try: log.push(1)
+catch: log.push(2)
+finally: log.push(3); log.push(4)
+assert(log, ["body", "finally", 1, 3, 4])
+attempts.length
+# return: 2"#);
+}
+
+/// Nucleoid rolls back a failed try body before its finally clause runs
+#[rustfmt::skip]
+#[test]
+fn rolls_back_a_failed_try_body_before_its_finally_clause_runs() {
+    let mut run = runner();
+    run(r#"class Tank(level):
+    this.level = level
+tank = Tank(80)
+reading = tank.level * 2
+audit = []
+entries = audit.length
+try:
+    tank.level = 120
+    assert(reading, 240)
+    throw "OVERFLOW"
+catch alarm:
+    audit.push(alarm)
+finally:
+    audit.push(tank.level)
+assert([tank.level, reading], [80, 160])
+assert([audit, entries], [["OVERFLOW", 80], 2])
+tank.level = 90
+reading
+# return: 180"#);
+}
+
+/// Nucleoid runs a finally clause before an error or a return leaves
+#[rustfmt::skip]
+#[test]
+fn runs_a_finally_clause_before_an_error_or_a_return_leaves() {
+    let mut run = runner();
+    run(r#"log = []
+try:
+    try:
+        log.push("read")
+        throw "SENSOR"
+    catch fault:
+        log.push("retry")
+        throw fault + " DOWN"
+    finally:
+        assert(log, [])
+        log.push("cleanup")
+catch outage:
+    assert([outage, log], ["SENSOR DOWN", []])
+    log.push(outage)
+assert(log, ["SENSOR DOWN"])
+def settle(order):
+    try:
+        order.state = "paid"
+        return order.state
+    catch:
+        return "failed"
+    finally:
+        order.state = "closed"
+cart = {state: "open"}
+assert([settle(cart), cart.state], ["paid", "closed"])
+def recover(order):
+    try:
+        throw "LOST"
+    catch problem:
+        order.state = problem
+        throw problem
+    finally:
+        return order.state
+assert(recover(cart), "closed")
+cart.state
+# return: "closed""#);
+}
+
 /// Nucleoid flattens nested lists by one level
 #[rustfmt::skip]
 #[test]

@@ -70,6 +70,7 @@ impl Runtime {
 
         match property {
             "sum" => return self.sum_items(items, selector.as_ref()),
+            "product" => return self.product_items(items, selector.as_ref()),
             "average" => return self.average_items(items, selector.as_ref()),
             _ => {}
         }
@@ -117,8 +118,27 @@ impl Runtime {
             _ => Value::Undefined,
         })
     }
+
     fn sum_items(&mut self, items: Vec<Value>, selector: Option<&Arc<Function>>) -> Result<Value> {
-        let mut total = 0.0;
+        self.fold_numbers(items, selector, 0.0, |total, value| total + value)
+    }
+
+    fn product_items(
+        &mut self,
+        items: Vec<Value>,
+        selector: Option<&Arc<Function>>,
+    ) -> Result<Value> {
+        self.fold_numbers(items, selector, 1.0, |total, value| total * value)
+    }
+
+    fn fold_numbers(
+        &mut self,
+        items: Vec<Value>,
+        selector: Option<&Arc<Function>>,
+        start: f64,
+        combine: impl Fn(f64, f64) -> f64,
+    ) -> Result<Value> {
+        let mut total = start;
         let mut undefined = false;
 
         for item in items {
@@ -127,7 +147,7 @@ impl Runtime {
                 None => item,
             };
             undefined |= value.is_undefined();
-            total += value.to_number();
+            total = combine(total, value.to_number());
         }
 
         Ok(if undefined {

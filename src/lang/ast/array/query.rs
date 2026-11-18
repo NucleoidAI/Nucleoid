@@ -3,6 +3,7 @@ use std::sync::Arc;
 use super::ListSource;
 use super::aggregate::{concat_items, join_items};
 use super::index::{list_at, position_number, slice_items};
+use crate::builtins;
 use crate::error::{Error, Result};
 use crate::graph::NodeKey;
 use crate::lang::ast::{Expr, Function};
@@ -42,13 +43,8 @@ impl Runtime {
         let predicate = arguments.first().cloned();
 
         match property {
-            "find" | "findLast" => {
-                let function = expect_function(predicate, property)?;
-                let found = self.find_position(&function, &items, property == "findLast")?;
-                Ok(found
-                    .and_then(|position| items.into_iter().nth(position))
-                    .unwrap_or(Value::Null))
-            }
+            "find" | "findLast" => self.find_item(items, property, predicate),
+            "first" | "last" => self.first_or_last(items, property, predicate, source),
             "findIndex" | "findLastIndex" => {
                 let function = expect_function(predicate, property)?;
                 let found = self.find_position(&function, &items, property == "findLastIndex")?;
@@ -80,7 +76,7 @@ impl Runtime {
                 let function = expect_function(predicate, "reduce")?;
                 self.reduce_items(items, &function, arguments.get(1))
             }
-            "sum" | "average" | "median" | "max" | "min" | "distinct" | "mode" => {
+            "sum" | "product" | "average" | "median" | "max" | "min" | "distinct" | "mode" => {
                 self.aggregate_items(items, property, predicate)
             }
             "maxBy" | "minBy" => self.extreme_item(items, property, predicate),
@@ -99,11 +95,39 @@ impl Runtime {
                 Ok(Value::List(reversed))
             }
             "concat" => Ok(Value::List(concat_items(items, arguments))),
-            "length" => Ok(Value::Number(number::from_usize(items.len()))),
-            _ => Err(Error::type_error(format!(
-                "{receiver}.{property} is not a function"
-            ))),
+            _ => builtins::size_query(property, || items.len()).ok_or_else(|| {
+                Error::type_error(format!("{receiver}.{property} is not a function"))
+            }),
         }
+    }
+
+    fn find_item(
+        &mut self,
+        items: Vec<Value>,
+        property: &str,
+        predicate: Option<Value>,
+    ) -> Result<Value> {
+        let function = expect_function(predicate, property)?;
+        let from_end = matches!(property, "findLast" | "last");
+        let found = self.find_position(&function, &items, from_end)?;
+        Ok(found
+            .and_then(|position| items.into_iter().nth(position))
+            .unwrap_or(Value::Null))
+    }
+
+    fn first_or_last(
+        &mut self,
+        items: Vec<Value>,
+        property: &str,
+        predicate: Option<Value>,
+        source: ListSource,
+    ) -> Result<Value> {
+        if predicate.is_some() {
+            return self.find_item(items, property, predicate);
+        }
+
+        let index = if property == "last" { -1.0 } else { 0.0 };
+        Ok(list_at(items, Some(&Value::Number(index)), source))
     }
 
     fn filter_items(&mut self, items: Vec<Value>, function: &Arc<Function>) -> Result<Value> {

@@ -1272,6 +1272,7 @@ counter.doubled()
 - An instance created without a variable name gets a generated `id`.
 - Instances are addressed by index `Name[0]`, by id `Name["id"]`, or by query `Name.find(...)`.
 - `Name[1:]`, `Name.at(-1)`, `Name.list()` and `Name.all()` read them by range, by position from either end, and all at once, in population order ([NUC 61](nuc-0061.md)).
+- `Name.first()` and `Name.last()` are the first and latest created instances, exactly `Name.at(0)` and `Name.at(-1)`, and `Name.first(predicate)` and `Name.last(predicate)` are `Name.find(predicate)` and `Name.findLast(predicate)` ([NUC 117](nuc-0117.md)).
 
 ### Subtypes
 
@@ -1882,6 +1883,51 @@ while savings.balance < 150:
 
 Normative detail: [while loops](../nucleoid.spec.md#while-loops).
 
+### repeat
+
+```
+class Account(balance):
+    this.balance = balance
+savings = Account(100)
+years = 3
+repeat years:
+    savings.balance = savings.balance * 1.5
+assert(savings.balance, 337.5)
+years = 10
+savings.balance
+```
+
+- This is the complete
+  `Nucleoid repeats statements a counted number of times` program in
+  `tests/reference.md`, without its title and expected-return metadata; it
+  returns `337.5`, and setting `years` later does not run the loop again.
+- `repeat <count>:` runs its body `count` times, under
+  [NUC 115](nuc-0115.md). The body is an indented block, or statements on
+  the same line separated by `;`.
+- The count is evaluated once, before the first iteration. It converts to a
+  number and then as the count of the string method `repeat` does: NaN and
+  negative numbers give 0 and fractions truncate, so `2.9` runs the body
+  twice, `"3"` three times, and `0`, `-1` and `null` not at all. What the body
+  changes never changes the count.
+- The body runs as a `while` body does: once per iteration, imperatively, in
+  the enclosing scope, with no scope frame and no loop variable. A local that
+  the enclosing function or loop body assigned accumulates, where a `for`
+  loop over a string of the count's length would leave it unchanged.
+  `return` leaves the enclosing function, as from a `while` body.
+- The loop runs once, like `while`: nothing is filed in the graph, and the
+  loop does not run again when its count or its inputs change later.
+- Each run of a loop runs its body at most 100,000 times. A count that
+  converts to more than 100,000 raises
+  `TypeError("Repeat count is too large")` before the first iteration, and
+  the transaction rolls back.
+- `repeat` is not reserved. `repeat NAME: TYPE`, `repeat assert: ...`, a
+  count whose last token is a bare `lambda`, a `suppose` count, and colon-free
+  or braced headers keep their accepted readings as separate statements, and
+  names, calls and properties named `repeat` and the string method
+  `"ab".repeat(2)` keep working.
+
+Normative detail: [count-controlled repeat loops](../nucleoid.spec.md#count-controlled-repeat-loops).
+
 ---
 
 ## 9. Functions
@@ -2415,7 +2461,55 @@ catch
   tokens, 603 are unchanged, and none increased. All 2,763 protected assertions
   executed and all 50 explicit expected returns matched.
 
-Full detail: [NUC 9](nuc-0009.md), [NUC 46](nuc-0046.md).
+### Finally clauses
+
+```
+visits = []
+def enter(room):
+    try:
+        if room == "vault":
+            throw "LOCKED"
+        return "open"
+    catch reason:
+        return reason
+    finally:
+        visits.push(room)
+assert([enter("hall"), enter("vault")], ["open", "LOCKED"])
+assert(visits, ["hall", "vault"])
+visits.length
+```
+
+- This is the complete
+  `Nucleoid runs finally clauses as Python, JavaScript and Java do` program
+  in `tests/reference.md`, without its title and expected-return metadata;
+  it returns `2`.
+- [NUC 119](nuc-0119.md) adds the `finally` clause of Python, JavaScript,
+  TypeScript, Java, Kotlin and C#: `finally:` and a suite, which runs
+  however a complete `try`/`catch` statement ends. `finally` stays an
+  ordinary name; the clause is the name and its colon at the start of the
+  line after the catch suite, at the `try` statement's indentation.
+- When the body or the catch suite completes, normally or by `return`, the
+  `finally` suite runs and the statement then completes as that suite did,
+  so `enter` returns `"open"` and `"LOCKED"` and records both rooms. A
+  pending `return` keeps the value it computed.
+- A failed body rolls back before the catch suite runs, as without the
+  clause. A failed catch suite rolls back too, then the `finally` suite
+  runs and the error propagates; when it leaves the statement, the enclosing
+  rollback also undoes what the `finally` suite changed.
+- A `return` in the `finally` suite replaces the pending result or error,
+  and a failure of the `finally` suite propagates in its place, as in
+  Python, JavaScript and Java. The catch parameter is not bound in the
+  `finally` suite.
+- `finally: NAME` before the end of its line stays the typed declaration of
+  `finally`, a `finally` on the catch suite's own line or inside a call's
+  parentheses keeps its `SyntaxError("Unexpected ':'")`, and `try` without
+  `catch` still raises `SyntaxError("Expected 'catch' after 'try'")`.
+- The native REPL buffers the clause with its `try` until a blank line; a
+  blank line before `finally:` commits the statement first, as it does
+  before a `catch`. See the
+  [root contract](../nucleoid.spec.md#finally-clauses).
+
+Full detail: [NUC 9](nuc-0009.md), [NUC 46](nuc-0046.md), [NUC 119](nuc-0119.md).
 
 ---
 
@@ -2550,9 +2644,9 @@ Full detail: [NUC 9](nuc-0009.md), [NUC 46](nuc-0046.md).
 | `Boolean` | `Boolean(value)` |
 | `Number` | `Number.MAX_INTEGER` |
 | `Math` | `pow`, `sqrt`, `floor`, `round`, `max`, `min`, `clamp` ([NUC 21](nuc-0021.md)), `lerp` ([NUC 22](nuc-0022.md)), `saturate` ([NUC 23](nuc-0023.md)), `smoothstep(lower, upper, value)` (accepted [NUC 33](nuc-0033.md)), `smootherstep(lower, upper, value)` (accepted [NUC 35](nuc-0035.md)), `remap(start, end, targetStart, targetEnd, value)` (accepted [NUC 39](nuc-0039.md)) |
-| `String` | `String.fromCharCode`; instance `charAt`, `length`, `lower`, `replace`, `replaceAll` (accepted [NUC 42](nuc-0042.md)), `repeat`, `split`, `padStart` and `padEnd` ([NUC 111](nuc-0111.md)), and Python's `startswith`, `endswith` and `join(items)`, with the separator as the receiver ([NUC 110](nuc-0110.md)) |
+| `String` | `String.fromCharCode`; instance `charAt`, `length`, `lower`, `replace`, `replaceAll` (accepted [NUC 42](nuc-0042.md)), `repeat`, `split`, `padStart` and `padEnd` ([NUC 111](nuc-0111.md)), Python's `startswith`, `endswith` and `join(items)`, with the separator as the receiver ([NUC 110](nuc-0110.md)), the size and emptiness methods `length()`, `size()`, `len()`, `isEmpty()`, `is_empty()` and `isNotEmpty()` ([NUC 116](nuc-0116.md)), and the case conversion aliases `uppercase()`, `to_uppercase()` and `uppercased()` of `toUpperCase()`, and `lowercase()`, `to_lowercase()` and `lowercased()` of `toLowerCase()` ([NUC 118](nuc-0118.md)) |
 | `Date` | `Date()`, `Date(string)`, `Date(number)`, `Date.now()`, `Date.parse()`; instance `getTime`, `getYear`, `toDateString` |
-| `List` | `push`, `pop`, `filter`, `map`, `flatMap` (accepted [NUC 41](nuc-0041.md)), `flat` ([NUC 103](nuc-0103.md)), `reduce`, `find`, `some`, `every`, `slice`, `sort` (in place, [NUC 58](nuc-0058.md)), `join`, `length`, and the queries `at`, `includes`, `indexOf`, `lastIndexOf`, `findIndex`, `findLast`, `findLastIndex` and `concat` ([NUC 61](nuc-0061.md)), `sum` ([NUC 68](nuc-0068.md)), `max` and `min` ([NUC 69](nuc-0069.md)), `distinct` ([NUC 71](nuc-0071.md)), `count(predicate)` ([NUC 73](nuc-0073.md)), `mode` ([NUC 75](nuc-0075.md)), `maxBy` and `minBy` ([NUC 77](nuc-0077.md)), `average` ([NUC 80](nuc-0080.md)), `median` ([NUC 84](nuc-0084.md)), `sortBy` ([NUC 105](nuc-0105.md)), and `partition` ([NUC 108](nuc-0108.md)); `sum`, `max`, `min` and `mode` also read as `sum of list` ([NUC 75](nuc-0075.md) revision 2) |
+| `List` | `push`, `pop`, `filter`, `map`, `flatMap` (accepted [NUC 41](nuc-0041.md)), `flat` ([NUC 103](nuc-0103.md)), `reduce`, `find`, `some`, `every`, `slice`, `sort` (in place, [NUC 58](nuc-0058.md)), `join`, `length`, and the queries `at`, `includes`, `indexOf`, `lastIndexOf`, `findIndex`, `findLast`, `findLastIndex` and `concat` ([NUC 61](nuc-0061.md)), `sum` ([NUC 68](nuc-0068.md)), `max` and `min` ([NUC 69](nuc-0069.md)), `distinct` ([NUC 71](nuc-0071.md)), `count(predicate)` ([NUC 73](nuc-0073.md)), `mode` ([NUC 75](nuc-0075.md)), `maxBy` and `minBy` ([NUC 77](nuc-0077.md)), `average` ([NUC 80](nuc-0080.md)), `median` ([NUC 84](nuc-0084.md)), `sortBy` ([NUC 105](nuc-0105.md)), `partition` ([NUC 108](nuc-0108.md)), `product` ([NUC 114](nuc-0114.md)), the size and emptiness aliases `size()`, `len()`, `isEmpty()`, `is_empty()` and `isNotEmpty()` ([NUC 116](nuc-0116.md)), and the first and last element aliases `first()`, `last()`, `first(predicate)` and `last(predicate)` ([NUC 117](nuc-0117.md)); `sum`, `max`, `min` and `mode` also read as `sum of list` ([NUC 75](nuc-0075.md) revision 2) |
 | `Class` | the global list of declared types; `Class.length` |
 
 ```
@@ -2655,6 +2749,157 @@ listing == scripts.join(", ")
   `Nucleoid spells startswith, endswith and join as Python does` in
   `tests/reference.md`. The
   [root section](../nucleoid.spec.md#python-string-method-aliases) and its
+  three appended entries define the results, liveness and rollback.
+
+### Size and emptiness method aliases
+
+```
+class Task(title):
+    this.title = title
+inbox = ["call ana", "pay rent"]
+pending = inbox.size()
+clear = inbox.isEmpty()
+Task("plan trip")
+assert([pending, inbox.len(), Task.size(), "inbox".length()], [2, 2, 1, 5])
+inbox.pop()
+inbox.pop()
+assert([pending, clear, inbox.is_empty(), Task.isNotEmpty()], [0, true, true, true])
+pending == inbox.length
+```
+
+- [NUC 116](nuc-0116.md) adds the size and emptiness methods of Java,
+  Kotlin, C++ and Rust as aliases of `length` on lists, class populations
+  and strings. `size()` and `len()` are `length`, `isEmpty()` and
+  `is_empty()` are `length == 0`, and `isNotEmpty()` is `length > 0`.
+  Strings also take Java's `length()`, which lists and populations already
+  take, and every receiver counts characters, as `length` does.
+- Each alias evaluates its receiver and then its arguments, which it
+  ignores, and stays live like its accepted spelling: `pending` and `clear`
+  follow the pops. `why` names the same dependencies.
+- Only calls on lists, populations and strings change. Other receivers keep
+  their errors, as their `length()` does, so `(5).size()` still raises
+  `TypeError("number.size is not a function")`. Reads such as `xs.size`
+  without a call, functions, properties and methods of the same names, and
+  `$Name` inside a class-level rule, where it is the instance, keep their
+  behavior. On a class name the population alias wins over an instance
+  method of the same name, as `Name.length()` already does.
+- Kotlin's `size` and Swift's `isEmpty` read as properties, C++ writes
+  `empty()` and Python `len(xs)`; none of these is added. Java counts UTF-16
+  code units and C++ and Rust count bytes, where Nucleoid counts characters,
+  so `"Zoë".len()` is `3`, not Rust's `4`.
+- This is the executable entry
+  `Nucleoid spells size, len and isEmpty as Java, Kotlin and Rust do` in
+  `tests/reference.md`. The
+  [root section](../nucleoid.spec.md#size-and-emptiness-method-aliases) and
+  its three appended entries define the results, liveness and rollback.
+
+### First and last element methods
+
+```
+class Job(name, done):
+    this.name = name
+    this.done = done
+queue = ["scan", "print"]
+head = queue.first()
+tail = queue.last()
+Job("backup", true)
+Job("deploy", false)
+pending = Job.first(job -> !job.done)
+assert([head, tail, pending.name, Job.last().name], ["scan", "print", "deploy", "deploy"])
+queue.shift()
+queue.push("fax")
+assert([head, tail], ["print", "fax"])
+[queue.first(job -> job == "copy"), [].last()]
+```
+
+- [NUC 117](nuc-0117.md) adds the `first` and `last` methods of Kotlin,
+  Rust, Swift, Ruby and C#'s LINQ as aliases on lists and class
+  populations. `first()` is `at(0)` and `last()` is `at(-1)`, so a class's
+  first and last instances are its first and latest created. With a
+  function, `first(test)` is `find(test)` and `last(test)` is
+  `findLast(test)`, as Kotlin's `orders.first { it.open }` and LINQ's
+  `First(predicate)` read.
+- Each alias gives what its spelling gives: undefined for an empty list,
+  `null` for a class without instances, and `null` when the predicate
+  accepts nothing, so the last line holds `null` and undefined. Any other
+  first argument raises `TypeError("first expects a function")` or
+  `TypeError("last expects a function")`, as `find` raises for it.
+- Each alias evaluates its receiver and then its arguments, and stays live
+  like its spelling: `head` and `tail` follow the shift and the push, and a
+  predicate's reads update its declaration too. `why` names the same
+  dependencies.
+- Only calls on lists and populations change. Strings, whose accepted
+  `find` is `indexOf`, and other receivers keep their errors, so
+  `"abc".first()` still raises `TypeError("abc.first is not a function")`;
+  `TEXT[0]` and `TEXT[-1]` read a string's ends. Reads such as `xs.first`
+  without a call, the state versions `xs@first` and `xs@last`, functions,
+  properties and methods of the same names, and `$Name` inside a
+  class-level rule, where it is the instance, keep their behavior. On a
+  class name the population alias wins over an instance method of the same
+  name.
+- Kotlin's, Java's and LINQ's `first()` and `last()` throw on an empty
+  receiver or when nothing matches, and Rust's return an `Option`; the
+  aliases give undefined or `null` instead. Swift's and Dart's `first` and
+  `last` are properties, and Ruby's `first(n)` takes a count, which raises
+  here, where `xs[:n]` reads the first `n` items. Kotlin's `firstOrNull`,
+  Java's `getFirst`, C++'s `front` and `back`, and `head` are not added.
+- This is the executable entry
+  `Nucleoid reads first and last elements as Kotlin and Rust do` in
+  `tests/reference.md`. The
+  [root section](../nucleoid.spec.md#first-and-last-element-methods) and its
+  three appended entries define the results, liveness and rollback.
+
+### Case conversion method aliases
+
+```
+class User(name):
+    this.name = name
+$User.handle = $User.name.lowercase()
+ada = User("Ada Lovelace")
+email = "ADA@EXAMPLE.ORG"
+inbox = email.to_lowercase()
+shown = ada.name.uppercased()
+assert([ada.handle, inbox, shown], ["ada lovelace", "ada@example.org", "ADA LOVELACE"])
+ada.name = "Ada King"
+email = "Countess@Example.org"
+assert([ada.handle, inbox, shown], ["ada king", "countess@example.org", "ADA KING"])
+["straße".to_uppercase(), "ÉCOLE".lowercased(), "ok".uppercase()]
+```
+
+- [NUC 118](nuc-0118.md) adds the case conversion methods of Kotlin, Rust
+  and Swift as aliases on strings. `uppercase()`, `to_uppercase()` and
+  `uppercased()` are `toUpperCase()`, and `lowercase()`, `to_lowercase()`
+  and `lowercased()` are `toLowerCase()`, with the same full Unicode case
+  mapping, so the last line holds `"STRASSE"`, one letter longer than
+  `"straße"`, and `"école"`.
+- Each alias evaluates its receiver and then its arguments, which it
+  ignores, and stays live like its spelling: `ada.handle`, `inbox` and
+  `shown` follow the writes of the name and the address. `why` names the
+  same dependencies.
+- An alias equals its spelling only while its receiver is a string. When a
+  later write replaces the receiver of a standing call with another kind
+  of value, the call reads the alias's name on that value: a number raises
+  `TypeError("number.uppercase is not a function")` where the spelling
+  raises `TypeError("number.toUpperCase is not a function")`, and an object
+  whose `uppercase` is a function runs it where the spelling gives
+  undefined.
+- Only calls on strings change. Lists, populations and other receivers keep
+  their errors, so `(5).uppercase()` still raises
+  `TypeError("number.uppercase is not a function")`. Reads such as
+  `text.uppercase` without a call, functions, properties and methods of the
+  same names, and `String.uppercase()` keep their behavior.
+- Kotlin's `uppercase()` and `lowercase()` use the invariant locale, as
+  these aliases do, and Rust's are the same mapping. A locale argument, as
+  in Java's and Kotlin's `Locale` overloads or Swift's
+  `uppercased(with:)`, is evaluated and ignored, so no Turkish dotless `ı`
+  mapping applies. C#'s `ToUpper()`, Rust's ASCII-only
+  `to_ascii_uppercase()`, Ruby's `upcase`, Python's `casefold()`,
+  `swapcase()`, `title()` and `capitalize()`, and Swift's `capitalized` are
+  not added.
+- This is the executable entry
+  `Nucleoid converts case as Kotlin, Rust and Swift do` in
+  `tests/reference.md`. The
+  [root section](../nucleoid.spec.md#case-conversion-method-aliases) and its
   three appended entries define the results, liveness and rollback.
 
 ### Reactive string padding
@@ -3896,6 +4141,52 @@ pace
   [list and population medians](../nucleoid.spec.md#list-and-population-medians)
   section.
 
+### List and population products
+
+```
+sides = [2, 3, 4]
+volume = sides.product()
+class Check(name, chance):
+    this.name = name
+    this.chance = chance
+Check("lint", 0.5)
+build = Check("build", 0.75)
+green = Check.product(check -> check.chance)
+assert([volume, green], [24, 0.375])
+sides.push(0.5)
+build.chance = 1
+Check("deploy", 0.5)
+assert([volume, green], [12, 0.25])
+sides = []
+volume
+```
+
+- This is the complete
+  `Nucleoid multiplies lists and populations with product` program in
+  `tests/reference.md`, without its title and expected-return metadata; it
+  returns `1`.
+- [NUC 114](nuc-0114.md) adds `product()` and `product(selector)` to lists
+  and class instance lists. The values multiply left to right from `1` in
+  64-bit floating point, so a list of numbers multiplies bit for bit to
+  `xs.reduce((total, x) => total * x, 1)`, and an empty list or class gives
+  `1`, the empty product.
+- Values convert as `sum` converts them, so `[2, "3", true].product()` is
+  `6`. An undefined value makes the product undefined, stored as `null`. A
+  `null` item counts `0` without settling a declaration to `null`, while the
+  reads inside a selector follow the existing rules.
+- The selector is called once per item, in order, with only the item. A
+  supplied selector that is not a function, including `null`, raises
+  `TypeError("product expects a function")`, even on an empty receiver.
+- Products are read-only and live: a declaration follows the list or
+  population, the arguments and what the selector reads, in class-level rules
+  too. On a class name, `Name.product(...)` is the population query even when
+  the class declares an instance method `product`; instances keep calling the
+  method. `product` is not a noun query, so `product of xs` stays a syntax
+  error.
+- The authoritative contract is the
+  [list and population products](../nucleoid.spec.md#list-and-population-products)
+  section.
+
 ---
 
 ## 12. Reasoning Operations
@@ -4411,9 +4702,11 @@ Messages are exact and are part of the observable behaviour of the language.
 | A string's `join` whose first argument is neither a list nor a declared class's instances, including a string or a missing argument | `<receiver>.join is not a function` |
 | Missing or non-function `flatMap` callback, even on an empty receiver | `flatMap expects a function` |
 | Missing or non-function `find`, `findIndex`, `findLast` or `findLastIndex` callback, even on an empty receiver | `<name> expects a function` |
+| A supplied `first` or `last` argument that is not a function, including `null`, even on an empty receiver | `first expects a function` or `last expects a function` |
 | A supplied `sum` selector that is not a function, including `null`, even on an empty receiver | `sum expects a function` |
 | A supplied `average` selector that is not a function, including `null`, even on an empty receiver | `average expects a function` |
 | A supplied `median` selector that is not a function, including `null`, even on an empty receiver | `median expects a function` |
+| A supplied `product` selector that is not a function, including `null`, even on an empty receiver | `product expects a function` |
 | A supplied `max` or `min` selector that is not a function, including `null`, even on an empty receiver | `max expects a function` or `min expects a function` |
 | A supplied `distinct` selector that is not a function, including `null`, even on an empty receiver | `distinct expects a function` |
 | Missing or non-function `count` predicate, including `null`, even on an empty receiver | `count expects a function` |
@@ -4435,6 +4728,7 @@ Messages are exact and are part of the observable behaviour of the language.
 | Repeated string output is too large to represent or allocate | `Repeated string is too large` |
 | Padded string output of `padStart` or `padEnd` is too large to represent or allocate | `Padded string is too large` |
 | A `while` loop whose condition still holds after 100,000 iterations of one run | `Loop did not terminate` |
+| A `repeat` loop whose count converts to more than 100,000, `Infinity` included, raised before the first iteration | `Repeat count is too large` |
 | An undeclared constructor label | `Unknown constructor argument '<name>' for <class>` |
 | A repeated constructor binding, including positional plus named | `Duplicate constructor argument '<name>' for <class>` |
 | A positional constructor argument following a label | `Positional constructor argument after named arguments for <class>` |
@@ -4606,6 +4900,9 @@ for source:                            indented iteration with local it
 while condition:                       repeat while the condition holds (NUC 63)
     statement
 while condition: statement             same loop with a same-line body
+repeat count:                          run the body count times; count is read once (NUC 115)
+    statement
+repeat count: statement                same loop with a same-line body
 
 value => expression                    anonymous arrow; also (a, b) => expression
 value => { statement }                 anonymous arrow with a statement body
@@ -4643,6 +4940,12 @@ record = {amount: amount unit: "C"}    optional explicit-property comma (NUC 44)
 record = {...base, qty: 1}             copy base's entries in order; later entries win (NUC 81)
 
 throw value                            raise a value
+try:                                   run the body; a failure rolls it back
+    statement
+catch name:                            then runs this suite with the error bound
+    statement
+finally:                               runs however the statement ends (NUC 119)
+    statement
 return expression                      yield from a block or function
 assert(actual, expected)                existing equality-check helper
 assert: actual, expected                optional statement spelling (Accepted NUC 45)
@@ -4669,9 +4972,18 @@ items.average()  Name.average(selector) live mean: exactly items.sum() / items.l
 items.median()  Name.median(selector)  live middle value; even counts take (lower + upper) / 2 (NUC 84)
 items.sortBy(key)  Name.sortBy(key)   live new list in ascending key order; ties keep receiver order (NUC 105)
 items.partition(test)  Name.partition(test) live [kept, rest]: what filter(test) keeps, then the others (NUC 108)
+items.product()  Name.product(selector) live product from 1: exactly items.reduce((t, x) => t * x, 1) (NUC 114)
 text.startswith(p)  text.endswith(s)  Python spellings: exactly text.startsWith(p), text.endsWith(s) (NUC 110)
 ", ".join(items)  ", ".join(Name)      Python spelling: exactly items.join(", "), Name.join(", ") (NUC 110)
 text.padStart(n, fill)  text.padEnd(n)  live text padded before or after to n characters; fill defaults to " " (NUC 111)
+items.size()  items.len()  text.length() exactly items.length and text.length; Name.size() counts instances (NUC 116)
+items.isEmpty()  items.is_empty()      exactly items.length == 0, on lists, populations and strings (NUC 116)
+items.isNotEmpty()                     exactly items.length > 0, on lists, populations and strings (NUC 116)
+items.first()  items.last()            exactly items.at(0) and items.at(-1); Name.last() is the latest instance (NUC 117)
+items.first(test)  items.last(test)    exactly items.find(test) and items.findLast(test), on lists and populations (NUC 117)
+text.uppercase()  text.lowercase()     Kotlin spellings: exactly text.toUpperCase(), text.toLowerCase() (NUC 118)
+text.to_uppercase()  text.to_lowercase() Rust spellings: exactly text.toUpperCase(), text.toLowerCase() (NUC 118)
+text.uppercased()  text.lowercased()   Swift spellings: exactly text.toUpperCase(), text.toLowerCase() (NUC 118)
 mode of items  sum of Name.map(f)      noun query: exactly items.mode(), Name.map(f).sum() (NUC 75)
 sum of items ** 2                      a noun query applies to the whole power: sum of (items ** 2) (NUC 75)
 

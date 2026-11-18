@@ -929,3 +929,60 @@ fn membership_headers_wait_for_their_indented_body() {
         Some("ok = x not in xs\n".to_string())
     );
 }
+
+#[test]
+fn repeat_headers_buffer_through_their_suite_colon() {
+    for line in [
+        "repeat 3:",
+        "repeat years: # yearly",
+        "repeat ready ? 2 : 3:",
+        "repeat all v in xs: v > 0:",
+    ] {
+        assert!(indented_body_header(line), "{line:?}");
+        assert_eq!(next_indentation(line, true), INDENT, "{line:?}");
+    }
+    for line in [
+        "repeat 3: count = count + 1",
+        "repeat ready: tick",
+        "repeat 3",
+        "repeat = 3",
+    ] {
+        assert!(!indented_body_header(line), "{line:?}");
+    }
+    assert_eq!(
+        next_indentation("    repeat 3:", true),
+        format!("    {INDENT}")
+    );
+}
+
+#[test]
+fn try_statements_buffer_their_finally_clause_until_a_blank_line() {
+    let source = "try:\n    log.push(1)\ncatch:\n    log.push(2)\nfinally:\n    log.push(3)\n";
+    let mut lines: Vec<&str> = source.lines().collect();
+    lines.push("");
+    let mut expected = vec![None; lines.len() - 1];
+    expected.push(Some(source.to_string()));
+    assert_eq!(submitted(&lines), expected);
+    assert!(indented_body_header("finally:"));
+    assert_eq!(next_indentation("finally:", true), INDENT);
+
+    let mut runtime = Runtime::new();
+    runtime.run("log = []").unwrap();
+    runtime.run(source).unwrap();
+    assert_eq!(
+        runtime.run("log").unwrap(),
+        Value::List(vec![Value::Number(1.0), Value::Number(3.0)])
+    );
+
+    assert_eq!(
+        submitted(&["try:", "    x = 1", "catch:", "    x = 2", "", "finally:"]),
+        [
+            None,
+            None,
+            None,
+            None,
+            Some("try:\n    x = 1\ncatch:\n    x = 2\n".to_string()),
+            None
+        ]
+    );
+}

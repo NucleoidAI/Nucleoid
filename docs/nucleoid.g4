@@ -102,11 +102,12 @@ block
 
 // Statements need no separator where the preceding production ends.
 // At statement start, '{' is a block or pattern, never an object literal.
-// Destructuring and whileStmt are tentative; other recognized statement
-// headers commit even if a later token fails to match.
+// Destructuring, whileStmt and repeatStmt are tentative; other recognized
+// statement headers commit even if a later token fails to match.
 statement
     : destructuring
     | whileStmt
+    | repeatStmt
     | enumStmt
     | ifStmt
     | forStmt
@@ -301,8 +302,25 @@ whileStmt
     : WHILE clauseExpression suite      // Stmt::While
     ;
 
+// The tentative count follows the whileStmt rules above, through one shared
+// header test. It is evaluated once, before the first iteration.
+repeatStmt
+    : REPEAT clauseExpression suite     // Stmt::Repeat
+    ;
+
+// Without finallyClause a tryStmt is Stmt::Try, with it Stmt::TryFinally.
 tryStmt
-    : TRY body lineSeparator* CATCH (LPAREN name RPAREN | name)? body
+    : TRY body lineSeparator* CATCH (LPAREN name RPAREN | name)? body finallyClause?
+    ;
+
+// FINALLY starts the logical line after the catch body, at the tryStmt's
+// layout level: only NEWLINEs follow the catch body, and the token before
+// FINALLY is a NEWLINE or the DEDENT that closes it. FINALLY on the catch
+// body's line, after ';', or inside '(' and '[', which suppress layout, keeps
+// its name reading, and so does 'FINALLY COLON name' before NEWLINE, ';',
+// DEDENT or EOF, which stays a typeDeclaration.
+finallyClause
+    : NEWLINE* FINALLY suite
     ;
 
 functionDecl
@@ -748,9 +766,9 @@ atVariable
  *   of a comprehension have no THIS receiver, so their reads keep the
  *   accepted error; a comprehension's source and a quantified condition
  *   keep THIS. A classBody inside such a body has THIS again.
- * - The NUC 93 probes of whileStmt and supposeStmt headers read THIS
- *   receivers but no assignment receivers, as the accepted probes read the
- *   written-out 'THIS DOT property'.
+ * - The NUC 93 probes of whileStmt, repeatStmt and supposeStmt headers read
+ *   THIS receivers but no assignment receivers, as the accepted probes read
+ *   the written-out 'THIS DOT property'.
  */
 receiverRead
     : DOT property                      // Expr::Member over the receiver path
@@ -790,9 +808,10 @@ quantified
  *   "Use all instead of every inside if" at the EVERY (NUC 98 revision 2).
  *   The other two words are unchanged there. The rule decides no parse: it
  *   is checked on the reading the parser keeps, so a tentative
- *   destructuring value, whileStmt condition, premise or Python conditional
- *   that holds such an EVERY and is dropped, or a parse pass that fails,
- *   leaves every decision as before; see the parse-pass contract.
+ *   destructuring value, whileStmt condition, repeatStmt count, premise or
+ *   Python conditional that holds such an EVERY and is dropped, or a parse
+ *   pass that fails, leaves every decision as before; see the parse-pass
+ *   contract.
  */
 spelledClass
     : (ANY | ALL) name                  // Expr::ClassRef
@@ -869,6 +888,8 @@ name
 enumName
     : NAME
     | WHILE
+    | REPEAT
+    | FINALLY
     | ENUM
     | EXTENDS
     | IS
@@ -952,6 +973,8 @@ TRY              : 'try';
 TYPEOF           : 'typeof';
 
 WHILE            : 'while';
+REPEAT           : 'repeat';
+FINALLY          : 'finally';
 ENUM             : 'enum';
 EXTENDS          : 'extends';
 ASSERT           : 'assert';
