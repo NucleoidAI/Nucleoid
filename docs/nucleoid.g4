@@ -310,12 +310,30 @@ repeatStmt
 
 // Without finallyClause a tryStmt is Stmt::Try, with it Stmt::TryFinally.
 tryStmt
-    : TRY body lineSeparator* CATCH (LPAREN name RPAREN | name)? body finallyClause?
+    : TRY body lineSeparator* (catchClause | exceptClause) finallyClause?
     ;
 
-// FINALLY starts the logical line after the catch body, at the tryStmt's
-// layout level: only NEWLINEs follow the catch body, and the token before
-// FINALLY is a NEWLINE or the DEDENT that closes it. FINALLY on the catch
+catchClause
+    : CATCH (LPAREN name RPAREN | name)? body
+    ;
+
+// Python's catch-all headers build the tree of their catch spelling (NUC 122):
+// 'EXCEPT COLON' and 'EXCEPT EXCEPTION COLON' are 'CATCH COLON', binding the
+// name error, and 'EXCEPT EXCEPTION AS name COLON' is 'CATCH name COLON'. The
+// whole header, through its COLON, is matched before any of it is consumed,
+// and its suite is the explicit-colon suite of CATCH. Any other EXCEPT where
+// CATCH is expected, a header without its COLON included, keeps
+// SyntaxError("Expected 'catch' after 'try'") at the EXCEPT. On an inline
+// body's line, EXCEPT after ';' begins another statement of the body, and a
+// destructuring, enumLine or predicateSentence ends only before NEWLINE, ';',
+// DEDENT, '}', EOF, ELSE or CATCH, never before EXCEPT.
+exceptClause
+    : EXCEPT (EXCEPTION (AS name)?)? suite
+    ;
+
+// FINALLY starts the logical line after the catch or except body, at the
+// tryStmt's layout level: only NEWLINEs follow that body, and the token before
+// FINALLY is a NEWLINE or the DEDENT that closes it. FINALLY on that
 // body's line, after ';', or inside '(' and '[', which suppress layout, keeps
 // its name reading, and so does 'FINALLY COLON name' before NEWLINE, ';',
 // DEDENT or EOF, which stays a typeDeclaration.
@@ -911,6 +929,8 @@ enumName
     | PATH
     | INTERSECT
     | EXCEPT
+    | EXCEPTION
+    | AS
     | UNION
     | NODES
     | HOLDS
@@ -1001,6 +1021,8 @@ DEPTH            : 'depth';
 PATH             : 'path';
 INTERSECT        : 'intersect';
 EXCEPT           : 'except';
+EXCEPTION        : 'Exception';
+AS               : 'as';
 UNION            : 'union';
 NODES            : 'nodes';
 HOLDS            : 'holds';
@@ -1194,6 +1216,8 @@ fragment REGEX_CHAR
  * new X(...)               -> X(...).
  * for xs:                  -> iteration with the item name "it".
  * catch without a name     -> the binding "error".
+ * except:                  -> catch:, also except Exception:.
+ * except Exception as e:   -> catch e:.
  * model directly before |> -> Expr::Model.
  * |> intersect(model)      -> its other selection is Expr::Model; also except
  *                             and union.

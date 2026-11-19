@@ -2814,6 +2814,29 @@ price = 20
 [facts, reach]
 # return: [[4,20,3],[60,65]]
 ---
+# Nucleoid reads Python except clauses as catch clauses
+
+def ratio(part, whole):
+    try:
+        if whole == 0:
+            throw "EMPTY"
+        return part / whole
+    except Exception as reason:
+        return reason
+assert([ratio(3, 4), ratio(1, 0)], [0.75, "EMPTY"])
+try:
+    share = stock / 2
+except Exception:
+    share = 0
+try:
+    level = stock.reorder()
+except:
+    level = error
+assert([share, level], [0, ReferenceError("stock is not defined")])
+stock = 8
+share
+# return: 0
+---
 # Nucleoid flattens nested lists with flat
 
 pallets = [[["bolt", "nut"], ["gear"]], [["cog"]]]

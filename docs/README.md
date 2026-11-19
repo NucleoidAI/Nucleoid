@@ -2509,7 +2509,55 @@ visits.length
   before a `catch`. See the
   [root contract](../nucleoid.spec.md#finally-clauses).
 
-Full detail: [NUC 9](nuc-0009.md), [NUC 46](nuc-0046.md), [NUC 119](nuc-0119.md).
+### Python-style except clauses
+
+```
+def ratio(part, whole):
+    try:
+        if whole == 0:
+            throw "EMPTY"
+        return part / whole
+    except Exception as reason:
+        return reason
+assert([ratio(3, 4), ratio(1, 0)], [0.75, "EMPTY"])
+try:
+    share = stock / 2
+except Exception:
+    share = 0
+try:
+    level = stock.reorder()
+except:
+    level = error
+assert([share, level], [0, ReferenceError("stock is not defined")])
+stock = 8
+share
+```
+
+- This is the complete
+  `Nucleoid reads Python except clauses as catch clauses` program in
+  `tests/reference.md`, without its title and expected-return metadata; it
+  returns `0`.
+- [NUC 122](nuc-0122.md) reads Python's catch-all clause headers where a
+  `catch` clause belongs: `except:` and `except Exception:` are exactly
+  `catch:`, binding the error to `error`, and `except Exception as NAME:` is
+  exactly `catch NAME:`. Each builds the same statement as its `catch`
+  spelling, so rollback, the binding and its scope, `return`, nested `try`
+  statements and a following `finally:` behave as they do with `catch`.
+- The header takes its colon. `except`, `Exception` and `as` stay ordinary
+  names, and every other header where `catch` belongs, such as `except e:`,
+  `except ValueError:` or a colon-free `except Exception as e`, keeps
+  `SyntaxError("Expected 'catch' after 'try'")`.
+- Differences from Python: typed and filtered clauses, several clauses,
+  `else:`, `except*` and `raise` are not added, and Nucleoid raises with
+  `throw`. The bound value is the error's text, such as
+  `"ReferenceError: stock is not defined"`, or the thrown value, not an
+  exception object. `Exception` catches every error, since Nucleoid has no
+  exits like `SystemExit` that Python's `Exception` leaves out, and an outer
+  name that the clause's binder shadows keeps its value, where Python
+  unbinds it. See the
+  [root contract](../nucleoid.spec.md#python-style-except-clauses).
+
+Full detail: [NUC 9](nuc-0009.md), [NUC 46](nuc-0046.md), [NUC 119](nuc-0119.md), [NUC 122](nuc-0122.md).
 
 ---
 
@@ -5062,6 +5110,10 @@ throw value                            raise a value
 try:                                   run the body; a failure rolls it back
     statement
 catch name:                            then runs this suite with the error bound
+    statement
+except Exception as name:              Python's spelling of catch name: (NUC 122)
+    statement
+except:                                Python's spelling of catch:, binding error (NUC 122)
     statement
 finally:                               runs however the statement ends (NUC 119)
     statement
