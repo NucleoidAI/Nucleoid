@@ -22,7 +22,6 @@ export async function instances({ train_dataset, test_input_matrix }) {
               ({ input_matrix, instances }) => ({
                 input_matrix,
                 instances: instances.map((instance) => ({
-                  instance_matrix: instance.input_instance_matrix,
                   instance_crop_matrix: Matrix.crop(
                     instance.input_instance_matrix
                   ),
@@ -34,6 +33,7 @@ export async function instances({ train_dataset, test_input_matrix }) {
                   orientation: instance.input_value.orientation,
                   volume: instance.input_value.volume,
                   value: instance.input_value,
+                  instance_matrix: instance.input_instance_matrix,
                 })),
               })
             ),

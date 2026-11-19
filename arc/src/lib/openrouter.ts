@@ -26,6 +26,10 @@ export async function generate({ reasoning = false, messages = [] }) {
       presence_penalty: 0,
       reasoning: { enabled: reasoning },
       response_format: { type: "json_object" },
+      provider: {
+        only: ["deepinfra/fp8"],
+        allow_fallbacks: false,
+      },
     },
   }).catch((error) => {
     if (!axios.isAxiosError(error)) {

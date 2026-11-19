@@ -7,7 +7,9 @@ import object from "./object.ts";
 export async function declarations({ train_dataset }) {
   milestone.inferring_declarations();
 
-  const { declarations, output_canvas } = await llm.generate({
+  const {
+    result: { declarations, output_canvas },
+  } = await llm.generate({
     grammar: true,
     messages: [
       {
@@ -20,7 +22,12 @@ export async function declarations({ train_dataset }) {
             output_canvas: "<OUTPUT_CANVAS>",
           })}
           json_format:
-          { "declarations": <DECLARATIONS>, "output_canvas": <OUTPUT_CANVAS> }
+          {
+            "result": {
+              "declarations": <DECLARATIONS>,
+              "output_canvas": <OUTPUT_CANVAS>
+            }
+          }
         `,
       },
     ],
