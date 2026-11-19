@@ -7,11 +7,11 @@ classStmt            ::= 'class' NAME '(' constructorParameter ( ',' constructor
                          ':' classBody
 constructorParameter ::= NAME ':' type
 type                 ::= 'int' | 'str' | 'list'
-classBody            ::= ( NEWLINE INDENT COMMENT NEWLINE INDENT fieldAssignment )+
+classBody            ::= ( NEWLINE INDENT fieldAssignment )+
 fieldAssignment      ::= 'this' '.' NAME assign ( NAME | STRING )
 
 ifStmt               ::= 'if' expression ':' ruleBody
-ruleBody             ::= ( NEWLINE INDENT COMMENT NEWLINE INDENT classRule )+
+ruleBody             ::= ( NEWLINE INDENT classRule )+
 classRule            ::= CLASS_REF '.' NAME assign expression
 
 labeledArgument      ::= NAME '=' literal

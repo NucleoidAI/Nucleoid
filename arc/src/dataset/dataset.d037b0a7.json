@@ -1,6 +1,6 @@
 {
   "declarations": [
-    "# Each object is one single-cell point. Every point extends straight down to the bottom edge, a vertical bar of its color\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, color: int):\n    # Its column\n    this.x is x\n    # Its row\n    this.y is y\n    # One column: a single cell\n    this.width is width\n    # One row\n    this.height is height\n    # A point points nowhere: 0\n    this.orientation is orientation\n    # Its one cell\n    this.volume is volume\n    # l7544 names a single point\n    this.tag is l7544\n    # Its color\n    this.color is color",
+    "# Each object is one single-cell point. Every point extends straight down to the bottom edge, a vertical bar of its color\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, color: int):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.tag is l7544\n    this.color is color",
     "# Each point becomes l6953, a vertical bar\n$Obj.tag is l6953",
     "# The bar runs from its input row down to the bottom edge\n$Obj.height is canvas_height - $Obj.y@first",
     "# Every cell of the bar is filled\n$Obj.volume is $Obj.width * $Obj.height"

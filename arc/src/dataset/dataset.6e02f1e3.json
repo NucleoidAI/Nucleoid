@@ -1,9 +1,9 @@
 {
   "declarations": [
-    "# Each object is the whole mosaic that fills the grid. The output replaces it with a line of 5 whose direction depends on how many colors the mosaic has\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, parts: list):\n    # Left column of its box, 0\n    this.x is x\n    # Top row of its box, 0\n    this.y is y\n    # Columns of its box, 3: the full grid\n    this.width is width\n    # Rows of its box, 3\n    this.height is height\n    # A mosaic points nowhere: 0\n    this.orientation is orientation\n    # Its 9 cells\n    this.volume is volume\n    # l9100 names a single shape\n    this.tag is l9100\n    # Colors of its cells, row by row\n    this.parts is parts",
+    "# Each object is the whole mosaic that fills the grid. The output replaces it with a line of 5 whose direction depends on how many colors the mosaic has\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, parts: list):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.tag is l9100\n    this.parts is parts",
     "# Each mosaic becomes l6074, a straight line across the grid\n$Obj.tag is l6074",
     "# The number of distinct colors picks the line: 1 color the top row at 90, 2 colors the diagonal falling to the right at 135, 3 colors the diagonal rising to the right at 45\n$Obj.orientation is {1: 90, 2: 135, 3: 45}[$Obj.parts.distinct().length]",
-    "# A top-row line, at 90, is one row tall\nif $Obj.orientation is 90:\n    # Height 1; a diagonal keeps the 3 rows of the grid\n    $Obj.height is 1",
+    "# A top-row line, at 90, is one row tall\nif $Obj.orientation is 90:\n    $Obj.height is 1",
     "# The line is drawn in color 5\n$Obj.fill_color is 5",
     "# The line has one cell per column: 3 cells\n$Obj.volume is max of [$Obj.width, $Obj.height]"
   ],

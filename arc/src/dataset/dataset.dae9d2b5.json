@@ -1,7 +1,7 @@
 {
   "declarations": [
-    "# Each object is the whole figure in one 3x3 half of the grid, all its cells: color 4 in the left half, color 3 in the right half. The output overlays the two halves on a 3x3 grid and draws every covered cell in color 6\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int):\n    # Left column of its box\n    this.x = x\n    # Top row of its box\n    this.y = y\n    # Columns of its box\n    this.width = width\n    # Rows of its box\n    this.height = height\n    # A corner points toward its vertex; a diagonal line rising to the right lies at 45; any other figure is 0\n    this.orientation = orientation\n    # Number of its cells\n    this.volume = volume\n    # l9100 names a single shape\n    this.tag = 'l9100'",
-    "# A figure in the right half\nif $Obj.x@first >= canvas_width / 2:\n    # It slides left by half the grid width, onto the left half\n    $Obj.x = $Obj.x@first - canvas_width / 2",
+    "# Each object is the whole figure in one 3x3 half of the grid, all its cells: color 4 in the left half, color 3 in the right half. The output overlays the two halves on a 3x3 grid and draws every covered cell in color 6\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int):\n    this.x = x\n    this.y = y\n    this.width = width\n    this.height = height\n    this.orientation = orientation\n    this.volume = volume\n    this.tag = 'l9100'",
+    "# A figure in the right half slides left by half the grid width, onto the left half\nif $Obj.x@first >= canvas_width / 2:\n    $Obj.x = $Obj.x@first - canvas_width / 2",
     "# Every figure is drawn in color 6, so the overlay shows the cells of both\n$Obj.fill_color = 6"
   ],
   "output_canvas": "FIT",

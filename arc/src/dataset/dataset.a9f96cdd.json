@@ -1,6 +1,6 @@
 {
   "declarations": [
-    "# Each object is the one color-2 cell in the grid. The output replaces it with its 4 diagonal neighbors in fixed colors, 3 top left, 6 top right, 8 bottom left, 7 bottom right, leaving out any that fall outside the grid\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int):\n    # Its column\n    this.x is x\n    # Its row\n    this.y is y\n    # One column: a single cell\n    this.width is width\n    # One row\n    this.height is height\n    # A point points nowhere: 0\n    this.orientation is orientation\n    # Its one cell\n    this.volume is volume\n    # l7544 names a single point\n    this.tag is l7544",
+    "# Each object is the one color-2 cell in the grid. The output replaces it with its 4 diagonal neighbors in fixed colors, 3 top left, 6 top right, 8 bottom left, 7 bottom right, leaving out any that fall outside the grid\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.tag is l7544",
     "# Each cell becomes l2898, the four corners of a 3x3 box around it, its center left empty\n$Obj.tag is l2898",
     "# Corner colors, top row then bottom row: 3 and 6 above, 8 and 7 below\n$Obj.corner_colors is [[3, 6], [8, 7]]",
     "# Leftmost corner column that lies inside the grid\n$Obj.x is min of [$Obj.x@first - 1, $Obj.x@first + 1].filter(column => column >= 0 and column < canvas_width)",

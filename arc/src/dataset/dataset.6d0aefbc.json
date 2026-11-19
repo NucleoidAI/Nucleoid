@@ -1,6 +1,6 @@
 {
   "declarations": [
-    "# Each object is the whole 3x3 block that fills the grid. The output sets its left-right mirror image beside it, on the right\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int):\n    # Left column of its box, 0\n    this.x is x\n    # Top row of its box, 0\n    this.y is y\n    # Columns of its box, 3: the full grid\n    this.width is width\n    # Rows of its box, 3\n    this.height is height\n    # A block points nowhere: 0\n    this.orientation is orientation\n    # Its 9 cells\n    this.volume is volume\n    # l9100 names a single shape\n    this.tag is l9100",
+    "# Each object is the whole 3x3 block that fills the grid. The output sets its left-right mirror image beside it, on the right\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.tag is l9100",
     "# Each block becomes l6919, a shape beside its mirror image\n$Obj.tag is l6919",
     "# Twice its input width: the block, then its mirror image on the right\n$Obj.width is $Obj.width@first * 2",
     "# The mirror image doubles its cells\n$Obj.volume is $Obj.volume@first * 2"

@@ -181,15 +181,16 @@ milestones retain the same second number and add a third occurrence number,
 such as `1.3.1` and `1.3.2` for training-object segmentation. Continued grid
 panels keep the same full number. The declarations header includes the
 output canvas instead of adding a separate milestone. Segmented-object panels
-use `Input` and `Output` without object-number labels. After each pair's
-segmentation, a `<count> training objects synthesized` step shows the `Input`
-and `Output` panels of the training pairs synthesized from it, titled with
-their synthesis, such as `Input · +90° x-1 y+1`. A synthesized
-instance's construction starts with a `Deriving <instance> from <source>`
-step. Model
-token usage remains
-attached to its active milestone. Instance-specific steps, crop and
-implementation headers, and input- and output-state headers include the
+use `Input` and `Output` without object-number labels. After the
+`Analysis · State` table, a `Synthesizing training pairs` step precedes the
+synthesis call, and a `<count> training pairs synthesized` step then shows
+each synthesized pair's `Synthesized <n> · Input` and
+`Synthesized <n> · Output` panels, followed by the
+`Synthesized <n> · Input instance` and `Synthesized <n> · Output instance`
+panels of each of its instances. A synthesized instance's construction then
+starts with a `Constructing <instance>` step, as an extracted instance's does.
+Model token usage remains attached to its active milestone. Instance-specific
+steps, crop and implementation headers, and input- and output-state headers include the
 instance name. In the visualization, each test object's synthesis shows its
 `Input crop` right before its `Implementation`, as in
 `2.6.1 Input crop · <instance>` and
@@ -398,32 +399,27 @@ three juxtaposed statements and raises `ReferenceError`. The solver's own
 same. Every snapshot is the state that the same rules give when spelled with
 `=`.
 
-Every line of every declaration and every implementation has one `#` comment
-line directly above it, indented like the line it explains, so each
-declaration and implementation starts with a comment. The comments are written
-for the model that reads the datasets as few-shot context. The model imitates
-them in the declarations and implementations it writes, and those reach the
-calls that receive no instruction dataset, such as test segmentation and
-output composition. The comments therefore state what those calls need, what
-one object is and what happens to it, in the same words across datasets.
-Above the code, a comment comes before the line it explains, so the model
-writes the reason first and the code after it:
+Every declaration and every implementation starts with one `#` comment line
+that describes the whole block, and the lines inside a class or `if` body
+carry no comment. The comments are written for the model that reads the
+datasets as few-shot context. The model imitates them in the declarations and
+implementations it writes, and those reach the calls that receive no
+instruction dataset, such as test segmentation and output composition. The
+comments therefore state what those calls need, what one object is and what
+happens to it, in the same words across datasets. A comment comes before the
+block it describes, so the model writes the reason first and the code after
+it:
 
-- A class header says what one object is, which is how the grid is
+- A class's comment says what one object is, which is how the grid is
   segmented, and then what the transformation does to the objects. It opens
   the declarations, so it also serves as the plan for the rules.
-- A class body line says what its value holds or how it is read from the
-  grid. The `orientation` line says how orientation applies to the dataset's
-  own shapes. A tag line names the tag's geometry in the same words wherever
-  that tag appears, such as `l6953 names a vertical bar`.
-- A rule states its visible effect on the grid and calls a value read with
-  `@first` the input value. An `if` header says which objects its branch
-  selects and what happens to them. `dataset.core.json` also states what
-  `@first` reads.
-- An implementation describes its object as the grid shows it: its shape and
-  colors, and the features its arguments or the rules depend on, such as a
-  corner's vertex, a row's head, a pattern's period, or which color has the
-  most cells.
+- A rule's comment states its visible effect on the grid and calls a value
+  read with `@first` the input value. An `if`'s comment says which objects
+  its branch selects and what happens to them.
+- An implementation's comment describes its object as the grid shows it: its
+  shape and colors, and the features its arguments or the rules depend on,
+  such as a corner's vertex, a row's head, a pattern's period, or which color
+  has the most cells.
 
 Every statement in a comment holds for the dataset's grids and snapshots.
 Comments use no quote, backslash, or second `#`, so they add no quote to
@@ -434,26 +430,17 @@ derives them as `COMMENT`:
 ```nuc
 # Each object is all the cells of one color, touching or not. Every color except the one with the most cells turns 5
 class Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, color: int):
-    # Left column of their box
     this.x is x
-    # Top row of their box
     this.y is y
-    # Columns of their box
     this.width is width
-    # Rows of their box
     this.height is height
-    # A bar lies along its axis, 0 vertical or 90 horizontal; a corner points toward its vertex; any other group is 0
     this.orientation is orientation
-    # Number of its cells
     this.volume is volume
-    # l9100 names a single shape
     this.tag is l9100
-    # Their color
     this.color is color
 
-# A color group that some other group outnumbers
+# A color group that some other group outnumbers turns color 5; only the group with the most cells keeps its color
 if any other in Obj: other.volume > $Obj.volume:
-    # It turns color 5; only the group with the most cells keeps its color
     $Obj.color is 5
 
 # The 5 color-2 cells, forming a corner with its vertex at the top left, the most of any color
@@ -2608,15 +2595,9 @@ object adds its clockwise turn, as in `($Obj.orientation@first + 180) % 360`.
 Wherever an output's shape points another way, a class-level rule sets its
 orientation, as `$Obj.orientation is 90` does for the rows that
 `dataset.a85d4709.json` paints. A line in `dataset.line.json` points toward its
-color-8 endpoint, so it needs no separate endpoint property. The comment above
-the `orientation` line of `dataset.core.json`'s class states the convention in
-full: `# Direction it points, in degrees clockwise from up: 0 up, 90 right, 180
-down, 270 left, 45 up-right, 135 down-right, 225 down-left, 315 up-left`.
-Every other dataset's `orientation` comment says how these rules apply to its
-own shapes, such as `# A corner points toward its vertex: 45 top right, 135
-bottom right, 225 bottom left, 315 top left`. Its implementation comments name
-the feature that sets each value, such as a corner's vertex, a row's head, or
-the side of a line's 8 end.
+color-8 endpoint, so it needs no separate endpoint property. Implementation
+comments name the feature that sets each orientation, such as a corner's
+vertex, a row's head, or the side of a line's 8 end.
 
 | Dataset | Descriptive properties |
 | --- | --- |

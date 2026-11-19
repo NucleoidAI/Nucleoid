@@ -1,6 +1,6 @@
 {
   "declarations": [
-    "# Each object is the one shape in the grid, inside a 3x3 box. The output shows the shape twice side by side, cropped to the two copies\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, color: int):\n    # Left column of its box\n    this.x is x\n    # Top row of its box\n    this.y is y\n    # Columns of its box, 3\n    this.width is width\n    # Rows of its box, 3\n    this.height is height\n    # The shape is not turned: 0\n    this.orientation is orientation\n    # Number of its cells\n    this.volume is volume\n    # l9100 names a single shape\n    this.tag is l9100\n    # Its one color\n    this.color is color",
+    "# Each object is the one shape in the grid, inside a 3x3 box. The output shows the shape twice side by side, cropped to the two copies\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, color: int):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.tag is l9100\n    this.color is color",
     "# Each shape becomes l4305, a shape repeated side by side\n$Obj.tag is l4305",
     "# The output holds 2 copies\n$Obj.repeat_count is 2",
     "# The second copy sits right of the first\n$Obj.repeat_direction is right",

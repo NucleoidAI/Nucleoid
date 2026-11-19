@@ -1,6 +1,6 @@
 {
   "declarations": [
-    "# Each object is the whole color-1 pattern in the grid. The output extends the grid down with its top-bottom mirror image, so the pattern meets its reflection at the old bottom edge\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int):\n    # Left column of its box\n    this.x is x\n    # Top row of its box\n    this.y is y\n    # Columns of its box\n    this.width is width\n    # Rows of its box\n    this.height is height\n    # The pattern is not turned: 0\n    this.orientation is orientation\n    # Number of its cells\n    this.volume is volume\n    # l9100 names a single shape\n    this.tag is l9100",
+    "# Each object is the whole color-1 pattern in the grid. The output extends the grid down with its top-bottom mirror image, so the pattern meets its reflection at the old bottom edge\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.tag is l9100",
     "# Each pattern becomes l7511, a shape over its mirror image\n$Obj.tag is l7511",
     "# It spans from its input top row down to the old bottom edge, then the same again mirrored below\n$Obj.height is 2 * (canvas_height - $Obj.y@first)",
     "# The mirror image doubles its cells\n$Obj.volume is 2 * $Obj.volume@first"

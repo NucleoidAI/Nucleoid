@@ -1,6 +1,6 @@
 {
   "declarations": [
-    "# Each object is the one shape in the grid. Every shape moves down by one row\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int):\n    # Left column of its box\n    this.x is x\n    # Top row of its box\n    this.y is y\n    # Columns of its box\n    this.width is width\n    # Rows of its box\n    this.height is height\n    # A bar lies along its axis, 0 vertical or 90 horizontal; a corner points toward its vertex; a single cell is 0\n    this.orientation is orientation\n    # Number of its cells\n    this.volume is volume\n    # l9100 names a single shape\n    this.tag is l9100",
+    "# Each object is the one shape in the grid. Every shape moves down by one row\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.tag is l9100",
     "# Each shape moves down one row from its input row; its cells and size stay the same\n$Obj.y is $Obj.y@first + 1"
   ],
   "output_canvas": "EXACT",

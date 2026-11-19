@@ -1,6 +1,6 @@
 {
   "declarations": [
-    "# Each object is the whole mosaic of the grid, empty cells included in its box. The output fills every cell of the grid with the most common color of the mosaic\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, parts: list):\n    # Left column of its box, 0\n    this.x is x\n    # Top row of its box, 0\n    this.y is y\n    # Columns of its box, 3: the full grid\n    this.width is width\n    # Rows of its box, 3\n    this.height is height\n    # A mosaic points nowhere: 0\n    this.orientation is orientation\n    # Number of its colored cells\n    this.volume is volume\n    # l9100 names a single shape\n    this.tag is l9100\n    # Colors of its cells, row by row, skipping empty cells\n    this.parts is parts",
+    "# Each object is the whole mosaic of the grid, empty cells included in its box. The output fills every cell of the grid with the most common color of the mosaic\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, parts: list):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.tag is l9100\n    this.parts is parts",
     "# Each mosaic becomes l5236, a solid rectangle\n$Obj.tag is l5236",
     "# The rectangle takes the most common color among its parts\n$Obj.fill_color is mode of $Obj.parts",
     "# Every cell of its box is filled, the empty ones too\n$Obj.volume is $Obj.width * $Obj.height"

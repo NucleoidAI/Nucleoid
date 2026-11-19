@@ -1,7 +1,7 @@
 {
   "declarations": [
-    "# Each object is all the cells of one color, touching or not. Every color except the one with the most cells turns 5\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, color: int):\n    # Left column of their box\n    this.x is x\n    # Top row of their box\n    this.y is y\n    # Columns of their box\n    this.width is width\n    # Rows of their box\n    this.height is height\n    # A bar lies along its axis, 0 vertical or 90 horizontal; a corner points toward its vertex; any other group is 0\n    this.orientation is orientation\n    # Number of its cells\n    this.volume is volume\n    # l9100 names a single shape\n    this.tag is l9100\n    # Their color\n    this.color is color",
-    "# A color group that some other group outnumbers\nif any other in Obj: other.volume > $Obj.volume:\n    # It turns color 5; only the group with the most cells keeps its color\n    $Obj.color is 5"
+    "# Each object is all the cells of one color, touching or not. Every color except the one with the most cells turns 5\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, color: int):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.tag is l9100\n    this.color is color",
+    "# A color group that some other group outnumbers turns color 5; only the group with the most cells keeps its color\nif any other in Obj: other.volume > $Obj.volume:\n    $Obj.color is 5"
   ],
   "output_canvas": "EXACT",
   "dataset": [

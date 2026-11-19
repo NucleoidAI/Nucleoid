@@ -1,6 +1,6 @@
 {
   "declarations": [
-    "# Each object is all the cells of one color. The output stands each color as a vertical bar of one cell per input cell, hanging from the top row, ordered from the most cells on the left to the fewest on the right\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, color: int):\n    # Left column of their box\n    this.x is x\n    # Top row of their box\n    this.y is y\n    # Columns of their box\n    this.width is width\n    # Rows of their box\n    this.height is height\n    # A bar lies along its axis, 0 vertical or 90 horizontal; a corner points toward its vertex; any other group is 0\n    this.orientation is orientation\n    # Number of its cells, which sets its bar height\n    this.volume is volume\n    # l9100 names a single shape\n    this.tag is l9100\n    # Their color\n    this.color is color",
+    "# Each object is all the cells of one color. The output stands each color as a vertical bar of one cell per input cell, hanging from the top row, ordered from the most cells on the left to the fewest on the right\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, color: int):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.tag is l9100\n    this.color is color",
     "# Each color becomes l6953, a vertical bar\n$Obj.tag is l6953",
     "# The bar is one column wide\n$Obj.width is 1",
     "# A vertical bar stands at 0\n$Obj.orientation is 0",

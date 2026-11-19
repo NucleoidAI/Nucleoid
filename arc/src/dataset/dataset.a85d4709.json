@@ -1,6 +1,6 @@
 {
   "declarations": [
-    "# Each object is one color-5 cell, one in every row. The output paints its whole row in a color picked by its column: 2 for the left column, 4 for the middle, 3 for the right\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int):\n    # Its column, which picks the row color\n    this.x is x\n    # Its row\n    this.y is y\n    # One column: a single cell\n    this.width is width\n    # One row\n    this.height is height\n    # A point points nowhere: 0\n    this.orientation is orientation\n    # Its one cell\n    this.volume is volume\n    # l7544 names a single point\n    this.tag is l7544",
+    "# Each object is one color-5 cell, one in every row. The output paints its whole row in a color picked by its column: 2 for the left column, 4 for the middle, 3 for the right\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.tag is l7544",
     "# Each cell becomes l3058, a horizontal bar\n$Obj.tag is l3058",
     "# A horizontal bar lies at 90\n$Obj.orientation is 90",
     "# Its input column picks the bar color: 2 left, 4 middle, 3 right\n$Obj.fill_color is [2, 4, 3][$Obj.x@first]",

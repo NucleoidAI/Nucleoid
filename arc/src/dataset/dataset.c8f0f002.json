@@ -1,7 +1,7 @@
 {
   "declarations": [
-    "# Each object is all the cells of one color in the grid, touching or not. Color-7 cells turn 5, and the other colors stay\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, color: int):\n    # Left column of their box\n    this.x is x\n    # Top row of their box\n    this.y is y\n    # Columns of their box\n    this.width is width\n    # Rows of their box\n    this.height is height\n    # No group here is a bar, corner or chevron, so every group is 0\n    this.orientation is orientation\n    # Number of its cells\n    this.volume is volume\n    # l9100 names a single shape\n    this.tag is l9100\n    # Their color\n    this.color is color",
-    "# The cells whose input color is 7\nif $Obj.color@first is 7:\n    # They turn color 5\n    $Obj.color is 5"
+    "# Each object is all the cells of one color in the grid, touching or not. Color-7 cells turn 5, and the other colors stay\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, color: int):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.tag is l9100\n    this.color is color",
+    "# The cells whose input color is 7 turn color 5\nif $Obj.color@first is 7:\n    $Obj.color is 5"
   ],
   "output_canvas": "EXACT",
   "dataset": [

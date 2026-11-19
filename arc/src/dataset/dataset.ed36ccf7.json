@@ -1,6 +1,6 @@
 {
   "declarations": [
-    "# Each object is the whole figure in the grid. The output turns it a quarter turn counterclockwise, 90 degrees, about the grid center\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int):\n    # Left column of its box\n    this.x is x\n    # Top row of its box\n    this.y is y\n    # Columns of its box\n    this.width is width\n    # Rows of its box\n    this.height is height\n    # A corner points toward its vertex; any other figure is 0\n    this.orientation is orientation\n    # Number of its cells\n    this.volume is volume\n    # l9100 names a single shape\n    this.tag is l9100",
+    "# Each object is the whole figure in the grid. The output turns it a quarter turn counterclockwise, 90 degrees, about the grid center\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.tag is l9100",
     "# Each figure turns 90 degrees counterclockwise, which adds 270 clockwise degrees to its input orientation\n$Obj.orientation is ($Obj.orientation@first + 270) % 360",
     "# After the turn its column is its input row\n$Obj.x is $Obj.y@first",
     "# After the turn its row is as far from the top edge as its input box was from the right edge\n$Obj.y is canvas_width - $Obj.x@first - $Obj.width@first"

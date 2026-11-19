@@ -1,6 +1,6 @@
 {
   "declarations": [
-    "# Each object is the whole color-2 pattern in the grid. The output is one cell: 1 when the pattern is its own left-right mirror image, otherwise 7\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, points: list):\n    # Left column of its box\n    this.x is x\n    # Top row of its box\n    this.y is y\n    # Columns of its box\n    this.width is width\n    # Rows of its box\n    this.height is height\n    # A corner points toward its vertex; any other pattern is 0\n    this.orientation is orientation\n    # Number of its cells\n    this.volume is volume\n    # l9100 names a single shape\n    this.tag is l9100\n    # Grid [x, y] of each of its cells, row by row\n    this.points is points",
+    "# Each object is the whole color-2 pattern in the grid. The output is one cell: 1 when the pattern is its own left-right mirror image, otherwise 7\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, points: list):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.tag is l9100\n    this.points is points",
     "# Each pattern becomes l7544, a single point\n$Obj.tag is l7544",
     "# The answer cell is one column wide\n$Obj.width is 1",
     "# The answer cell is one row tall\n$Obj.height is 1",

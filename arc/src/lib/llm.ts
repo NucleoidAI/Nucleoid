@@ -7,17 +7,11 @@ import * as openrouter from "./openrouter";
 const init_class: string = [
   "# Each object is one group of cells on the grid, located by its bounding box",
   "class Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int):",
-  "    # Left column of its bounding box",
   "    this.x is x",
-  "    # Top row of its bounding box",
   "    this.y is y",
-  "    # Columns of its bounding box",
   "    this.width is width",
-  "    # Rows of its bounding box",
   "    this.height is height",
-  "    # Direction it points, in degrees clockwise from up: 0 up, 90 right, 180 down, 270 left, 45 up-right, 135 down-right, 225 down-left, 315 up-left",
   "    this.orientation is orientation",
-  "    # Number of its cells",
   "    this.volume is volume",
 ].join("\n");
 

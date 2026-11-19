@@ -1,6 +1,6 @@
 {
   "declarations": [
-    "# Each object is one color-8 corner: 3 cells of a 2x2 box that meet at its vertex cell. Every corner fills the open cell of its box with color 1, completing the square\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, color: int):\n    # Left column of its 2x2 box\n    this.x is x\n    # Top row of its 2x2 box\n    this.y is y\n    # Columns of its box, 2\n    this.width is width\n    # Rows of its box, 2\n    this.height is height\n    # A corner points toward its vertex: 45 top right, 135 bottom right, 225 bottom left, 315 top left\n    this.orientation is orientation\n    # Its 3 cells\n    this.volume is volume\n    # l6747 names a corner\n    this.tag is l6747\n    # Its color, 8 for every corner\n    this.color is color",
+    "# Each object is one color-8 corner: 3 cells of a 2x2 box that meet at its vertex cell. Every corner fills the open cell of its box with color 1, completing the square\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, color: int):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.tag is l6747\n    this.color is color",
     "# Each corner becomes l3337, a corner with its inside marker\n$Obj.tag is l3337",
     "# The open cell of its box, diagonally opposite its vertex, turns color 1\n$Obj.marker_color is 1",
     "# The marker adds one cell to its 3 input cells\n$Obj.volume is $Obj.volume@first + 1"

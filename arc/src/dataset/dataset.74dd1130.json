@@ -1,6 +1,6 @@
 {
   "declarations": [
-    "# Each object is the whole mosaic that fills the grid. The output flips it across its main diagonal, from top left to bottom right, so its rows become its columns\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int):\n    # Left column of its box, 0\n    this.x is x\n    # Top row of its box, 0\n    this.y is y\n    # Columns of its box, 3: the full grid\n    this.width is width\n    # Rows of its box, 3\n    this.height is height\n    # A mosaic points nowhere: 0, and a flip is not a turn\n    this.orientation is orientation\n    # Its 9 cells\n    this.volume is volume\n    # l9100 names a single shape\n    this.tag is l9100",
+    "# Each object is the whole mosaic that fills the grid. The output flips it across its main diagonal, from top left to bottom right, so its rows become its columns\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.tag is l9100",
     "# Each mosaic is mirrored across the line from the top-left cell of its input box to its bottom-right cell; the cells on that line stay in place\n$Obj.mirror_axis is {start: {x: $Obj.x@first, y: $Obj.y@first}, end: {x: $Obj.x@first + $Obj.width@first - 1, y: $Obj.y@first + $Obj.height@first - 1}}"
   ],
   "output_canvas": "EXACT",
