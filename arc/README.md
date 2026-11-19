@@ -339,7 +339,7 @@ Each genesis class takes the standard entries `x`, `y`, `width`, `height`,
 `orientation`, and `volume` first, then its descriptive properties in their
 existing order, and every implementation passes the input shape's bounding-box
 `width` and `height` and its input mask's `volume`, its number of nonzero
-cells, which no rule changes. A rule that grows a shape computes its new size
+cells. A rule that grows a shape computes its new size
 from its first values in the branch that sets its output tag: a core corner
 grows from 2 by 2 to 3 by 3 with its outside marker, and its origin moves one
 column left when it points west, at orientation 225 or 315, and one row up
@@ -347,8 +347,13 @@ when it points north, at orientation 45 or 315; a curve point grows from
 1 by 1 to 3 by 2 with its rim; and a line of 3 or 4 cells grows by one cell,
 one column wider when horizontal and one row taller when vertical. An
 extension corner keeps its 3 by 3 size, because its inside marker fills a
-cell of its own box. Every native output snapshot therefore carries its
-shape's output bounding box, so `output_value.x` and `output_value.y` equal
+cell of its own box. The core and extension markers each add one cell with
+`$Obj.volume is $Obj.volume@first + 1`, and the curve rim adds two with
+`$Obj.volume is $Obj.volume@first + 2`, in the same branches; a line, a box
+one cell thick that its cells fill, takes
+`$Obj.volume is $Obj.width * $Obj.height` in one unconditional rule. Every
+native output snapshot therefore carries its shape's output bounding box and
+number of nonzero cells, so `output_value.x` and `output_value.y` equal
 `output_x` and `output_y`. A line points toward its color-8 endpoint: its
 orientation is 270, 90, 0, or 180 when the endpoint is on the left, on the
 right, at the top, or at the bottom, and it keeps that orientation as it grows
@@ -483,17 +488,19 @@ each implementation passes `width=1, height=1` and `volume=1`.
 The declarative rules introduce `marker_color`, which is absent before the
 rules run, and, in the same branches that shift the origin, grow each cross
 to 3 by 3 with `$Obj.width is $Obj.width@first + 2` and
-`$Obj.height is $Obj.height@first + 2`; color-6 and color-8 points keep their
-1 by 1 size. The two branches are guarded by `if $Obj.vertex_color is 1:`
-and `if $Obj.vertex_color is 2:`, with `is`, the spelling of `==` that
+`$Obj.height is $Obj.height@first + 2`, and count its point and four markers
+with `$Obj.volume is $Obj.volume@first + 4`; color-6 and color-8 points keep
+their 1 by 1 size and volume 1. The two branches are guarded by
+`if $Obj.vertex_color is 1:` and `if $Obj.vertex_color is 2:`, with `is`, the spelling of `==` that
 [NUC 86](../docs/nuc-0086.md) adds. Tags identify the geometry: `l1707` is an
 orthogonal cross, `l2404` is a diagonal cross, and `l7544` remains a single
 point.
 Every instance mask retains the complete 9 by 9 canvas. The x/y metadata
 records each mask's nonzero bounding-box origin. Native output snapshots carry
 the shifted pattern origin, derived from the original point coordinates with
-`@first` anchors, and the pattern's size, equal to its output mask's
-bounding box. Orientation is 0 in both states because
+`@first` anchors, the pattern's size, equal to its output mask's bounding
+box, and its volume, the output mask's number of nonzero cells. Orientation
+is 0 in both states because
 the patterns are symmetric. The test pair follows the training pairs at the
 same level and is annotated by the same rules.
 `document()` includes it in the shared few-shot context for every run by
@@ -579,10 +586,12 @@ list query `distinct` of
 [NUC 71](../docs/nuc-0071.md) keeps each of the row's colors once, so exactly
 one kept color means the row is a single color, and the conditional
 expression of [NUC 59](../docs/nuc-0059.md) gives such a row color 5 and
-every other row the background color 0. The rules create no other property
-and leave `x`, `y`, `width`, `height`, `orientation`, and the tag unchanged,
-since a row keeps its size whether it becomes a bar or is cleared, so each
-output state adds only `fill_color` to its input state's keys. Native
+every other row the background color 0. A second unconditional rule,
+`$Obj.volume is 0 if $Obj.fill_color is 0 else $Obj.volume@first`, empties a
+cleared row and keeps a bar's 3 cells. The rules create no other property and
+leave `x`, `y`, `width`, `height`, `orientation`, and the tag unchanged, since
+a row keeps its size whether it becomes a bar or is cleared, so each output
+state adds only `fill_color` to its input state's keys. Native
 snapshots start with the pair's `canvas_width` and `canvas_height`, and
 output snapshots are captured with all of the same pair's implementations
 together, followed by `Obj[:]`. The tag `l3058` is a horizontal bar, as in
@@ -704,7 +713,8 @@ before the rules run, as
 `{'l4262': 1, 'l2404': 2, 'l3743': 3, 'l1707': 6}[$Obj.tag@first]`: the object
 literal states each shape's code once, and object bracket access reads the
 code of the block's input tag, anchored with `@first` because the tag rule
-turns the tag into `l7544`. The rules create no other properties, so each
+turns the tag into `l7544`. `$Obj.volume is $Obj.width * $Obj.height` counts
+the filled point's single cell. The rules create no other properties, so each
 output state adds only `fill_color` to its input state's keys, and they leave
 `x` and `y` unchanged because the point sits at the block's origin, 0 and 0 in
 every training pair. Native snapshots start with the pair's `canvas_width` and
@@ -738,14 +748,66 @@ they introduce `repeat_count` (2, the total number of copies) and
 `repeat_direction` (`right`), which are absent before the rules run, rewrite
 `width` as `$Obj.width@first * $Obj.repeat_count`, 6 columns, because the
 copies side by side make the repeated shape that many times as wide as the
-input shape while its `height` stays 3, and move `x` and `y` to the output
-origin 0. Each output state's `width` and `height` are therefore the repeated
-shape's bounding box, the whole 3 by 6 output. Tags identify the geometry:
+input shape while its `height` stays 3, multiply its cells the same way with
+`$Obj.volume is $Obj.volume@first * $Obj.repeat_count`, and move `x` and `y`
+to the output origin 0. Each output state's `width` and `height` are therefore
+the repeated shape's bounding box, the whole 3 by 6 output, and its `volume`
+the output's number of nonzero cells. Tags identify the geometry:
 `l9100` is a single shape and `l4305` is the shape repeated side by side.
 Input masks retain each pair's input canvas and output masks its output
 canvas. Orientation is 0 in both states because the shapes are not rotated.
 The test pair follows the training pairs at the same level and is annotated
 by the same rules.
+
+`dataset.3aa6fb7a.json` annotates the two original training pairs from
+`data\training\3aa6fb7a.json`, in order, followed by its test pair at the same
+level, in the single canonical `src\dataset\dataset.3aa6fb7a.json`, nine
+corner instances in total: two, three, and four per pair. These are the
+genesis puzzle's own exact pairs; the four shared genesis datasets keep their
+synthesized varieties unchanged, and this file adds no pair to them. Every
+input and output retains its original 7 by 7 canvas, with its colors,
+positions, and zero cells. Each input shows separate color-8 corners on a zero
+background, none touching another even at a corner; each object is one whole
+corner, three cells of a 2 by 2 box that meet at its vertex. Each output keeps
+every corner in place and paints color 1 into the open cell of its box,
+diagonally across from its vertex, completing a 2 by 2 square, as the inside
+markers of `dataset.extension.json` do for its 3 by 3 corners. The class takes
+the standard entries `x`, `y`, `width`, `height`, `orientation`, and `volume`
+first, in that order, where `width` and `height` are the column and row counts
+of the corner's box, the nonzero bounding box of its input mask, 2 and 2 for
+every corner, and `volume` the number of its nonzero cells, 3, and then
+`color`, 8 for every corner; each implementation passes `width=2, height=2`
+right after `y`. Three unconditional class-level rules hold for every
+instance, with no color condition and no population query, because every
+corner changes alike and independently of the others: `$Obj.tag is l3337`
+sets the output tag, `$Obj.marker_color is 1` introduces `marker_color`,
+which is absent before the rules run, and
+`$Obj.volume is $Obj.volume@first + 1` counts the marker's cell, 4 in all. The
+marker fills a cell of the corner's own box, so the rules leave `x`, `y`,
+`width`, `height`, `orientation`, and `color` unchanged; each output state
+changes only the tag and `volume` and adds `marker_color` to its input state's
+keys. Native snapshots start with the pair's `canvas_width`
+and `canvas_height`; input states run the class alone, and output states run
+each pair's implementations together with all declarations, followed by
+`Obj[:]`. Tags identify the geometry: `l6747` is a corner, as in
+`dataset.core.json` and `dataset.extension.json`, and `l3337` is a corner with
+its inside marker, as in `dataset.extension.json`. Input masks retain each
+pair's full 7 by 7 input canvas and output masks its full 7 by 7 output,
+padded with `0` outside the corner and its marker; merging them reproduces
+each pair's input and output. The `output_x`/`output_y` fields equal the input
+box's origin and `output_value.x`/`output_value.y`, and each output state's
+`width` and `height` are the completed square's box. `output_canvas` is
+`EXACT`, because every output keeps its input's 7 by 7 canvas. Each corner
+points toward its vertex, at 45 when the vertex is at the top right of its
+box, 135 at the bottom right, 225 at the bottom left, and 315 at the top left,
+and keeps that orientation with its inside marker: the training corners point
+at 225 and 45, and at 45, 225, and 135, and the test corners at 45, 315, 225,
+and 135, so only the test pair has a corner at 315. The declarations write
+their assignments with `is` and their tags as bare words, with no quoted
+string, and hold `#` comments: two lines above the class, the orientation line
+among them, and one above the `marker_color` rule. Each implementation starts
+with two comment lines that describe its corner. The test pair follows the
+training pairs at the same level and is annotated by the same rules.
 
 `dataset.3c9b0459.json` annotates the four original training pairs from
 `data\training\3c9b0459.json`, in order, followed by its test pair, five
@@ -846,7 +908,8 @@ holds exactly when the pattern equals its mirror image. The rule uses the
 quantifier `all` of [NUC 62](../docs/nuc-0062.md), which states the claim of
 `every` directly, and `includes`, which matches the mirrored `[column, row]`
 list against the points with the deep equality of
-[NUC 61](../docs/nuc-0061.md). `fill_color` is `1 if $Obj.symmetric else 7`.
+[NUC 61](../docs/nuc-0061.md). `fill_color` is `1 if $Obj.symmetric else 7`,
+and `$Obj.volume is $Obj.width * $Obj.height` counts the point's single cell.
 The rules also move `x` and `y` to the output origin 0, which changes `y` in
 the fourth training pair and the second test pair. Native output snapshots
 are captured with the pair's implementation followed by `Obj[:]`. Tags
@@ -898,11 +961,13 @@ That is the noun form of `$Obj.parts.mode()`: the accepted list query `mode`
 from [NUC 75](../docs/nuc-0075.md) returns the most frequent item of `parts`,
 the color with the most cells, matching items as `distinct` does. On a tie,
 which no pair has, `mode` returns the tied color that occurs first in `parts`,
-the one whose first cell comes first in reading order. The rules create no
-other properties, so each output state adds only
-`fill_color` to its input state's keys, and they leave `x` and `y` unchanged
-because the fill starts at the block's origin, 0 and 0, and `width` and
-`height` unchanged because the fill covers the block's 3 by 3 bounding box.
+the one whose first cell comes first in reading order.
+`$Obj.volume is $Obj.width * $Obj.height` counts the fill's 9 cells, also for
+a block with a zero cell. The rules create no other properties, so each output
+state adds only `fill_color` to its input state's keys, and they leave `x` and
+`y` unchanged because the fill starts at the block's origin, 0 and 0, and
+`width` and `height` unchanged because the fill covers the block's 3 by 3
+bounding box.
 Native output snapshots are captured with the pair's implementation followed
 by `Obj[:]`. Tags identify the geometry: `l9100` is a single shape, as in
 `dataset.28bf18c6.json`, and `l5236` is a solid rectangle that fills the whole
@@ -992,18 +1057,20 @@ comments included, is that of `dataset.6150a2bd.json`. Each implementation
 passes `x=0, y=0, width=3, height=3, orientation=0, volume=9` after comment
 lines that name the block's colors in reading order and its box, such as
 `# The whole block of colors 6, 1 and 8,` and `# 3 by 3 at x 0, y 0` for the
-first training input. Two unconditional, commented class-level rules turn
+first training input. Three unconditional, commented class-level rules turn
 every block into the figure it forms with its mirror image:
-`$Obj.tag is l6919` names that geometry, and
+`$Obj.tag is l6919` names that geometry,
 `$Obj.width is $Obj.width@first * 2` makes the figure twice as wide as the
 block, 6 columns, as `dataset.28bf18c6.json` multiplies its shape's width by
-its copies. The rules leave `x`, `y`, `height`, and `orientation` unchanged,
-because the figure keeps the block's top-left corner and rows, and state no
-`mirror_axis`, because the tag already names a mirror image to the right and
-only `width` grows. Each grid holds a single block and shows no relation
-between objects, so no population operation appears. The rules create no
-property, so input and output states share the same keys and differ only in
-the tag and `width`, and they give the same states in reverse order and when
+its copies, and `$Obj.volume is $Obj.volume@first * 2` counts the block's
+cells with their mirror images. The rules leave `x`, `y`, `height`, and
+`orientation` unchanged, because the figure keeps the block's top-left corner
+and rows, and state no `mirror_axis`, because the tag already names a mirror
+image to the right and the box grows only in `width`. Each grid holds a single
+block and shows no relation between objects, so no population operation
+appears. The rules create no property, so input and output states share the
+same keys and differ only in the tag, `width`, and `volume`, and they give the
+same states in reverse order and when
 declared after the instance. Native snapshots start with the pair's
 `canvas_width` and `canvas_height`, and output snapshots are captured with
 the pair's implementation followed by `Obj[:]`. Tags identify the geometry:
@@ -1063,10 +1130,13 @@ nonzero cells, 3, 3, and 9 in every pair, and then
 training input, as its only descriptive property, with no color list, color
 count, line direction, canvas size, or matrix of cells, so no input property
 names the count or the line. Each implementation passes `width=3, height=3`
-right after `y`. Three unconditional class-level rules and one conditional
+right after `y`. Four unconditional class-level rules and one conditional
 rule turn the mosaic into the line. `$Obj.tag is l6074` names the line, and
 `$Obj.fill_color is 5` introduces `fill_color`, which is absent before the
 rules run, because the line is gray whatever the mosaic's colors.
+`$Obj.volume is max of [$Obj.width, $Obj.height]` counts the line's cells, one
+for each step along the longer side of its box: 3 for the top row and for
+either diagonal.
 `orientation` is `{1: 90, 2: 135, 3: 45}[$Obj.parts.distinct().length]`: the
 list query `distinct` of [NUC 71](../docs/nuc-0071.md) keeps each of the
 mosaic's colors once, so its length is the number of colors, and the object
@@ -1092,7 +1162,8 @@ for the other diagonal, whose cells run from the top-right corner. They create
 no other property, so each output state adds only `fill_color` to its input
 state's keys, its tag turns `l6074`, its orientation turns 90, 135, or 45, and
 its `height` turns 1 for the top-row line, so its `width` and `height` are the
-line's bounding box: 3 and 1 for the top row and 3 and 3 for a diagonal.
+line's bounding box: 3 and 1 for the top row and 3 and 3 for a diagonal, and
+its `volume` turns 3.
 Native snapshots start with the pair's `canvas_width` and `canvas_height`, and
 output snapshots are captured with the pair's implementation followed by
 `Obj[:]`. Tags identify the geometry: `l9100` is a single shape, as in
@@ -1146,18 +1217,20 @@ bounding box of its input mask, and `volume` the number of its nonzero cells,
 list, canvas size, or matrix of cells, because the rules need none: the
 block's cells travel in its masks. Its declaration is that of
 `dataset.6d0aefbc.json`, and each implementation passes
-`x=0, y=0, width=3, height=3, orientation=0, volume=9`. Two unconditional
+`x=0, y=0, width=3, height=3, orientation=0, volume=9`. Three unconditional
 class-level rules turn every block into the figure it forms with its mirror
-image: `$Obj.tag is l7511` names that geometry, and
+image: `$Obj.tag is l7511` names that geometry,
 `$Obj.height is $Obj.height@first * 2` makes the figure twice as tall as the
 block, 6 rows, anchored with `@first` because the rule rewrites `height`
-itself. The rules leave `x`, `y`, `width`, and `orientation` unchanged,
-because the figure keeps the block's top-left corner and columns, and state
-no `mirror_axis`, the property of `dataset.74dd1130.json`, because the tag
-already names a mirror image below the shape and only `height` grows. Each
-grid holds a single block and shows no relation between objects, so no
-population operation appears. The rules create no property, so input and
-output states share the same keys and differ only in the tag and `height`,
+itself, and `$Obj.volume is $Obj.volume@first * 2` counts the block's cells
+with their mirror images, anchored the same way. The rules leave `x`, `y`,
+`width`, and `orientation` unchanged, because the figure keeps the block's
+top-left corner and columns, and state no `mirror_axis`, the property of
+`dataset.74dd1130.json`, because the tag already names a mirror image below
+the shape and the box grows only in `height`. Each grid holds a single block
+and shows no relation between objects, so no population operation appears.
+The rules create no property, so input and output states share the same keys
+and differ only in the tag, `height`, and `volume`,
 and they give the same states in reverse order and when declared after the
 instance. Native snapshots start with the pair's `canvas_width` and
 `canvas_height`, and output snapshots are captured with the pair's
@@ -1385,7 +1458,7 @@ height from the solver's `canvas_height`. Each implementation passes `width`
 and `height` right after `y`, such as
 `x=0, y=0, width=3, height=2, orientation=0, volume=5` for the first
 training input.
-Two unconditional class-level rules turn every pattern into the figure it
+Three unconditional class-level rules turn every pattern into the figure it
 forms with its mirror image. `$Obj.tag is l7511` names that geometry, and
 `$Obj.height is 2 * (canvas_height - $Obj.y@first)` grows the box down to the
 mirror image of its top row: twice the distance from the pattern's top row to
@@ -1394,15 +1467,17 @@ gives 6 rows for the first training pattern, which starts on the top row, and
 4 for the others, which start one row down. The rule reads the canvas's height
 as `dataset.d037b0a7.json` grows its bars with `canvas_height - $Obj.y@first`,
 anchored with `@first` to read the pattern's input row, as there, although no
-rule moves `y`. The rules leave `x`, `y`, `width`, and `orientation`
-unchanged, because the mirror image keeps the pattern's columns and the figure
-starts on the pattern's top row. They state no `mirror_axis`, the property of
-`dataset.74dd1130.json`: the tag already names a mirror image below the shape,
-and only `height` grows, so an axis would restate them. Each grid holds a
-single pattern and shows no relation between objects, so no population
-operation appears. The rules give the same states in reverse order and when
-they are declared after the instances. They create no property, so input and
-output states share the same keys and differ only in the tag and `height`.
+rule moves `y`. `$Obj.volume is 2 * $Obj.volume@first` counts the pattern's
+cells with their mirror images. The rules leave `x`, `y`, `width`, and
+`orientation` unchanged, because the mirror image keeps the pattern's columns
+and the figure starts on the pattern's top row. They state no `mirror_axis`,
+the property of `dataset.74dd1130.json`: the tag already names a mirror image
+below the shape, and the box grows only in `height`, so an axis would restate
+them. Each grid holds a single pattern and shows no relation between objects,
+so no population operation appears. The rules give the same states in reverse
+order and when they are declared after the instances. They create no property,
+so input and output states share the same keys and differ only in the tag,
+`height`, and `volume`.
 Native snapshots start with the pair's `canvas_width` and `canvas_height`, and
 output snapshots are captured with the pair's implementation followed by
 `Obj[:]`. Tags identify the geometry: `l9100` is a single shape, as in
@@ -1591,14 +1666,16 @@ while `y` keeps the marker's row. `fill_color` is
 column picks its row's color, anchored with `@first` because another rule
 moves `x`. `width` becomes `canvas_width`, reading the canvas's width from the
 solver's `canvas_width`, as `dataset.d037b0a7.json` reads `canvas_height`,
-while `height` stays the marker's 1 because the bar is one row tall. The
+while `height` stays the marker's 1 because the bar is one row tall, and
+`$Obj.volume is $Obj.width * $Obj.height` counts the bar's 3 cells. The
 bar's ends come from the canvas, not the population: in the second training
 pair every marker lies in the right column, yet every bar spans the whole row.
 Each bar depends only on its own marker, and the training pairs show no
 relation between markers, so no population operation appears. The rules create
 no other property and leave `y` and `height` unchanged, so each output state
 adds only `fill_color` to its input state's keys, its tag turns `l3058`, its
-`width` turns 3, its `x` turns 0, and its `orientation` 90. Native snapshots
+`width` and `volume` turn 3, its `x` turns 0, and its `orientation` 90. Native
+snapshots
 start with the pair's `canvas_width` and `canvas_height`, and output snapshots
 are captured with all of the same pair's implementations together, followed by
 `Obj[:]`. Tags
@@ -1651,12 +1728,12 @@ cells, each 1, and no descriptive property, with no
 color, canvas size, or matrix of cells: every point has color 2, which the
 rules never read. Each implementation passes `width=1, height=1` right after
 `y`, such as `x=1, y=1, width=1, height=1, orientation=0, volume=1` for the
-first training input. Six unconditional class-level rules turn every point into
-its figure. `$Obj.tag is l2898` names the figure, and
+first training input. Seven unconditional class-level rules turn every point
+into its figure. `$Obj.tag is l2898` names the figure, and
 `$Obj.corner_colors is [[3, 6], [8, 7]]` introduces `corner_colors`, which is
 absent before the rules run: the corners' colors as they lie around the
 point, the top row's left and right corners first and then the bottom row's.
-The other four rules move the box onto the remaining corners. `x` becomes
+Four of the other rules move the box onto the remaining corners. `x` becomes
 `min of [$Obj.x@first - 1, $Obj.x@first + 1].filter(column => column >= 0 and column < canvas_width)`,
 the leftmost of the two corner columns, one left and one right of the point,
 that lie on the canvas, reading the canvas's width from the solver's
@@ -1672,14 +1749,18 @@ columns and rows that lie on the canvas, and `min of` and `max of` take the
 ends of what it keeps. The filtered list is written out in each rule that
 uses it rather than stored, because a property such as `$Obj.columns`, read
 by `$Obj.x is min of $Obj.columns` while it reads `$Obj.x@first`, raises
-`TypeError("Circular Dependency")` in the accepted runtime. Each figure
+`TypeError("Circular Dependency")` in the accepted runtime. The last rule,
+`$Obj.volume`, multiplies the `length` of the same filtered columns by that of
+the filtered rows, one cell for each corner on the canvas: 4, 1, 2, and 4 in
+the training pairs and 2 in the test pair. Each figure
 depends only on its own point and the canvas, and every pair holds one point,
 so no population operation appears. The training pairs alone also fit
 clipping at fixed rows and columns, because every canvas is 3 by 5; the rules
 read `canvas_width` and `canvas_height` instead, a choice fixed from the
 training pairs before the test pair was read. The rules create no other
 property, so each output state adds only `corner_colors` to its input state's
-keys, its tag turns `l2898`, and its `x`, `y`, `width`, and `height` become
+keys, its tag turns `l2898`, its `volume` counts the remaining corners, and
+its `x`, `y`, `width`, and `height` become
 the remaining corners' box: origin 0 and 0, 3 columns by 3 rows, in the first
 training pair; 3 and 1, 1 column by 1 row, in the second; 1 and 1, 3 columns
 by 1 row, in the third; 2 and 0, 3 columns by 3 rows, in the fourth; and 3
@@ -1822,7 +1903,7 @@ and the rules read the canvas's width from the solver's `canvas_width`. Each
 implementation passes `width` and `height` right after `y`, such as
 `x=1, y=0, width=2, height=3, orientation=0, volume=4` for the first
 training input.
-Two unconditional class-level rules turn every pattern into the figure it
+Three unconditional class-level rules turn every pattern into the figure it
 forms with its mirror image. `$Obj.tag is l6919` names that geometry, and
 `$Obj.width is 2 * (canvas_width - $Obj.x@first)` grows the box right to the
 mirror image of its left column: twice the distance from the pattern's left
@@ -1831,17 +1912,19 @@ center. That gives 4 columns for the first and second training patterns,
 which start in the second column, and 6 for the third training pattern and
 the test pattern, which start in the left column. The rule reads the canvas's
 width as `dataset.8be77c9e.json` reads its height, anchored with `@first` to
-read the pattern's input column, as there, although no rule moves `x`. The
-rules leave `x`, `y`, `height`, and `orientation` unchanged, because the
-mirror image keeps the pattern's rows and the figure starts at the pattern's
-left column. They state no `mirror_axis`, the property of
-`dataset.74dd1130.json`: the tag already names a mirror image to the right of
-the shape, and only `width` grows, so an axis would restate them. Each grid
-holds a single pattern and shows no relation between objects, so no
-population operation appears. The rules give the same states in reverse
+read the pattern's input column, as there, although no rule moves `x`.
+`$Obj.volume is 2 * $Obj.volume@first` counts the pattern's cells with their
+mirror images. The rules leave `x`, `y`, `height`, and `orientation`
+unchanged, because the mirror image keeps the pattern's rows and the figure
+starts at the pattern's left column. They state no `mirror_axis`, the property
+of `dataset.74dd1130.json`: the tag already names a mirror image to the right
+of the shape, and the box grows only in `width`, so an axis would restate
+them. Each grid holds a single pattern and shows no relation between objects,
+so no population operation appears. The rules give the same states in reverse
 order and when they are declared after the instances. They create no
 property, so input and output states share the same keys and differ only in
-the tag and `width`. Native snapshots start with the pair's `canvas_width`
+the tag, `width`, and `volume`. Native snapshots start with the pair's
+`canvas_width`
 and `canvas_height`, and output snapshots are captured with the pair's
 implementation followed by `Obj[:]`. Tags identify the geometry: `l9100` is a
 single shape, as in `dataset.28bf18c6.json` and `dataset.8be77c9e.json`, and
@@ -1890,9 +1973,10 @@ takes the standard entries `x`, `y`, `width`, `height`, `orientation`, and
 `volume`, where `width` and `height` are the column and row counts of the
 point's box and `volume` the number of its nonzero cells, each 1, and `color`
 as its only descriptive scalar, with no canvas size or
-matrix of cells. Unconditional class-level rules set the output tag and grow
+matrix of cells. Unconditional class-level rules set the output tag, grow
 the point's `height` into the bar's, `canvas_height - $Obj.y@first`, reading
-the canvas's height from the solver's `canvas_height`, and leave `x`, `y`, and
+the canvas's height from the solver's `canvas_height`, and count the bar's
+cells with `$Obj.volume is $Obj.width * $Obj.height`. They leave `x`, `y`, and
 `width` unchanged because the point is the bar's top cell and the bar is one
 column wide. The `@first` anchor reads the point's input row, so the bar grows
 from the point's input state even though no rule moves `y`; the rules create
@@ -2213,9 +2297,11 @@ extremes of [NUC 69](../docs/nuc-0069.md): `$Obj.points.min(point => point[0])`
 gives `x` and `$Obj.points.min(point => point[1])` gives `y`, while
 `$Obj.points.max(point => point[0]) - $Obj.x + 1` and
 `$Obj.points.max(point => point[1]) - $Obj.y + 1` give `width` and `height`,
-the box's column and row counts. Both figures of a pair thus reach the same
-output state apart from their `id`, `holes`, and `volume`: each becomes the
-shared empty space, and their identical masks compose to the output. The
+the box's column and row counts, and the last rule,
+`$Obj.volume is $Obj.points.length`, counts the shared empty cells. Both
+figures of a pair thus reach the same output state apart from their `id` and
+`holes`: each becomes the shared empty space, and their identical masks
+compose to the output. The
 `points` rule reads every figure's holes, so it needs the whole world; the
 rules give the same states in either instance order, with the rules in reverse
 order, and with the rules declared after the instances. They leave
@@ -2432,7 +2518,7 @@ It also infers the `output_canvas` from the training pairs.
 {
   "declarations": [
     "class Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, vertex_color: int, vertical_segment_color: int, horizontal_segment_color: int):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.tag is l6747\n    this.vertex_color is vertex_color\n    this.vertical_segment_color is vertical_segment_color\n    this.horizontal_segment_color is horizontal_segment_color",
-    "if $Obj.vertex_color is 9 and $Obj.vertical_segment_color is 9 and $Obj.horizontal_segment_color is 9:\n    $Obj.tag is l6624\n    $Obj.marker_color is 4\n    $Obj.x is $Obj.x@first - 1 if $Obj.orientation > 180 else $Obj.x@first\n    $Obj.y is $Obj.y@first - 1 if $Obj.orientation < 90 or $Obj.orientation > 270 else $Obj.y@first\n    $Obj.width is $Obj.width@first + 1\n    $Obj.height is $Obj.height@first + 1"
+    "if $Obj.vertex_color is 9 and $Obj.vertical_segment_color is 9 and $Obj.horizontal_segment_color is 9:\n    $Obj.tag is l6624\n    $Obj.marker_color is 4\n    $Obj.x is $Obj.x@first - 1 if $Obj.orientation > 180 else $Obj.x@first\n    $Obj.y is $Obj.y@first - 1 if $Obj.orientation < 90 or $Obj.orientation > 270 else $Obj.y@first\n    $Obj.width is $Obj.width@first + 1\n    $Obj.height is $Obj.height@first + 1\n    $Obj.volume is $Obj.volume@first + 1"
   ],
   "output_canvas": "EXACT"
 }
@@ -2526,10 +2612,12 @@ Line `extension_direction` and curve `rim_color` are created
 by those rules and are absent from their input snapshots rather than filled
 with artificial defaults.
 
-The input snapshot's `x` and `y` give the input bounding box's origin, and its
-`width` and `height` give that box's column and row counts. The rules move the
-output snapshot's `x` and `y` to the output bounding box's origin, recorded in
-`output_x` and `output_y`, and set its `width` and `height` to that box's size.
+The input snapshot's `x` and `y` give the input bounding box's origin, its
+`width` and `height` give that box's column and row counts, and its `volume`
+the input shape's number of nonzero cells. The rules move the output
+snapshot's `x` and `y` to the output bounding box's origin, recorded in
+`output_x` and `output_y`, set its `width` and `height` to that box's size,
+and set its `volume` to the output shape's number of nonzero cells.
 In `dataset.core.json`, adding the exterior marker grows the corner from
 2 by 2 to 3 by 3: the rule subtracts one from the x origin for orientation
 225 or 315, and from the y origin for orientation 45 or 315.
@@ -2543,7 +2631,8 @@ from 1 by 1 to 3 by 2.
 These offsets are already applied in the output snapshot and recorded in
 `output_x` and `output_y`; do not apply them a second time during placement.
 The inner markers in `dataset.extension.json` change neither the
-bounding-box origin nor the corner's 3 by 3 size.
+bounding-box origin nor the corner's 3 by 3 size, though each adds one cell to
+its `volume`.
 
 ```json
 {
@@ -2772,7 +2861,7 @@ The LLM also represents identified instances in `nuc` lang. This step is crucial
         "tag": "l6624",
         "vertex_color": 9,
         "vertical_segment_color": 9,
-        "volume": 3,
+        "volume": 4,
         "width": 3,
         "x": 5,
         "y": 1

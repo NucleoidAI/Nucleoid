@@ -1,0 +1,347 @@
+{
+  "declarations": [
+    "# Orientation is the direction an object points, in degrees clockwise from north (0 up, 90 right, 180 down, 270 left)\n# Each object is a one-color corner, three cells of a 2 by 2 box that meet at its vertex, and it points toward that vertex.\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, color: int):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.tag is l6747\n    this.color is color",
+    "$Obj.tag is l3337",
+    "# Every corner gets its inside marker: the open cell of its box, diagonally across from its vertex, turns color 1 and completes the square.\n$Obj.marker_color is 1",
+    "$Obj.volume is $Obj.volume@first + 1"
+  ],
+  "output_canvas": "EXACT",
+  "dataset": [
+    {
+      "input_matrix": [
+        [0, 0, 0, 0, 0, 0, 0],
+        [0, 8, 0, 0, 0, 0, 0],
+        [0, 8, 8, 0, 0, 0, 0],
+        [0, 0, 0, 0, 8, 8, 0],
+        [0, 0, 0, 0, 0, 8, 0],
+        [0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0]
+      ],
+      "output_matrix": [
+        [0, 0, 0, 0, 0, 0, 0],
+        [0, 8, 1, 0, 0, 0, 0],
+        [0, 8, 8, 0, 0, 0, 0],
+        [0, 0, 0, 0, 8, 8, 0],
+        [0, 0, 0, 0, 1, 8, 0],
+        [0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0]
+      ],
+      "instances": [
+        {
+          "instance_name": "obj06bbbdc98e71",
+          "input_x": 1,
+          "output_x": 1,
+          "input_y": 1,
+          "output_y": 1,
+          "input_orientation": 225,
+          "output_orientation": 225,
+          "input_instance_matrix": [
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 8, 0, 0, 0, 0, 0],
+            [0, 8, 8, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0]
+          ],
+          "output_instance_matrix": [
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 8, 1, 0, 0, 0, 0],
+            [0, 8, 8, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0]
+          ],
+          "implementation": "# A corner of color 8,\n# 2 by 2 at x 1, y 1, pointing southwest\nobj06bbbdc98e71 is Obj(x=1, y=1, width=2, height=2, orientation=225, volume=3, color=8)",
+          "input_value": {"color":8,"height":2,"id":"obj06bbbdc98e71","orientation":225,"tag":"l6747","volume":3,"width":2,"x":1,"y":1},
+          "output_value": {"color":8,"height":2,"id":"obj06bbbdc98e71","marker_color":1,"orientation":225,"tag":"l3337","volume":4,"width":2,"x":1,"y":1}
+        },
+        {
+          "instance_name": "obj812b7881ec0e",
+          "input_x": 4,
+          "output_x": 4,
+          "input_y": 3,
+          "output_y": 3,
+          "input_orientation": 45,
+          "output_orientation": 45,
+          "input_instance_matrix": [
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 8, 8, 0],
+            [0, 0, 0, 0, 0, 8, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0]
+          ],
+          "output_instance_matrix": [
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 8, 8, 0],
+            [0, 0, 0, 0, 1, 8, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0]
+          ],
+          "implementation": "# A corner of color 8,\n# 2 by 2 at x 4, y 3, pointing northeast\nobj812b7881ec0e is Obj(x=4, y=3, width=2, height=2, orientation=45, volume=3, color=8)",
+          "input_value": {"color":8,"height":2,"id":"obj812b7881ec0e","orientation":45,"tag":"l6747","volume":3,"width":2,"x":4,"y":3},
+          "output_value": {"color":8,"height":2,"id":"obj812b7881ec0e","marker_color":1,"orientation":45,"tag":"l3337","volume":4,"width":2,"x":4,"y":3}
+        }
+      ]
+    },
+    {
+      "input_matrix": [
+        [0, 0, 0, 0, 8, 8, 0],
+        [0, 0, 0, 0, 0, 8, 0],
+        [0, 0, 8, 0, 0, 0, 0],
+        [0, 0, 8, 8, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 8, 0, 0],
+        [0, 0, 0, 8, 8, 0, 0]
+      ],
+      "output_matrix": [
+        [0, 0, 0, 0, 8, 8, 0],
+        [0, 0, 0, 0, 1, 8, 0],
+        [0, 0, 8, 1, 0, 0, 0],
+        [0, 0, 8, 8, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 1, 8, 0, 0],
+        [0, 0, 0, 8, 8, 0, 0]
+      ],
+      "instances": [
+        {
+          "instance_name": "obj3a91dc0b584b",
+          "input_x": 4,
+          "output_x": 4,
+          "input_y": 0,
+          "output_y": 0,
+          "input_orientation": 45,
+          "output_orientation": 45,
+          "input_instance_matrix": [
+            [0, 0, 0, 0, 8, 8, 0],
+            [0, 0, 0, 0, 0, 8, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0]
+          ],
+          "output_instance_matrix": [
+            [0, 0, 0, 0, 8, 8, 0],
+            [0, 0, 0, 0, 1, 8, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0]
+          ],
+          "implementation": "# A corner of color 8,\n# 2 by 2 at x 4, y 0, pointing northeast\nobj3a91dc0b584b is Obj(x=4, y=0, width=2, height=2, orientation=45, volume=3, color=8)",
+          "input_value": {"color":8,"height":2,"id":"obj3a91dc0b584b","orientation":45,"tag":"l6747","volume":3,"width":2,"x":4,"y":0},
+          "output_value": {"color":8,"height":2,"id":"obj3a91dc0b584b","marker_color":1,"orientation":45,"tag":"l3337","volume":4,"width":2,"x":4,"y":0}
+        },
+        {
+          "instance_name": "obj1d5b3380e76e",
+          "input_x": 2,
+          "output_x": 2,
+          "input_y": 2,
+          "output_y": 2,
+          "input_orientation": 225,
+          "output_orientation": 225,
+          "input_instance_matrix": [
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 8, 0, 0, 0, 0],
+            [0, 0, 8, 8, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0]
+          ],
+          "output_instance_matrix": [
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 8, 1, 0, 0, 0],
+            [0, 0, 8, 8, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0]
+          ],
+          "implementation": "# A corner of color 8,\n# 2 by 2 at x 2, y 2, pointing southwest\nobj1d5b3380e76e is Obj(x=2, y=2, width=2, height=2, orientation=225, volume=3, color=8)",
+          "input_value": {"color":8,"height":2,"id":"obj1d5b3380e76e","orientation":225,"tag":"l6747","volume":3,"width":2,"x":2,"y":2},
+          "output_value": {"color":8,"height":2,"id":"obj1d5b3380e76e","marker_color":1,"orientation":225,"tag":"l3337","volume":4,"width":2,"x":2,"y":2}
+        },
+        {
+          "instance_name": "obje29de8da7b6d",
+          "input_x": 3,
+          "output_x": 3,
+          "input_y": 5,
+          "output_y": 5,
+          "input_orientation": 135,
+          "output_orientation": 135,
+          "input_instance_matrix": [
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 8, 0, 0],
+            [0, 0, 0, 8, 8, 0, 0]
+          ],
+          "output_instance_matrix": [
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 1, 8, 0, 0],
+            [0, 0, 0, 8, 8, 0, 0]
+          ],
+          "implementation": "# A corner of color 8,\n# 2 by 2 at x 3, y 5, pointing southeast\nobje29de8da7b6d is Obj(x=3, y=5, width=2, height=2, orientation=135, volume=3, color=8)",
+          "input_value": {"color":8,"height":2,"id":"obje29de8da7b6d","orientation":135,"tag":"l6747","volume":3,"width":2,"x":3,"y":5},
+          "output_value": {"color":8,"height":2,"id":"obje29de8da7b6d","marker_color":1,"orientation":135,"tag":"l3337","volume":4,"width":2,"x":3,"y":5}
+        }
+      ]
+    },
+    {
+      "input_matrix": [
+        [0, 0, 0, 0, 0, 8, 8],
+        [8, 8, 0, 0, 0, 0, 8],
+        [8, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 8, 0, 0, 0],
+        [0, 0, 0, 8, 8, 0, 0],
+        [0, 8, 0, 0, 0, 0, 0],
+        [8, 8, 0, 0, 0, 0, 0]
+      ],
+      "output_matrix": [
+        [0, 0, 0, 0, 0, 8, 8],
+        [8, 8, 0, 0, 0, 1, 8],
+        [8, 1, 0, 0, 0, 0, 0],
+        [0, 0, 0, 8, 1, 0, 0],
+        [0, 0, 0, 8, 8, 0, 0],
+        [1, 8, 0, 0, 0, 0, 0],
+        [8, 8, 0, 0, 0, 0, 0]
+      ],
+      "instances": [
+        {
+          "instance_name": "obje1ac1e9c728c",
+          "input_x": 5,
+          "output_x": 5,
+          "input_y": 0,
+          "output_y": 0,
+          "input_orientation": 45,
+          "output_orientation": 45,
+          "input_instance_matrix": [
+            [0, 0, 0, 0, 0, 8, 8],
+            [0, 0, 0, 0, 0, 0, 8],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0]
+          ],
+          "output_instance_matrix": [
+            [0, 0, 0, 0, 0, 8, 8],
+            [0, 0, 0, 0, 0, 1, 8],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0]
+          ],
+          "implementation": "# A corner of color 8,\n# 2 by 2 at x 5, y 0, pointing northeast\nobje1ac1e9c728c is Obj(x=5, y=0, width=2, height=2, orientation=45, volume=3, color=8)",
+          "input_value": {"color":8,"height":2,"id":"obje1ac1e9c728c","orientation":45,"tag":"l6747","volume":3,"width":2,"x":5,"y":0},
+          "output_value": {"color":8,"height":2,"id":"obje1ac1e9c728c","marker_color":1,"orientation":45,"tag":"l3337","volume":4,"width":2,"x":5,"y":0}
+        },
+        {
+          "instance_name": "obj58a9534f3655",
+          "input_x": 0,
+          "output_x": 0,
+          "input_y": 1,
+          "output_y": 1,
+          "input_orientation": 315,
+          "output_orientation": 315,
+          "input_instance_matrix": [
+            [0, 0, 0, 0, 0, 0, 0],
+            [8, 8, 0, 0, 0, 0, 0],
+            [8, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0]
+          ],
+          "output_instance_matrix": [
+            [0, 0, 0, 0, 0, 0, 0],
+            [8, 8, 0, 0, 0, 0, 0],
+            [8, 1, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0]
+          ],
+          "implementation": "# A corner of color 8,\n# 2 by 2 at x 0, y 1, pointing northwest\nobj58a9534f3655 is Obj(x=0, y=1, width=2, height=2, orientation=315, volume=3, color=8)",
+          "input_value": {"color":8,"height":2,"id":"obj58a9534f3655","orientation":315,"tag":"l6747","volume":3,"width":2,"x":0,"y":1},
+          "output_value": {"color":8,"height":2,"id":"obj58a9534f3655","marker_color":1,"orientation":315,"tag":"l3337","volume":4,"width":2,"x":0,"y":1}
+        },
+        {
+          "instance_name": "obj5b57cbfb98c2",
+          "input_x": 3,
+          "output_x": 3,
+          "input_y": 3,
+          "output_y": 3,
+          "input_orientation": 225,
+          "output_orientation": 225,
+          "input_instance_matrix": [
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 8, 0, 0, 0],
+            [0, 0, 0, 8, 8, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0]
+          ],
+          "output_instance_matrix": [
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 8, 1, 0, 0],
+            [0, 0, 0, 8, 8, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0]
+          ],
+          "implementation": "# A corner of color 8,\n# 2 by 2 at x 3, y 3, pointing southwest\nobj5b57cbfb98c2 is Obj(x=3, y=3, width=2, height=2, orientation=225, volume=3, color=8)",
+          "input_value": {"color":8,"height":2,"id":"obj5b57cbfb98c2","orientation":225,"tag":"l6747","volume":3,"width":2,"x":3,"y":3},
+          "output_value": {"color":8,"height":2,"id":"obj5b57cbfb98c2","marker_color":1,"orientation":225,"tag":"l3337","volume":4,"width":2,"x":3,"y":3}
+        },
+        {
+          "instance_name": "objda2d685493eb",
+          "input_x": 0,
+          "output_x": 0,
+          "input_y": 5,
+          "output_y": 5,
+          "input_orientation": 135,
+          "output_orientation": 135,
+          "input_instance_matrix": [
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 8, 0, 0, 0, 0, 0],
+            [8, 8, 0, 0, 0, 0, 0]
+          ],
+          "output_instance_matrix": [
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [1, 8, 0, 0, 0, 0, 0],
+            [8, 8, 0, 0, 0, 0, 0]
+          ],
+          "implementation": "# A corner of color 8,\n# 2 by 2 at x 0, y 5, pointing southeast\nobjda2d685493eb is Obj(x=0, y=5, width=2, height=2, orientation=135, volume=3, color=8)",
+          "input_value": {"color":8,"height":2,"id":"objda2d685493eb","orientation":135,"tag":"l6747","volume":3,"width":2,"x":0,"y":5},
+          "output_value": {"color":8,"height":2,"id":"objda2d685493eb","marker_color":1,"orientation":135,"tag":"l3337","volume":4,"width":2,"x":0,"y":5}
+        }
+      ]
+    }
+  ]
+}

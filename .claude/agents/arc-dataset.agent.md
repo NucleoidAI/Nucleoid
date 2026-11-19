@@ -132,9 +132,15 @@ formatting exactly:
 - `volume` is the number of nonzero cells in the object's input mask, not the
   area of its bounding box; the solver measures it with `Matrix.locate` and
   sends it to the implementation call as `input_volume`. Like `width` and
-  `height`, it does not change when only the orientation changes. Use it for
-  an object's cell count instead of a separate property such as
-  `cell_count`.
+  `height`, it does not change when only the orientation changes. When the
+  transformation adds or removes cells, a rule recomputes it, so that every
+  output state's `volume` is the number of nonzero cells in its output mask:
+  from the input value with `@first`, as in
+  `$Obj.volume is $Obj.volume@first * 2` for a mirror image
+  (`dataset.6d0aefbc.json`), or from other properties, as in
+  `$Obj.volume is $Obj.width * $Obj.height` for a filled box
+  (`dataset.5582e5ca.json`). Use it for an object's cell count instead of a
+  separate property such as `cell_count`.
 - The solver starts every Nucleoid program with `canvas_width` and
   `canvas_height`, the column and row counts of the pair's `input_matrix`
   (every `nucleoid.run` call in `arc/src/analyzer.ts` and
@@ -273,6 +279,8 @@ Verify with a throwaway script outside the repository; do not add tests:
   hold only cells of their respective matrices.
 - Merging a pair's input masks reproduces `input_matrix`, and merging its
   output masks reproduces `output_matrix`, cell for cell.
+- Every `input_value.volume` and `output_value.volume` equals the number of
+  nonzero cells in the instance's input or output mask.
 - Rerunning Nucleoid reproduces every `input_value` and `output_value`.
 
 For an explicitly authorized padding-only repair, restore unambiguous

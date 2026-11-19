@@ -8,7 +8,8 @@
     "$Obj.symmetric is all point in $Obj.points: $Obj.points.includes([canvas_width - 1 - point[0], point[1]])",
     "$Obj.fill_color is 1 if $Obj.symmetric else 7",
     "$Obj.x is 0",
-    "$Obj.y is 0"
+    "$Obj.y is 0",
+    "$Obj.volume is $Obj.width * $Obj.height"
   ],
   "output_canvas": "FIT",
   "dataset": [
@@ -34,7 +35,7 @@
           ],
           "implementation": "objaefa2ef1a32f is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=5, points=[[0, 0], [2, 0], [1, 1], [0, 2], [2, 2]])",
           "input_value": {"height":3,"id":"objaefa2ef1a32f","orientation":0,"points":[[0,0],[2,0],[1,1],[0,2],[2,2]],"tag":"l9100","volume":5,"width":3,"x":0,"y":0},
-          "output_value": {"fill_color":1,"height":1,"id":"objaefa2ef1a32f","orientation":0,"points":[[0,0],[2,0],[1,1],[0,2],[2,2]],"symmetric":true,"tag":"l7544","volume":5,"width":1,"x":0,"y":0}
+          "output_value": {"fill_color":1,"height":1,"id":"objaefa2ef1a32f","orientation":0,"points":[[0,0],[2,0],[1,1],[0,2],[2,2]],"symmetric":true,"tag":"l7544","volume":1,"width":1,"x":0,"y":0}
         }
       ]
     },
@@ -60,7 +61,7 @@
           ],
           "implementation": "obj3914f7995d3e is Obj(x=0, y=0, width=2, height=3, orientation=0, volume=3, points=[[0, 0], [0, 1], [1, 2]])",
           "input_value": {"height":3,"id":"obj3914f7995d3e","orientation":0,"points":[[0,0],[0,1],[1,2]],"tag":"l9100","volume":3,"width":2,"x":0,"y":0},
-          "output_value": {"fill_color":7,"height":1,"id":"obj3914f7995d3e","orientation":0,"points":[[0,0],[0,1],[1,2]],"symmetric":false,"tag":"l7544","volume":3,"width":1,"x":0,"y":0}
+          "output_value": {"fill_color":7,"height":1,"id":"obj3914f7995d3e","orientation":0,"points":[[0,0],[0,1],[1,2]],"symmetric":false,"tag":"l7544","volume":1,"width":1,"x":0,"y":0}
         }
       ]
     },
@@ -86,7 +87,7 @@
           ],
           "implementation": "objeb5c0167d445 is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=6, points=[[0, 0], [2, 0], [0, 1], [2, 1], [0, 2], [2, 2]])",
           "input_value": {"height":3,"id":"objeb5c0167d445","orientation":0,"points":[[0,0],[2,0],[0,1],[2,1],[0,2],[2,2]],"tag":"l9100","volume":6,"width":3,"x":0,"y":0},
-          "output_value": {"fill_color":1,"height":1,"id":"objeb5c0167d445","orientation":0,"points":[[0,0],[2,0],[0,1],[2,1],[0,2],[2,2]],"symmetric":true,"tag":"l7544","volume":6,"width":1,"x":0,"y":0}
+          "output_value": {"fill_color":1,"height":1,"id":"objeb5c0167d445","orientation":0,"points":[[0,0],[2,0],[0,1],[2,1],[0,2],[2,2]],"symmetric":true,"tag":"l7544","volume":1,"width":1,"x":0,"y":0}
         }
       ]
     },
@@ -112,7 +113,7 @@
           ],
           "implementation": "objcef2c78836a4 is Obj(x=0, y=1, width=3, height=1, orientation=0, volume=2, points=[[0, 1], [2, 1]])",
           "input_value": {"height":1,"id":"objcef2c78836a4","orientation":0,"points":[[0,1],[2,1]],"tag":"l9100","volume":2,"width":3,"x":0,"y":1},
-          "output_value": {"fill_color":1,"height":1,"id":"objcef2c78836a4","orientation":0,"points":[[0,1],[2,1]],"symmetric":true,"tag":"l7544","volume":2,"width":1,"x":0,"y":0}
+          "output_value": {"fill_color":1,"height":1,"id":"objcef2c78836a4","orientation":0,"points":[[0,1],[2,1]],"symmetric":true,"tag":"l7544","volume":1,"width":1,"x":0,"y":0}
         }
       ]
     },
@@ -138,7 +139,7 @@
           ],
           "implementation": "obje0d187e059c6 is Obj(x=0, y=0, width=3, height=2, orientation=0, volume=4, points=[[0, 0], [1, 0], [1, 1], [2, 1]])",
           "input_value": {"height":2,"id":"obje0d187e059c6","orientation":0,"points":[[0,0],[1,0],[1,1],[2,1]],"tag":"l9100","volume":4,"width":3,"x":0,"y":0},
-          "output_value": {"fill_color":7,"height":1,"id":"obje0d187e059c6","orientation":0,"points":[[0,0],[1,0],[1,1],[2,1]],"symmetric":false,"tag":"l7544","volume":4,"width":1,"x":0,"y":0}
+          "output_value": {"fill_color":7,"height":1,"id":"obje0d187e059c6","orientation":0,"points":[[0,0],[1,0],[1,1],[2,1]],"symmetric":false,"tag":"l7544","volume":1,"width":1,"x":0,"y":0}
         }
       ]
     },
@@ -164,7 +165,7 @@
           ],
           "implementation": "obj656ae86cdc80 is Obj(x=0, y=0, width=2, height=2, orientation=45, volume=3, points=[[0, 0], [1, 0], [1, 1]])",
           "input_value": {"height":2,"id":"obj656ae86cdc80","orientation":45,"points":[[0,0],[1,0],[1,1]],"tag":"l9100","volume":3,"width":2,"x":0,"y":0},
-          "output_value": {"fill_color":7,"height":1,"id":"obj656ae86cdc80","orientation":0,"points":[[0,0],[1,0],[1,1]],"symmetric":false,"tag":"l7544","volume":3,"width":1,"x":0,"y":0}
+          "output_value": {"fill_color":7,"height":1,"id":"obj656ae86cdc80","orientation":0,"points":[[0,0],[1,0],[1,1]],"symmetric":false,"tag":"l7544","volume":1,"width":1,"x":0,"y":0}
         }
       ]
     },
@@ -190,7 +191,7 @@
           ],
           "implementation": "obje4210d7a3726 is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=7, points=[[0, 0], [2, 0], [0, 1], [1, 1], [2, 1], [0, 2], [2, 2]])",
           "input_value": {"height":3,"id":"obje4210d7a3726","orientation":0,"points":[[0,0],[2,0],[0,1],[1,1],[2,1],[0,2],[2,2]],"tag":"l9100","volume":7,"width":3,"x":0,"y":0},
-          "output_value": {"fill_color":1,"height":1,"id":"obje4210d7a3726","orientation":0,"points":[[0,0],[2,0],[0,1],[1,1],[2,1],[0,2],[2,2]],"symmetric":true,"tag":"l7544","volume":7,"width":1,"x":0,"y":0}
+          "output_value": {"fill_color":1,"height":1,"id":"obje4210d7a3726","orientation":0,"points":[[0,0],[2,0],[0,1],[1,1],[2,1],[0,2],[2,2]],"symmetric":true,"tag":"l7544","volume":1,"width":1,"x":0,"y":0}
         }
       ]
     },
@@ -216,7 +217,7 @@
           ],
           "implementation": "obj7170e5f9a58a is Obj(x=0, y=1, width=1, height=2, orientation=0, volume=2, points=[[0, 1], [0, 2]])",
           "input_value": {"height":2,"id":"obj7170e5f9a58a","orientation":0,"points":[[0,1],[0,2]],"tag":"l9100","volume":2,"width":1,"x":0,"y":1},
-          "output_value": {"fill_color":7,"height":1,"id":"obj7170e5f9a58a","orientation":0,"points":[[0,1],[0,2]],"symmetric":false,"tag":"l7544","volume":2,"width":1,"x":0,"y":0}
+          "output_value": {"fill_color":7,"height":1,"id":"obj7170e5f9a58a","orientation":0,"points":[[0,1],[0,2]],"symmetric":false,"tag":"l7544","volume":1,"width":1,"x":0,"y":0}
         }
       ]
     }

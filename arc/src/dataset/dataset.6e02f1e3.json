@@ -4,7 +4,8 @@
     "$Obj.tag is l6074",
     "$Obj.orientation is {1: 90, 2: 135, 3: 45}[$Obj.parts.distinct().length]",
     "if $Obj.orientation is 90:\n    $Obj.height is 1",
-    "$Obj.fill_color is 5"
+    "$Obj.fill_color is 5",
+    "$Obj.volume is max of [$Obj.width, $Obj.height]"
   ],
   "output_canvas": "EXACT",
   "dataset": [
@@ -34,7 +35,7 @@
           ],
           "implementation": "objf30b9a69fe75 is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=9, parts=[2, 2, 2, 3, 2, 3, 3, 3, 3])",
           "input_value": {"height":3,"id":"objf30b9a69fe75","orientation":0,"parts":[2,2,2,3,2,3,3,3,3],"tag":"l9100","volume":9,"width":3,"x":0,"y":0},
-          "output_value": {"fill_color":5,"height":3,"id":"objf30b9a69fe75","orientation":135,"parts":[2,2,2,3,2,3,3,3,3],"tag":"l6074","volume":9,"width":3,"x":0,"y":0}
+          "output_value": {"fill_color":5,"height":3,"id":"objf30b9a69fe75","orientation":135,"parts":[2,2,2,3,2,3,3,3,3],"tag":"l6074","volume":3,"width":3,"x":0,"y":0}
         }
       ]
     },
@@ -64,7 +65,7 @@
           ],
           "implementation": "obj9b3f65ec8bbe is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=9, parts=[3, 3, 3, 4, 2, 2, 4, 4, 2])",
           "input_value": {"height":3,"id":"obj9b3f65ec8bbe","orientation":0,"parts":[3,3,3,4,2,2,4,4,2],"tag":"l9100","volume":9,"width":3,"x":0,"y":0},
-          "output_value": {"fill_color":5,"height":3,"id":"obj9b3f65ec8bbe","orientation":45,"parts":[3,3,3,4,2,2,4,4,2],"tag":"l6074","volume":9,"width":3,"x":0,"y":0}
+          "output_value": {"fill_color":5,"height":3,"id":"obj9b3f65ec8bbe","orientation":45,"parts":[3,3,3,4,2,2,4,4,2],"tag":"l6074","volume":3,"width":3,"x":0,"y":0}
         }
       ]
     },
@@ -94,7 +95,7 @@
           ],
           "implementation": "obj23d15ee33476 is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=9, parts=[4, 4, 4, 4, 4, 4, 4, 4, 4])",
           "input_value": {"height":3,"id":"obj23d15ee33476","orientation":0,"parts":[4,4,4,4,4,4,4,4,4],"tag":"l9100","volume":9,"width":3,"x":0,"y":0},
-          "output_value": {"fill_color":5,"height":1,"id":"obj23d15ee33476","orientation":90,"parts":[4,4,4,4,4,4,4,4,4],"tag":"l6074","volume":9,"width":3,"x":0,"y":0}
+          "output_value": {"fill_color":5,"height":1,"id":"obj23d15ee33476","orientation":90,"parts":[4,4,4,4,4,4,4,4,4],"tag":"l6074","volume":3,"width":3,"x":0,"y":0}
         }
       ]
     },
@@ -124,7 +125,7 @@
           ],
           "implementation": "objb16c3542a556 is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=9, parts=[3, 3, 3, 3, 3, 3, 3, 3, 3])",
           "input_value": {"height":3,"id":"objb16c3542a556","orientation":0,"parts":[3,3,3,3,3,3,3,3,3],"tag":"l9100","volume":9,"width":3,"x":0,"y":0},
-          "output_value": {"fill_color":5,"height":1,"id":"objb16c3542a556","orientation":90,"parts":[3,3,3,3,3,3,3,3,3],"tag":"l6074","volume":9,"width":3,"x":0,"y":0}
+          "output_value": {"fill_color":5,"height":1,"id":"objb16c3542a556","orientation":90,"parts":[3,3,3,3,3,3,3,3,3],"tag":"l6074","volume":3,"width":3,"x":0,"y":0}
         }
       ]
     },
@@ -154,7 +155,7 @@
           ],
           "implementation": "objde2fe15d0cff is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=9, parts=[4, 4, 4, 4, 4, 4, 3, 3, 3])",
           "input_value": {"height":3,"id":"objde2fe15d0cff","orientation":0,"parts":[4,4,4,4,4,4,3,3,3],"tag":"l9100","volume":9,"width":3,"x":0,"y":0},
-          "output_value": {"fill_color":5,"height":3,"id":"objde2fe15d0cff","orientation":135,"parts":[4,4,4,4,4,4,3,3,3],"tag":"l6074","volume":9,"width":3,"x":0,"y":0}
+          "output_value": {"fill_color":5,"height":3,"id":"objde2fe15d0cff","orientation":135,"parts":[4,4,4,4,4,4,3,3,3],"tag":"l6074","volume":3,"width":3,"x":0,"y":0}
         }
       ]
     },
@@ -184,7 +185,7 @@
           ],
           "implementation": "obj19a35427d914 is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=9, parts=[4, 4, 4, 2, 3, 2, 3, 2, 3])",
           "input_value": {"height":3,"id":"obj19a35427d914","orientation":0,"parts":[4,4,4,2,3,2,3,2,3],"tag":"l9100","volume":9,"width":3,"x":0,"y":0},
-          "output_value": {"fill_color":5,"height":3,"id":"obj19a35427d914","orientation":45,"parts":[4,4,4,2,3,2,3,2,3],"tag":"l6074","volume":9,"width":3,"x":0,"y":0}
+          "output_value": {"fill_color":5,"height":3,"id":"obj19a35427d914","orientation":45,"parts":[4,4,4,2,3,2,3,2,3],"tag":"l6074","volume":3,"width":3,"x":0,"y":0}
         }
       ]
     }

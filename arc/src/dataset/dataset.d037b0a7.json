@@ -2,7 +2,8 @@
   "declarations": [
     "class Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, color: int):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.tag is l7544\n    this.color is color",
     "$Obj.tag is l6953",
-    "$Obj.height is canvas_height - $Obj.y@first"
+    "$Obj.height is canvas_height - $Obj.y@first",
+    "$Obj.volume is $Obj.width * $Obj.height"
   ],
   "output_canvas": "EXACT",
   "dataset": [
@@ -32,7 +33,7 @@
           ],
           "implementation": "obj7ed0b8b9b5eb is Obj(x=2, y=0, width=1, height=1, orientation=0, volume=1, color=6)",
           "input_value": {"color":6,"height":1,"id":"obj7ed0b8b9b5eb","orientation":0,"tag":"l7544","volume":1,"width":1,"x":2,"y":0},
-          "output_value": {"color":6,"height":3,"id":"obj7ed0b8b9b5eb","orientation":0,"tag":"l6953","volume":1,"width":1,"x":2,"y":0}
+          "output_value": {"color":6,"height":3,"id":"obj7ed0b8b9b5eb","orientation":0,"tag":"l6953","volume":3,"width":1,"x":2,"y":0}
         },
         {
           "instance_name": "objcd75eb6d92af",
@@ -48,7 +49,7 @@
           ],
           "implementation": "objcd75eb6d92af is Obj(x=1, y=1, width=1, height=1, orientation=0, volume=1, color=4)",
           "input_value": {"color":4,"height":1,"id":"objcd75eb6d92af","orientation":0,"tag":"l7544","volume":1,"width":1,"x":1,"y":1},
-          "output_value": {"color":4,"height":2,"id":"objcd75eb6d92af","orientation":0,"tag":"l6953","volume":1,"width":1,"x":1,"y":1}
+          "output_value": {"color":4,"height":2,"id":"objcd75eb6d92af","orientation":0,"tag":"l6953","volume":2,"width":1,"x":1,"y":1}
         },
         {
           "instance_name": "obj64246d126f5a",
@@ -94,7 +95,7 @@
           ],
           "implementation": "obj0cad03e1a41e is Obj(x=1, y=0, width=1, height=1, orientation=0, volume=1, color=2)",
           "input_value": {"color":2,"height":1,"id":"obj0cad03e1a41e","orientation":0,"tag":"l7544","volume":1,"width":1,"x":1,"y":0},
-          "output_value": {"color":2,"height":3,"id":"obj0cad03e1a41e","orientation":0,"tag":"l6953","volume":1,"width":1,"x":1,"y":0}
+          "output_value": {"color":2,"height":3,"id":"obj0cad03e1a41e","orientation":0,"tag":"l6953","volume":3,"width":1,"x":1,"y":0}
         },
         {
           "instance_name": "obj00ed3078c7da",
@@ -110,7 +111,7 @@
           ],
           "implementation": "obj00ed3078c7da is Obj(x=0, y=1, width=1, height=1, orientation=0, volume=1, color=7)",
           "input_value": {"color":7,"height":1,"id":"obj00ed3078c7da","orientation":0,"tag":"l7544","volume":1,"width":1,"x":0,"y":1},
-          "output_value": {"color":7,"height":2,"id":"obj00ed3078c7da","orientation":0,"tag":"l6953","volume":1,"width":1,"x":0,"y":1}
+          "output_value": {"color":7,"height":2,"id":"obj00ed3078c7da","orientation":0,"tag":"l6953","volume":2,"width":1,"x":0,"y":1}
         },
         {
           "instance_name": "obj2c96fafb078f",
@@ -126,7 +127,7 @@
           ],
           "implementation": "obj2c96fafb078f is Obj(x=2, y=1, width=1, height=1, orientation=0, volume=1, color=8)",
           "input_value": {"color":8,"height":1,"id":"obj2c96fafb078f","orientation":0,"tag":"l7544","volume":1,"width":1,"x":2,"y":1},
-          "output_value": {"color":8,"height":2,"id":"obj2c96fafb078f","orientation":0,"tag":"l6953","volume":1,"width":1,"x":2,"y":1}
+          "output_value": {"color":8,"height":2,"id":"obj2c96fafb078f","orientation":0,"tag":"l6953","volume":2,"width":1,"x":2,"y":1}
         }
       ]
     },
@@ -156,7 +157,7 @@
           ],
           "implementation": "obja1fc4c6969c5 is Obj(x=0, y=0, width=1, height=1, orientation=0, volume=1, color=4)",
           "input_value": {"color":4,"height":1,"id":"obja1fc4c6969c5","orientation":0,"tag":"l7544","volume":1,"width":1,"x":0,"y":0},
-          "output_value": {"color":4,"height":3,"id":"obja1fc4c6969c5","orientation":0,"tag":"l6953","volume":1,"width":1,"x":0,"y":0}
+          "output_value": {"color":4,"height":3,"id":"obja1fc4c6969c5","orientation":0,"tag":"l6953","volume":3,"width":1,"x":0,"y":0}
         },
         {
           "instance_name": "obj8f5e8ba44614",
@@ -172,7 +173,7 @@
           ],
           "implementation": "obj8f5e8ba44614 is Obj(x=1, y=1, width=1, height=1, orientation=0, volume=1, color=2)",
           "input_value": {"color":2,"height":1,"id":"obj8f5e8ba44614","orientation":0,"tag":"l7544","volume":1,"width":1,"x":1,"y":1},
-          "output_value": {"color":2,"height":2,"id":"obj8f5e8ba44614","orientation":0,"tag":"l6953","volume":1,"width":1,"x":1,"y":1}
+          "output_value": {"color":2,"height":2,"id":"obj8f5e8ba44614","orientation":0,"tag":"l6953","volume":2,"width":1,"x":1,"y":1}
         }
       ]
     },
@@ -202,7 +203,7 @@
           ],
           "implementation": "obj279d8caacd73 is Obj(x=0, y=0, width=1, height=1, orientation=0, volume=1, color=4)",
           "input_value": {"color":4,"height":1,"id":"obj279d8caacd73","orientation":0,"tag":"l7544","volume":1,"width":1,"x":0,"y":0},
-          "output_value": {"color":4,"height":3,"id":"obj279d8caacd73","orientation":0,"tag":"l6953","volume":1,"width":1,"x":0,"y":0}
+          "output_value": {"color":4,"height":3,"id":"obj279d8caacd73","orientation":0,"tag":"l6953","volume":3,"width":1,"x":0,"y":0}
         },
         {
           "instance_name": "obje0d11c952ecc",
@@ -218,7 +219,7 @@
           ],
           "implementation": "obje0d11c952ecc is Obj(x=2, y=0, width=1, height=1, orientation=0, volume=1, color=8)",
           "input_value": {"color":8,"height":1,"id":"obje0d11c952ecc","orientation":0,"tag":"l7544","volume":1,"width":1,"x":2,"y":0},
-          "output_value": {"color":8,"height":3,"id":"obje0d11c952ecc","orientation":0,"tag":"l6953","volume":1,"width":1,"x":2,"y":0}
+          "output_value": {"color":8,"height":3,"id":"obje0d11c952ecc","orientation":0,"tag":"l6953","volume":3,"width":1,"x":2,"y":0}
         },
         {
           "instance_name": "objbf4bef4c3e59",

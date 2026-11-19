@@ -2,7 +2,8 @@
   "declarations": [
     "class Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.tag is l9100",
     "$Obj.tag is l7511",
-    "$Obj.height is $Obj.height@first * 2"
+    "$Obj.height is $Obj.height@first * 2",
+    "$Obj.volume is $Obj.volume@first * 2"
   ],
   "output_canvas": "EXACT",
   "dataset": [
@@ -38,7 +39,7 @@
           ],
           "implementation": "obj54b166493c46 is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=9)",
           "input_value": {"height":3,"id":"obj54b166493c46","orientation":0,"tag":"l9100","volume":9,"width":3,"x":0,"y":0},
-          "output_value": {"height":6,"id":"obj54b166493c46","orientation":0,"tag":"l7511","volume":9,"width":3,"x":0,"y":0}
+          "output_value": {"height":6,"id":"obj54b166493c46","orientation":0,"tag":"l7511","volume":18,"width":3,"x":0,"y":0}
         }
       ]
     },
@@ -74,7 +75,7 @@
           ],
           "implementation": "obj277b0edf4557 is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=9)",
           "input_value": {"height":3,"id":"obj277b0edf4557","orientation":0,"tag":"l9100","volume":9,"width":3,"x":0,"y":0},
-          "output_value": {"height":6,"id":"obj277b0edf4557","orientation":0,"tag":"l7511","volume":9,"width":3,"x":0,"y":0}
+          "output_value": {"height":6,"id":"obj277b0edf4557","orientation":0,"tag":"l7511","volume":18,"width":3,"x":0,"y":0}
         }
       ]
     },
@@ -110,7 +111,7 @@
           ],
           "implementation": "obj342ec195f31f is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=9)",
           "input_value": {"height":3,"id":"obj342ec195f31f","orientation":0,"tag":"l9100","volume":9,"width":3,"x":0,"y":0},
-          "output_value": {"height":6,"id":"obj342ec195f31f","orientation":0,"tag":"l7511","volume":9,"width":3,"x":0,"y":0}
+          "output_value": {"height":6,"id":"obj342ec195f31f","orientation":0,"tag":"l7511","volume":18,"width":3,"x":0,"y":0}
         }
       ]
     },
@@ -146,7 +147,7 @@
           ],
           "implementation": "objaa6b82d62f4e is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=9)",
           "input_value": {"height":3,"id":"objaa6b82d62f4e","orientation":0,"tag":"l9100","volume":9,"width":3,"x":0,"y":0},
-          "output_value": {"height":6,"id":"objaa6b82d62f4e","orientation":0,"tag":"l7511","volume":9,"width":3,"x":0,"y":0}
+          "output_value": {"height":6,"id":"objaa6b82d62f4e","orientation":0,"tag":"l7511","volume":18,"width":3,"x":0,"y":0}
         }
       ]
     },
@@ -182,7 +183,7 @@
           ],
           "implementation": "obj8c1478ec6c90 is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=9)",
           "input_value": {"height":3,"id":"obj8c1478ec6c90","orientation":0,"tag":"l9100","volume":9,"width":3,"x":0,"y":0},
-          "output_value": {"height":6,"id":"obj8c1478ec6c90","orientation":0,"tag":"l7511","volume":9,"width":3,"x":0,"y":0}
+          "output_value": {"height":6,"id":"obj8c1478ec6c90","orientation":0,"tag":"l7511","volume":18,"width":3,"x":0,"y":0}
         }
       ]
     }

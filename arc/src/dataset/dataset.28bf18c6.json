@@ -6,7 +6,8 @@
     "$Obj.repeat_direction is right",
     "$Obj.width is $Obj.width@first * $Obj.repeat_count",
     "$Obj.x is 0",
-    "$Obj.y is 0"
+    "$Obj.y is 0",
+    "$Obj.volume is $Obj.volume@first * $Obj.repeat_count"
   ],
   "output_canvas": "FIT",
   "dataset": [
@@ -46,7 +47,7 @@
           ],
           "implementation": "obj9b9fe2a02df1 is Obj(x=1, y=1, width=3, height=3, orientation=0, volume=6, color=8)",
           "input_value": {"color":8,"height":3,"id":"obj9b9fe2a02df1","orientation":0,"tag":"l9100","volume":6,"width":3,"x":1,"y":1},
-          "output_value": {"color":8,"height":3,"id":"obj9b9fe2a02df1","orientation":0,"repeat_count":2,"repeat_direction":"right","tag":"l4305","volume":6,"width":6,"x":0,"y":0}
+          "output_value": {"color":8,"height":3,"id":"obj9b9fe2a02df1","orientation":0,"repeat_count":2,"repeat_direction":"right","tag":"l4305","volume":12,"width":6,"x":0,"y":0}
         }
       ]
     },
@@ -86,7 +87,7 @@
           ],
           "implementation": "obje0404a753c87 is Obj(x=2, y=5, width=3, height=3, orientation=0, volume=6, color=2)",
           "input_value": {"color":2,"height":3,"id":"obje0404a753c87","orientation":0,"tag":"l9100","volume":6,"width":3,"x":2,"y":5},
-          "output_value": {"color":2,"height":3,"id":"obje0404a753c87","orientation":0,"repeat_count":2,"repeat_direction":"right","tag":"l4305","volume":6,"width":6,"x":0,"y":0}
+          "output_value": {"color":2,"height":3,"id":"obje0404a753c87","orientation":0,"repeat_count":2,"repeat_direction":"right","tag":"l4305","volume":12,"width":6,"x":0,"y":0}
         }
       ]
     },
@@ -126,7 +127,7 @@
           ],
           "implementation": "objb063b1a80b04 is Obj(x=4, y=1, width=3, height=3, orientation=0, volume=4, color=1)",
           "input_value": {"color":1,"height":3,"id":"objb063b1a80b04","orientation":0,"tag":"l9100","volume":4,"width":3,"x":4,"y":1},
-          "output_value": {"color":1,"height":3,"id":"objb063b1a80b04","orientation":0,"repeat_count":2,"repeat_direction":"right","tag":"l4305","volume":4,"width":6,"x":0,"y":0}
+          "output_value": {"color":1,"height":3,"id":"objb063b1a80b04","orientation":0,"repeat_count":2,"repeat_direction":"right","tag":"l4305","volume":8,"width":6,"x":0,"y":0}
         }
       ]
     },
@@ -166,7 +167,7 @@
           ],
           "implementation": "obj4b7b41624747 is Obj(x=1, y=4, width=3, height=3, orientation=0, volume=5, color=3)",
           "input_value": {"color":3,"height":3,"id":"obj4b7b41624747","orientation":0,"tag":"l9100","volume":5,"width":3,"x":1,"y":4},
-          "output_value": {"color":3,"height":3,"id":"obj4b7b41624747","orientation":0,"repeat_count":2,"repeat_direction":"right","tag":"l4305","volume":5,"width":6,"x":0,"y":0}
+          "output_value": {"color":3,"height":3,"id":"obj4b7b41624747","orientation":0,"repeat_count":2,"repeat_direction":"right","tag":"l4305","volume":10,"width":6,"x":0,"y":0}
         }
       ]
     }
