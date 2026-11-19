@@ -6780,6 +6780,77 @@ t.promote(bob)
   `Nucleoid rolls back failed product updates` specify the executable
   behavior. `tests/list_products.rs` executes the rest.
 
+## List and population variances and standard deviations
+
+- [NUC 123](docs/nuc-0123.md) adds the read-only list queries `variance` and
+  `stdev` to lists and class instance lists. No syntax, keyword or error type
+  is added.
+- `RECEIVER.variance()` returns the population variance of the receiver's
+  items, the mean of their squared deviations from their mean, and
+  `RECEIVER.variance(selector)` that of `selector(item)` for every item.
+  `RECEIVER.stdev()` and `RECEIVER.stdev(selector)` return its square root,
+  the population standard deviation. Both divide by the number of values, so
+  `[2, 4, 4, 4, 5, 5, 7, 9].variance()` is `4` and its `stdev()` is `2`.
+- The values are converted to numbers once and read in two passes, in 64-bit
+  floating point. The mean is computed as `average` computes it: the values
+  added in receiver order from `0`, divided by their number. The variance adds
+  the squares `d * d` of the deviations `d = value - mean` in receiver order
+  from `0` and divides by the number of values, and the standard deviation is
+  the square root that `Math.sqrt` gives. A list of numbers therefore has
+  exactly the variance that
+  `xs.average(x -> (x - xs.average()) * (x - xs.average()))` gives, and exactly
+  `Math.sqrt` of it as its standard deviation.
+- Because the deviations are taken from the mean, large values with a small
+  spread keep their spread: `[1000000001, 1000000002, 1000000003].variance()`
+  is `0.6666666666666666`, where the mean of the squares minus the square of
+  the mean, `xs.average(x -> x * x) - xs.average() ** 2`, cancels to `0`.
+- A single value gives `0`, and an empty receiver gives `0 / 0`, which is NaN.
+  A value that converts to NaN makes both results NaN, and so does an infinite
+  value, whose deviation from the mean, itself infinite or NaN, is NaN. A
+  square or a total beyond the largest number overflows to `Infinity`, so
+  `[1e200, -1e200].stdev()` is `Infinity`, and a square below the smallest
+  positive number underflows to `0`. An undefined value makes both results
+  undefined, which a declaration stores as `null`, ahead of NaN; every item is
+  still visited.
+- The receivers, the numeric conversion and the selector are those of
+  `median`: a list however it is reached, or a class's instance list in
+  population order, named by the class or by a variable that holds the class;
+  `null`, `false`, empty strings and empty lists are `0`, `true` is `1`,
+  numeric strings and one-item lists are their number, and objects, other
+  strings and longer lists are NaN. On a class name, `variance` and `stdev` are
+  the population queries even when the class declares instance methods with
+  those names; its instances keep calling those methods.
+- `variance()` and `stdev()` read items, not bindings, so a `null` item counts
+  `0` without settling a declaration to `null`, while the reads inside a
+  selector follow the existing rules.
+- A selector is called once for every item, in order, with only the item;
+  further parameters are `null`. A supplied first argument that is not a
+  function, including `null`, raises `TypeError("variance expects a function")`
+  or `TypeError("stdev expects a function")`, even on an empty receiver.
+- `variance` and `stdev` follow the shared rules of the list queries: they read
+  their receiver before their arguments, evaluate every supplied argument once,
+  left to right, including unused extras, and never write the receiver. A
+  declaration that uses them depends on the list or population, on their
+  argument expressions and on whatever the selector reads, so list mutations,
+  new and deleted instances and property changes re-evaluate it, in
+  class-level rules too. Selector errors roll back through the existing
+  transaction. A null or undefined receiver yields undefined without evaluating
+  the arguments.
+- A call converts every value once and makes two linear passes over the
+  numbers, without recursion.
+- The call keeps its ordinary rendering, so `spread = scores.variance()`
+  explains as `spread = scores.variance()`, and `why` lists the receiver among
+  the declaration's dependencies.
+- `variance of xs` stays `SyntaxError("Unexpected keyword 'of'")`: neither
+  name is a noun query. Property reads such as `xs.variance` and `xs.stdev`,
+  bindings and object properties named `variance` or `stdev`, `variance(...)`
+  without a definition, `Math.variance`, `xs.std()` and instance methods named
+  `variance` or `stdev` called on an instance keep their accepted results. The
+  four entries beginning
+  `Nucleoid measures the spread of lists with variance and stdev` through
+  `Nucleoid rolls back failed variance updates` specify the executable
+  behavior. `tests/list_variances.rs` executes the rest.
+
 ## Object entry loops with ordered rollback
 
 - [NUC 72](docs/nuc-0072.md) adds loops over an object's entries:
@@ -26816,6 +26887,83 @@ except:
 assert(seen, ReferenceError("alarm is not defined"))
 check(120)
 # return: "HIGH ALARM"
+---
+# Nucleoid measures the spread of lists with variance and stdev
+
+scores = [2, 4, 4, 4, 5, 5, 7, 9]
+spread = scores.variance()
+deviation = scores.stdev()
+assert([spread, deviation], [4, 2])
+scores.push(11)
+assert([spread, deviation], [7.111111111111111, 2.6666666666666665])
+scores = [6]
+assert([spread, deviation], [0, 0])
+team = {laps: [61, 58, 64]}
+wobble = team.laps.stdev()
+assert(wobble, 2.449489742783178)
+team.laps.push(57)
+assert(wobble, 2.7386127875258306)
+---
+# Nucleoid measures the spread of class instance populations with variance and stdev
+
+class Reading(level):
+    this.level = level
+Reading(3)
+Reading(5)
+spike = Reading(10)
+gain = 2
+spread = Reading.variance(reading -> reading.level)
+recent = Reading[-3:].stdev(reading -> reading.level * gain)
+assert([spread, recent], [8.666666666666666, 5.887840577551898])
+Reading(6)
+assert([spread, recent], [6.5, 4.320493798938574])
+spike.level = 4
+gain = 3
+assert([spread, recent], [1.25, 2.449489742783178])
+---
+# Nucleoid computes the variances of large values from their deviations
+
+stamps = [1000000001, 1000000002, 1000000003]
+jitter = stamps.variance()
+wobble = stamps.stdev()
+assert([jitter, wobble], [0.6666666666666666, 0.816496580927726])
+stamps.push(1000000004)
+assert([jitter, wobble], [1.25, 1.118033988749895])
+---
+# Nucleoid rolls back failed variance updates
+
+def checked(level):
+    if level < 0:
+        throw "NEGATIVE_LEVEL"
+    return level
+levels = [3, 5, 10]
+spread = levels.variance(checked)
+failure = ""
+try:
+    levels.push(-1)
+catch error:
+    failure = error
+assert([failure, levels, spread], ["NEGATIVE_LEVEL", [3, 5, 10], 8.666666666666666])
+try:
+    levels.push(6)
+    assert(spread, 6.5)
+    throw "UNDO"
+catch error:
+    assert(error, "UNDO")
+assert([levels, spread], [[3, 5, 10], 8.666666666666666])
+class Gauge(level): this.level = level
+Gauge(4)
+Gauge(8)
+wobble = Gauge.stdev(gauge -> checked(gauge.level))
+failure = ""
+try:
+    Gauge(-2)
+catch error:
+    failure = error
+assert([failure, Gauge.length, wobble], ["NEGATIVE_LEVEL", 2, 2])
+Gauge(12)
+wobble
+# return: 3.265986323710904
 ---
 # Nucleoid flattens nested lists by one level
 

@@ -76,9 +76,8 @@ impl Runtime {
                 let function = expect_function(predicate, "reduce")?;
                 self.reduce_items(items, &function, arguments.get(1))
             }
-            "sum" | "product" | "average" | "median" | "max" | "min" | "distinct" | "mode" => {
-                self.aggregate_items(items, property, predicate)
-            }
+            "sum" | "product" | "average" | "median" | "variance" | "stdev" | "max" | "min"
+            | "distinct" | "mode" => self.aggregate_items(items, property, predicate),
             "maxBy" | "minBy" => self.extreme_item(items, property, predicate),
             "sortBy" => self.sort_by_key(items, predicate),
             // Lists sort in place through `call_list_method`; a class population

@@ -2837,6 +2837,22 @@ stock = 8
 share
 # return: 0
 ---
+# Nucleoid measures the spread of lists and populations with variance and stdev
+
+temps = [18, 21, 24]
+swing = temps.stdev()
+class Shot(score):
+    this.score = score
+Shot(7)
+Shot(9)
+spread = Shot.variance(shot -> shot.score)
+assert([swing, spread], [2.449489742783178, 1])
+temps.push(17)
+Shot(5)
+assert([swing, spread], [2.7386127875258306, 2.6666666666666665])
+spread
+# return: 2.6666666666666665
+---
 # Nucleoid flattens nested lists with flat
 
 pallets = [[["bolt", "nut"], ["gear"]], [["cog"]]]
