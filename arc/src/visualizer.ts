@@ -11,6 +11,7 @@ export async function instances({ train_dataset, test_input_matrix }) {
     result: { instances },
   } = await llm.generate({
     few_shot: null,
+    grammar: true,
     messages: [
       {
         role: "assistant",
