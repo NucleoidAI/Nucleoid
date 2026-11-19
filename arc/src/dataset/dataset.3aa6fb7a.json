@@ -1,9 +1,9 @@
 {
   "declarations": [
-    "class Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, color: int):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.tag is l6747\n    this.color is color",
-    "$Obj.tag is l3337",
-    "$Obj.marker_color is 1",
-    "$Obj.volume is $Obj.volume@first + 1"
+    "# Each object is one color-8 corner: 3 cells of a 2x2 box that meet at its vertex cell. Every corner fills the open cell of its box with color 1, completing the square\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, color: int):\n    # Left column of its 2x2 box\n    this.x is x\n    # Top row of its 2x2 box\n    this.y is y\n    # Columns of its box, 2\n    this.width is width\n    # Rows of its box, 2\n    this.height is height\n    # A corner points toward its vertex: 45 top right, 135 bottom right, 225 bottom left, 315 top left\n    this.orientation is orientation\n    # Its 3 cells\n    this.volume is volume\n    # l6747 names a corner\n    this.tag is l6747\n    # Its color, 8 for every corner\n    this.color is color",
+    "# Each corner becomes l3337, a corner with its inside marker\n$Obj.tag is l3337",
+    "# The open cell of its box, diagonally opposite its vertex, turns color 1\n$Obj.marker_color is 1",
+    "# The marker adds one cell to its 3 input cells\n$Obj.volume is $Obj.volume@first + 1"
   ],
   "output_canvas": "EXACT",
   "dataset": [
@@ -53,7 +53,7 @@
             [0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "obj06bbbdc98e71 is Obj(x=1, y=1, width=2, height=2, orientation=225, volume=3, color=8)",
+          "implementation": "# Color-8 corner with its vertex at the bottom left and its open cell at the top right\nobj06bbbdc98e71 is Obj(x=1, y=1, width=2, height=2, orientation=225, volume=3, color=8)",
           "input_value": {"color":8,"height":2,"id":"obj06bbbdc98e71","orientation":225,"tag":"l6747","volume":3,"width":2,"x":1,"y":1},
           "output_value": {"color":8,"height":2,"id":"obj06bbbdc98e71","marker_color":1,"orientation":225,"tag":"l3337","volume":4,"width":2,"x":1,"y":1}
         },
@@ -83,7 +83,7 @@
             [0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "obj812b7881ec0e is Obj(x=4, y=3, width=2, height=2, orientation=45, volume=3, color=8)",
+          "implementation": "# Color-8 corner with its vertex at the top right and its open cell at the bottom left\nobj812b7881ec0e is Obj(x=4, y=3, width=2, height=2, orientation=45, volume=3, color=8)",
           "input_value": {"color":8,"height":2,"id":"obj812b7881ec0e","orientation":45,"tag":"l6747","volume":3,"width":2,"x":4,"y":3},
           "output_value": {"color":8,"height":2,"id":"obj812b7881ec0e","marker_color":1,"orientation":45,"tag":"l3337","volume":4,"width":2,"x":4,"y":3}
         }
@@ -135,7 +135,7 @@
             [0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "obj3a91dc0b584b is Obj(x=4, y=0, width=2, height=2, orientation=45, volume=3, color=8)",
+          "implementation": "# Color-8 corner with its vertex at the top right and its open cell at the bottom left\nobj3a91dc0b584b is Obj(x=4, y=0, width=2, height=2, orientation=45, volume=3, color=8)",
           "input_value": {"color":8,"height":2,"id":"obj3a91dc0b584b","orientation":45,"tag":"l6747","volume":3,"width":2,"x":4,"y":0},
           "output_value": {"color":8,"height":2,"id":"obj3a91dc0b584b","marker_color":1,"orientation":45,"tag":"l3337","volume":4,"width":2,"x":4,"y":0}
         },
@@ -165,7 +165,7 @@
             [0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "obj1d5b3380e76e is Obj(x=2, y=2, width=2, height=2, orientation=225, volume=3, color=8)",
+          "implementation": "# Color-8 corner with its vertex at the bottom left and its open cell at the top right\nobj1d5b3380e76e is Obj(x=2, y=2, width=2, height=2, orientation=225, volume=3, color=8)",
           "input_value": {"color":8,"height":2,"id":"obj1d5b3380e76e","orientation":225,"tag":"l6747","volume":3,"width":2,"x":2,"y":2},
           "output_value": {"color":8,"height":2,"id":"obj1d5b3380e76e","marker_color":1,"orientation":225,"tag":"l3337","volume":4,"width":2,"x":2,"y":2}
         },
@@ -195,7 +195,7 @@
             [0, 0, 0, 1, 8, 0, 0],
             [0, 0, 0, 8, 8, 0, 0]
           ],
-          "implementation": "obje29de8da7b6d is Obj(x=3, y=5, width=2, height=2, orientation=135, volume=3, color=8)",
+          "implementation": "# Color-8 corner with its vertex at the bottom right and its open cell at the top left\nobje29de8da7b6d is Obj(x=3, y=5, width=2, height=2, orientation=135, volume=3, color=8)",
           "input_value": {"color":8,"height":2,"id":"obje29de8da7b6d","orientation":135,"tag":"l6747","volume":3,"width":2,"x":3,"y":5},
           "output_value": {"color":8,"height":2,"id":"obje29de8da7b6d","marker_color":1,"orientation":135,"tag":"l3337","volume":4,"width":2,"x":3,"y":5}
         }
@@ -247,7 +247,7 @@
             [0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "obje1ac1e9c728c is Obj(x=5, y=0, width=2, height=2, orientation=45, volume=3, color=8)",
+          "implementation": "# Color-8 corner with its vertex at the top right and its open cell at the bottom left\nobje1ac1e9c728c is Obj(x=5, y=0, width=2, height=2, orientation=45, volume=3, color=8)",
           "input_value": {"color":8,"height":2,"id":"obje1ac1e9c728c","orientation":45,"tag":"l6747","volume":3,"width":2,"x":5,"y":0},
           "output_value": {"color":8,"height":2,"id":"obje1ac1e9c728c","marker_color":1,"orientation":45,"tag":"l3337","volume":4,"width":2,"x":5,"y":0}
         },
@@ -277,7 +277,7 @@
             [0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "obj58a9534f3655 is Obj(x=0, y=1, width=2, height=2, orientation=315, volume=3, color=8)",
+          "implementation": "# Color-8 corner with its vertex at the top left and its open cell at the bottom right\nobj58a9534f3655 is Obj(x=0, y=1, width=2, height=2, orientation=315, volume=3, color=8)",
           "input_value": {"color":8,"height":2,"id":"obj58a9534f3655","orientation":315,"tag":"l6747","volume":3,"width":2,"x":0,"y":1},
           "output_value": {"color":8,"height":2,"id":"obj58a9534f3655","marker_color":1,"orientation":315,"tag":"l3337","volume":4,"width":2,"x":0,"y":1}
         },
@@ -307,7 +307,7 @@
             [0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "obj5b57cbfb98c2 is Obj(x=3, y=3, width=2, height=2, orientation=225, volume=3, color=8)",
+          "implementation": "# Color-8 corner with its vertex at the bottom left and its open cell at the top right\nobj5b57cbfb98c2 is Obj(x=3, y=3, width=2, height=2, orientation=225, volume=3, color=8)",
           "input_value": {"color":8,"height":2,"id":"obj5b57cbfb98c2","orientation":225,"tag":"l6747","volume":3,"width":2,"x":3,"y":3},
           "output_value": {"color":8,"height":2,"id":"obj5b57cbfb98c2","marker_color":1,"orientation":225,"tag":"l3337","volume":4,"width":2,"x":3,"y":3}
         },
@@ -337,7 +337,7 @@
             [1, 8, 0, 0, 0, 0, 0],
             [8, 8, 0, 0, 0, 0, 0]
           ],
-          "implementation": "objda2d685493eb is Obj(x=0, y=5, width=2, height=2, orientation=135, volume=3, color=8)",
+          "implementation": "# Color-8 corner with its vertex at the bottom right and its open cell at the top left\nobjda2d685493eb is Obj(x=0, y=5, width=2, height=2, orientation=135, volume=3, color=8)",
           "input_value": {"color":8,"height":2,"id":"objda2d685493eb","orientation":135,"tag":"l6747","volume":3,"width":2,"x":0,"y":5},
           "output_value": {"color":8,"height":2,"id":"objda2d685493eb","marker_color":1,"orientation":135,"tag":"l3337","volume":4,"width":2,"x":0,"y":5}
         }

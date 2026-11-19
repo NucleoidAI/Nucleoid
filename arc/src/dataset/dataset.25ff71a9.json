@@ -1,7 +1,7 @@
 {
   "declarations": [
-    "class Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.tag is l9100",
-    "$Obj.y is $Obj.y@first + 1"
+    "# Each object is the one shape in the grid. Every shape moves down by one row\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int):\n    # Left column of its box\n    this.x is x\n    # Top row of its box\n    this.y is y\n    # Columns of its box\n    this.width is width\n    # Rows of its box\n    this.height is height\n    # A bar lies along its axis, 0 vertical or 90 horizontal; a corner points toward its vertex; a single cell is 0\n    this.orientation is orientation\n    # Number of its cells\n    this.volume is volume\n    # l9100 names a single shape\n    this.tag is l9100",
+    "# Each shape moves down one row from its input row; its cells and size stay the same\n$Obj.y is $Obj.y@first + 1"
   ],
   "output_canvas": "EXACT",
   "dataset": [
@@ -29,7 +29,7 @@
             [1, 1, 1],
             [0, 0, 0]
           ],
-          "implementation": "obj56f6c04f44d8 is Obj(x=0, y=0, width=3, height=1, orientation=90, volume=3)",
+          "implementation": "# Color-1 horizontal bar of 3 cells\nobj56f6c04f44d8 is Obj(x=0, y=0, width=3, height=1, orientation=90, volume=3)",
           "input_value": {"height":1,"id":"obj56f6c04f44d8","orientation":90,"tag":"l9100","volume":3,"width":3,"x":0,"y":0},
           "output_value": {"height":1,"id":"obj56f6c04f44d8","orientation":90,"tag":"l9100","volume":3,"width":3,"x":0,"y":1}
         }
@@ -59,7 +59,7 @@
             [0, 0, 0],
             [1, 1, 1]
           ],
-          "implementation": "objb2baa9b2270c is Obj(x=0, y=1, width=3, height=1, orientation=90, volume=3)",
+          "implementation": "# Color-1 horizontal bar of 3 cells\nobjb2baa9b2270c is Obj(x=0, y=1, width=3, height=1, orientation=90, volume=3)",
           "input_value": {"height":1,"id":"objb2baa9b2270c","orientation":90,"tag":"l9100","volume":3,"width":3,"x":0,"y":1},
           "output_value": {"height":1,"id":"objb2baa9b2270c","orientation":90,"tag":"l9100","volume":3,"width":3,"x":0,"y":2}
         }
@@ -89,7 +89,7 @@
             [0, 1, 0],
             [1, 1, 0]
           ],
-          "implementation": "obj470037f0334e is Obj(x=0, y=0, width=2, height=2, orientation=135, volume=3)",
+          "implementation": "# Color-1 corner with its vertex at the bottom right\nobj470037f0334e is Obj(x=0, y=0, width=2, height=2, orientation=135, volume=3)",
           "input_value": {"height":2,"id":"obj470037f0334e","orientation":135,"tag":"l9100","volume":3,"width":2,"x":0,"y":0},
           "output_value": {"height":2,"id":"obj470037f0334e","orientation":135,"tag":"l9100","volume":3,"width":2,"x":0,"y":1}
         }
@@ -119,7 +119,7 @@
             [0, 2, 2],
             [0, 0, 2]
           ],
-          "implementation": "obj2ad74ac3e6ef is Obj(x=1, y=0, width=2, height=2, orientation=45, volume=3)",
+          "implementation": "# Color-2 corner with its vertex at the top right\nobj2ad74ac3e6ef is Obj(x=1, y=0, width=2, height=2, orientation=45, volume=3)",
           "input_value": {"height":2,"id":"obj2ad74ac3e6ef","orientation":45,"tag":"l9100","volume":3,"width":2,"x":1,"y":0},
           "output_value": {"height":2,"id":"obj2ad74ac3e6ef","orientation":45,"tag":"l9100","volume":3,"width":2,"x":1,"y":1}
         }
@@ -149,7 +149,7 @@
             [2, 0, 0],
             [2, 0, 0]
           ],
-          "implementation": "objb847b315216d is Obj(x=0, y=0, width=1, height=2, orientation=0, volume=2)",
+          "implementation": "# Color-2 vertical bar of 2 cells\nobjb847b315216d is Obj(x=0, y=0, width=1, height=2, orientation=0, volume=2)",
           "input_value": {"height":2,"id":"objb847b315216d","orientation":0,"tag":"l9100","volume":2,"width":1,"x":0,"y":0},
           "output_value": {"height":2,"id":"objb847b315216d","orientation":0,"tag":"l9100","volume":2,"width":1,"x":0,"y":1}
         }
@@ -179,7 +179,7 @@
             [0, 0, 0],
             [0, 1, 0]
           ],
-          "implementation": "objf247c9d3ab45 is Obj(x=1, y=1, width=1, height=1, orientation=0, volume=1)",
+          "implementation": "# Single color-1 cell\nobjf247c9d3ab45 is Obj(x=1, y=1, width=1, height=1, orientation=0, volume=1)",
           "input_value": {"height":1,"id":"objf247c9d3ab45","orientation":0,"tag":"l9100","volume":1,"width":1,"x":1,"y":1},
           "output_value": {"height":1,"id":"objf247c9d3ab45","orientation":0,"tag":"l9100","volume":1,"width":1,"x":1,"y":2}
         }

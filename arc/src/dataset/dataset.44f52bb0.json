@@ -1,15 +1,15 @@
 {
   "declarations": [
-    "class Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, points: list):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.tag is l9100\n    this.points is points",
-    "$Obj.tag is l7544",
-    "$Obj.width is 1",
-    "$Obj.height is 1",
-    "$Obj.orientation is 0",
-    "$Obj.symmetric is all point in $Obj.points: $Obj.points.includes([canvas_width - 1 - point[0], point[1]])",
-    "$Obj.fill_color is 1 if $Obj.symmetric else 7",
-    "$Obj.x is 0",
-    "$Obj.y is 0",
-    "$Obj.volume is $Obj.width * $Obj.height"
+    "# Each object is the whole color-2 pattern in the grid. The output is one cell: 1 when the pattern is its own left-right mirror image, otherwise 7\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, points: list):\n    # Left column of its box\n    this.x is x\n    # Top row of its box\n    this.y is y\n    # Columns of its box\n    this.width is width\n    # Rows of its box\n    this.height is height\n    # A corner points toward its vertex; any other pattern is 0\n    this.orientation is orientation\n    # Number of its cells\n    this.volume is volume\n    # l9100 names a single shape\n    this.tag is l9100\n    # Grid [x, y] of each of its cells, row by row\n    this.points is points",
+    "# Each pattern becomes l7544, a single point\n$Obj.tag is l7544",
+    "# The answer cell is one column wide\n$Obj.width is 1",
+    "# The answer cell is one row tall\n$Obj.height is 1",
+    "# A point points nowhere: 0\n$Obj.orientation is 0",
+    "# True when the mirror of every cell across the vertical center line of the grid is also a cell\n$Obj.symmetric is all point in $Obj.points: $Obj.points.includes([canvas_width - 1 - point[0], point[1]])",
+    "# The answer cell is 1 for a symmetric pattern and 7 otherwise\n$Obj.fill_color is 1 if $Obj.symmetric else 7",
+    "# The answer cell sits at column 0 of the cropped output\n$Obj.x is 0",
+    "# The answer cell sits at row 0 of the cropped output\n$Obj.y is 0",
+    "# The answer has one cell\n$Obj.volume is $Obj.width * $Obj.height"
   ],
   "output_canvas": "FIT",
   "dataset": [
@@ -33,7 +33,7 @@
           "output_instance_matrix": [
             [1]
           ],
-          "implementation": "objaefa2ef1a32f is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=5, points=[[0, 0], [2, 0], [1, 1], [0, 2], [2, 2]])",
+          "implementation": "# Color-2 pattern, its own left-right mirror image\nobjaefa2ef1a32f is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=5, points=[[0, 0], [2, 0], [1, 1], [0, 2], [2, 2]])",
           "input_value": {"height":3,"id":"objaefa2ef1a32f","orientation":0,"points":[[0,0],[2,0],[1,1],[0,2],[2,2]],"tag":"l9100","volume":5,"width":3,"x":0,"y":0},
           "output_value": {"fill_color":1,"height":1,"id":"objaefa2ef1a32f","orientation":0,"points":[[0,0],[2,0],[1,1],[0,2],[2,2]],"symmetric":true,"tag":"l7544","volume":1,"width":1,"x":0,"y":0}
         }
@@ -59,7 +59,7 @@
           "output_instance_matrix": [
             [7]
           ],
-          "implementation": "obj3914f7995d3e is Obj(x=0, y=0, width=2, height=3, orientation=0, volume=3, points=[[0, 0], [0, 1], [1, 2]])",
+          "implementation": "# Color-2 pattern, not its own left-right mirror image\nobj3914f7995d3e is Obj(x=0, y=0, width=2, height=3, orientation=0, volume=3, points=[[0, 0], [0, 1], [1, 2]])",
           "input_value": {"height":3,"id":"obj3914f7995d3e","orientation":0,"points":[[0,0],[0,1],[1,2]],"tag":"l9100","volume":3,"width":2,"x":0,"y":0},
           "output_value": {"fill_color":7,"height":1,"id":"obj3914f7995d3e","orientation":0,"points":[[0,0],[0,1],[1,2]],"symmetric":false,"tag":"l7544","volume":1,"width":1,"x":0,"y":0}
         }
@@ -85,7 +85,7 @@
           "output_instance_matrix": [
             [1]
           ],
-          "implementation": "objeb5c0167d445 is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=6, points=[[0, 0], [2, 0], [0, 1], [2, 1], [0, 2], [2, 2]])",
+          "implementation": "# Color-2 pattern, its own left-right mirror image\nobjeb5c0167d445 is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=6, points=[[0, 0], [2, 0], [0, 1], [2, 1], [0, 2], [2, 2]])",
           "input_value": {"height":3,"id":"objeb5c0167d445","orientation":0,"points":[[0,0],[2,0],[0,1],[2,1],[0,2],[2,2]],"tag":"l9100","volume":6,"width":3,"x":0,"y":0},
           "output_value": {"fill_color":1,"height":1,"id":"objeb5c0167d445","orientation":0,"points":[[0,0],[2,0],[0,1],[2,1],[0,2],[2,2]],"symmetric":true,"tag":"l7544","volume":1,"width":1,"x":0,"y":0}
         }
@@ -111,7 +111,7 @@
           "output_instance_matrix": [
             [1]
           ],
-          "implementation": "objcef2c78836a4 is Obj(x=0, y=1, width=3, height=1, orientation=0, volume=2, points=[[0, 1], [2, 1]])",
+          "implementation": "# Color-2 pattern, its own left-right mirror image\nobjcef2c78836a4 is Obj(x=0, y=1, width=3, height=1, orientation=0, volume=2, points=[[0, 1], [2, 1]])",
           "input_value": {"height":1,"id":"objcef2c78836a4","orientation":0,"points":[[0,1],[2,1]],"tag":"l9100","volume":2,"width":3,"x":0,"y":1},
           "output_value": {"fill_color":1,"height":1,"id":"objcef2c78836a4","orientation":0,"points":[[0,1],[2,1]],"symmetric":true,"tag":"l7544","volume":1,"width":1,"x":0,"y":0}
         }
@@ -137,7 +137,7 @@
           "output_instance_matrix": [
             [7]
           ],
-          "implementation": "obje0d187e059c6 is Obj(x=0, y=0, width=3, height=2, orientation=0, volume=4, points=[[0, 0], [1, 0], [1, 1], [2, 1]])",
+          "implementation": "# Color-2 pattern, not its own left-right mirror image\nobje0d187e059c6 is Obj(x=0, y=0, width=3, height=2, orientation=0, volume=4, points=[[0, 0], [1, 0], [1, 1], [2, 1]])",
           "input_value": {"height":2,"id":"obje0d187e059c6","orientation":0,"points":[[0,0],[1,0],[1,1],[2,1]],"tag":"l9100","volume":4,"width":3,"x":0,"y":0},
           "output_value": {"fill_color":7,"height":1,"id":"obje0d187e059c6","orientation":0,"points":[[0,0],[1,0],[1,1],[2,1]],"symmetric":false,"tag":"l7544","volume":1,"width":1,"x":0,"y":0}
         }
@@ -163,7 +163,7 @@
           "output_instance_matrix": [
             [7]
           ],
-          "implementation": "obj656ae86cdc80 is Obj(x=0, y=0, width=2, height=2, orientation=45, volume=3, points=[[0, 0], [1, 0], [1, 1]])",
+          "implementation": "# Color-2 corner with its vertex at the top right, not its own left-right mirror image\nobj656ae86cdc80 is Obj(x=0, y=0, width=2, height=2, orientation=45, volume=3, points=[[0, 0], [1, 0], [1, 1]])",
           "input_value": {"height":2,"id":"obj656ae86cdc80","orientation":45,"points":[[0,0],[1,0],[1,1]],"tag":"l9100","volume":3,"width":2,"x":0,"y":0},
           "output_value": {"fill_color":7,"height":1,"id":"obj656ae86cdc80","orientation":0,"points":[[0,0],[1,0],[1,1]],"symmetric":false,"tag":"l7544","volume":1,"width":1,"x":0,"y":0}
         }
@@ -189,7 +189,7 @@
           "output_instance_matrix": [
             [1]
           ],
-          "implementation": "obje4210d7a3726 is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=7, points=[[0, 0], [2, 0], [0, 1], [1, 1], [2, 1], [0, 2], [2, 2]])",
+          "implementation": "# Color-2 pattern, its own left-right mirror image\nobje4210d7a3726 is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=7, points=[[0, 0], [2, 0], [0, 1], [1, 1], [2, 1], [0, 2], [2, 2]])",
           "input_value": {"height":3,"id":"obje4210d7a3726","orientation":0,"points":[[0,0],[2,0],[0,1],[1,1],[2,1],[0,2],[2,2]],"tag":"l9100","volume":7,"width":3,"x":0,"y":0},
           "output_value": {"fill_color":1,"height":1,"id":"obje4210d7a3726","orientation":0,"points":[[0,0],[2,0],[0,1],[1,1],[2,1],[0,2],[2,2]],"symmetric":true,"tag":"l7544","volume":1,"width":1,"x":0,"y":0}
         }
@@ -215,7 +215,7 @@
           "output_instance_matrix": [
             [7]
           ],
-          "implementation": "obj7170e5f9a58a is Obj(x=0, y=1, width=1, height=2, orientation=0, volume=2, points=[[0, 1], [0, 2]])",
+          "implementation": "# Color-2 vertical bar, not its own left-right mirror image\nobj7170e5f9a58a is Obj(x=0, y=1, width=1, height=2, orientation=0, volume=2, points=[[0, 1], [0, 2]])",
           "input_value": {"height":2,"id":"obj7170e5f9a58a","orientation":0,"points":[[0,1],[0,2]],"tag":"l9100","volume":2,"width":1,"x":0,"y":1},
           "output_value": {"fill_color":7,"height":1,"id":"obj7170e5f9a58a","orientation":0,"points":[[0,1],[0,2]],"symmetric":false,"tag":"l7544","volume":1,"width":1,"x":0,"y":0}
         }

@@ -1,10 +1,10 @@
 {
   "declarations": [
-    "class Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, color: int, period: int):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.tag is l9100\n    this.color is color\n    this.period is period",
-    "$Obj.tag is l8384",
-    "$Obj.extension_direction is down",
-    "$Obj.height is $Obj.height@first * 3 / 2",
-    "$Obj.color is 2"
+    "# Each object is the whole color-1 pattern, as tall as the grid, whose rows repeat every period rows. The output continues it down to 9 rows and draws it in color 2\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, color: int, period: int):\n    # Left column of its box, 0\n    this.x is x\n    # Top row of its box, 0\n    this.y is y\n    # Columns of its box\n    this.width is width\n    # Rows of its box, 6: the full height of the input grid\n    this.height is height\n    # A repeating pattern points nowhere: 0\n    this.orientation is orientation\n    # Number of its cells\n    this.volume is volume\n    # l9100 names a single shape\n    this.tag is l9100\n    # Its one color, 1\n    this.color is color\n    # Fewest rows after which every row repeats: row r equals row r + period\n    this.period is period",
+    "# Each pattern becomes l8384, a pattern repeating down\n$Obj.tag is l8384",
+    "# It continues downward, below its last row\n$Obj.extension_direction is down",
+    "# Its height grows to 1.5 times its input height, 6 rows to 9, the height of the output grid\n$Obj.height is $Obj.height@first * 3 / 2",
+    "# The whole pattern is drawn in color 2\n$Obj.color is 2"
   ],
   "output_canvas": "EXACT",
   "dataset": [
@@ -50,7 +50,7 @@
             [0, 2, 2],
             [0, 2, 0]
           ],
-          "implementation": "obj7868bfbcdc17 is Obj(x=0, y=0, width=3, height=6, orientation=0, volume=9, color=1, period=4)",
+          "implementation": "# Color-1 pattern whose rows repeat every 4 rows: row 4 equals row 0\nobj7868bfbcdc17 is Obj(x=0, y=0, width=3, height=6, orientation=0, volume=9, color=1, period=4)",
           "input_value": {"color":1,"height":6,"id":"obj7868bfbcdc17","orientation":0,"period":4,"tag":"l9100","volume":9,"width":3,"x":0,"y":0},
           "output_value": {"color":2,"extension_direction":"down","height":9,"id":"obj7868bfbcdc17","orientation":0,"period":4,"tag":"l8384","volume":9,"width":3,"x":0,"y":0}
         }
@@ -98,7 +98,7 @@
             [2, 0, 2],
             [0, 2, 0]
           ],
-          "implementation": "obj251f7bd03919 is Obj(x=0, y=0, width=3, height=6, orientation=0, volume=9, color=1, period=2)",
+          "implementation": "# Color-1 pattern whose rows repeat every 2 rows: row 2 equals row 0\nobj251f7bd03919 is Obj(x=0, y=0, width=3, height=6, orientation=0, volume=9, color=1, period=2)",
           "input_value": {"color":1,"height":6,"id":"obj251f7bd03919","orientation":0,"period":2,"tag":"l9100","volume":9,"width":3,"x":0,"y":0},
           "output_value": {"color":2,"extension_direction":"down","height":9,"id":"obj251f7bd03919","orientation":0,"period":2,"tag":"l8384","volume":9,"width":3,"x":0,"y":0}
         }
@@ -146,7 +146,7 @@
             [2, 2, 0],
             [0, 2, 0]
           ],
-          "implementation": "obj69f9506dfd32 is Obj(x=0, y=0, width=2, height=6, orientation=0, volume=8, color=1, period=3)",
+          "implementation": "# Color-1 pattern whose rows repeat every 3 rows: row 3 equals row 0\nobj69f9506dfd32 is Obj(x=0, y=0, width=2, height=6, orientation=0, volume=8, color=1, period=3)",
           "input_value": {"color":1,"height":6,"id":"obj69f9506dfd32","orientation":0,"period":3,"tag":"l9100","volume":8,"width":2,"x":0,"y":0},
           "output_value": {"color":2,"extension_direction":"down","height":9,"id":"obj69f9506dfd32","orientation":0,"period":3,"tag":"l8384","volume":8,"width":2,"x":0,"y":0}
         }
@@ -194,7 +194,7 @@
             [0, 2, 0],
             [0, 2, 0]
           ],
-          "implementation": "obj93fb566cfca3 is Obj(x=0, y=0, width=3, height=6, orientation=0, volume=10, color=1, period=3)",
+          "implementation": "# Color-1 pattern whose rows repeat every 3 rows: row 3 equals row 0\nobj93fb566cfca3 is Obj(x=0, y=0, width=3, height=6, orientation=0, volume=10, color=1, period=3)",
           "input_value": {"color":1,"height":6,"id":"obj93fb566cfca3","orientation":0,"period":3,"tag":"l9100","volume":10,"width":3,"x":0,"y":0},
           "output_value": {"color":2,"extension_direction":"down","height":9,"id":"obj93fb566cfca3","orientation":0,"period":3,"tag":"l8384","volume":10,"width":3,"x":0,"y":0}
         }

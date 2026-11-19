@@ -1,7 +1,7 @@
 {
   "declarations": [
-    "class Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, color: int):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.tag is l9100\n    this.color is color",
-    "if $Obj.color@first is 7:\n    $Obj.color is 5"
+    "# Each object is all the cells of one color in the grid, touching or not. Color-7 cells turn 5, and the other colors stay\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, color: int):\n    # Left column of their box\n    this.x is x\n    # Top row of their box\n    this.y is y\n    # Columns of their box\n    this.width is width\n    # Rows of their box\n    this.height is height\n    # No group here is a bar, corner or chevron, so every group is 0\n    this.orientation is orientation\n    # Number of its cells\n    this.volume is volume\n    # l9100 names a single shape\n    this.tag is l9100\n    # Their color\n    this.color is color",
+    "# The cells whose input color is 7\nif $Obj.color@first is 7:\n    # They turn color 5\n    $Obj.color is 5"
   ],
   "output_canvas": "EXACT",
   "dataset": [
@@ -29,7 +29,7 @@
             [1, 1, 0, 0, 1, 0],
             [0, 1, 1, 0, 0, 0]
           ],
-          "implementation": "obj956c87d67c7c is Obj(x=0, y=0, width=5, height=3, orientation=0, volume=6, color=1)",
+          "implementation": "# The 6 color-1 cells, in 2 separate pieces\nobj956c87d67c7c is Obj(x=0, y=0, width=5, height=3, orientation=0, volume=6, color=1)",
           "input_value": {"color":1,"height":3,"id":"obj956c87d67c7c","orientation":0,"tag":"l9100","volume":6,"width":5,"x":0,"y":0},
           "output_value": {"color":1,"height":3,"id":"obj956c87d67c7c","orientation":0,"tag":"l9100","volume":6,"width":5,"x":0,"y":0}
         },
@@ -45,7 +45,7 @@
             [0, 0, 0, 0, 0, 8],
             [0, 0, 0, 0, 0, 8]
           ],
-          "implementation": "objf90224b9c06f is Obj(x=1, y=0, width=5, height=3, orientation=0, volume=5, color=8)",
+          "implementation": "# The 5 color-8 cells, in 2 separate pieces\nobjf90224b9c06f is Obj(x=1, y=0, width=5, height=3, orientation=0, volume=5, color=8)",
           "input_value": {"color":8,"height":3,"id":"objf90224b9c06f","orientation":0,"tag":"l9100","volume":5,"width":5,"x":1,"y":0},
           "output_value": {"color":8,"height":3,"id":"objf90224b9c06f","orientation":0,"tag":"l9100","volume":5,"width":5,"x":1,"y":0}
         },
@@ -61,7 +61,7 @@
             [0, 0, 5, 5, 0, 0],
             [5, 0, 0, 5, 5, 0]
           ],
-          "implementation": "obj4df746967d02 is Obj(x=0, y=0, width=5, height=3, orientation=0, volume=7, color=7)",
+          "implementation": "# The 7 color-7 cells, in 2 separate pieces\nobj4df746967d02 is Obj(x=0, y=0, width=5, height=3, orientation=0, volume=7, color=7)",
           "input_value": {"color":7,"height":3,"id":"obj4df746967d02","orientation":0,"tag":"l9100","volume":7,"width":5,"x":0,"y":0},
           "output_value": {"color":5,"height":3,"id":"obj4df746967d02","orientation":0,"tag":"l9100","volume":7,"width":5,"x":0,"y":0}
         }
@@ -91,7 +91,7 @@
             [0, 0, 0, 5],
             [5, 0, 0, 5]
           ],
-          "implementation": "objf2f3621429ce is Obj(x=0, y=0, width=4, height=3, orientation=0, volume=6, color=7)",
+          "implementation": "# The 6 color-7 cells, in 2 separate pieces\nobjf2f3621429ce is Obj(x=0, y=0, width=4, height=3, orientation=0, volume=6, color=7)",
           "input_value": {"color":7,"height":3,"id":"objf2f3621429ce","orientation":0,"tag":"l9100","volume":6,"width":4,"x":0,"y":0},
           "output_value": {"color":5,"height":3,"id":"objf2f3621429ce","orientation":0,"tag":"l9100","volume":6,"width":4,"x":0,"y":0}
         },
@@ -107,7 +107,7 @@
             [1, 0, 1, 0],
             [0, 1, 1, 0]
           ],
-          "implementation": "obj01feaae7ae02 is Obj(x=0, y=0, width=4, height=3, orientation=0, volume=5, color=1)",
+          "implementation": "# The 5 color-1 cells, forming one piece\nobj01feaae7ae02 is Obj(x=0, y=0, width=4, height=3, orientation=0, volume=5, color=1)",
           "input_value": {"color":1,"height":3,"id":"obj01feaae7ae02","orientation":0,"tag":"l9100","volume":5,"width":4,"x":0,"y":0},
           "output_value": {"color":1,"height":3,"id":"obj01feaae7ae02","orientation":0,"tag":"l9100","volume":5,"width":4,"x":0,"y":0}
         },
@@ -123,7 +123,7 @@
             [0, 8, 0, 0],
             [0, 0, 0, 0]
           ],
-          "implementation": "obja86be7ae7c94 is Obj(x=1, y=1, width=1, height=1, orientation=0, volume=1, color=8)",
+          "implementation": "# Single color-8 cell\nobja86be7ae7c94 is Obj(x=1, y=1, width=1, height=1, orientation=0, volume=1, color=8)",
           "input_value": {"color":8,"height":1,"id":"obja86be7ae7c94","orientation":0,"tag":"l9100","volume":1,"width":1,"x":1,"y":1},
           "output_value": {"color":8,"height":1,"id":"obja86be7ae7c94","orientation":0,"tag":"l9100","volume":1,"width":1,"x":1,"y":1}
         }
@@ -153,7 +153,7 @@
             [0, 0, 0, 1, 1],
             [0, 1, 0, 0, 0]
           ],
-          "implementation": "obj4c35be9e32a9 is Obj(x=0, y=0, width=5, height=3, orientation=0, volume=6, color=1)",
+          "implementation": "# The 6 color-1 cells, in 3 separate pieces\nobj4c35be9e32a9 is Obj(x=0, y=0, width=5, height=3, orientation=0, volume=6, color=1)",
           "input_value": {"color":1,"height":3,"id":"obj4c35be9e32a9","orientation":0,"tag":"l9100","volume":6,"width":5,"x":0,"y":0},
           "output_value": {"color":1,"height":3,"id":"obj4c35be9e32a9","orientation":0,"tag":"l9100","volume":6,"width":5,"x":0,"y":0}
         },
@@ -169,7 +169,7 @@
             [0, 8, 8, 0, 0],
             [0, 0, 8, 8, 0]
           ],
-          "implementation": "obj0a7020c0e8f9 is Obj(x=1, y=0, width=3, height=3, orientation=0, volume=5, color=8)",
+          "implementation": "# The 5 color-8 cells, forming one piece\nobj0a7020c0e8f9 is Obj(x=1, y=0, width=3, height=3, orientation=0, volume=5, color=8)",
           "input_value": {"color":8,"height":3,"id":"obj0a7020c0e8f9","orientation":0,"tag":"l9100","volume":5,"width":3,"x":1,"y":0},
           "output_value": {"color":8,"height":3,"id":"obj0a7020c0e8f9","orientation":0,"tag":"l9100","volume":5,"width":3,"x":1,"y":0}
         },
@@ -185,7 +185,7 @@
             [5, 0, 0, 0, 0],
             [5, 0, 0, 0, 5]
           ],
-          "implementation": "obj3c263747a93d is Obj(x=0, y=0, width=5, height=3, orientation=0, volume=4, color=7)",
+          "implementation": "# The 4 color-7 cells, in 3 separate pieces\nobj3c263747a93d is Obj(x=0, y=0, width=5, height=3, orientation=0, volume=4, color=7)",
           "input_value": {"color":7,"height":3,"id":"obj3c263747a93d","orientation":0,"tag":"l9100","volume":4,"width":5,"x":0,"y":0},
           "output_value": {"color":5,"height":3,"id":"obj3c263747a93d","orientation":0,"tag":"l9100","volume":4,"width":5,"x":0,"y":0}
         }
@@ -215,7 +215,7 @@
             [0, 1, 0, 0, 0],
             [0, 0, 1, 0, 0]
           ],
-          "implementation": "obj5ed70ad29ddf is Obj(x=0, y=0, width=4, height=3, orientation=0, volume=4, color=1)",
+          "implementation": "# The 4 color-1 cells, in 2 separate pieces\nobj5ed70ad29ddf is Obj(x=0, y=0, width=4, height=3, orientation=0, volume=4, color=1)",
           "input_value": {"color":1,"height":3,"id":"obj5ed70ad29ddf","orientation":0,"tag":"l9100","volume":4,"width":4,"x":0,"y":0},
           "output_value": {"color":1,"height":3,"id":"obj5ed70ad29ddf","orientation":0,"tag":"l9100","volume":4,"width":4,"x":0,"y":0}
         },
@@ -231,7 +231,7 @@
             [0, 0, 5, 5, 5],
             [0, 5, 0, 5, 0]
           ],
-          "implementation": "objd04757dd76e2 is Obj(x=1, y=0, width=4, height=3, orientation=0, volume=8, color=7)",
+          "implementation": "# The 8 color-7 cells, forming one piece\nobjd04757dd76e2 is Obj(x=1, y=0, width=4, height=3, orientation=0, volume=8, color=7)",
           "input_value": {"color":7,"height":3,"id":"objd04757dd76e2","orientation":0,"tag":"l9100","volume":8,"width":4,"x":1,"y":0},
           "output_value": {"color":5,"height":3,"id":"objd04757dd76e2","orientation":0,"tag":"l9100","volume":8,"width":4,"x":1,"y":0}
         },
@@ -247,7 +247,7 @@
             [8, 0, 0, 0, 0],
             [8, 0, 0, 0, 8]
           ],
-          "implementation": "objf2fd0d143dae is Obj(x=0, y=1, width=5, height=2, orientation=0, volume=3, color=8)",
+          "implementation": "# The 3 color-8 cells, in 2 separate pieces\nobjf2fd0d143dae is Obj(x=0, y=1, width=5, height=2, orientation=0, volume=3, color=8)",
           "input_value": {"color":8,"height":2,"id":"objf2fd0d143dae","orientation":0,"tag":"l9100","volume":3,"width":5,"x":0,"y":1},
           "output_value": {"color":8,"height":2,"id":"objf2fd0d143dae","orientation":0,"tag":"l9100","volume":3,"width":5,"x":0,"y":1}
         }

@@ -94,8 +94,30 @@ formatting exactly:
   `input_value`, `output_value`.
 - Two-space indentation, one matrix row per line, and `implementation`,
   `input_value`, and `output_value` each on a single line.
-- No field carries `#` comments: every declaration and every `implementation`
-  is executable code alone, as in every existing dataset.
+- Every line of every declaration and every `implementation` has one `#`
+  comment line for the model directly above it, indented like that line, as
+  in every existing dataset and the "Instruction datasets" section of
+  `arc/README.md`. Each declaration and implementation therefore starts with
+  a comment. The model copies them into the code it writes for the calls that
+  receive no instruction dataset, so write what those calls need, in the
+  words the other datasets use:
+  - The class header: what one object is, which is how the grid is
+    segmented, then what the transformation does to the objects.
+  - Each class body line: what its value holds or how it is read from the
+    grid. The `orientation` line says how orientation applies to this
+    dataset's shapes. A tag line reads `lNNNN names ...`, reusing the words
+    of any dataset with that tag.
+  - Each rule: its visible effect on the grid, calling a value read with
+    `@first` the input value. Each `if` header: which objects its branch
+    selects and what happens to them.
+  - Each implementation: its object as the grid shows it. Give its shape and
+    colors, and the features its arguments or the rules depend on, such as a
+    corner's vertex, a row's head, a pattern's period, or the color with the
+    most cells. Do not restate its arguments.
+
+  Every statement must hold for the dataset's grids and snapshots. No comment
+  uses a quote, a backslash, or a second `#`, and no other field carries
+  comments.
 
 ## Model the world
 
@@ -234,7 +256,7 @@ The caller decides whether to propose the feature; you never start a NUC.
   volume=<volume>, ...)`, constructing the instance's class (`Obj` in existing
   datasets) with named arguments matching its parameters, where `width` and
   `height` are the input mask's nonzero bounding-box column and row counts and
-  `volume` is its number of nonzero cells.
+  `volume` is its number of nonzero cells, below its comment line.
 - Never hand-write `input_value` or `output_value`. As `arc/src/analyzer.ts`
   does, run the Nucleoid executable (`NUCLEOID_EXECUTABLE`, else the debug
   build in `target/debug/`; build it with `cargo build` if missing) as
@@ -275,7 +297,11 @@ Verify with a throwaway script outside the repository; do not add tests:
   output masks reproduces `output_matrix`, cell for cell.
 - Every `input_value.volume` and `output_value.volume` equals the number of
   nonzero cells in the instance's input or output mask.
-- No declaration or `implementation` holds a `#` comment line.
+- Every line of every declaration and `implementation` has exactly one
+  comment line directly above it, indented like it, in that convention.
+  Removing the comment lines leaves the code alone. Every statement in each
+  comment holds for the grids and snapshots, and no comment holds a quote, a
+  backslash, or a second `#`.
 - Rerunning Nucleoid reproduces every `input_value` and `output_value`.
 
 For an explicitly authorized padding-only repair, restore unambiguous

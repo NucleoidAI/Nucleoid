@@ -1,7 +1,7 @@
 {
   "declarations": [
-    "class Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, color: int):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.tag is l9100\n    this.color is color",
-    "if any other in Obj: other.volume > $Obj.volume:\n    $Obj.color is 5"
+    "# Each object is all the cells of one color, touching or not. Every color except the one with the most cells turns 5\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, color: int):\n    # Left column of their box\n    this.x is x\n    # Top row of their box\n    this.y is y\n    # Columns of their box\n    this.width is width\n    # Rows of their box\n    this.height is height\n    # A bar lies along its axis, 0 vertical or 90 horizontal; a corner points toward its vertex; any other group is 0\n    this.orientation is orientation\n    # Number of its cells\n    this.volume is volume\n    # l9100 names a single shape\n    this.tag is l9100\n    # Their color\n    this.color is color",
+    "# A color group that some other group outnumbers\nif any other in Obj: other.volume > $Obj.volume:\n    # It turns color 5; only the group with the most cells keeps its color\n    $Obj.color is 5"
   ],
   "output_canvas": "EXACT",
   "dataset": [
@@ -29,7 +29,7 @@
             [2, 0, 0],
             [2, 0, 0]
           ],
-          "implementation": "objfd8da1fb82d2 is Obj(x=0, y=0, width=3, height=3, orientation=315, volume=5, color=2)",
+          "implementation": "# The 5 color-2 cells, forming a corner with its vertex at the top left, the most of any color\nobjfd8da1fb82d2 is Obj(x=0, y=0, width=3, height=3, orientation=315, volume=5, color=2)",
           "input_value": {"color":2,"height":3,"id":"objfd8da1fb82d2","orientation":315,"tag":"l9100","volume":5,"width":3,"x":0,"y":0},
           "output_value": {"color":2,"height":3,"id":"objfd8da1fb82d2","orientation":315,"tag":"l9100","volume":5,"width":3,"x":0,"y":0}
         },
@@ -45,7 +45,7 @@
             [0, 5, 0],
             [0, 0, 0]
           ],
-          "implementation": "obj18a2b2379cda is Obj(x=1, y=1, width=1, height=1, orientation=0, volume=1, color=1)",
+          "implementation": "# Single color-1 cell\nobj18a2b2379cda is Obj(x=1, y=1, width=1, height=1, orientation=0, volume=1, color=1)",
           "input_value": {"color":1,"height":1,"id":"obj18a2b2379cda","orientation":0,"tag":"l9100","volume":1,"width":1,"x":1,"y":1},
           "output_value": {"color":5,"height":1,"id":"obj18a2b2379cda","orientation":0,"tag":"l9100","volume":1,"width":1,"x":1,"y":1}
         },
@@ -61,7 +61,7 @@
             [0, 0, 5],
             [0, 5, 5]
           ],
-          "implementation": "objaabb8a63326c is Obj(x=1, y=1, width=2, height=2, orientation=135, volume=3, color=8)",
+          "implementation": "# The 3 color-8 cells, forming a corner with its vertex at the bottom right\nobjaabb8a63326c is Obj(x=1, y=1, width=2, height=2, orientation=135, volume=3, color=8)",
           "input_value": {"color":8,"height":2,"id":"objaabb8a63326c","orientation":135,"tag":"l9100","volume":3,"width":2,"x":1,"y":1},
           "output_value": {"color":5,"height":2,"id":"objaabb8a63326c","orientation":135,"tag":"l9100","volume":3,"width":2,"x":1,"y":1}
         }
@@ -91,7 +91,7 @@
             [0, 1, 0],
             [0, 0, 0]
           ],
-          "implementation": "objb4c2bdc31cbd is Obj(x=0, y=0, width=3, height=2, orientation=0, volume=4, color=1)",
+          "implementation": "# The 4 color-1 cells, forming one piece, the most of any color\nobjb4c2bdc31cbd is Obj(x=0, y=0, width=3, height=2, orientation=0, volume=4, color=1)",
           "input_value": {"color":1,"height":2,"id":"objb4c2bdc31cbd","orientation":0,"tag":"l9100","volume":4,"width":3,"x":0,"y":0},
           "output_value": {"color":1,"height":2,"id":"objb4c2bdc31cbd","orientation":0,"tag":"l9100","volume":4,"width":3,"x":0,"y":0}
         },
@@ -107,7 +107,7 @@
             [5, 0, 0],
             [5, 0, 0]
           ],
-          "implementation": "objfbe4a4224d14 is Obj(x=0, y=1, width=1, height=2, orientation=0, volume=2, color=8)",
+          "implementation": "# The 2 color-8 cells, forming a vertical bar\nobjfbe4a4224d14 is Obj(x=0, y=1, width=1, height=2, orientation=0, volume=2, color=8)",
           "input_value": {"color":8,"height":2,"id":"objfbe4a4224d14","orientation":0,"tag":"l9100","volume":2,"width":1,"x":0,"y":1},
           "output_value": {"color":5,"height":2,"id":"objfbe4a4224d14","orientation":0,"tag":"l9100","volume":2,"width":1,"x":0,"y":1}
         },
@@ -123,7 +123,7 @@
             [0, 0, 5],
             [0, 0, 0]
           ],
-          "implementation": "obj9b51b0fdc01c is Obj(x=2, y=1, width=1, height=1, orientation=0, volume=1, color=3)",
+          "implementation": "# Single color-3 cell\nobj9b51b0fdc01c is Obj(x=2, y=1, width=1, height=1, orientation=0, volume=1, color=3)",
           "input_value": {"color":3,"height":1,"id":"obj9b51b0fdc01c","orientation":0,"tag":"l9100","volume":1,"width":1,"x":2,"y":1},
           "output_value": {"color":5,"height":1,"id":"obj9b51b0fdc01c","orientation":0,"tag":"l9100","volume":1,"width":1,"x":2,"y":1}
         },
@@ -139,7 +139,7 @@
             [0, 0, 0],
             [0, 5, 5]
           ],
-          "implementation": "obj91b67e1827b1 is Obj(x=1, y=2, width=2, height=1, orientation=90, volume=2, color=2)",
+          "implementation": "# The 2 color-2 cells, forming a horizontal bar\nobj91b67e1827b1 is Obj(x=1, y=2, width=2, height=1, orientation=90, volume=2, color=2)",
           "input_value": {"color":2,"height":1,"id":"obj91b67e1827b1","orientation":90,"tag":"l9100","volume":2,"width":2,"x":1,"y":2},
           "output_value": {"color":5,"height":1,"id":"obj91b67e1827b1","orientation":90,"tag":"l9100","volume":2,"width":2,"x":1,"y":2}
         }
@@ -169,7 +169,7 @@
             [0, 0, 2],
             [2, 2, 2]
           ],
-          "implementation": "obj3710037e184f is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=7, color=2)",
+          "implementation": "# The 7 color-2 cells, forming one piece, the most of any color\nobj3710037e184f is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=7, color=2)",
           "input_value": {"color":2,"height":3,"id":"obj3710037e184f","orientation":0,"tag":"l9100","volume":7,"width":3,"x":0,"y":0},
           "output_value": {"color":2,"height":3,"id":"obj3710037e184f","orientation":0,"tag":"l9100","volume":7,"width":3,"x":0,"y":0}
         },
@@ -185,7 +185,7 @@
             [5, 5, 0],
             [0, 0, 0]
           ],
-          "implementation": "objcfb87667abdf is Obj(x=0, y=1, width=2, height=1, orientation=90, volume=2, color=8)",
+          "implementation": "# The 2 color-8 cells, forming a horizontal bar\nobjcfb87667abdf is Obj(x=0, y=1, width=2, height=1, orientation=90, volume=2, color=8)",
           "input_value": {"color":8,"height":1,"id":"objcfb87667abdf","orientation":90,"tag":"l9100","volume":2,"width":2,"x":0,"y":1},
           "output_value": {"color":5,"height":1,"id":"objcfb87667abdf","orientation":90,"tag":"l9100","volume":2,"width":2,"x":0,"y":1}
         }
@@ -215,7 +215,7 @@
             [0, 0, 0],
             [0, 0, 0]
           ],
-          "implementation": "obj501aae1fff6a is Obj(x=0, y=0, width=2, height=1, orientation=90, volume=2, color=3)",
+          "implementation": "# The 2 color-3 cells, forming a horizontal bar\nobj501aae1fff6a is Obj(x=0, y=0, width=2, height=1, orientation=90, volume=2, color=3)",
           "input_value": {"color":3,"height":1,"id":"obj501aae1fff6a","orientation":90,"tag":"l9100","volume":2,"width":2,"x":0,"y":0},
           "output_value": {"color":5,"height":1,"id":"obj501aae1fff6a","orientation":90,"tag":"l9100","volume":2,"width":2,"x":0,"y":0}
         },
@@ -231,7 +231,7 @@
             [0, 0, 0],
             [5, 0, 0]
           ],
-          "implementation": "obj5f62becffc78 is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=2, color=8)",
+          "implementation": "# The 2 color-8 cells, in 2 separate pieces\nobj5f62becffc78 is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=2, color=8)",
           "input_value": {"color":8,"height":3,"id":"obj5f62becffc78","orientation":0,"tag":"l9100","volume":2,"width":3,"x":0,"y":0},
           "output_value": {"color":5,"height":3,"id":"obj5f62becffc78","orientation":0,"tag":"l9100","volume":2,"width":3,"x":0,"y":0}
         },
@@ -247,7 +247,7 @@
             [4, 4, 4],
             [0, 0, 0]
           ],
-          "implementation": "obj50d280d9fceb is Obj(x=0, y=1, width=3, height=1, orientation=90, volume=3, color=4)",
+          "implementation": "# The 3 color-4 cells, forming a horizontal bar, the most of any color\nobj50d280d9fceb is Obj(x=0, y=1, width=3, height=1, orientation=90, volume=3, color=4)",
           "input_value": {"color":4,"height":1,"id":"obj50d280d9fceb","orientation":90,"tag":"l9100","volume":3,"width":3,"x":0,"y":1},
           "output_value": {"color":4,"height":1,"id":"obj50d280d9fceb","orientation":90,"tag":"l9100","volume":3,"width":3,"x":0,"y":1}
         },
@@ -263,7 +263,7 @@
             [0, 0, 0],
             [0, 5, 5]
           ],
-          "implementation": "objf2cf87623f42 is Obj(x=1, y=2, width=2, height=1, orientation=90, volume=2, color=1)",
+          "implementation": "# The 2 color-1 cells, forming a horizontal bar\nobjf2cf87623f42 is Obj(x=1, y=2, width=2, height=1, orientation=90, volume=2, color=1)",
           "input_value": {"color":1,"height":1,"id":"objf2cf87623f42","orientation":90,"tag":"l9100","volume":2,"width":2,"x":1,"y":2},
           "output_value": {"color":5,"height":1,"id":"objf2cf87623f42","orientation":90,"tag":"l9100","volume":2,"width":2,"x":1,"y":2}
         }
@@ -293,7 +293,7 @@
             [0, 0, 0],
             [5, 0, 0]
           ],
-          "implementation": "obja0f8bb24bef9 is Obj(x=0, y=0, width=1, height=3, orientation=0, volume=2, color=1)",
+          "implementation": "# The 2 color-1 cells, in 2 separate pieces\nobja0f8bb24bef9 is Obj(x=0, y=0, width=1, height=3, orientation=0, volume=2, color=1)",
           "input_value": {"color":1,"height":3,"id":"obja0f8bb24bef9","orientation":0,"tag":"l9100","volume":2,"width":1,"x":0,"y":0},
           "output_value": {"color":5,"height":3,"id":"obja0f8bb24bef9","orientation":0,"tag":"l9100","volume":2,"width":1,"x":0,"y":0}
         },
@@ -309,7 +309,7 @@
             [3, 3, 0],
             [0, 3, 0]
           ],
-          "implementation": "obj6c6428c31841 is Obj(x=0, y=0, width=2, height=3, orientation=0, volume=4, color=3)",
+          "implementation": "# The 4 color-3 cells, forming one piece, the most of any color\nobj6c6428c31841 is Obj(x=0, y=0, width=2, height=3, orientation=0, volume=4, color=3)",
           "input_value": {"color":3,"height":3,"id":"obj6c6428c31841","orientation":0,"tag":"l9100","volume":4,"width":2,"x":0,"y":0},
           "output_value": {"color":3,"height":3,"id":"obj6c6428c31841","orientation":0,"tag":"l9100","volume":4,"width":2,"x":0,"y":0}
         },
@@ -325,7 +325,7 @@
             [0, 0, 5],
             [0, 0, 5]
           ],
-          "implementation": "obja8f0a8586df4 is Obj(x=2, y=0, width=1, height=3, orientation=0, volume=3, color=2)",
+          "implementation": "# The 3 color-2 cells, forming a vertical bar\nobja8f0a8586df4 is Obj(x=2, y=0, width=1, height=3, orientation=0, volume=3, color=2)",
           "input_value": {"color":2,"height":3,"id":"obja8f0a8586df4","orientation":0,"tag":"l9100","volume":3,"width":1,"x":2,"y":0},
           "output_value": {"color":5,"height":3,"id":"obja8f0a8586df4","orientation":0,"tag":"l9100","volume":3,"width":1,"x":2,"y":0}
         }

@@ -1,5 +1,5 @@
-declaration          ::= classStmt | ifStmt | classRule
-implementation       ::= NAME assign NAME
+declaration          ::= COMMENT NEWLINE ( classStmt | ifStmt | classRule )
+implementation       ::= COMMENT NEWLINE NAME assign NAME
                          '(' labeledArgument ( ',' labeledArgument )+ ')'
 assign               ::= 'is' | '='
 
@@ -7,11 +7,11 @@ classStmt            ::= 'class' NAME '(' constructorParameter ( ',' constructor
                          ':' classBody
 constructorParameter ::= NAME ':' type
 type                 ::= 'int' | 'str' | 'list'
-classBody            ::= ( NEWLINE INDENT fieldAssignment )+
+classBody            ::= ( NEWLINE INDENT COMMENT NEWLINE INDENT fieldAssignment )+
 fieldAssignment      ::= 'this' '.' NAME assign ( NAME | STRING )
 
 ifStmt               ::= 'if' expression ':' ruleBody
-ruleBody             ::= ( NEWLINE INDENT classRule )+
+ruleBody             ::= ( NEWLINE INDENT COMMENT NEWLINE INDENT classRule )+
 classRule            ::= CLASS_REF '.' NAME assign expression
 
 labeledArgument      ::= NAME '=' literal
@@ -50,5 +50,6 @@ RESERVED             ::= 'and' | 'class' | 'else' | 'if' | 'in' | 'not' | 'of' |
 CLASS_REF            ::= '$' NAME
 INTEGER              ::= [0-9]+
 STRING               ::= "'" [^']* "'"
+COMMENT              ::= '#' [^#xA]*
 NEWLINE              ::= #xA
 INDENT               ::= '    '

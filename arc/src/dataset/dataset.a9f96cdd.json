@@ -1,13 +1,13 @@
 {
   "declarations": [
-    "class Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.tag is l7544",
-    "$Obj.tag is l2898",
-    "$Obj.corner_colors is [[3, 6], [8, 7]]",
-    "$Obj.x is min of [$Obj.x@first - 1, $Obj.x@first + 1].filter(column => column >= 0 and column < canvas_width)",
-    "$Obj.y is min of [$Obj.y@first - 1, $Obj.y@first + 1].filter(row => row >= 0 and row < canvas_height)",
-    "$Obj.width is max of [$Obj.x@first - 1, $Obj.x@first + 1].filter(column => column >= 0 and column < canvas_width) - $Obj.x + 1",
-    "$Obj.height is max of [$Obj.y@first - 1, $Obj.y@first + 1].filter(row => row >= 0 and row < canvas_height) - $Obj.y + 1",
-    "$Obj.volume is [$Obj.x@first - 1, $Obj.x@first + 1].filter(column => column >= 0 and column < canvas_width).length * [$Obj.y@first - 1, $Obj.y@first + 1].filter(row => row >= 0 and row < canvas_height).length"
+    "# Each object is the one color-2 cell in the grid. The output replaces it with its 4 diagonal neighbors in fixed colors, 3 top left, 6 top right, 8 bottom left, 7 bottom right, leaving out any that fall outside the grid\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int):\n    # Its column\n    this.x is x\n    # Its row\n    this.y is y\n    # One column: a single cell\n    this.width is width\n    # One row\n    this.height is height\n    # A point points nowhere: 0\n    this.orientation is orientation\n    # Its one cell\n    this.volume is volume\n    # l7544 names a single point\n    this.tag is l7544",
+    "# Each cell becomes l2898, the four corners of a 3x3 box around it, its center left empty\n$Obj.tag is l2898",
+    "# Corner colors, top row then bottom row: 3 and 6 above, 8 and 7 below\n$Obj.corner_colors is [[3, 6], [8, 7]]",
+    "# Leftmost corner column that lies inside the grid\n$Obj.x is min of [$Obj.x@first - 1, $Obj.x@first + 1].filter(column => column >= 0 and column < canvas_width)",
+    "# Top corner row that lies inside the grid\n$Obj.y is min of [$Obj.y@first - 1, $Obj.y@first + 1].filter(row => row >= 0 and row < canvas_height)",
+    "# Columns from the leftmost to the rightmost corner inside the grid\n$Obj.width is max of [$Obj.x@first - 1, $Obj.x@first + 1].filter(column => column >= 0 and column < canvas_width) - $Obj.x + 1",
+    "# Rows from the top to the bottom corner inside the grid\n$Obj.height is max of [$Obj.y@first - 1, $Obj.y@first + 1].filter(row => row >= 0 and row < canvas_height) - $Obj.y + 1",
+    "# Number of corners inside the grid\n$Obj.volume is [$Obj.x@first - 1, $Obj.x@first + 1].filter(column => column >= 0 and column < canvas_width).length * [$Obj.y@first - 1, $Obj.y@first + 1].filter(row => row >= 0 and row < canvas_height).length"
   ],
   "output_canvas": "EXACT",
   "dataset": [
@@ -35,7 +35,7 @@
             [0, 0, 0, 0, 0],
             [8, 0, 7, 0, 0]
           ],
-          "implementation": "objed6a3fa35475 is Obj(x=1, y=1, width=1, height=1, orientation=0, volume=1)",
+          "implementation": "# Single color-2 cell away from the grid edges\nobjed6a3fa35475 is Obj(x=1, y=1, width=1, height=1, orientation=0, volume=1)",
           "input_value": {"height":1,"id":"objed6a3fa35475","orientation":0,"tag":"l7544","volume":1,"width":1,"x":1,"y":1},
           "output_value": {"corner_colors":[[3,6],[8,7]],"height":3,"id":"objed6a3fa35475","orientation":0,"tag":"l2898","volume":4,"width":3,"x":0,"y":0}
         }
@@ -65,7 +65,7 @@
             [0, 0, 0, 3, 0],
             [0, 0, 0, 0, 0]
           ],
-          "implementation": "obj9c3dbe145cc0 is Obj(x=4, y=2, width=1, height=1, orientation=0, volume=1)",
+          "implementation": "# Single color-2 cell in the bottom-right corner of the grid\nobj9c3dbe145cc0 is Obj(x=4, y=2, width=1, height=1, orientation=0, volume=1)",
           "input_value": {"height":1,"id":"obj9c3dbe145cc0","orientation":0,"tag":"l7544","volume":1,"width":1,"x":4,"y":2},
           "output_value": {"corner_colors":[[3,6],[8,7]],"height":1,"id":"obj9c3dbe145cc0","orientation":0,"tag":"l2898","volume":1,"width":1,"x":3,"y":1}
         }
@@ -95,7 +95,7 @@
             [0, 8, 0, 7, 0],
             [0, 0, 0, 0, 0]
           ],
-          "implementation": "obj20d2f816abe0 is Obj(x=2, y=0, width=1, height=1, orientation=0, volume=1)",
+          "implementation": "# Single color-2 cell on the top edge of the grid\nobj20d2f816abe0 is Obj(x=2, y=0, width=1, height=1, orientation=0, volume=1)",
           "input_value": {"height":1,"id":"obj20d2f816abe0","orientation":0,"tag":"l7544","volume":1,"width":1,"x":2,"y":0},
           "output_value": {"corner_colors":[[3,6],[8,7]],"height":1,"id":"obj20d2f816abe0","orientation":0,"tag":"l2898","volume":2,"width":3,"x":1,"y":1}
         }
@@ -125,7 +125,7 @@
             [0, 0, 0, 0, 0],
             [0, 0, 8, 0, 7]
           ],
-          "implementation": "obj6d81a3b4f5dd is Obj(x=3, y=1, width=1, height=1, orientation=0, volume=1)",
+          "implementation": "# Single color-2 cell away from the grid edges\nobj6d81a3b4f5dd is Obj(x=3, y=1, width=1, height=1, orientation=0, volume=1)",
           "input_value": {"height":1,"id":"obj6d81a3b4f5dd","orientation":0,"tag":"l7544","volume":1,"width":1,"x":3,"y":1},
           "output_value": {"corner_colors":[[3,6],[8,7]],"height":3,"id":"obj6d81a3b4f5dd","orientation":0,"tag":"l2898","volume":4,"width":3,"x":2,"y":0}
         }
@@ -155,7 +155,7 @@
             [0, 0, 0, 0, 0],
             [0, 0, 0, 8, 0]
           ],
-          "implementation": "obj1669859e3a8b is Obj(x=4, y=1, width=1, height=1, orientation=0, volume=1)",
+          "implementation": "# Single color-2 cell on the right edge of the grid\nobj1669859e3a8b is Obj(x=4, y=1, width=1, height=1, orientation=0, volume=1)",
           "input_value": {"height":1,"id":"obj1669859e3a8b","orientation":0,"tag":"l7544","volume":1,"width":1,"x":4,"y":1},
           "output_value": {"corner_colors":[[3,6],[8,7]],"height":3,"id":"obj1669859e3a8b","orientation":0,"tag":"l2898","volume":2,"width":1,"x":3,"y":0}
         }

@@ -1,12 +1,12 @@
 {
   "declarations": [
-    "class Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, color: int):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.tag is l9100\n    this.color is color",
-    "$Obj.tag is l3058",
-    "$Obj.width is $Obj.volume",
-    "$Obj.height is 1",
-    "$Obj.orientation is 90 if $Obj.width > 1 else 0",
-    "$Obj.x is 0",
-    "$Obj.y is 0"
+    "# Each object is all the cells of the one color in the grid, touching or not. The output lines them up as a one-row bar of that color, one cell per input cell\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, color: int):\n    # Left column of their box\n    this.x is x\n    # Top row of their box\n    this.y is y\n    # Columns of their box\n    this.width is width\n    # Rows of their box\n    this.height is height\n    # A diagonal line points along its axis, 135 falling; a chevron points toward its vertex, 270 left; any other group is 0\n    this.orientation is orientation\n    # Number of its cells, which sets the bar length\n    this.volume is volume\n    # l9100 names a single shape\n    this.tag is l9100\n    # Their color\n    this.color is color",
+    "# Each group becomes l3058, a horizontal bar\n$Obj.tag is l3058",
+    "# The bar has one column per input cell\n$Obj.width is $Obj.volume",
+    "# The bar is one row tall\n$Obj.height is 1",
+    "# A bar of 2 or more cells lies at 90; a single cell is 0\n$Obj.orientation is 90 if $Obj.width > 1 else 0",
+    "# The cropped output starts at the left end of the bar\n$Obj.x is 0",
+    "# The cropped output starts at the row of the bar\n$Obj.y is 0"
   ],
   "output_canvas": "FIT",
   "dataset": [
@@ -30,7 +30,7 @@
           "output_instance_matrix": [
             [1, 1]
           ],
-          "implementation": "obje6495176f8fb is Obj(x=0, y=1, width=2, height=2, orientation=135, volume=2, color=1)",
+          "implementation": "# The 2 color-1 cells, forming a diagonal line falling to the right\nobje6495176f8fb is Obj(x=0, y=1, width=2, height=2, orientation=135, volume=2, color=1)",
           "input_value": {"color":1,"height":2,"id":"obje6495176f8fb","orientation":135,"tag":"l9100","volume":2,"width":2,"x":0,"y":1},
           "output_value": {"color":1,"height":1,"id":"obje6495176f8fb","orientation":90,"tag":"l3058","volume":2,"width":2,"x":0,"y":0}
         }
@@ -56,7 +56,7 @@
           "output_instance_matrix": [
             [2, 2, 2]
           ],
-          "implementation": "objc658ccf52db5 is Obj(x=0, y=0, width=2, height=3, orientation=270, volume=3, color=2)",
+          "implementation": "# The 3 color-2 cells, forming a chevron pointing left\nobjc658ccf52db5 is Obj(x=0, y=0, width=2, height=3, orientation=270, volume=3, color=2)",
           "input_value": {"color":2,"height":3,"id":"objc658ccf52db5","orientation":270,"tag":"l9100","volume":3,"width":2,"x":0,"y":0},
           "output_value": {"color":2,"height":1,"id":"objc658ccf52db5","orientation":90,"tag":"l3058","volume":3,"width":3,"x":0,"y":0}
         }
@@ -82,7 +82,7 @@
           "output_instance_matrix": [
             [7]
           ],
-          "implementation": "objfd9f284dcfeb is Obj(x=1, y=0, width=1, height=1, orientation=0, volume=1, color=7)",
+          "implementation": "# Single color-7 cell\nobjfd9f284dcfeb is Obj(x=1, y=0, width=1, height=1, orientation=0, volume=1, color=7)",
           "input_value": {"color":7,"height":1,"id":"objfd9f284dcfeb","orientation":0,"tag":"l9100","volume":1,"width":1,"x":1,"y":0},
           "output_value": {"color":7,"height":1,"id":"objfd9f284dcfeb","orientation":0,"tag":"l3058","volume":1,"width":1,"x":0,"y":0}
         }
@@ -108,7 +108,7 @@
           "output_instance_matrix": [
             [8, 8, 8, 8]
           ],
-          "implementation": "obj3ec9cc61c7f7 is Obj(x=0, y=0, width=2, height=3, orientation=0, volume=4, color=8)",
+          "implementation": "# The 4 color-8 cells, forming one piece\nobj3ec9cc61c7f7 is Obj(x=0, y=0, width=2, height=3, orientation=0, volume=4, color=8)",
           "input_value": {"color":8,"height":3,"id":"obj3ec9cc61c7f7","orientation":0,"tag":"l9100","volume":4,"width":2,"x":0,"y":0},
           "output_value": {"color":8,"height":1,"id":"obj3ec9cc61c7f7","orientation":90,"tag":"l3058","volume":4,"width":4,"x":0,"y":0}
         }
@@ -134,7 +134,7 @@
           "output_instance_matrix": [
             [4, 4, 4, 4, 4]
           ],
-          "implementation": "obj7ec5133e61b7 is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=5, color=4)",
+          "implementation": "# The 5 color-4 cells, forming one piece\nobj7ec5133e61b7 is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=5, color=4)",
           "input_value": {"color":4,"height":3,"id":"obj7ec5133e61b7","orientation":0,"tag":"l9100","volume":5,"width":3,"x":0,"y":0},
           "output_value": {"color":4,"height":1,"id":"obj7ec5133e61b7","orientation":90,"tag":"l3058","volume":5,"width":5,"x":0,"y":0}
         }

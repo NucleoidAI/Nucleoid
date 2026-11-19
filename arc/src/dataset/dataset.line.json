@@ -1,11 +1,11 @@
 {
   "declarations": [
-    "class Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.tag is l8001",
-    "if $Obj.orientation is 270:\n    $Obj.tag is l4102\n    $Obj.extension_direction is right\n    $Obj.width is $Obj.width@first + 1",
-    "if $Obj.orientation is 90:\n    $Obj.tag is l4102\n    $Obj.extension_direction is left\n    $Obj.x is $Obj.x@first - 1\n    $Obj.width is $Obj.width@first + 1",
-    "if $Obj.orientation is 0:\n    $Obj.tag is l6012\n    $Obj.extension_direction is down\n    $Obj.height is $Obj.height@first + 1",
-    "if $Obj.orientation is 180:\n    $Obj.tag is l6012\n    $Obj.extension_direction is up\n    $Obj.y is $Obj.y@first - 1\n    $Obj.height is $Obj.height@first + 1",
-    "$Obj.volume is $Obj.width * $Obj.height"
+    "# Each object is one straight line of color 6 with a color-8 end cell, pointing toward that 8 end. Every line grows by one color-6 cell at its other end\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int):\n    # Left column of its box\n    this.x is x\n    # Top row of its box\n    this.y is y\n    # Columns of its box\n    this.width is width\n    # Rows of its box\n    this.height is height\n    # A line points toward its 8 end: 0 up, 90 right, 180 down, 270 left\n    this.orientation is orientation\n    # Number of its cells\n    this.volume is volume\n    # l8001 names a line with an 8 end\n    this.tag is l8001",
+    "# A line whose 8 end is on the left\nif $Obj.orientation is 270:\n    # It becomes l4102, a horizontal line grown by one cell\n    $Obj.tag is l4102\n    # It grows to the right, away from its 8 end\n    $Obj.extension_direction is right\n    # One column longer\n    $Obj.width is $Obj.width@first + 1",
+    "# A line whose 8 end is on the right\nif $Obj.orientation is 90:\n    # It becomes l4102, a horizontal line grown by one cell\n    $Obj.tag is l4102\n    # It grows to the left, away from its 8 end\n    $Obj.extension_direction is left\n    # Its box starts one column further left\n    $Obj.x is $Obj.x@first - 1\n    # One column longer\n    $Obj.width is $Obj.width@first + 1",
+    "# A line whose 8 end is on top\nif $Obj.orientation is 0:\n    # It becomes l6012, a vertical line grown by one cell\n    $Obj.tag is l6012\n    # It grows downward, away from its 8 end\n    $Obj.extension_direction is down\n    # One row longer\n    $Obj.height is $Obj.height@first + 1",
+    "# A line whose 8 end is at the bottom\nif $Obj.orientation is 180:\n    # It becomes l6012, a vertical line grown by one cell\n    $Obj.tag is l6012\n    # It grows upward, away from its 8 end\n    $Obj.extension_direction is up\n    # Its box starts one row higher\n    $Obj.y is $Obj.y@first - 1\n    # One row longer\n    $Obj.height is $Obj.height@first + 1",
+    "# A line fills its box, one cell per column or row\n$Obj.volume is $Obj.width * $Obj.height"
   ],
   "output_canvas": "EXACT",
   "dataset": [
@@ -53,7 +53,7 @@
             [0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "obj31dc1400794e is Obj(x=2, y=0, width=3, height=1, orientation=270, volume=3)",
+          "implementation": "# Horizontal color-6 line of 3 cells with its 8 end on the left\nobj31dc1400794e is Obj(x=2, y=0, width=3, height=1, orientation=270, volume=3)",
           "input_value": {"height":1,"id":"obj31dc1400794e","orientation":270,"tag":"l8001","volume":3,"width":3,"x":2,"y":0},
           "output_value": {"extension_direction":"right","height":1,"id":"obj31dc1400794e","orientation":270,"tag":"l4102","volume":4,"width":4,"x":2,"y":0}
         },
@@ -79,7 +79,7 @@
             [0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "obj1383c0d06fda is Obj(x=4, y=5, width=3, height=1, orientation=90, volume=3)",
+          "implementation": "# Horizontal color-6 line of 3 cells with its 8 end on the right\nobj1383c0d06fda is Obj(x=4, y=5, width=3, height=1, orientation=90, volume=3)",
           "input_value": {"height":1,"id":"obj1383c0d06fda","orientation":90,"tag":"l8001","volume":3,"width":3,"x":4,"y":5},
           "output_value": {"extension_direction":"left","height":1,"id":"obj1383c0d06fda","orientation":90,"tag":"l4102","volume":4,"width":4,"x":3,"y":5}
         }
@@ -129,7 +129,7 @@
             [8, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "objfef9b8e1a36c is Obj(x=0, y=3, width=1, height=4, orientation=180, volume=4)",
+          "implementation": "# Vertical color-6 line of 4 cells with its 8 end at the bottom\nobjfef9b8e1a36c is Obj(x=0, y=3, width=1, height=4, orientation=180, volume=4)",
           "input_value": {"height":4,"id":"objfef9b8e1a36c","orientation":180,"tag":"l8001","volume":4,"width":1,"x":0,"y":3},
           "output_value": {"extension_direction":"up","height":5,"id":"objfef9b8e1a36c","orientation":180,"tag":"l6012","volume":5,"width":1,"x":0,"y":2}
         },
@@ -155,7 +155,7 @@
             [0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "objb3a27e31f269 is Obj(x=2, y=5, width=4, height=1, orientation=270, volume=4)",
+          "implementation": "# Horizontal color-6 line of 4 cells with its 8 end on the left\nobjb3a27e31f269 is Obj(x=2, y=5, width=4, height=1, orientation=270, volume=4)",
           "input_value": {"height":1,"id":"objb3a27e31f269","orientation":270,"tag":"l8001","volume":4,"width":4,"x":2,"y":5},
           "output_value": {"extension_direction":"right","height":1,"id":"objb3a27e31f269","orientation":270,"tag":"l4102","volume":5,"width":5,"x":2,"y":5}
         }
@@ -205,7 +205,7 @@
             [0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "obj3f1a34c478cd is Obj(x=3, y=0, width=4, height=1, orientation=90, volume=4)",
+          "implementation": "# Horizontal color-6 line of 4 cells with its 8 end on the right\nobj3f1a34c478cd is Obj(x=3, y=0, width=4, height=1, orientation=90, volume=4)",
           "input_value": {"height":1,"id":"obj3f1a34c478cd","orientation":90,"tag":"l8001","volume":4,"width":4,"x":3,"y":0},
           "output_value": {"extension_direction":"left","height":1,"id":"obj3f1a34c478cd","orientation":90,"tag":"l4102","volume":5,"width":5,"x":2,"y":0}
         },
@@ -231,7 +231,7 @@
             [0, 6, 0, 0, 0, 0, 0, 0],
             [0, 8, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "obja034f4182e12 is Obj(x=1, y=4, width=1, height=4, orientation=180, volume=4)",
+          "implementation": "# Vertical color-6 line of 4 cells with its 8 end at the bottom\nobja034f4182e12 is Obj(x=1, y=4, width=1, height=4, orientation=180, volume=4)",
           "input_value": {"height":4,"id":"obja034f4182e12","orientation":180,"tag":"l8001","volume":4,"width":1,"x":1,"y":4},
           "output_value": {"extension_direction":"up","height":5,"id":"obja034f4182e12","orientation":180,"tag":"l6012","volume":5,"width":1,"x":1,"y":3}
         },
@@ -257,7 +257,7 @@
             [0, 0, 0, 0, 0, 0, 6, 0],
             [0, 0, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "obj4eba52e160b2 is Obj(x=6, y=2, width=1, height=4, orientation=0, volume=4)",
+          "implementation": "# Vertical color-6 line of 4 cells with its 8 end on top\nobj4eba52e160b2 is Obj(x=6, y=2, width=1, height=4, orientation=0, volume=4)",
           "input_value": {"height":4,"id":"obj4eba52e160b2","orientation":0,"tag":"l8001","volume":4,"width":1,"x":6,"y":2},
           "output_value": {"extension_direction":"down","height":5,"id":"obj4eba52e160b2","orientation":0,"tag":"l6012","volume":5,"width":1,"x":6,"y":2}
         }
@@ -303,7 +303,7 @@
             [0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "obj84b61b7cd8f6 is Obj(x=2, y=1, width=1, height=3, orientation=0, volume=3)",
+          "implementation": "# Vertical color-6 line of 3 cells with its 8 end on top\nobj84b61b7cd8f6 is Obj(x=2, y=1, width=1, height=3, orientation=0, volume=3)",
           "input_value": {"height":3,"id":"obj84b61b7cd8f6","orientation":0,"tag":"l8001","volume":3,"width":1,"x":2,"y":1},
           "output_value": {"extension_direction":"down","height":4,"id":"obj84b61b7cd8f6","orientation":0,"tag":"l6012","volume":4,"width":1,"x":2,"y":1}
         }
@@ -349,7 +349,7 @@
             [0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "obj71a65bf8e5ce is Obj(x=1, y=1, width=1, height=4, orientation=180, volume=4)",
+          "implementation": "# Vertical color-6 line of 4 cells with its 8 end at the bottom\nobj71a65bf8e5ce is Obj(x=1, y=1, width=1, height=4, orientation=180, volume=4)",
           "input_value": {"height":4,"id":"obj71a65bf8e5ce","orientation":180,"tag":"l8001","volume":4,"width":1,"x":1,"y":1},
           "output_value": {"extension_direction":"up","height":5,"id":"obj71a65bf8e5ce","orientation":180,"tag":"l6012","volume":5,"width":1,"x":1,"y":0}
         },
@@ -373,7 +373,7 @@
             [0, 0, 0, 6, 6, 6, 8],
             [0, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "obj400315cd8551 is Obj(x=4, y=5, width=3, height=1, orientation=90, volume=3)",
+          "implementation": "# Horizontal color-6 line of 3 cells with its 8 end on the right\nobj400315cd8551 is Obj(x=4, y=5, width=3, height=1, orientation=90, volume=3)",
           "input_value": {"height":1,"id":"obj400315cd8551","orientation":90,"tag":"l8001","volume":3,"width":3,"x":4,"y":5},
           "output_value": {"extension_direction":"left","height":1,"id":"obj400315cd8551","orientation":90,"tag":"l4102","volume":4,"width":4,"x":3,"y":5}
         }

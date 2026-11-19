@@ -1,11 +1,11 @@
 {
   "declarations": [
-    "class Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.tag is l3058",
-    "$Obj.tag is l5973",
-    "$Obj.orientation is 0",
-    "$Obj.parity is $Obj.y@first % 2",
-    "$Obj.height is canvas_height",
-    "$Obj.y is 0"
+    "# Each object is one full-width row of a single color. The output weaves the two rows into a checkerboard: each color keeps the cells whose row plus column has the parity of its input row\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int):\n    # Left column of its box, 0\n    this.x is x\n    # Its row: 0 top, 1 bottom\n    this.y is y\n    # Columns of its box, 6: the full width of the grid\n    this.width is width\n    # One row\n    this.height is height\n    # A horizontal bar without a head lies at 90\n    this.orientation is orientation\n    # Its 6 cells\n    this.volume is volume\n    # l3058 names a horizontal bar\n    this.tag is l3058",
+    "# Each row becomes l5973, one color of a checkerboard\n$Obj.tag is l5973",
+    "# A checkerboard points nowhere: 0\n$Obj.orientation is 0",
+    "# Parity of its input row: its cells are those whose row plus column is even for the top row and odd for the bottom row\n$Obj.parity is $Obj.y@first % 2",
+    "# It spans both rows of the grid\n$Obj.height is canvas_height",
+    "# It starts at the top edge\n$Obj.y is 0"
   ],
   "output_canvas": "EXACT",
   "dataset": [
@@ -29,7 +29,7 @@
             [3, 0, 3, 0, 3, 0],
             [0, 3, 0, 3, 0, 3]
           ],
-          "implementation": "objf75bfec5b742 is Obj(x=0, y=0, width=6, height=1, orientation=90, volume=6)",
+          "implementation": "# Full top row of color 3\nobjf75bfec5b742 is Obj(x=0, y=0, width=6, height=1, orientation=90, volume=6)",
           "input_value": {"height":1,"id":"objf75bfec5b742","orientation":90,"tag":"l3058","volume":6,"width":6,"x":0,"y":0},
           "output_value": {"height":2,"id":"objf75bfec5b742","orientation":0,"parity":0,"tag":"l5973","volume":6,"width":6,"x":0,"y":0}
         },
@@ -43,7 +43,7 @@
             [0, 9, 0, 9, 0, 9],
             [9, 0, 9, 0, 9, 0]
           ],
-          "implementation": "obj3d85d507495c is Obj(x=0, y=1, width=6, height=1, orientation=90, volume=6)",
+          "implementation": "# Full bottom row of color 9\nobj3d85d507495c is Obj(x=0, y=1, width=6, height=1, orientation=90, volume=6)",
           "input_value": {"height":1,"id":"obj3d85d507495c","orientation":90,"tag":"l3058","volume":6,"width":6,"x":0,"y":1},
           "output_value": {"height":2,"id":"obj3d85d507495c","orientation":0,"parity":1,"tag":"l5973","volume":6,"width":6,"x":0,"y":0}
         }
@@ -69,7 +69,7 @@
             [4, 0, 4, 0, 4, 0],
             [0, 4, 0, 4, 0, 4]
           ],
-          "implementation": "objd1bdb9496f7f is Obj(x=0, y=0, width=6, height=1, orientation=90, volume=6)",
+          "implementation": "# Full top row of color 4\nobjd1bdb9496f7f is Obj(x=0, y=0, width=6, height=1, orientation=90, volume=6)",
           "input_value": {"height":1,"id":"objd1bdb9496f7f","orientation":90,"tag":"l3058","volume":6,"width":6,"x":0,"y":0},
           "output_value": {"height":2,"id":"objd1bdb9496f7f","orientation":0,"parity":0,"tag":"l5973","volume":6,"width":6,"x":0,"y":0}
         },
@@ -83,7 +83,7 @@
             [0, 8, 0, 8, 0, 8],
             [8, 0, 8, 0, 8, 0]
           ],
-          "implementation": "objfd7c9fde835c is Obj(x=0, y=1, width=6, height=1, orientation=90, volume=6)",
+          "implementation": "# Full bottom row of color 8\nobjfd7c9fde835c is Obj(x=0, y=1, width=6, height=1, orientation=90, volume=6)",
           "input_value": {"height":1,"id":"objfd7c9fde835c","orientation":90,"tag":"l3058","volume":6,"width":6,"x":0,"y":1},
           "output_value": {"height":2,"id":"objfd7c9fde835c","orientation":0,"parity":1,"tag":"l5973","volume":6,"width":6,"x":0,"y":0}
         }
@@ -109,7 +109,7 @@
             [6, 0, 6, 0, 6, 0],
             [0, 6, 0, 6, 0, 6]
           ],
-          "implementation": "objad6bf1b1995c is Obj(x=0, y=0, width=6, height=1, orientation=90, volume=6)",
+          "implementation": "# Full top row of color 6\nobjad6bf1b1995c is Obj(x=0, y=0, width=6, height=1, orientation=90, volume=6)",
           "input_value": {"height":1,"id":"objad6bf1b1995c","orientation":90,"tag":"l3058","volume":6,"width":6,"x":0,"y":0},
           "output_value": {"height":2,"id":"objad6bf1b1995c","orientation":0,"parity":0,"tag":"l5973","volume":6,"width":6,"x":0,"y":0}
         },
@@ -123,7 +123,7 @@
             [0, 2, 0, 2, 0, 2],
             [2, 0, 2, 0, 2, 0]
           ],
-          "implementation": "obj595ac3a028ef is Obj(x=0, y=1, width=6, height=1, orientation=90, volume=6)",
+          "implementation": "# Full bottom row of color 2\nobj595ac3a028ef is Obj(x=0, y=1, width=6, height=1, orientation=90, volume=6)",
           "input_value": {"height":1,"id":"obj595ac3a028ef","orientation":90,"tag":"l3058","volume":6,"width":6,"x":0,"y":1},
           "output_value": {"height":2,"id":"obj595ac3a028ef","orientation":0,"parity":1,"tag":"l5973","volume":6,"width":6,"x":0,"y":0}
         }

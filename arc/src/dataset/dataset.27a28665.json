@@ -1,11 +1,11 @@
 {
   "declarations": [
-    "class Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, tag: str):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.tag is tag",
-    "$Obj.tag is l7544",
-    "$Obj.width is 1",
-    "$Obj.height is 1",
-    "$Obj.fill_color is {'l4262': 1, 'l2404': 2, 'l3743': 3, 'l1707': 6}[$Obj.tag@first]",
-    "$Obj.volume is $Obj.width * $Obj.height"
+    "# Each object is the whole 5-cell block of one color, in one of four shapes. The output is a single cell whose color codes the shape, whatever the block color\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, tag: str):\n    # Left column of its box, 0\n    this.x is x\n    # Top row of its box, 0\n    this.y is y\n    # Columns of its box, 3: the full grid\n    this.width is width\n    # Rows of its box, 3\n    this.height is height\n    # No block is turned: 0\n    this.orientation is orientation\n    # Its 5 cells\n    this.volume is volume\n    # Tag naming its shape, given by each implementation\n    this.tag is tag",
+    "# Each block becomes l7544, a single point\n$Obj.tag is l7544",
+    "# The output cell is one column wide\n$Obj.width is 1",
+    "# The output cell is one row tall\n$Obj.height is 1",
+    "# Its color codes the input shape, read from its input tag: 1 hollow diamond, 2 diagonal cross, 3 square with a tail, 6 orthogonal cross\n$Obj.fill_color is {'l4262': 1, 'l2404': 2, 'l3743': 3, 'l1707': 6}[$Obj.tag@first]",
+    "# The output has one cell\n$Obj.volume is $Obj.width * $Obj.height"
   ],
   "output_canvas": "FIT",
   "dataset": [
@@ -29,7 +29,7 @@
           "output_instance_matrix": [
             [1]
           ],
-          "implementation": "obj3fc7d6382a47 is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=5, tag='l4262')",
+          "implementation": "# Color-5 hollow diamond: the 4 edge cells around an empty center, plus its top-left corner\nobj3fc7d6382a47 is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=5, tag='l4262')",
           "input_value": {"height":3,"id":"obj3fc7d6382a47","orientation":0,"tag":"l4262","volume":5,"width":3,"x":0,"y":0},
           "output_value": {"fill_color":1,"height":1,"id":"obj3fc7d6382a47","orientation":0,"tag":"l7544","volume":1,"width":1,"x":0,"y":0}
         }
@@ -55,7 +55,7 @@
           "output_instance_matrix": [
             [2]
           ],
-          "implementation": "obj4eb5795d0cdd is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=5, tag='l2404')",
+          "implementation": "# Color-8 diagonal cross: the center and the 4 corners\nobj4eb5795d0cdd is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=5, tag='l2404')",
           "input_value": {"height":3,"id":"obj4eb5795d0cdd","orientation":0,"tag":"l2404","volume":5,"width":3,"x":0,"y":0},
           "output_value": {"fill_color":2,"height":1,"id":"obj4eb5795d0cdd","orientation":0,"tag":"l7544","volume":1,"width":1,"x":0,"y":0}
         }
@@ -81,7 +81,7 @@
           "output_instance_matrix": [
             [2]
           ],
-          "implementation": "obj6601704d7bf6 is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=5, tag='l2404')",
+          "implementation": "# Color-5 diagonal cross: the center and the 4 corners\nobj6601704d7bf6 is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=5, tag='l2404')",
           "input_value": {"height":3,"id":"obj6601704d7bf6","orientation":0,"tag":"l2404","volume":5,"width":3,"x":0,"y":0},
           "output_value": {"fill_color":2,"height":1,"id":"obj6601704d7bf6","orientation":0,"tag":"l7544","volume":1,"width":1,"x":0,"y":0}
         }
@@ -107,7 +107,7 @@
           "output_instance_matrix": [
             [3]
           ],
-          "implementation": "objae50fa19d8b4 is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=5, tag='l3743')",
+          "implementation": "# Color-1 square with a diagonal tail: a 2x2 square at the top right and one cell touching its bottom-left corner\nobjae50fa19d8b4 is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=5, tag='l3743')",
           "input_value": {"height":3,"id":"objae50fa19d8b4","orientation":0,"tag":"l3743","volume":5,"width":3,"x":0,"y":0},
           "output_value": {"fill_color":3,"height":1,"id":"objae50fa19d8b4","orientation":0,"tag":"l7544","volume":1,"width":1,"x":0,"y":0}
         }
@@ -133,7 +133,7 @@
           "output_instance_matrix": [
             [3]
           ],
-          "implementation": "obj1f918c128ece is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=5, tag='l3743')",
+          "implementation": "# Color-8 square with a diagonal tail: a 2x2 square at the top right and one cell touching its bottom-left corner\nobj1f918c128ece is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=5, tag='l3743')",
           "input_value": {"height":3,"id":"obj1f918c128ece","orientation":0,"tag":"l3743","volume":5,"width":3,"x":0,"y":0},
           "output_value": {"fill_color":3,"height":1,"id":"obj1f918c128ece","orientation":0,"tag":"l7544","volume":1,"width":1,"x":0,"y":0}
         }
@@ -159,7 +159,7 @@
           "output_instance_matrix": [
             [1]
           ],
-          "implementation": "obja9f56fdb5669 is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=5, tag='l4262')",
+          "implementation": "# Color-4 hollow diamond: the 4 edge cells around an empty center, plus its top-left corner\nobja9f56fdb5669 is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=5, tag='l4262')",
           "input_value": {"height":3,"id":"obja9f56fdb5669","orientation":0,"tag":"l4262","volume":5,"width":3,"x":0,"y":0},
           "output_value": {"fill_color":1,"height":1,"id":"obja9f56fdb5669","orientation":0,"tag":"l7544","volume":1,"width":1,"x":0,"y":0}
         }
@@ -185,7 +185,7 @@
           "output_instance_matrix": [
             [6]
           ],
-          "implementation": "objd5070919a78b is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=5, tag='l1707')",
+          "implementation": "# Color-5 orthogonal cross: the center and its 4 edge neighbors\nobjd5070919a78b is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=5, tag='l1707')",
           "input_value": {"height":3,"id":"objd5070919a78b","orientation":0,"tag":"l1707","volume":5,"width":3,"x":0,"y":0},
           "output_value": {"fill_color":6,"height":1,"id":"objd5070919a78b","orientation":0,"tag":"l7544","volume":1,"width":1,"x":0,"y":0}
         }
@@ -211,7 +211,7 @@
           "output_instance_matrix": [
             [6]
           ],
-          "implementation": "obj21c794e899a4 is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=5, tag='l1707')",
+          "implementation": "# Color-8 orthogonal cross: the center and its 4 edge neighbors\nobj21c794e899a4 is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=5, tag='l1707')",
           "input_value": {"height":3,"id":"obj21c794e899a4","orientation":0,"tag":"l1707","volume":5,"width":3,"x":0,"y":0},
           "output_value": {"fill_color":6,"height":1,"id":"obj21c794e899a4","orientation":0,"tag":"l7544","volume":1,"width":1,"x":0,"y":0}
         }
@@ -237,7 +237,7 @@
           "output_instance_matrix": [
             [1]
           ],
-          "implementation": "objda373cb02758 is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=5, tag='l4262')",
+          "implementation": "# Color-7 hollow diamond: the 4 edge cells around an empty center, plus its top-left corner\nobjda373cb02758 is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=5, tag='l4262')",
           "input_value": {"height":3,"id":"objda373cb02758","orientation":0,"tag":"l4262","volume":5,"width":3,"x":0,"y":0},
           "output_value": {"fill_color":1,"height":1,"id":"objda373cb02758","orientation":0,"tag":"l7544","volume":1,"width":1,"x":0,"y":0}
         }
@@ -263,7 +263,7 @@
           "output_instance_matrix": [
             [2]
           ],
-          "implementation": "obj3f449313ec0d is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=5, tag='l2404')",
+          "implementation": "# Color-2 diagonal cross: the center and the 4 corners\nobj3f449313ec0d is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=5, tag='l2404')",
           "input_value": {"height":3,"id":"obj3f449313ec0d","orientation":0,"tag":"l2404","volume":5,"width":3,"x":0,"y":0},
           "output_value": {"fill_color":2,"height":1,"id":"obj3f449313ec0d","orientation":0,"tag":"l7544","volume":1,"width":1,"x":0,"y":0}
         }

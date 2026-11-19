@@ -1,8 +1,8 @@
 {
   "declarations": [
-    "class Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, parts: list):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.tag is l3058\n    this.parts is parts",
-    "$Obj.fill_color is 5 if $Obj.parts.distinct().length is 1 else 0",
-    "$Obj.volume is 0 if $Obj.fill_color is 0 else $Obj.volume@first"
+    "# Each object is one full-width row of 3 cells. A row whose cells share one color turns all 5, and any other row is cleared to the background\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, parts: list):\n    # Left column of its box, 0: it starts at the left edge\n    this.x is x\n    # Its row\n    this.y is y\n    # Columns of its box, 3: the full width of the grid\n    this.width is width\n    # One row\n    this.height is height\n    # A row points toward its head, an end cell whose color differs from the other two: 90 right, 270 left. A row without a head lies at 90\n    this.orientation is orientation\n    # Its 3 cells\n    this.volume is volume\n    # l3058 names a horizontal bar\n    this.tag is l3058\n    # Colors of its cells, left to right\n    this.parts is parts",
+    "# A row with one distinct color is filled with 5; any other row gets 0, the background\n$Obj.fill_color is 5 if $Obj.parts.distinct().length is 1 else 0",
+    "# A cleared row keeps no cells; a filled row keeps its 3 input cells\n$Obj.volume is 0 if $Obj.fill_color is 0 else $Obj.volume@first"
   ],
   "output_canvas": "EXACT",
   "dataset": [
@@ -30,7 +30,7 @@
             [0, 0, 0],
             [0, 0, 0]
           ],
-          "implementation": "obj264fe4293acf is Obj(x=0, y=0, width=3, height=1, orientation=90, volume=3, parts=[4, 4, 4])",
+          "implementation": "# Row whose 3 cells are all color 4\nobj264fe4293acf is Obj(x=0, y=0, width=3, height=1, orientation=90, volume=3, parts=[4, 4, 4])",
           "input_value": {"height":1,"id":"obj264fe4293acf","orientation":90,"parts":[4,4,4],"tag":"l3058","volume":3,"width":3,"x":0,"y":0},
           "output_value": {"fill_color":5,"height":1,"id":"obj264fe4293acf","orientation":90,"parts":[4,4,4],"tag":"l3058","volume":3,"width":3,"x":0,"y":0}
         },
@@ -46,7 +46,7 @@
             [0, 0, 0],
             [0, 0, 0]
           ],
-          "implementation": "obje69821b4eaf1 is Obj(x=0, y=1, width=3, height=1, orientation=90, volume=3, parts=[2, 3, 2])",
+          "implementation": "# Row of mixed colors: 2 and 3, with no head\nobje69821b4eaf1 is Obj(x=0, y=1, width=3, height=1, orientation=90, volume=3, parts=[2, 3, 2])",
           "input_value": {"height":1,"id":"obje69821b4eaf1","orientation":90,"parts":[2,3,2],"tag":"l3058","volume":3,"width":3,"x":0,"y":1},
           "output_value": {"fill_color":0,"height":1,"id":"obje69821b4eaf1","orientation":90,"parts":[2,3,2],"tag":"l3058","volume":0,"width":3,"x":0,"y":1}
         },
@@ -62,7 +62,7 @@
             [0, 0, 0],
             [0, 0, 0]
           ],
-          "implementation": "obj1ece888d68bd is Obj(x=0, y=2, width=3, height=1, orientation=270, volume=3, parts=[2, 3, 3])",
+          "implementation": "# Row of mixed colors: 2 and 3, its head 2 on the left\nobj1ece888d68bd is Obj(x=0, y=2, width=3, height=1, orientation=270, volume=3, parts=[2, 3, 3])",
           "input_value": {"height":1,"id":"obj1ece888d68bd","orientation":270,"parts":[2,3,3],"tag":"l3058","volume":3,"width":3,"x":0,"y":2},
           "output_value": {"fill_color":0,"height":1,"id":"obj1ece888d68bd","orientation":270,"parts":[2,3,3],"tag":"l3058","volume":0,"width":3,"x":0,"y":2}
         }
@@ -92,7 +92,7 @@
             [0, 0, 0],
             [0, 0, 0]
           ],
-          "implementation": "obj95bc4ed42279 is Obj(x=0, y=0, width=3, height=1, orientation=270, volume=3, parts=[7, 3, 3])",
+          "implementation": "# Row of mixed colors: 3 and 7, its head 7 on the left\nobj95bc4ed42279 is Obj(x=0, y=0, width=3, height=1, orientation=270, volume=3, parts=[7, 3, 3])",
           "input_value": {"height":1,"id":"obj95bc4ed42279","orientation":270,"parts":[7,3,3],"tag":"l3058","volume":3,"width":3,"x":0,"y":0},
           "output_value": {"fill_color":0,"height":1,"id":"obj95bc4ed42279","orientation":270,"parts":[7,3,3],"tag":"l3058","volume":0,"width":3,"x":0,"y":0}
         },
@@ -108,7 +108,7 @@
             [5, 5, 5],
             [0, 0, 0]
           ],
-          "implementation": "objde7e64595025 is Obj(x=0, y=1, width=3, height=1, orientation=90, volume=3, parts=[6, 6, 6])",
+          "implementation": "# Row whose 3 cells are all color 6\nobjde7e64595025 is Obj(x=0, y=1, width=3, height=1, orientation=90, volume=3, parts=[6, 6, 6])",
           "input_value": {"height":1,"id":"objde7e64595025","orientation":90,"parts":[6,6,6],"tag":"l3058","volume":3,"width":3,"x":0,"y":1},
           "output_value": {"fill_color":5,"height":1,"id":"objde7e64595025","orientation":90,"parts":[6,6,6],"tag":"l3058","volume":3,"width":3,"x":0,"y":1}
         },
@@ -124,7 +124,7 @@
             [0, 0, 0],
             [0, 0, 0]
           ],
-          "implementation": "obj96cdc68d576d is Obj(x=0, y=2, width=3, height=1, orientation=270, volume=3, parts=[3, 7, 7])",
+          "implementation": "# Row of mixed colors: 3 and 7, its head 3 on the left\nobj96cdc68d576d is Obj(x=0, y=2, width=3, height=1, orientation=270, volume=3, parts=[3, 7, 7])",
           "input_value": {"height":1,"id":"obj96cdc68d576d","orientation":270,"parts":[3,7,7],"tag":"l3058","volume":3,"width":3,"x":0,"y":2},
           "output_value": {"fill_color":0,"height":1,"id":"obj96cdc68d576d","orientation":270,"parts":[3,7,7],"tag":"l3058","volume":0,"width":3,"x":0,"y":2}
         }
@@ -154,7 +154,7 @@
             [0, 0, 0],
             [0, 0, 0]
           ],
-          "implementation": "objdce2f80fa708 is Obj(x=0, y=0, width=3, height=1, orientation=90, volume=3, parts=[2, 9, 2])",
+          "implementation": "# Row of mixed colors: 2 and 9, with no head\nobjdce2f80fa708 is Obj(x=0, y=0, width=3, height=1, orientation=90, volume=3, parts=[2, 9, 2])",
           "input_value": {"height":1,"id":"objdce2f80fa708","orientation":90,"parts":[2,9,2],"tag":"l3058","volume":3,"width":3,"x":0,"y":0},
           "output_value": {"fill_color":0,"height":1,"id":"objdce2f80fa708","orientation":90,"parts":[2,9,2],"tag":"l3058","volume":0,"width":3,"x":0,"y":0}
         },
@@ -170,7 +170,7 @@
             [5, 5, 5],
             [0, 0, 0]
           ],
-          "implementation": "objeebba7399d09 is Obj(x=0, y=1, width=3, height=1, orientation=90, volume=3, parts=[4, 4, 4])",
+          "implementation": "# Row whose 3 cells are all color 4\nobjeebba7399d09 is Obj(x=0, y=1, width=3, height=1, orientation=90, volume=3, parts=[4, 4, 4])",
           "input_value": {"height":1,"id":"objeebba7399d09","orientation":90,"parts":[4,4,4],"tag":"l3058","volume":3,"width":3,"x":0,"y":1},
           "output_value": {"fill_color":5,"height":1,"id":"objeebba7399d09","orientation":90,"parts":[4,4,4],"tag":"l3058","volume":3,"width":3,"x":0,"y":1}
         },
@@ -186,7 +186,7 @@
             [0, 0, 0],
             [5, 5, 5]
           ],
-          "implementation": "objba007454e906 is Obj(x=0, y=2, width=3, height=1, orientation=90, volume=3, parts=[9, 9, 9])",
+          "implementation": "# Row whose 3 cells are all color 9\nobjba007454e906 is Obj(x=0, y=2, width=3, height=1, orientation=90, volume=3, parts=[9, 9, 9])",
           "input_value": {"height":1,"id":"objba007454e906","orientation":90,"parts":[9,9,9],"tag":"l3058","volume":3,"width":3,"x":0,"y":2},
           "output_value": {"fill_color":5,"height":1,"id":"objba007454e906","orientation":90,"parts":[9,9,9],"tag":"l3058","volume":3,"width":3,"x":0,"y":2}
         }
@@ -216,7 +216,7 @@
             [0, 0, 0],
             [0, 0, 0]
           ],
-          "implementation": "obj40985c2be42e is Obj(x=0, y=0, width=3, height=1, orientation=90, volume=3, parts=[2, 2, 4])",
+          "implementation": "# Row of mixed colors: 2 and 4, its head 4 on the right\nobj40985c2be42e is Obj(x=0, y=0, width=3, height=1, orientation=90, volume=3, parts=[2, 2, 4])",
           "input_value": {"height":1,"id":"obj40985c2be42e","orientation":90,"parts":[2,2,4],"tag":"l3058","volume":3,"width":3,"x":0,"y":0},
           "output_value": {"fill_color":0,"height":1,"id":"obj40985c2be42e","orientation":90,"parts":[2,2,4],"tag":"l3058","volume":0,"width":3,"x":0,"y":0}
         },
@@ -232,7 +232,7 @@
             [0, 0, 0],
             [0, 0, 0]
           ],
-          "implementation": "obj19d5e0d67828 is Obj(x=0, y=1, width=3, height=1, orientation=90, volume=3, parts=[2, 2, 4])",
+          "implementation": "# Row of mixed colors: 2 and 4, its head 4 on the right\nobj19d5e0d67828 is Obj(x=0, y=1, width=3, height=1, orientation=90, volume=3, parts=[2, 2, 4])",
           "input_value": {"height":1,"id":"obj19d5e0d67828","orientation":90,"parts":[2,2,4],"tag":"l3058","volume":3,"width":3,"x":0,"y":1},
           "output_value": {"fill_color":0,"height":1,"id":"obj19d5e0d67828","orientation":90,"parts":[2,2,4],"tag":"l3058","volume":0,"width":3,"x":0,"y":1}
         },
@@ -248,7 +248,7 @@
             [0, 0, 0],
             [5, 5, 5]
           ],
-          "implementation": "objaafd6657954a is Obj(x=0, y=2, width=3, height=1, orientation=90, volume=3, parts=[1, 1, 1])",
+          "implementation": "# Row whose 3 cells are all color 1\nobjaafd6657954a is Obj(x=0, y=2, width=3, height=1, orientation=90, volume=3, parts=[1, 1, 1])",
           "input_value": {"height":1,"id":"objaafd6657954a","orientation":90,"parts":[1,1,1],"tag":"l3058","volume":3,"width":3,"x":0,"y":2},
           "output_value": {"fill_color":5,"height":1,"id":"objaafd6657954a","orientation":90,"parts":[1,1,1],"tag":"l3058","volume":3,"width":3,"x":0,"y":2}
         }
@@ -278,7 +278,7 @@
             [0, 0, 0],
             [0, 0, 0]
           ],
-          "implementation": "obj11e274d6d6f7 is Obj(x=0, y=0, width=3, height=1, orientation=90, volume=3, parts=[4, 4, 4])",
+          "implementation": "# Row whose 3 cells are all color 4\nobj11e274d6d6f7 is Obj(x=0, y=0, width=3, height=1, orientation=90, volume=3, parts=[4, 4, 4])",
           "input_value": {"height":1,"id":"obj11e274d6d6f7","orientation":90,"parts":[4,4,4],"tag":"l3058","volume":3,"width":3,"x":0,"y":0},
           "output_value": {"fill_color":5,"height":1,"id":"obj11e274d6d6f7","orientation":90,"parts":[4,4,4],"tag":"l3058","volume":3,"width":3,"x":0,"y":0}
         },
@@ -294,7 +294,7 @@
             [0, 0, 0],
             [0, 0, 0]
           ],
-          "implementation": "obj36899a23a956 is Obj(x=0, y=1, width=3, height=1, orientation=90, volume=3, parts=[3, 2, 3])",
+          "implementation": "# Row of mixed colors: 2 and 3, with no head\nobj36899a23a956 is Obj(x=0, y=1, width=3, height=1, orientation=90, volume=3, parts=[3, 2, 3])",
           "input_value": {"height":1,"id":"obj36899a23a956","orientation":90,"parts":[3,2,3],"tag":"l3058","volume":3,"width":3,"x":0,"y":1},
           "output_value": {"fill_color":0,"height":1,"id":"obj36899a23a956","orientation":90,"parts":[3,2,3],"tag":"l3058","volume":0,"width":3,"x":0,"y":1}
         },
@@ -310,7 +310,7 @@
             [0, 0, 0],
             [5, 5, 5]
           ],
-          "implementation": "obj37710faf4a58 is Obj(x=0, y=2, width=3, height=1, orientation=90, volume=3, parts=[8, 8, 8])",
+          "implementation": "# Row whose 3 cells are all color 8\nobj37710faf4a58 is Obj(x=0, y=2, width=3, height=1, orientation=90, volume=3, parts=[8, 8, 8])",
           "input_value": {"height":1,"id":"obj37710faf4a58","orientation":90,"parts":[8,8,8],"tag":"l3058","volume":3,"width":3,"x":0,"y":2},
           "output_value": {"fill_color":5,"height":1,"id":"obj37710faf4a58","orientation":90,"parts":[8,8,8],"tag":"l3058","volume":3,"width":3,"x":0,"y":2}
         }

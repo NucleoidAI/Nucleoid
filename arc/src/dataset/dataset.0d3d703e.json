@@ -1,7 +1,7 @@
 {
   "declarations": [
-    "class Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, color: int):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.tag is l6953\n    this.color is color",
-    "$Obj.color is [[1, 5], [2, 6], [3, 4], [8, 9]].find(pair => pair.includes($Obj.color@first)).find(partner => partner is not $Obj.color@first)"
+    "# Each object is one full-height column of a single color. Every column swaps its color for its partner: 1 and 5, 2 and 6, 3 and 4, 8 and 9 swap\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, color: int):\n    # Its column\n    this.x is x\n    # Top row of its box, 0: it starts at the top edge\n    this.y is y\n    # One column\n    this.width is width\n    # Rows of its box, 3: the full height of the grid\n    this.height is height\n    # A vertical bar without a head lies at 0\n    this.orientation is orientation\n    # Its 3 cells\n    this.volume is volume\n    # l6953 names a vertical bar\n    this.tag is l6953\n    # Its one color\n    this.color is color",
+    "# Each column takes the partner of its input color: find the pair holding the input color, then the other member of that pair\n$Obj.color is [[1, 5], [2, 6], [3, 4], [8, 9]].find(pair => pair.includes($Obj.color@first)).find(partner => partner is not $Obj.color@first)"
   ],
   "output_canvas": "EXACT",
   "dataset": [
@@ -29,7 +29,7 @@
             [4, 0, 0],
             [4, 0, 0]
           ],
-          "implementation": "obj4d683f973e7d is Obj(x=0, y=0, width=1, height=3, orientation=0, volume=3, color=3)",
+          "implementation": "# Full-height column of color 3\nobj4d683f973e7d is Obj(x=0, y=0, width=1, height=3, orientation=0, volume=3, color=3)",
           "input_value": {"color":3,"height":3,"id":"obj4d683f973e7d","orientation":0,"tag":"l6953","volume":3,"width":1,"x":0,"y":0},
           "output_value": {"color":4,"height":3,"id":"obj4d683f973e7d","orientation":0,"tag":"l6953","volume":3,"width":1,"x":0,"y":0}
         },
@@ -45,7 +45,7 @@
             [0, 5, 0],
             [0, 5, 0]
           ],
-          "implementation": "obj21e76bc9df63 is Obj(x=1, y=0, width=1, height=3, orientation=0, volume=3, color=1)",
+          "implementation": "# Full-height column of color 1\nobj21e76bc9df63 is Obj(x=1, y=0, width=1, height=3, orientation=0, volume=3, color=1)",
           "input_value": {"color":1,"height":3,"id":"obj21e76bc9df63","orientation":0,"tag":"l6953","volume":3,"width":1,"x":1,"y":0},
           "output_value": {"color":5,"height":3,"id":"obj21e76bc9df63","orientation":0,"tag":"l6953","volume":3,"width":1,"x":1,"y":0}
         },
@@ -61,7 +61,7 @@
             [0, 0, 6],
             [0, 0, 6]
           ],
-          "implementation": "objfd9a9320bfe9 is Obj(x=2, y=0, width=1, height=3, orientation=0, volume=3, color=2)",
+          "implementation": "# Full-height column of color 2\nobjfd9a9320bfe9 is Obj(x=2, y=0, width=1, height=3, orientation=0, volume=3, color=2)",
           "input_value": {"color":2,"height":3,"id":"objfd9a9320bfe9","orientation":0,"tag":"l6953","volume":3,"width":1,"x":2,"y":0},
           "output_value": {"color":6,"height":3,"id":"objfd9a9320bfe9","orientation":0,"tag":"l6953","volume":3,"width":1,"x":2,"y":0}
         }
@@ -91,7 +91,7 @@
             [6, 0, 0],
             [6, 0, 0]
           ],
-          "implementation": "obje305b9fc2bcb is Obj(x=0, y=0, width=1, height=3, orientation=0, volume=3, color=2)",
+          "implementation": "# Full-height column of color 2\nobje305b9fc2bcb is Obj(x=0, y=0, width=1, height=3, orientation=0, volume=3, color=2)",
           "input_value": {"color":2,"height":3,"id":"obje305b9fc2bcb","orientation":0,"tag":"l6953","volume":3,"width":1,"x":0,"y":0},
           "output_value": {"color":6,"height":3,"id":"obje305b9fc2bcb","orientation":0,"tag":"l6953","volume":3,"width":1,"x":0,"y":0}
         },
@@ -107,7 +107,7 @@
             [0, 4, 0],
             [0, 4, 0]
           ],
-          "implementation": "objb8e066db3336 is Obj(x=1, y=0, width=1, height=3, orientation=0, volume=3, color=3)",
+          "implementation": "# Full-height column of color 3\nobjb8e066db3336 is Obj(x=1, y=0, width=1, height=3, orientation=0, volume=3, color=3)",
           "input_value": {"color":3,"height":3,"id":"objb8e066db3336","orientation":0,"tag":"l6953","volume":3,"width":1,"x":1,"y":0},
           "output_value": {"color":4,"height":3,"id":"objb8e066db3336","orientation":0,"tag":"l6953","volume":3,"width":1,"x":1,"y":0}
         },
@@ -123,7 +123,7 @@
             [0, 0, 9],
             [0, 0, 9]
           ],
-          "implementation": "obj459cb43b4fc7 is Obj(x=2, y=0, width=1, height=3, orientation=0, volume=3, color=8)",
+          "implementation": "# Full-height column of color 8\nobj459cb43b4fc7 is Obj(x=2, y=0, width=1, height=3, orientation=0, volume=3, color=8)",
           "input_value": {"color":8,"height":3,"id":"obj459cb43b4fc7","orientation":0,"tag":"l6953","volume":3,"width":1,"x":2,"y":0},
           "output_value": {"color":9,"height":3,"id":"obj459cb43b4fc7","orientation":0,"tag":"l6953","volume":3,"width":1,"x":2,"y":0}
         }
@@ -153,7 +153,7 @@
             [1, 0, 0],
             [1, 0, 0]
           ],
-          "implementation": "objdbde324aea51 is Obj(x=0, y=0, width=1, height=3, orientation=0, volume=3, color=5)",
+          "implementation": "# Full-height column of color 5\nobjdbde324aea51 is Obj(x=0, y=0, width=1, height=3, orientation=0, volume=3, color=5)",
           "input_value": {"color":5,"height":3,"id":"objdbde324aea51","orientation":0,"tag":"l6953","volume":3,"width":1,"x":0,"y":0},
           "output_value": {"color":1,"height":3,"id":"objdbde324aea51","orientation":0,"tag":"l6953","volume":3,"width":1,"x":0,"y":0}
         },
@@ -169,7 +169,7 @@
             [0, 9, 0],
             [0, 9, 0]
           ],
-          "implementation": "objc90623314e56 is Obj(x=1, y=0, width=1, height=3, orientation=0, volume=3, color=8)",
+          "implementation": "# Full-height column of color 8\nobjc90623314e56 is Obj(x=1, y=0, width=1, height=3, orientation=0, volume=3, color=8)",
           "input_value": {"color":8,"height":3,"id":"objc90623314e56","orientation":0,"tag":"l6953","volume":3,"width":1,"x":1,"y":0},
           "output_value": {"color":9,"height":3,"id":"objc90623314e56","orientation":0,"tag":"l6953","volume":3,"width":1,"x":1,"y":0}
         },
@@ -185,7 +185,7 @@
             [0, 0, 2],
             [0, 0, 2]
           ],
-          "implementation": "obj8053e210f0c9 is Obj(x=2, y=0, width=1, height=3, orientation=0, volume=3, color=6)",
+          "implementation": "# Full-height column of color 6\nobj8053e210f0c9 is Obj(x=2, y=0, width=1, height=3, orientation=0, volume=3, color=6)",
           "input_value": {"color":6,"height":3,"id":"obj8053e210f0c9","orientation":0,"tag":"l6953","volume":3,"width":1,"x":2,"y":0},
           "output_value": {"color":2,"height":3,"id":"obj8053e210f0c9","orientation":0,"tag":"l6953","volume":3,"width":1,"x":2,"y":0}
         }
@@ -215,7 +215,7 @@
             [8, 0, 0],
             [8, 0, 0]
           ],
-          "implementation": "obj2bf7c4be7551 is Obj(x=0, y=0, width=1, height=3, orientation=0, volume=3, color=9)",
+          "implementation": "# Full-height column of color 9\nobj2bf7c4be7551 is Obj(x=0, y=0, width=1, height=3, orientation=0, volume=3, color=9)",
           "input_value": {"color":9,"height":3,"id":"obj2bf7c4be7551","orientation":0,"tag":"l6953","volume":3,"width":1,"x":0,"y":0},
           "output_value": {"color":8,"height":3,"id":"obj2bf7c4be7551","orientation":0,"tag":"l6953","volume":3,"width":1,"x":0,"y":0}
         },
@@ -231,7 +231,7 @@
             [0, 3, 0],
             [0, 3, 0]
           ],
-          "implementation": "obj56b034b13f54 is Obj(x=1, y=0, width=1, height=3, orientation=0, volume=3, color=4)",
+          "implementation": "# Full-height column of color 4\nobj56b034b13f54 is Obj(x=1, y=0, width=1, height=3, orientation=0, volume=3, color=4)",
           "input_value": {"color":4,"height":3,"id":"obj56b034b13f54","orientation":0,"tag":"l6953","volume":3,"width":1,"x":1,"y":0},
           "output_value": {"color":3,"height":3,"id":"obj56b034b13f54","orientation":0,"tag":"l6953","volume":3,"width":1,"x":1,"y":0}
         },
@@ -247,7 +247,7 @@
             [0, 0, 6],
             [0, 0, 6]
           ],
-          "implementation": "obj3ffe66f15ccd is Obj(x=2, y=0, width=1, height=3, orientation=0, volume=3, color=2)",
+          "implementation": "# Full-height column of color 2\nobj3ffe66f15ccd is Obj(x=2, y=0, width=1, height=3, orientation=0, volume=3, color=2)",
           "input_value": {"color":2,"height":3,"id":"obj3ffe66f15ccd","orientation":0,"tag":"l6953","volume":3,"width":1,"x":2,"y":0},
           "output_value": {"color":6,"height":3,"id":"obj3ffe66f15ccd","orientation":0,"tag":"l6953","volume":3,"width":1,"x":2,"y":0}
         }
@@ -277,7 +277,7 @@
             [9, 0, 0],
             [9, 0, 0]
           ],
-          "implementation": "obj5eb7d9cdeec7 is Obj(x=0, y=0, width=1, height=3, orientation=0, volume=3, color=8)",
+          "implementation": "# Full-height column of color 8\nobj5eb7d9cdeec7 is Obj(x=0, y=0, width=1, height=3, orientation=0, volume=3, color=8)",
           "input_value": {"color":8,"height":3,"id":"obj5eb7d9cdeec7","orientation":0,"tag":"l6953","volume":3,"width":1,"x":0,"y":0},
           "output_value": {"color":9,"height":3,"id":"obj5eb7d9cdeec7","orientation":0,"tag":"l6953","volume":3,"width":1,"x":0,"y":0}
         },
@@ -293,7 +293,7 @@
             [0, 5, 0],
             [0, 5, 0]
           ],
-          "implementation": "objace61333c0e2 is Obj(x=1, y=0, width=1, height=3, orientation=0, volume=3, color=1)",
+          "implementation": "# Full-height column of color 1\nobjace61333c0e2 is Obj(x=1, y=0, width=1, height=3, orientation=0, volume=3, color=1)",
           "input_value": {"color":1,"height":3,"id":"objace61333c0e2","orientation":0,"tag":"l6953","volume":3,"width":1,"x":1,"y":0},
           "output_value": {"color":5,"height":3,"id":"objace61333c0e2","orientation":0,"tag":"l6953","volume":3,"width":1,"x":1,"y":0}
         },
@@ -309,7 +309,7 @@
             [0, 0, 4],
             [0, 0, 4]
           ],
-          "implementation": "obj3e2a498cbef9 is Obj(x=2, y=0, width=1, height=3, orientation=0, volume=3, color=3)",
+          "implementation": "# Full-height column of color 3\nobj3e2a498cbef9 is Obj(x=2, y=0, width=1, height=3, orientation=0, volume=3, color=3)",
           "input_value": {"color":3,"height":3,"id":"obj3e2a498cbef9","orientation":0,"tag":"l6953","volume":3,"width":1,"x":2,"y":0},
           "output_value": {"color":4,"height":3,"id":"obj3e2a498cbef9","orientation":0,"tag":"l6953","volume":3,"width":1,"x":2,"y":0}
         }
