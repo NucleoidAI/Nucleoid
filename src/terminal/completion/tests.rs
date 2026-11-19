@@ -332,3 +332,14 @@ fn completion_offers_finally_as_it_offers_catch() {
     let completion = Completion::find(&runtime, &editor::new("cat"), false).unwrap();
     assert_eq!(completion.candidates, ["catch"]);
 }
+
+#[test]
+fn completion_offers_except_as_it_offers_catch() {
+    let mut runtime = Runtime::new();
+    runtime.run("excess = 1").unwrap();
+    let completion = Completion::find(&runtime, &editor::new("exc"), false).unwrap();
+    assert_eq!(completion.candidates, ["except", "excess"]);
+    assert!(Completion::find(&runtime, &editor::new("except"), false).is_none());
+    let completion = Completion::find(&runtime, &editor::new("    ex"), false).unwrap();
+    assert_eq!(completion.candidates, ["except", "excess", "extends"]);
+}

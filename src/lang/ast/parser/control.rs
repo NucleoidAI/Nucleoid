@@ -4,6 +4,12 @@ use crate::error::Result;
 use crate::lang::ast::lexer::{Keyword, Token};
 use crate::lang::ast::{Expr, Stmt};
 
+const DEFAULT_PARAMETER: &str = "error";
+
+fn is_identifier(token: &Token, name: &str) -> bool {
+    matches!(token, Token::Identifier(identifier) if identifier == name)
+}
+
 impl Parser {
     pub(super) fn if_statement(&mut self) -> Result<Stmt> {
         self.expect(&Token::Keyword(Keyword::If))?;
@@ -236,18 +242,45 @@ impl Parser {
     pub(super) fn try_statement(&mut self) -> Result<Stmt> {
         self.expect(&Token::Keyword(Keyword::Try))?;
         // Explicit colons keep the original suite path and diagnostics.
-        let body = if self.check(&Token::Colon) || !self.has_indented_body(0) {
-            self.suite()?
-        } else {
-            self.suite_body()?
-        };
+        let body = self.clause_suite()?;
         self.skip_newlines();
+
+        let parameter = self.clause_parameter()?;
+        let catch = self.clause_suite()?;
+
+        Ok(match self.finally_suite()? {
+            Some(finally) => Stmt::TryFinally {
+                body,
+                parameter,
+                catch,
+                finally,
+            },
+            None => Stmt::Try {
+                body,
+                parameter,
+                catch,
+            },
+        })
+    }
+
+    fn clause_suite(&mut self) -> Result<Vec<Stmt>> {
+        if self.check(&Token::Colon) || !self.has_indented_body(0) {
+            self.suite()
+        } else {
+            self.suite_body()
+        }
+    }
+
+    fn clause_parameter(&mut self) -> Result<String> {
+        if let Some(parameter) = self.except_header() {
+            return Ok(parameter);
+        }
 
         if !self.eat_keyword(Keyword::Catch) {
             return Err(self.error("Expected 'catch' after 'try'"));
         }
 
-        let parameter = match self.peek().clone() {
+        Ok(match self.peek().clone() {
             Token::Identifier(name) => {
                 self.advance();
                 name
@@ -265,28 +298,29 @@ impl Parser {
                 self.expect(&Token::RightParen)?;
                 name
             }
-            _ => "error".to_string(),
-        };
-
-        let catch = if self.check(&Token::Colon) || !self.has_indented_body(0) {
-            self.suite()?
-        } else {
-            self.suite_body()?
-        };
-
-        Ok(match self.finally_suite()? {
-            Some(finally) => Stmt::TryFinally {
-                body,
-                parameter,
-                catch,
-                finally,
-            },
-            None => Stmt::Try {
-                body,
-                parameter,
-                catch,
-            },
+            _ => DEFAULT_PARAMETER.to_string(),
         })
+    }
+
+    fn except_header(&mut self) -> Option<String> {
+        if !is_identifier(self.peek(), "except") {
+            return None;
+        }
+        let (binder, colon) = if !is_identifier(self.peek_at(1), "Exception") {
+            (DEFAULT_PARAMETER, 1)
+        } else if !is_identifier(self.peek_at(2), "as") {
+            (DEFAULT_PARAMETER, 2)
+        } else if let Token::Identifier(name) = self.peek_at(3) {
+            (name.as_str(), 4)
+        } else {
+            return None;
+        };
+        if self.peek_at(colon) != &Token::Colon {
+            return None;
+        }
+        let parameter = binder.to_string();
+        self.position += colon;
+        Some(parameter)
     }
 
     fn finally_suite(&mut self) -> Result<Option<Vec<Stmt>>> {

@@ -986,3 +986,39 @@ fn try_statements_buffer_their_finally_clause_until_a_blank_line() {
         ]
     );
 }
+
+#[test]
+fn try_statements_buffer_their_except_clause_until_a_blank_line() {
+    for header in ["except:", "except Exception:", "except Exception as e:"] {
+        let source = format!("try:\n    x = missing\n{header}\n    x = 2\n");
+        let mut lines: Vec<&str> = source.lines().collect();
+        lines.push("");
+        let mut expected = vec![None; lines.len() - 1];
+        expected.push(Some(source.clone()));
+        assert_eq!(submitted(&lines), expected, "{header}");
+        assert!(indented_body_header(header), "{header}");
+        assert_eq!(next_indentation(header, true), INDENT, "{header}");
+        assert_eq!(
+            next_indentation(&format!("    {header}"), true),
+            format!("    {INDENT}"),
+            "{header}"
+        );
+        assert_eq!(Runtime::new().run(&source).unwrap(), Value::Number(2.0));
+    }
+    for line in ["except", "except Exception as e", "except = 1", "except(1)"] {
+        assert!(!indented_body_header(line), "{line}");
+        assert!(!indented_alternative_header(line), "{line}");
+        assert_eq!(next_indentation(line, false), "", "{line}");
+    }
+    assert_eq!(
+        submitted(&["try:", "    x = 1", "", "except:", "    x = 2", ""]),
+        [
+            None,
+            None,
+            Some("try:\n    x = 1\n".to_string()),
+            None,
+            None,
+            Some("except:\n    x = 2\n".to_string())
+        ]
+    );
+}

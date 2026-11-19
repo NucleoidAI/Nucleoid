@@ -2593,6 +2593,73 @@ statement positions; caught values and transaction recovery are unchanged.
   specify the executable behavior. `tests/finally_clauses.rs` executes the
   rest.
 
+## Python-style except clauses
+
+- [NUC 122](docs/nuc-0122.md) lets a `try` statement spell its catch clause
+  with Python's catch-all `except` headers. No keyword, lexer token, syntax
+  tree, error type or message is added, and `except`, `Exception` and `as`
+  stay ordinary names everywhere else.
+- **Syntax.** Where a `catch` clause belongs, directly after the body of a
+  `try` statement, three headers open it:
+  - `except:` and `except Exception:` are exactly `catch:`, so the error is
+    bound to the name `error`;
+  - `except Exception as NAME:`, where `NAME` is a name, is exactly
+    `catch NAME:`.
+- The header ends with its colon, and its suite is the explicit-colon suite
+  of `catch`: an indented block, statements on the same line separated by
+  `;`, or a braced block. Line breaks, blank lines and comment lines may
+  stand between the body and the header, as before `catch`. Any `try` header
+  may precede it, including the colon-free one of
+  [Colon-free indented exception suites](#colon-free-indented-exception-suites),
+  and a `finally:` clause of [Finally clauses](#finally-clauses) may follow
+  it. `Exception` is a fixed word of the header, not a name that is read, so
+  a program that defines `Exception` still catches every error with it.
+- **Semantics.** Each header builds the statement of its `catch` spelling,
+  so the clause runs exactly as that spelling does: the failed body is
+  rolled back first, the bound name is scoped to the clause and shadows an
+  outer name only there, the bound value is the error's text, such as
+  `"ReferenceError: missing is not defined"`, or the thrown value, as
+  `catch` binds them, an error raised in the clause propagates, and
+  returns, loops, nested `try` statements, `finally` suites and the
+  declarations of either suite behave as with `catch`.
+- **Kept readings.** Every other `except` keeps its accepted reading:
+  - where a `catch` clause belongs, any other header keeps
+    `SyntaxError("Expected 'catch' after 'try'")` at the `except`: another
+    name, as in `except e:`, `except ValueError:` or `except exception:`, a
+    parenthesized or comma-separated list, a binder that is not a name, as
+    in `except Exception as (e):` or `except Exception as this:`, a second
+    `as`, a header without its colon, also before an indented block, and
+    `except` followed by anything else, as in `except = 1` and `except(1)`;
+  - a `try` statement takes one clause, so after an `except` clause a second
+    `except` header, a `catch` or an `else` reads as it reads after a
+    complete `try`/`catch` statement and raises that statement's error;
+  - on the line of an inline body, `except` after a `;` begins another
+    statement of the body, and a destructuring, a one-line enum or a
+    predicate sentence there ends only at the end of the line, `else` or
+    `catch`, so these programs keep their accepted errors;
+  - variables, properties, object keys, functions, methods, parameters and
+    the stage of
+    [Intersect and except reasoning selections](#intersect-and-except-reasoning-selections)
+    named `except`, `Exception` or `as` keep working.
+- **REPL and terminal.** The native REPL buffers a `try` statement through
+  an `except` clause until a blank line, as it buffers a `catch` clause,
+  since the header ends in a colon; a blank line before the header commits
+  the statement first. The terminal workspace indents after the header and
+  completes `except`.
+- **Differences from Python.** Typed and filtered clauses, several clauses,
+  the `else` clause, `except*` and `raise` are not added; Nucleoid raises
+  with `throw`. The bound value is Nucleoid's error text or thrown value, not
+  an exception object. Python's `Exception` leaves out exits such as
+  `SystemExit` and `KeyboardInterrupt`, which Nucleoid does not have, so it
+  catches what a bare `except:` catches. Python unbinds the name of
+  `except Exception as NAME:` after the clause even when it was bound
+  before; Nucleoid keeps an outer `NAME` as it was.
+- The three entries beginning
+  `Nucleoid catches every error with except clauses` through
+  `Nucleoid reads except clauses in methods, functions and nested try statements`
+  specify the executable behavior. `tests/except_clauses.rs` executes the
+  rest.
+
 ## Default named constructors
 
 - An ordinary `class Student(name, age):` accepts `Student("Can", 20)`,
@@ -26659,6 +26726,96 @@ qty = 4
 inputs = subtotal |> why |> stated |> holds
 [values, inputs]
 # return: [[40,10,4],[10,4]]
+---
+# Nucleoid catches every error with except clauses
+
+indoor = 21
+try:
+    feels = indoor - outdoor / 2
+except:
+    feels = indoor
+assert(feels, 21)
+try:
+    offset = indoor.calibrate(2)
+except Exception:
+    offset = 0
+assert(offset, 0)
+try:
+    throw "SENSOR OFFLINE"
+except Exception as fault:
+    status = fault
+assert(status, "SENSOR OFFLINE")
+try:
+    trend = outdoor + 1
+except:
+    trend = error
+assert(trend, ReferenceError("outdoor is not defined"))
+indoor = 23
+outdoor = 10
+[feels, offset, status, trend]
+# return: [23,0,"SENSOR OFFLINE","ReferenceError: outdoor is not defined"]
+---
+# Nucleoid rolls back a failed update before its except clause runs
+
+class Account(owner, balance):
+    this.owner = owner
+    this.balance = balance
+ada = Account("Ada", 100)
+limit = ada.balance * 2
+def withdraw(account, amount):
+    if amount > account.balance.value:
+        throw "INSUFFICIENT FUNDS"
+    account.balance = account.balance - amount
+    return account.balance
+try:
+    ada.balance = 500
+    withdraw(ada, 900)
+except Exception as reason:
+    assert([ada.balance, limit], [100, 200])
+    refusal = reason
+assert(refusal, "INSUFFICIENT FUNDS")
+try:
+    withdraw(ada, 30)
+    ada.owner = missing
+except:
+    assert(error, ReferenceError("missing is not defined"))
+assert([ada.balance, limit], [100, 200])
+withdraw(ada, 40)
+limit
+# return: 120
+---
+# Nucleoid reads except clauses in methods, functions and nested try statements
+
+class Gauge(name, limit):
+    this.name = name
+    this.limit = limit
+    def read(value):
+        try:
+            if value > this.limit:
+                throw this.name + " OVER LIMIT"
+            return value
+        except Exception as alarm:
+            return alarm
+boiler = Gauge("boiler", 90)
+assert([boiler.read(70), boiler.read(95)], [70, "boiler OVER LIMIT"])
+def check(value):
+    try:
+        try:
+            if value > 100:
+                throw "HIGH"
+            return "OK"
+        except Exception as inner:
+            throw inner + " ALARM"
+    except Exception as outer:
+        return outer
+assert([check(50), check(150)], ["OK", "HIGH ALARM"])
+try:
+    seen = alarm
+except:
+    seen = error
+assert(seen, ReferenceError("alarm is not defined"))
+check(120)
+# return: "HIGH ALARM"
 ---
 # Nucleoid flattens nested lists by one level
 

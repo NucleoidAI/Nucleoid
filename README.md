@@ -2617,6 +2617,34 @@ assert([readings, moved], [[-1, 3, 4], [2, false]])
   warning clears. See the
   [root contract](nucleoid.spec.md#held-values-of-reasoning-selections).
 
+## Python-style except clauses
+
+**Except clauses fall back to another sensor when a reading fails**
+
+```nuc
+hall = 19
+try:
+    kitchen = cellar + 1
+except Exception as fault:
+    kitchen = hall - 1
+    note = fault
+heating = kitchen < 20
+assert([kitchen, note, heating], [18, ReferenceError("cellar is not defined"), true])
+hall = 22
+assert([kitchen, heating], [21, false])
+```
+
+- [NUC 122](docs/nuc-0122.md) reads Python's catch-all clause headers:
+  `except:` and `except Exception:` are `catch:`, and
+  `except Exception as fault:` is `catch fault:`, with the same suite, the
+  same rollback of the failed body and the same binding.
+- The kitchen's reading derives from a cellar sensor that has not
+  reported, so reading it fails, and the clause estimates the kitchen from
+  the hall instead and records why. The estimate is a declaration like any
+  other, so it follows the hall's reading, and the heating follows the
+  estimate. See the
+  [root contract](nucleoid.spec.md#python-style-except-clauses).
+
 ## Reactive list flattening
 
 **Flat turns nested lists into one live list**

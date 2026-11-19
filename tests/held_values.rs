@@ -427,7 +427,7 @@ fn only_the_appended_cases_write_holds_and_they_run_every_assertion() {
         assert_eq!(matching, 1, "{title}");
     }
     assert_eq!(assertions, 27);
-    assert_eq!(cases, 1203);
+    assert_eq!(cases, 1209);
 }
 
 #[test]
@@ -470,7 +470,7 @@ fn the_appended_cases_stand_after_nuc_120_and_before_nuc_103() {
     let titles: Vec<&str> = spec.iter().map(|case| case.title.as_str()).collect();
     assert_eq!(titles[796], "Nucleoid restores unions after failed changes");
     assert_eq!(titles[797..801], SPEC_TITLES);
-    assert_eq!(titles[801], "Nucleoid flattens nested lists by one level");
+    assert_eq!(titles[804], "Nucleoid flattens nested lists by one level");
     for (cases, title, previous, following) in [
         (
             &reference,
@@ -492,9 +492,9 @@ fn the_appended_cases_stand_after_nuc_120_and_before_nuc_103() {
         ),
     ] {
         let index = cases.iter().position(|case| case.title == title).unwrap();
-        assert_eq!(index, cases.len() - 4, "{title}");
+        assert_eq!(index, cases.len() - 5, "{title}");
         assert_eq!(cases[index - 1].title, previous);
-        assert_eq!(cases[index + 1].title, following);
+        assert_eq!(cases[index + 2].title, following);
     }
 }
 

@@ -21110,6 +21110,108 @@ inputs = subtotal |> why |> stated |> holds
 # return: [[40,10,4],[10,4]]"#);
 }
 
+/// Nucleoid catches every error with except clauses
+#[rustfmt::skip]
+#[test]
+fn catches_every_error_with_except_clauses() {
+    let mut run = runner();
+    run(r#"indoor = 21
+try:
+    feels = indoor - outdoor / 2
+except:
+    feels = indoor
+assert(feels, 21)
+try:
+    offset = indoor.calibrate(2)
+except Exception:
+    offset = 0
+assert(offset, 0)
+try:
+    throw "SENSOR OFFLINE"
+except Exception as fault:
+    status = fault
+assert(status, "SENSOR OFFLINE")
+try:
+    trend = outdoor + 1
+except:
+    trend = error
+assert(trend, ReferenceError("outdoor is not defined"))
+indoor = 23
+outdoor = 10
+[feels, offset, status, trend]
+# return: [23,0,"SENSOR OFFLINE","ReferenceError: outdoor is not defined"]"#);
+}
+
+/// Nucleoid rolls back a failed update before its except clause runs
+#[rustfmt::skip]
+#[test]
+fn rolls_back_a_failed_update_before_its_except_clause_runs() {
+    let mut run = runner();
+    run(r#"class Account(owner, balance):
+    this.owner = owner
+    this.balance = balance
+ada = Account("Ada", 100)
+limit = ada.balance * 2
+def withdraw(account, amount):
+    if amount > account.balance.value:
+        throw "INSUFFICIENT FUNDS"
+    account.balance = account.balance - amount
+    return account.balance
+try:
+    ada.balance = 500
+    withdraw(ada, 900)
+except Exception as reason:
+    assert([ada.balance, limit], [100, 200])
+    refusal = reason
+assert(refusal, "INSUFFICIENT FUNDS")
+try:
+    withdraw(ada, 30)
+    ada.owner = missing
+except:
+    assert(error, ReferenceError("missing is not defined"))
+assert([ada.balance, limit], [100, 200])
+withdraw(ada, 40)
+limit
+# return: 120"#);
+}
+
+/// Nucleoid reads except clauses in methods, functions and nested try statements
+#[rustfmt::skip]
+#[test]
+fn reads_except_clauses_in_methods_functions_and_nested_try_statements() {
+    let mut run = runner();
+    run(r#"class Gauge(name, limit):
+    this.name = name
+    this.limit = limit
+    def read(value):
+        try:
+            if value > this.limit:
+                throw this.name + " OVER LIMIT"
+            return value
+        except Exception as alarm:
+            return alarm
+boiler = Gauge("boiler", 90)
+assert([boiler.read(70), boiler.read(95)], [70, "boiler OVER LIMIT"])
+def check(value):
+    try:
+        try:
+            if value > 100:
+                throw "HIGH"
+            return "OK"
+        except Exception as inner:
+            throw inner + " ALARM"
+    except Exception as outer:
+        return outer
+assert([check(50), check(150)], ["OK", "HIGH ALARM"])
+try:
+    seen = alarm
+except:
+    seen = error
+assert(seen, ReferenceError("alarm is not defined"))
+check(120)
+# return: "HIGH ALARM""#);
+}
+
 /// Nucleoid flattens nested lists by one level
 #[rustfmt::skip]
 #[test]

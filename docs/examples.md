@@ -4142,6 +4142,40 @@ hours = 15
   [NUC 121](nuc-0121.md) and the
   [root contract](../nucleoid.spec.md#held-values-of-reasoning-selections).
 
+## Python-style except clauses
+
+**Except clauses refuse an overdrawn transfer and keep both wallets whole**
+
+```nuc
+class Wallet(owner, coins):
+    this.owner = owner
+    this.coins = coins
+def transfer(source, target, amount):
+    target.coins = target.coins + amount
+    if amount > source.coins.value:
+        throw source.owner + " LACKS " + amount
+    source.coins = source.coins - amount
+ana = Wallet("Ana", 50)
+ben = Wallet("Ben", 10)
+try:
+    transfer(ana, ben, 80)
+except Exception as refusal:
+    log = refusal
+assert([ana.coins, ben.coins, log], [50, 10, "Ana LACKS 80"])
+transfer(ana, ben, 20)
+[ana.coins, ben.coins]
+# return: [30,30]
+```
+
+- `transfer` credits the target before it finds that the source lacks the
+  coins, so the refused transfer has already changed Ben's wallet when it
+  throws. The failed body is rolled back before the `except` clause runs,
+  so both wallets keep what they had, and the clause records the refusal.
+- `except Exception as refusal:` is exactly `catch refusal:`, so a transfer
+  the source can afford then goes through as before. See
+  [NUC 122](nuc-0122.md) and the
+  [root contract](../nucleoid.spec.md#python-style-except-clauses).
+
 ## Reactive list flattening
 
 **Flattening keeps the dirty tiles of every room counted**

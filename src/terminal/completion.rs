@@ -14,6 +14,7 @@ const WORDS: &[&str] = &[
     "elif",
     "else",
     "enum",
+    "except",
     "extends",
     "false",
     "finally",
