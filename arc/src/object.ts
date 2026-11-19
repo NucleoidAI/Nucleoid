@@ -77,6 +77,7 @@ async function implementation({
   });
   const { implementation } = await llm.generate({
     few_shot: few_shot && few_shot_function,
+    grammar: true,
     messages: [
       {
         role: "assistant",
