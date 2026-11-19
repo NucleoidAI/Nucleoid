@@ -1,4 +1,5 @@
 import * as llm from "./lib/llm.ts";
+import * as Matrix from "./lib/Matrix";
 
 const FIELD_GUIDE = `
 - "dataset" holds the existing examples. Each pairs an "input_matrix" with the "output_matrix" that the rule produces from it.
@@ -17,7 +18,24 @@ async function synthesize({ train_dataset }) {
         content: `Below is the data for a matrix-transformation task. Each example pairs an input matrix with the output matrix that one hidden rule produces from it, and the same rule holds for every example.
 
         <current_dataset>
-        ${JSON.stringify(train_dataset)}
+        ${JSON.stringify({
+          ...train_dataset,
+          dataset: train_dataset.dataset.map(
+            ({ input_matrix, output_matrix, instances }) => ({
+              input_matrix,
+              output_matrix,
+              instances: instances.map((instance) => ({
+                ...instance,
+                input_instance_crop_matrix: Matrix.crop(
+                  instance.input_instance_matrix
+                ),
+                output_instance_crop_matrix: Matrix.crop(
+                  instance.output_instance_matrix
+                ),
+              })),
+            })
+          ),
+        })}
         </current_dataset>
         
         How to read it:
@@ -60,7 +78,10 @@ async function synthesize({ train_dataset }) {
                 output_matrix: "<OUTPUT_MATRIX>",
                 instances: [
                   {
+                    input_instance_crop_matrix: "<INPUT_INSTANCE_CROP_MATRIX>",
                     input_instance_matrix: "<INPUT_INSTANCE_MATRIX>",
+                    output_instance_crop_matrix:
+                      "<OUTPUT_INSTANCE_CROP_MATRIX>",
                     output_instance_matrix: "<OUTPUT_INSTANCE_MATRIX>",
                   },
                 ],
@@ -71,14 +92,16 @@ async function synthesize({ train_dataset }) {
           {
             "result": [
               {
-                "input_matrix": "<INPUT_MATRIX>",
-                "output_matrix": "<OUTPUT_MATRIX>",
                 "instances": [
                   {
+                    "input_instance_crop_matrix": "<INPUT_INSTANCE_CROP_MATRIX>",
                     "input_instance_matrix": "<INPUT_INSTANCE_MATRIX>",
+                    "output_instance_crop_matrix": "<OUTPUT_INSTANCE_CROP_MATRIX>",
                     "output_instance_matrix": "<OUTPUT_INSTANCE_MATRIX>",
                   },
                 ],
+                "input_matrix": "<INPUT_MATRIX>",
+                "output_matrix": "<OUTPUT_MATRIX>",
               },
             ]
           }

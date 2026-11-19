@@ -7,7 +7,9 @@ import * as nucleoid from "./lib/nucleoid";
 export async function instances({ train_dataset, test_input_matrix }) {
   milestone.segmenting_test_input({ test_input_matrix });
 
-  let { instances } = await llm.generate({
+  let {
+    result: { instances },
+  } = await llm.generate({
     few_shot: null,
     messages: [
       {
@@ -21,7 +23,16 @@ export async function instances({ train_dataset, test_input_matrix }) {
                 input_matrix,
                 instances: instances.map((instance) => ({
                   instance_matrix: instance.input_instance_matrix,
+                  instance_crop_matrix: Matrix.crop(
+                    instance.input_instance_matrix
+                  ),
                   implementation: instance.implementation,
+                  x: instance.input_value.x,
+                  y: instance.input_value.y,
+                  width: instance.input_value.width,
+                  height: instance.input_value.height,
+                  orientation: instance.input_value.orientation,
+                  volume: instance.input_value.volume,
                   value: instance.input_value,
                 })),
               })
@@ -48,9 +59,11 @@ export async function instances({ train_dataset, test_input_matrix }) {
           })}
           json_format:
           {
-            "instances": [{
-              "instance_matrix": <INSTANCE_MATRIX>
-            }]
+            "result": {
+              "instances": [{
+                "instance_matrix": <INSTANCE_MATRIX>
+              }]
+            }
           }
         `,
       },
@@ -147,6 +160,10 @@ export async function output_instance_matrix({
                 output_instance_matrix: Matrix.crop(
                   instance.output_instance_matrix
                 ),
+                width: instance.input_value.width,
+                height: instance.input_value.height,
+                orientation: instance.input_value.orientation,
+                volume: instance.input_value.volume,
               })),
             })),
           })}
@@ -165,6 +182,10 @@ export async function output_instance_matrix({
                     input_instance_matrix: Matrix.crop(
                       instance.input_instance_matrix
                     ),
+                    width: instance.input_value.width,
+                    height: instance.input_value.height,
+                    orientation: instance.input_value.orientation,
+                    volume: instance.input_value.volume,
                     output_instance_matrix: "<OUTPUT_INSTANCE_MATRIX>",
                   },
                 ],
