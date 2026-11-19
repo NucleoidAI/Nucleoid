@@ -3029,8 +3029,8 @@ statement positions; caught values and transaction recovery are unchanged.
   `derived`, `diff`, `intersect` and `except` keep a step by a property of its
   node, so after a union they keep what they keep of each side:
   `S |> union(O) |> stated` is `(S |> stated).concat(O |> except(S) |> stated)`.
-  A later `why` or `affects` walks from every step of the union, and `nodes`
-  names them.
+  A later `why` or `affects` walks from every step of the union, `nodes`
+  names them and `holds` gives their values.
 - Each step keeps the distance of the walk that selected it: the steps of
   `SELECTION` their own, and the steps added from `OTHER` the distances they
   have in `OTHER`'s own selection. So `S |> union(O) |> depth(n)` is
@@ -3186,6 +3186,110 @@ statement positions; caught values and transaction recovery are unchanged.
   `Nucleoid names the nodes of an explanation with nodes` through
   `Nucleoid rolls back failed updates through node names` specify the
   executable behavior. `tests/reasoning_node_names.rs` executes the rest.
+
+## Held values of reasoning selections
+
+- [NUC 121](docs/nuc-0121.md) adds the final pipeline stage
+  `SELECTION |> holds`. It gives the `holds` values of the steps that
+  `SELECTION` selects, as a list in the selection's order. It is exactly
+  `(SELECTION).map(step => step.holds)`, where `SELECTION` is the selection
+  that the pipeline before `holds` denotes, read as the accepted stages read
+  their source: `total |> why |> holds` is
+  `(why total).map(step => step.holds)` and
+  `total |> why |> stated |> holds` is
+  `(total |> why |> stated).map(step => step.holds)`.
+- Each element is the value that the step's record holds in its `holds`
+  field, unchanged: a number, string, boolean, list, object or `null`. An
+  instance's own step gives the instance itself, a variable that holds a
+  function gives the function, and the step of a class, a function
+  declaration or an `if` block gives `null`, as their records do.
+- A reference alone denotes its own one-step selection, not its value, so
+  `total |> holds` is a list that holds the total's value, as
+  `(total |> why |> depth(0)).map(step => step.holds)` is, while the value
+  `(total).map(step => step.holds)` of a number raises
+  `TypeError("number.map is not a function")`.
+- So `total |> why |> stated |> holds` gives the values of the facts a
+  conclusion rests on, `total |> why |> derived |> holds` the values of the
+  conclusions on the way to it, `price |> affects |> holds` the values that
+  a change of the price reaches, and `model |> holds` the value of every
+  node of the model in model order, without pending nodes and reasoning
+  observers.
+- `SELECTION` is written as the source of a pipeline is: a reference, which
+  selects its own step; `model`; a prefix stage, as in `why total |> holds`;
+  or a pipeline of the stages `why`, `affects`, `stated`, `derived`,
+  `depth`, `path`, `intersect`, `except`, `union` and `diff`. An empty
+  selection gives `[]`. A selection that a `depth` stage with a `null` or
+  undefined limit makes undefined gives undefined, which a declaration
+  stores as `null`, as a read from that selection does.
+- The stage ends the pipeline, as `nodes` does: its result is a list of
+  values, not a selection. A stage written after it has that list as its
+  source, which is neither a reference nor a selection, so
+  `total |> why |> holds |> why` and `total |> why |> holds |> nodes` raise
+  `TypeError("Cannot explain total|>why|>holds")`, as the same stages after
+  `(why total).map(step => step.holds)` raise for that source, and
+  `total |> why |> nodes |> holds` raises
+  `TypeError("Cannot explain total|>why|>nodes")`. An `intersect`,
+  `except`, `union` or `path` argument that ends with `holds` raises
+  `TypeError("Cannot explain <argument>")`, such as
+  `TypeError("Cannot explain shipping|>why|>holds")` for
+  `intersect(shipping |> why |> holds)`. A name that holds the list is a
+  reasoning observer, which no selection holds, so after
+  `values = shipping |> why |> holds`, `intersect(values)` keeps nothing.
+- Only `|>` followed by the name `holds` is the stage. `holds` remains an
+  ordinary lexer identifier: variables, parameters, properties, keys,
+  functions and methods named `holds` keep their accepted meanings, and so
+  does the `holds` field of a step record. There is no prefix form, so
+  `holds total` remains the two statements `holds` and `total`. `|> Holds`
+  and `|> hold` keep their parse-time
+  `TypeError("<name> is not an operation")`, and a line break after `|>`
+  keeps `SyntaxError("Expected an operation")`.
+- A local or parameter, state variable, function or class named `holds`
+  shadows the stage, as for `stated`, `derived`, `depth`, `diff`, `path`,
+  `intersect`, `except`, `union` and `nodes`: the pipeline then raises
+  `TypeError("holds is not an operation")` at the running statement, before
+  its source is selected. A binding declared after a standing declaration
+  makes its next evaluation raise, which fails and rolls back the statement
+  that triggered it. Methods, properties and object keys named `holds` are
+  not bindings. The accepted `why` and `affects` shadowing behavior does
+  not change.
+- An invalid source keeps its diagnostic: `1 |> holds` raises
+  `TypeError("Cannot explain 1")`, `missing |> why |> holds` raises
+  `ReferenceError("missing is not defined")`, and outside a `suppose` block
+  `total |> why |> diff |> holds` raises
+  `TypeError("Cannot use 'diff' outside suppose")`. These errors are
+  positioned at the running top-level statement and roll back its
+  transaction.
+- The stage keeps every value and structural observation that its selection
+  made, including those of the steps a filter drops, so a declaration,
+  property, class-level rule, condition or quantifier that holds it
+  re-derives whenever its selection would, which includes every change of a
+  value it gives, and an empty result still follows its source. It is a
+  reasoning observer, which walks neither select nor traverse and `model`
+  excludes. Functions, methods and lambdas evaluate it in place, and
+  class-level rules give each instance its own list. `.value` snapshots it,
+  and propagation order, `suppose` blocks and rollback behave as for the
+  accepted stages.
+- The stage builds the step records that the accepted spelling builds, so
+  the anonymous objects that later statements create are numbered as after
+  that spelling, and it reads their `holds` fields without depending on
+  them: a declaration that holds it depends only on what its selection
+  observes, and gains no pending graph node for the records it reads.
+- Those reads keep the null rule of stored declarations, as the accepted
+  spelling's reads of the records do: a stored declaration whose evaluation
+  read a null binding or property settles to `null`, and so does a
+  declaration, property or class-level rule whose stage gives a `null`
+  value. So `values = model |> holds` stores `null` in a model that holds a
+  class or a function declaration, and so does a declaration over a step
+  that a deletion has made `null`, while the expression `model |> holds`
+  gives the list with its `null` elements.
+- The stage renders as `SOURCE|>holds` in graph keys, block keys,
+  conditions, `rule` text and the errors that quote an expression, so a
+  stage and its accepted spelling are different graph keys. Programs
+  without the stage do no work for it.
+- The four appended entries from
+  `Nucleoid gives the values of an explanation with holds` through
+  `Nucleoid rolls back failed updates through held values` specify the
+  executable behavior. `tests/held_values.rs` executes the rest.
 
 ## Reactive degree to radian conversion
 
@@ -26464,6 +26568,97 @@ catch error:
 assert(either.map(s -> s.node), ["subtotal", "price", "quantity", "shipping"])
 quantity = 6
 assert(either.map(s -> s.holds), [60, 10, 6, 12])
+---
+# Nucleoid gives the values of an explanation with holds
+
+price = 10
+qty = 3
+shipping = 5
+subtotal = price * qty
+total = subtotal + shipping
+values = total |> why |> holds
+facts = total |> why |> stated |> holds
+rules = total |> why |> derived |> holds
+assert(values, [35, 30, 5, 10, 3])
+assert([facts, rules], [[5, 10, 3], [35, 30]])
+base = 4
+shipping = base + 1
+assert(values, [35, 30, 5, 4, 10, 3])
+assert(facts, [4, 10, 3])
+price = 20
+assert(values, [65, 60, 5, 4, 20, 3])
+rules
+# return: [65,60,5]
+---
+# Nucleoid gives the values that a change reaches and the model with holds
+
+rate = 0.2
+price = 10
+qty = 3
+subtotal = price * qty
+tax = subtotal * rate
+reach = price |> affects |> holds
+known = model |> holds
+assert(reach, [30, 6])
+assert(known, [0.2, 10, 3, 30, 6])
+total = subtotal + tax
+assert(reach, [30, 6, 36])
+qty = 4
+assert(reach, [40, 8, 48])
+tax = qty * rate
+assert(reach, [40, 40.8])
+delete total
+assert(known, [0.2, 10, 4, 40, 0.8])
+reach
+# return: [40]
+---
+# Nucleoid gives the values behind class level rules with holds
+
+fee = 2
+class Order(price, qty):
+    this.price = price
+    this.qty = qty
+$Order.total = $Order.price * $Order.qty
+$Order.basis = $Order.total |> why |> holds
+first = Order(10, 2)
+assert(first.basis, [20, 10, 2])
+$Order.total = $Order.price * $Order.qty + fee
+second = Order(4, 5)
+reach = fee |> affects |> holds
+assert([first.basis, second.basis], [[22, 10, 2, 2], [22, 4, 5, 2]])
+assert(reach, [22, 22])
+first.qty = 3
+fee = 1
+assert([first.basis, second.basis], [[31, 10, 3, 1], [21, 4, 5, 1]])
+assert(reach, [31, 21])
+first.total |> why |> stated |> holds
+# return: [1]
+---
+# Nucleoid rolls back failed updates through held values
+
+price = 10
+qty = 3
+subtotal = price * qty
+values = subtotal |> why |> holds
+failure = ""
+try:
+    values = 1 |> holds
+catch error:
+    failure = error
+assert(failure, TypeError("Cannot explain 1"))
+assert(values, [30, 10, 3])
+try:
+    fee = 2
+    subtotal = price * qty + fee
+    assert(values, [32, 10, 3, 2])
+    throw "UNDO"
+catch error:
+    assert(error, "UNDO")
+assert(values, [30, 10, 3])
+qty = 4
+inputs = subtotal |> why |> stated |> holds
+[values, inputs]
+# return: [[40,10,4],[10,4]]
 ---
 # Nucleoid flattens nested lists by one level
 

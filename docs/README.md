@@ -4201,6 +4201,9 @@ volume
 - `selection |> nodes` lists the steps' `node` names, as
   `(selection).map(step => step.node)` does for the selection the pipeline
   denotes ([NUC 112](nuc-0112.md)).
+- `selection |> holds` lists the steps' `holds` values, as
+  `(selection).map(step => step.holds)` does for the selection the pipeline
+  denotes ([NUC 121](nuc-0121.md)).
 
 ```
 a = 1
@@ -4521,6 +4524,62 @@ facts
   [node names of reasoning selections](../nucleoid.spec.md#node-names-of-reasoning-selections)
   section.
 
+### Held values of reasoning selections
+
+```
+price = 10
+qty = 3
+shipping = 5
+subtotal = price * qty
+total = subtotal + shipping
+facts = total |> why |> stated |> holds
+reach = price |> affects |> holds
+assert(facts, [5, 10, 3])
+assert(reach, [30, 35])
+base = 4
+shipping = base + 1
+price = 20
+[facts, reach]
+```
+
+- This is the complete `Nucleoid gives the values of selections with holds`
+  program in `tests/reference.md`, without its title and expected-return
+  metadata; it returns `[[4,20,3],[60,65]]`.
+- [NUC 121](nuc-0121.md) adds the final stage `selection |> holds`. It gives
+  the `holds` values of the selection's steps as a list, in their order, so
+  `total |> why |> stated |> holds` gives the values of the facts the total
+  rests on and `price |> affects |> holds` the values that a change of the
+  price reaches. It is exactly `(selection).map(step => step.holds)`, where
+  `selection` is the selection that the pipeline before `holds` denotes,
+  read as the stages read their source, and each value is the one its step
+  holds, unchanged.
+- The selection is written as for `nodes`: a reference, which denotes its
+  own one-step selection rather than its value, `model`, a prefix stage such
+  as `why total`, or a pipeline of any of the stages above but `nodes`. So
+  `total |> holds` is a list of the total's value, as
+  `(total |> why |> depth(0)).map(step => step.holds)` is. An empty
+  selection gives `[]`, and a selection that a `depth(null)` makes undefined
+  gives undefined.
+- The stage ends the pipeline, as `nodes` does: a stage after it, `nodes`
+  included, or an `intersect`, `except`, `union` or `path` argument that
+  ends with it, has a list of values rather than a selection and raises
+  `TypeError("Cannot explain <source>")`, as it does after the accepted
+  spelling.
+- Only `|>` followed by `holds` is the stage; `holds` stays an ordinary name
+  everywhere else, the `holds` field of a step record included, and there
+  is no prefix form. A local or parameter, variable, function or class named
+  `holds` shadows the stage, as bindings shadow the other stages: the
+  pipeline then raises `TypeError("holds is not an operation")` before
+  selecting its source.
+- The list stays live through every observation its selection made, the
+  values it gives included, and a declaration that holds it is a reasoning
+  observer. A stored declaration whose stage gives a `null` value settles
+  to `null`, as one that reads a null property does. It renders as
+  `selection|>holds`.
+- The authoritative contract is the
+  [held values of reasoning selections](../nucleoid.spec.md#held-values-of-reasoning-selections)
+  section.
+
 ### Live structure
 
 - A reasoning assignment follows both values and graph structure.
@@ -4562,9 +4621,11 @@ c = b * 2
   `except(other)` stages, which NUC 11 does not plan either, the
   [NUC 112](nuc-0112.md) candidate adds a final `nodes` stage, which names
   the nodes of a selection and, unlike NUC 11's operations, returns a list
-  rather than a selection, and the [NUC 120](nuc-0120.md) candidate adds a
-  `union(other)` stage, which NUC 11 does not plan either. Other NUC 11
-  operations remain proposals, not dependencies.
+  rather than a selection, the [NUC 120](nuc-0120.md) candidate adds a
+  `union(other)` stage, which NUC 11 does not plan either, and the
+  [NUC 121](nuc-0121.md) candidate adds a final `holds` stage, which gives
+  the values of a selection's steps and, like `nodes`, returns a list. Other
+  NUC 11 operations remain proposals, not dependencies.
 
 ### Quantifiers
 
@@ -5075,6 +5136,11 @@ reference |> why |> stated |> nodes   the names of the facts an explanation rest
 reference |> affects |> nodes         the names of what a change of the reference reaches (NUC 112)
 model |> nodes                        the names of the current model's nodes (NUC 112)
 selection |> nodes                    the list (selection).map(step => step.node); ends the pipeline (NUC 112)
+reference |> why |> holds             the values of an explanation's steps, in its order (NUC 121)
+reference |> why |> stated |> holds   the values of the facts an explanation rests on (NUC 121)
+reference |> affects |> holds         the values of what a change of the reference reaches (NUC 121)
+model |> holds                        the values of the current model's nodes (NUC 121)
+selection |> holds                    the list (selection).map(step => step.holds); ends the pipeline (NUC 121)
 all name in collection: condition     true when the condition holds for every member (NUC 62)
 every name in collection: condition   the same quantifier as all (NUC 98)
 any name in collection: condition     true when the condition holds for some member (NUC 62)

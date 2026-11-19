@@ -4113,6 +4113,35 @@ wages = 3500
   [NUC 120](nuc-0120.md) and the
   [root contract](../nucleoid.spec.md#union-reasoning-selections).
 
+## Held values of reasoning selections
+
+**Holds shows the figures behind an invoice and the totals on the way**
+
+```nuc
+hours = 12
+rate = 80
+travel = 150
+labor = hours * rate
+invoice = labor + travel
+inputs = invoice |> why |> stated |> holds
+totals = invoice |> why |> derived |> holds
+assert([inputs, totals], [[150, 12, 80], [1110, 960]])
+discount = 100
+invoice = labor + travel - discount
+hours = 15
+[inputs, totals]
+# return: [[150,100,15,80],[1250,1200]]
+```
+
+- `invoice |> why |> stated |> holds` gives the figures the invoice rests
+  on, the travel cost, the hours and the rate, and
+  `invoice |> why |> derived |> holds` the totals on the way to it, the
+  invoice and the labor, each in the order of the explanation.
+- The values follow the model: once the invoice takes off a discount, the
+  discount joins the figures, and more hours raise both totals. See
+  [NUC 121](nuc-0121.md) and the
+  [root contract](../nucleoid.spec.md#held-values-of-reasoning-selections).
+
 ## Reactive list flattening
 
 **Flattening keeps the dirty tiles of every room counted**

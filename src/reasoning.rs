@@ -20,6 +20,7 @@ pub enum Stage {
     Derived,
     Diff,
     Nodes,
+    Holds,
 }
 
 impl Stage {
@@ -38,7 +39,15 @@ impl Stage {
         match self {
             Stage::Why => Some(Direction::Dependencies),
             Stage::Affects => Some(Direction::Dependents),
-            Stage::Stated | Stage::Derived | Stage::Diff | Stage::Nodes => None,
+            Stage::Stated | Stage::Derived | Stage::Diff | Stage::Nodes | Stage::Holds => None,
+        }
+    }
+
+    pub(crate) fn projection(self) -> Option<StepField> {
+        match self {
+            Stage::Nodes => Some(StepField::Node),
+            Stage::Holds => Some(StepField::Holds),
+            Stage::Why | Stage::Affects | Stage::Stated | Stage::Derived | Stage::Diff => None,
         }
     }
 
@@ -51,6 +60,7 @@ impl Stage {
             Stage::Derived => "derived",
             Stage::Diff => "diff",
             Stage::Nodes => "nodes",
+            Stage::Holds => "holds",
         }
     }
 }
@@ -78,6 +88,21 @@ pub struct Step {
     pub rule: String,
     pub state: StepState,
     pub from: Vec<NodeKey>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum StepField {
+    Node,
+    Holds,
+}
+
+impl StepField {
+    pub(crate) fn of(self, step: &Step) -> Value {
+        match self {
+            StepField::Node => Value::string(step.node.to_string()),
+            StepField::Holds => step.value.clone(),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Default)]
@@ -230,7 +255,7 @@ impl Runtime {
             }
             Stage::Why => self.traverse(selection, Direction::Dependencies),
             Stage::Affects => self.traverse(selection, Direction::Dependents),
-            Stage::Nodes => selection.clone(),
+            Stage::Nodes | Stage::Holds => selection.clone(),
         })
     }
 
@@ -244,7 +269,7 @@ impl Runtime {
             }
             Stage::Why => self.walk(&ranked.selection, Direction::Dependencies),
             Stage::Affects => self.walk(&ranked.selection, Direction::Dependents),
-            Stage::Nodes => ranked,
+            Stage::Nodes | Stage::Holds => ranked,
         })
     }
 

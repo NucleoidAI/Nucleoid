@@ -1,7 +1,7 @@
 use indexmap::IndexMap;
 use std::fmt;
 
-use super::{Selection, Step};
+use super::{Selection, Step, StepField};
 use crate::error::{Error, Result};
 use crate::graph::{NodeKey, NodeKind};
 use crate::lang::ast::Expr;
@@ -45,10 +45,6 @@ pub(super) fn rule_of(node: Option<&Nuc>, key: &NodeKey) -> String {
         },
         _ => key.to_string(),
     }
-}
-
-fn node_name(step: &Step) -> Value {
-    Value::string(step.node.to_string())
 }
 
 fn declaration_rule(name: &str, value: &Expr) -> String {
@@ -122,19 +118,21 @@ impl Runtime {
         )
     }
 
-    pub(crate) fn node_names(&mut self, selection: &Selection) -> Value {
-        let mut names = Vec::with_capacity(selection.steps.len());
+    pub(crate) fn projected(&mut self, selection: &Selection, field: StepField) -> Value {
+        let mut values = Vec::with_capacity(selection.steps.len());
         for step in &selection.steps {
             let _: Value = self.record(step);
-            names.push(node_name(step));
+            let value = field.of(step);
+            self.note_nullish(&value);
+            values.push(value);
         }
-        Value::List(names)
+        Value::List(values)
     }
 
     fn record(&mut self, step: &Step) -> Value {
         let mut properties: IndexMap<String, Value> = IndexMap::new();
-        properties.insert("node".to_string(), node_name(step));
-        properties.insert("holds".to_string(), step.value.clone());
+        properties.insert("node".to_string(), StepField::Node.of(step));
+        properties.insert("holds".to_string(), StepField::Holds.of(step));
         properties.insert("rule".to_string(), Value::string(step.rule.clone()));
         properties.insert("state".to_string(), Value::string(step.state.as_str()));
         properties.insert(

@@ -2797,6 +2797,23 @@ shipping = quantity * 2 + fee
 facts.map(step => step.node)
 # return: ["rate","price","quantity","fee"]
 ---
+# Nucleoid gives the values of selections with holds
+
+price = 10
+qty = 3
+shipping = 5
+subtotal = price * qty
+total = subtotal + shipping
+facts = total |> why |> stated |> holds
+reach = price |> affects |> holds
+assert(facts, [5, 10, 3])
+assert(reach, [30, 35])
+base = 4
+shipping = base + 1
+price = 20
+[facts, reach]
+# return: [[4,20,3],[60,65]]
+---
 # Nucleoid flattens nested lists with flat
 
 pallets = [[["bolt", "nut"], ["gear"]], [["cog"]]]

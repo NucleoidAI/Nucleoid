@@ -21000,6 +21000,116 @@ quantity = 6
 assert(either.map(s -> s.holds), [60, 10, 6, 12])"#);
 }
 
+/// Nucleoid gives the values of an explanation with holds
+#[rustfmt::skip]
+#[test]
+fn gives_the_values_of_an_explanation_with_holds() {
+    let mut run = runner();
+    run("price = 10");
+    run("qty = 3");
+    run("shipping = 5");
+    run("subtotal = price * qty");
+    run("total = subtotal + shipping");
+    run("values = total |> why |> holds");
+    run("facts = total |> why |> stated |> holds");
+    run("rules = total |> why |> derived |> holds");
+    assert_eq!(run("values"), serde_json::json!([35, 30, 5, 10, 3]));
+    assert_eq!(run("[facts, rules]"), serde_json::json!([[5, 10, 3], [35, 30]]));
+    run("base = 4");
+    run("shipping = base + 1");
+    assert_eq!(run("values"), serde_json::json!([35, 30, 5, 4, 10, 3]));
+    assert_eq!(run("facts"), serde_json::json!([4, 10, 3]));
+    run("price = 20");
+    assert_eq!(run("values"), serde_json::json!([65, 60, 5, 4, 20, 3]));
+    run(r#"rules
+
+# return: [65,60,5]"#);
+}
+
+/// Nucleoid gives the values that a change reaches and the model with holds
+#[rustfmt::skip]
+#[test]
+fn gives_the_values_that_a_change_reaches_and_the_model_with_holds() {
+    let mut run = runner();
+    run("rate = 0.2");
+    run("price = 10");
+    run("qty = 3");
+    run("subtotal = price * qty");
+    run("tax = subtotal * rate");
+    run("reach = price |> affects |> holds");
+    run("known = model |> holds");
+    assert_eq!(run("reach"), serde_json::json!([30, 6]));
+    assert_eq!(run("known"), serde_json::json!([0.2, 10, 3, 30, 6]));
+    run("total = subtotal + tax");
+    assert_eq!(run("reach"), serde_json::json!([30, 6, 36]));
+    run("qty = 4");
+    assert_eq!(run("reach"), serde_json::json!([40, 8, 48]));
+    run("tax = qty * rate");
+    assert_eq!(run("reach"), serde_json::json!([40, 40.8]));
+    run("delete total");
+    assert_eq!(run("known"), serde_json::json!([0.2, 10, 4, 40, 0.8]));
+    run(r#"reach
+
+# return: [40]"#);
+}
+
+/// Nucleoid gives the values behind class level rules with holds
+#[rustfmt::skip]
+#[test]
+fn gives_the_values_behind_class_level_rules_with_holds() {
+    let mut run = runner();
+    run("fee = 2");
+    run(r#"class Order(price, qty):
+    this.price = price
+    this.qty = qty"#);
+    run("$Order.total = $Order.price * $Order.qty");
+    run("$Order.basis = $Order.total |> why |> holds");
+    run("first = Order(10, 2)");
+    assert_eq!(run("first.basis"), serde_json::json!([20, 10, 2]));
+    run("$Order.total = $Order.price * $Order.qty + fee");
+    run("second = Order(4, 5)");
+    run("reach = fee |> affects |> holds");
+    assert_eq!(run("[first.basis, second.basis]"), serde_json::json!([[22, 10, 2, 2], [22, 4, 5, 2]]));
+    assert_eq!(run("reach"), serde_json::json!([22, 22]));
+    run("first.qty = 3");
+    run("fee = 1");
+    assert_eq!(run("[first.basis, second.basis]"), serde_json::json!([[31, 10, 3, 1], [21, 4, 5, 1]]));
+    assert_eq!(run("reach"), serde_json::json!([31, 21]));
+    run(r#"first.total |> why |> stated |> holds
+
+# return: [1]"#);
+}
+
+/// Nucleoid rolls back failed updates through held values
+#[rustfmt::skip]
+#[test]
+fn rolls_back_failed_updates_through_held_values() {
+    let mut run = runner();
+    run(r#"price = 10
+qty = 3
+subtotal = price * qty
+values = subtotal |> why |> holds
+failure = ""
+try:
+    values = 1 |> holds
+catch error:
+    failure = error
+assert(failure, TypeError("Cannot explain 1"))
+assert(values, [30, 10, 3])
+try:
+    fee = 2
+    subtotal = price * qty + fee
+    assert(values, [32, 10, 3, 2])
+    throw "UNDO"
+catch error:
+    assert(error, "UNDO")
+assert(values, [30, 10, 3])
+qty = 4
+inputs = subtotal |> why |> stated |> holds
+[values, inputs]
+# return: [[40,10,4],[10,4]]"#);
+}
+
 /// Nucleoid flattens nested lists by one level
 #[rustfmt::skip]
 #[test]

@@ -322,6 +322,7 @@ impl Parser {
             let stage = match name.as_str() {
                 "diff" => Some(Stage::Diff),
                 "nodes" => Some(Stage::Nodes),
+                "holds" => Some(Stage::Holds),
                 other => Stage::from_name(other),
             };
             if let Some(stage) = stage {

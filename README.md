@@ -2587,6 +2587,36 @@ assert(inspect.map(step -> step.node), ["flow", "pressure", "valve", "temperatur
   valve joins them. See the
   [root contract](nucleoid.spec.md#union-reasoning-selections).
 
+## Held values of reasoning selections
+
+**Holds lists the readings behind a frost warning and what the wind moves**
+
+```nuc
+air = 3
+ground = -1
+wind = 12
+chill = air - wind / 4
+frost = chill + ground < 1
+readings = frost |> why |> stated |> holds
+moved = wind |> affects |> holds
+assert(readings, [-1, 3, 12])
+assert(moved, [0, true])
+wind = 4
+assert([readings, moved], [[-1, 3, 4], [2, false]])
+```
+
+- [NUC 121](docs/nuc-0121.md) adds the final reasoning stage `|> holds`,
+  which gives the values of a selection's steps in their order.
+  `frost |> why |> stated |> holds` lists the readings the frost warning
+  rests on, and `wind |> affects |> holds` the values that a change of the
+  wind reaches: the chill and the warning itself.
+- Both lists are the values that
+  `(frost |> why |> stated).map(step => step.holds)` and
+  `(wind |> affects).map(step => step.holds)` give, and they stay live the
+  same way: once the wind drops, the readings show its new speed and the
+  warning clears. See the
+  [root contract](nucleoid.spec.md#held-values-of-reasoning-selections).
+
 ## Reactive list flattening
 
 **Flat turns nested lists into one live list**

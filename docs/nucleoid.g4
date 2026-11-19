@@ -508,7 +508,8 @@ stage
     | STATED
     | DERIVED
     | DIFF
-    | NODES                                               // Expr::Reason
+    | NODES
+    | HOLDS                                               // Expr::Reason
     | DEPTH LPAREN expression RPAREN                       // Expr::Depth
     | PATH LPAREN expression RPAREN                        // Expr::Path
     | (INTERSECT | EXCEPT) LPAREN expression RPAREN        // Expr::Combine
@@ -912,6 +913,7 @@ enumName
     | EXCEPT
     | UNION
     | NODES
+    | HOLDS
     | MODEL
     | FIRST
     | LAST
@@ -1001,6 +1003,7 @@ INTERSECT        : 'intersect';
 EXCEPT           : 'except';
 UNION            : 'union';
 NODES            : 'nodes';
+HOLDS            : 'holds';
 MODEL            : 'model';
 FIRST            : 'first';
 LAST             : 'last';
@@ -1204,6 +1207,10 @@ fragment REGEX_CHAR
  *                             after it, or an intersect, except, union or path
  *                             argument that ends with it, parses and then
  *                             raises TypeError("Cannot explain <source>").
+ * s |> holds               -> Expr::Reason with Stage::Holds, the values that
+ *                             s's steps hold. It ends the pipeline as nodes
+ *                             does, and a binding named holds shadows it at
+ *                             run time.
  * An object containing spread uses Expr::SpreadObject, with later entries
  * winning; otherwise it uses Expr::ObjectLiteral. Numeric keys become text.
  *

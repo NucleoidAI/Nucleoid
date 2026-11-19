@@ -2,7 +2,7 @@ use crate::error::{Error, Result};
 use crate::graph::{NodeKey, ShapeKey};
 use crate::lang::ast::{Expr, SetOperation};
 use crate::number;
-use crate::reasoning::{Direction, Ranked, Selection, Stage};
+use crate::reasoning::{Direction, Ranked, Selection, Stage, StepField};
 use crate::runtime::{MAX_DEPTH, Runtime};
 use crate::scope::Scope;
 use crate::value::{ObjectId, Value};
@@ -19,12 +19,10 @@ impl<'a> Reason<'a> {
     }
 
     pub fn resolve(&self, runtime: &mut Runtime, scope: &mut Scope) -> Result<Value> {
-        if let Expr::Reason {
-            stage: Stage::Nodes,
-            source,
-        } = self.node
-        {
-            return runtime.node_names_of(source, scope);
+        if let Expr::Reason { stage, source } = self.node {
+            if let Some(field) = stage.projection() {
+                return runtime.projection_of(*stage, field, source, scope);
+            }
         }
 
         match runtime.reason(self.node, scope)? {
@@ -49,7 +47,7 @@ impl Link<'_> {
     }
 
     fn ends_pipeline(self) -> bool {
-        matches!(self, Link::Stage(Stage::Nodes))
+        matches!(self, Link::Stage(stage) if stage.projection().is_some())
     }
 
     pub(crate) fn freezes_argument(self) -> bool {
@@ -58,9 +56,10 @@ impl Link<'_> {
 
     fn operation(self) -> Option<&'static str> {
         match self {
-            Link::Stage(stage @ (Stage::Stated | Stage::Derived | Stage::Diff | Stage::Nodes)) => {
-                Some(stage.as_str())
-            }
+            Link::Stage(
+                stage
+                @ (Stage::Stated | Stage::Derived | Stage::Diff | Stage::Nodes | Stage::Holds),
+            ) => Some(stage.as_str()),
             Link::Stage(Stage::Why | Stage::Affects) => None,
             Link::Depth(_) => Some("depth"),
             Link::Path(_) => Some("path"),
@@ -150,10 +149,16 @@ impl Runtime {
         Ok((links, selection))
     }
 
-    fn node_names_of(&mut self, source: &Expr, scope: &mut Scope) -> Result<Value> {
-        self.check_operation(Link::Stage(Stage::Nodes), scope)?;
+    fn projection_of(
+        &mut self,
+        stage: Stage,
+        field: StepField,
+        source: &Expr,
+        scope: &mut Scope,
+    ) -> Result<Value> {
+        self.check_operation(Link::Stage(stage), scope)?;
         Ok(match self.reason(source, scope)? {
-            Some(selection) => self.node_names(&selection),
+            Some(selection) => self.projected(&selection, field),
             None => Value::Undefined,
         })
     }
