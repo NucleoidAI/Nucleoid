@@ -66,7 +66,7 @@ async function implementation({
 }) {
   const few_shot_function = (train_dataset) => ({
     ...train_dataset,
-    declarations: train_dataset.declarations[0],
+    declarations: undefined,
     dataset: train_dataset.dataset.map(({ instances }) => ({
       instances: instances.map((instance) => ({
         ...instance,
@@ -85,7 +85,7 @@ async function implementation({
           current:
           ${JSON.stringify({
             ...train_dataset,
-            declarations: train_dataset.declarations[0],
+            declarations: undefined,
             dataset: train_dataset.dataset
               .filter(({ instances }) => instances)
               .map(({ instances }) => ({
@@ -130,7 +130,12 @@ async function implementation({
   return implementation;
 }
 
-async function state({ declarations, input_matrix, input_instances }) {
+async function state({
+  class_declaration,
+  declarations,
+  input_matrix,
+  input_instances,
+}) {
   const implementations = input_instances.map(
     ({ implementation }) => implementation
   );
@@ -141,6 +146,7 @@ async function state({ declarations, input_matrix, input_instances }) {
     [
       `canvas_width = ${canvas_width}`,
       `canvas_height = ${canvas_height}`,
+      class_declaration,
       ...declarations,
       ...implementations,
       "Obj[:]",

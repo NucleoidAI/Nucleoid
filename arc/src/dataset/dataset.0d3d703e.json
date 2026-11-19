@@ -1,6 +1,6 @@
 {
+  "class_declaration": "# Each object is one full-height column of a single color. Every column swaps its color for its partner: 1 and 5, 2 and 6, 3 and 4, 8 and 9 swap\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, color: int):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.tag is l6953\n    this.color is color",
   "declarations": [
-    "# Each object is one full-height column of a single color. Every column swaps its color for its partner: 1 and 5, 2 and 6, 3 and 4, 8 and 9 swap\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, color: int):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.tag is l6953\n    this.color is color",
     "# Each column takes the partner of its input color: find the pair holding the input color, then the other member of that pair\n$Obj.color is [[1, 5], [2, 6], [3, 4], [8, 9]].find(pair => pair.includes($Obj.color@first)).find(partner => partner is not $Obj.color@first)"
   ],
   "output_canvas": "EXACT",

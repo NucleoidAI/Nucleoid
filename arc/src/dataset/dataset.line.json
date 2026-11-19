@@ -1,6 +1,6 @@
 {
+  "class_declaration": "# Each object is one straight line of color 6 with a color-8 end cell, pointing toward that 8 end. Every line grows by one color-6 cell at its other end\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.tag is l8001",
   "declarations": [
-    "# Each object is one straight line of color 6 with a color-8 end cell, pointing toward that 8 end. Every line grows by one color-6 cell at its other end\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.tag is l8001",
     "# A line whose 8 end is on the left grows one cell to the right, away from its 8 end\nif $Obj.orientation is 270:\n    $Obj.tag is l4102\n    $Obj.extension_direction is right\n    $Obj.width is $Obj.width@first + 1",
     "# A line whose 8 end is on the right grows one cell to the left, away from its 8 end\nif $Obj.orientation is 90:\n    $Obj.tag is l4102\n    $Obj.extension_direction is left\n    $Obj.x is $Obj.x@first - 1\n    $Obj.width is $Obj.width@first + 1",
     "# A line whose 8 end is on top grows one cell downward, away from its 8 end\nif $Obj.orientation is 0:\n    $Obj.tag is l6012\n    $Obj.extension_direction is down\n    $Obj.height is $Obj.height@first + 1",

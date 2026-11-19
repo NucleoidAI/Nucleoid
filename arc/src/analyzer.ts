@@ -8,7 +8,7 @@ export async function declarations({ train_dataset }) {
   milestone.inferring_declarations();
 
   const {
-    result: { declarations, output_canvas },
+    result: { class_declaration, declarations, output_canvas },
   } = await llm.generate({
     grammar: true,
     messages: [
@@ -18,12 +18,14 @@ export async function declarations({ train_dataset }) {
           query:
           ${JSON.stringify({
             ...train_dataset,
+            class_declaration: "<CLASS_DECLARATION>",
             declarations: "<DECLARATIONS>",
             output_canvas: "<OUTPUT_CANVAS>",
           })}
           json_format:
           {
             "result": {
+              "class_declaration": <CLASS_DECLARATION>,
               "declarations": <DECLARATIONS>,
               "output_canvas": <OUTPUT_CANVAS>
             }
@@ -33,9 +35,12 @@ export async function declarations({ train_dataset }) {
     ],
   });
 
-  milestone.declarations_inferred({ declarations, output_canvas });
+  milestone.declarations_inferred({
+    declarations: [class_declaration, ...declarations],
+    output_canvas,
+  });
 
-  return { declarations, output_canvas };
+  return { class_declaration, declarations, output_canvas };
 }
 
 export async function instances({ train_dataset }) {
@@ -111,7 +116,7 @@ export async function value({
     [
       `canvas_width = ${canvas_width}`,
       `canvas_height = ${canvas_height}`,
-      train_dataset.declarations[0],
+      train_dataset.class_declaration,
       implementation,
     ].join("\n\n")
   );
@@ -142,6 +147,7 @@ export async function state(train_dataset) {
       [
         `canvas_width = ${canvas_width}`,
         `canvas_height = ${canvas_height}`,
+        train_dataset.class_declaration,
         ...train_dataset.declarations,
         ...implementations,
         "Obj[:]",

@@ -4,7 +4,7 @@ import * as Matrix from "./lib/Matrix";
 const FIELD_GUIDE = `
 - "dataset" holds the existing examples. Each pairs an "input_matrix" with the "output_matrix" that the rule produces from it.
 - Each example's "instances" lists its instances, each pairing an "input_instance_matrix" with its "output_instance_matrix". They relate to the example's full matrices by a fixed convention (how instances are found, ordered and cropped); work that convention out from the existing examples and follow it exactly.
-- "declarations" and "output_canvas" are fixed for this task. Every new example must be valid under them. Do not change them or repeat them in your answer.
+- "class_declaration", "declarations" and "output_canvas" are fixed for this task. Every new example must be valid under them. Do not change them or repeat them in your answer.
 `.trim();
 
 async function synthesize({ train_dataset }) {
@@ -49,7 +49,7 @@ async function synthesize({ train_dataset }) {
         
         Work in this order:
         1. Infer the rule and write it as a sequence of steps, precise enough that someone could apply it by hand to an input they have never seen, including how the instances are derived. Check it against every existing example and revise it until it reproduces all of them exactly.
-        2. List the invariants: what every existing example has in common that the rule relies on, plus anything "declarations" and "output_canvas" impose (allowed values, dimensions, how many of something appear, what never touches or overlaps). If you are unsure whether the rule depends on a property, treat it as an invariant. Every new example must keep all of them.
+        2. List the invariants: what every existing example has in common that the rule relies on, plus anything "class_declaration", "declarations" and "output_canvas" impose (allowed values, dimensions, how many of something appear, what never touches or overlaps). If you are unsure whether the rule depends on a property, treat it as an invariant. Every new example must keep all of them.
         3. Plan each new example in a sentence or two: what its input contains, how it differs from the existing examples and from your other new examples, and what output the rule gives for it.
         4. Write the examples. Build each input first, then produce its output by applying the rule step by step, copying exactly any cell the rule leaves unchanged. Then derive its instances with the same convention as the existing examples.
         
@@ -70,6 +70,7 @@ async function synthesize({ train_dataset }) {
         content: `
           synthesize:
           ${JSON.stringify({
+            class_declaration: train_dataset.class_declaration,
             declarations: train_dataset.declarations,
             output_canvas: train_dataset.output_canvas,
             dataset: [

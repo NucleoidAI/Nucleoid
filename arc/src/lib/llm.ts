@@ -38,7 +38,9 @@ export async function generate({
   if (grammar) {
     messages.unshift({
       role: "system",
-      content: JSON.stringify({ init_class: { declarations: [init_class] } }),
+      content: JSON.stringify({
+        init_class: { class_declaration: init_class },
+      }),
     });
 
     messages.unshift({

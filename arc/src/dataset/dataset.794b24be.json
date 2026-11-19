@@ -1,6 +1,6 @@
 {
+  "class_declaration": "# Each object is all the color-1 cells of the grid together, touching or not. The output counts them as a color-2 tally from the top-left corner: a bar along the top row, then a stem down from its middle\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.tag is l9100",
   "declarations": [
-    "# Each object is all the color-1 cells of the grid together, touching or not. The output counts them as a color-2 tally from the top-left corner: a bar along the top row, then a stem down from its middle\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.tag is l9100",
     "# Each pattern becomes l5714, a tally: a top bar, then a stem\n$Obj.tag is l5714",
     "# The tally is drawn in color 2\n$Obj.fill_color is 2",
     "# The bar holds one cell per input cell, up to the grid width\n$Obj.width is min of [$Obj.volume, canvas_width]",

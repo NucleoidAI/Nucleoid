@@ -1,6 +1,6 @@
 {
+  "class_declaration": "# Each object is the whole 5-cell block of one color, in one of four shapes. The output is a single cell whose color codes the shape, whatever the block color\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, tag: str):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.tag is tag",
   "declarations": [
-    "# Each object is the whole 5-cell block of one color, in one of four shapes. The output is a single cell whose color codes the shape, whatever the block color\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, tag: str):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.tag is tag",
     "# Each block becomes l7544, a single point\n$Obj.tag is l7544",
     "# The output cell is one column wide\n$Obj.width is 1",
     "# The output cell is one row tall\n$Obj.height is 1",

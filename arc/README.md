@@ -285,10 +285,10 @@ call passes its own:
 
 | Call | Few-shot properties of each instruction dataset |
 | --- | --- |
-| `analyzer.declarations` | `declarations`, `output_canvas`, and each pair's `input_matrix` and `output_matrix` |
-| `analyzer.instances`, `visualizer.instances` | `declarations`, and each pair's `input_matrix`, `output_matrix`, and `instances` with `input_instance_matrix` and `output_instance_matrix` |
-| `analyzer.value` | `declarations`, and each pair's `instances` with `instance_name`, `input_instance_matrix`, and `implementation` |
-| `visualizer.value` | `declarations`, and the instances of every pair in one list, with `implementation`, `input_value`, and `input_instance_matrix` |
+| `analyzer.declarations` | `class_declaration`, `declarations`, `output_canvas`, and each pair's `input_matrix` and `output_matrix` |
+| `analyzer.instances`, `visualizer.instances` | `class_declaration`, `declarations`, and each pair's `input_matrix`, `output_matrix`, and `instances` with `input_instance_matrix` and `output_instance_matrix` |
+| `analyzer.value` | `class_declaration`, and each pair's `instances` with `instance_name`, `input_instance_matrix`, and `implementation` |
+| `visualizer.value` | `class_declaration`, and the instances of every pair in one list, with `implementation`, `input_value`, and `input_instance_matrix` |
 | `visualizer.output_instance_matrix` | The instances of every pair in one list, with `input_value`, `input_instance_matrix`, `output_value`, and `output_instance_matrix` |
 
 `analyzer.value` sends no `train_dataset`, so its examples carry the
@@ -2518,12 +2518,14 @@ There are 2 sections in our approach: analysis and visualization. In analysis ph
 ##### 1. Find patterns and Represent in `nuc` lang
 
 The LLM finds pattern for given training input and output data and creates declarations in `nuc` lang.
+The class declaration goes in `class_declaration`, a string, and
+`declarations` holds the declarations that follow it.
 It also infers the `output_canvas` from the training pairs.
 
 ```json
 {
+  "class_declaration": "class Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, vertex_color: int, vertical_segment_color: int, horizontal_segment_color: int):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.tag is l6747\n    this.vertex_color is vertex_color\n    this.vertical_segment_color is vertical_segment_color\n    this.horizontal_segment_color is horizontal_segment_color",
   "declarations": [
-    "class Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, vertex_color: int, vertical_segment_color: int, horizontal_segment_color: int):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.tag is l6747\n    this.vertex_color is vertex_color\n    this.vertical_segment_color is vertical_segment_color\n    this.horizontal_segment_color is horizontal_segment_color",
     "if $Obj.vertex_color is 9 and $Obj.vertical_segment_color is 9 and $Obj.horizontal_segment_color is 9:\n    $Obj.tag is l6624\n    $Obj.marker_color is 4\n    $Obj.x is $Obj.x@first - 1 if $Obj.orientation > 180 else $Obj.x@first\n    $Obj.y is $Obj.y@first - 1 if $Obj.orientation < 90 or $Obj.orientation > 270 else $Obj.y@first\n    $Obj.width is $Obj.width@first + 1\n    $Obj.height is $Obj.height@first + 1\n    $Obj.volume is $Obj.volume@first + 1"
   ],
   "output_canvas": "EXACT"

@@ -1,6 +1,6 @@
 {
+  "class_declaration": "# Each object is the whole color-1 pattern, as tall as the grid, whose rows repeat every period rows. The output continues it down to 9 rows and draws it in color 2\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, color: int, period: int):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.tag is l9100\n    this.color is color\n    this.period is period",
   "declarations": [
-    "# Each object is the whole color-1 pattern, as tall as the grid, whose rows repeat every period rows. The output continues it down to 9 rows and draws it in color 2\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, color: int, period: int):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.tag is l9100\n    this.color is color\n    this.period is period",
     "# Each pattern becomes l8384, a pattern repeating down\n$Obj.tag is l8384",
     "# It continues downward, below its last row\n$Obj.extension_direction is down",
     "# Its height grows to 1.5 times its input height, 6 rows to 9, the height of the output grid\n$Obj.height is $Obj.height@first * 3 / 2",

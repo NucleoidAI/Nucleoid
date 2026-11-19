@@ -18,7 +18,7 @@ export async function instances({ train_dataset, test_input_matrix }) {
         content: `
           current:
           ${JSON.stringify({
-            declarations: train_dataset.declarations[0],
+            class_declaration: train_dataset.class_declaration,
             dataset: train_dataset.dataset.map(
               ({ input_matrix, instances }) => ({
                 input_matrix,
@@ -46,7 +46,7 @@ export async function instances({ train_dataset, test_input_matrix }) {
         content: `
           query:
           ${JSON.stringify({
-            declarations: train_dataset.declarations[0],
+            class_declaration: train_dataset.class_declaration,
             dataset: [
               {
                 instance_matrix: test_input_matrix,
@@ -124,7 +124,7 @@ export async function value({
     [
       `canvas_width = ${canvas_width}`,
       `canvas_height = ${canvas_height}`,
-      train_dataset.declarations[0],
+      train_dataset.class_declaration,
       implementation,
     ].join("\n\n")
   );

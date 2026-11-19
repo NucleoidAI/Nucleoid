@@ -1,6 +1,6 @@
 {
+  "class_declaration": "# Each object is the whole figure in the grid. The output turns it a half turn, 180 degrees, about the grid center\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.tag is l9100",
   "declarations": [
-    "# Each object is the whole figure in the grid. The output turns it a half turn, 180 degrees, about the grid center\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.tag is l9100",
     "# Each figure turns 180 degrees from its input orientation\n$Obj.orientation is ($Obj.orientation@first + 180) % 360",
     "# The half turn moves its box to the mirrored column: as far from the right edge as it was from the left\n$Obj.x is canvas_width - $Obj.x@first - $Obj.width",
     "# The half turn moves its box to the mirrored row: as far from the bottom edge as it was from the top\n$Obj.y is canvas_height - $Obj.y@first - $Obj.height"

@@ -1,6 +1,6 @@
 {
+  "class_declaration": "# Each object is all the cells of one color, touching or not. Every color except the one with the most cells turns 5\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, color: int):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.tag is l9100\n    this.color is color",
   "declarations": [
-    "# Each object is all the cells of one color, touching or not. Every color except the one with the most cells turns 5\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, color: int):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.tag is l9100\n    this.color is color",
     "# A color group that some other group outnumbers turns color 5; only the group with the most cells keeps its color\nif any other in Obj: other.volume > $Obj.volume:\n    $Obj.color is 5"
   ],
   "output_canvas": "EXACT",

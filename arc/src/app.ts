@@ -19,6 +19,7 @@ export async function start(puzzle_id: string = "3aa6fb7a") {
       output_matrix: output,
       instances: undefined,
     })),
+    class_declaration: undefined,
     declarations: undefined,
     output_canvas: undefined,
   };
@@ -38,10 +39,12 @@ export async function start(puzzle_id: string = "3aa6fb7a") {
   const next_instance_name = (): string =>
     `obj${String(instance_index++).padStart(12, "0")}`;
 
-  const { declarations, output_canvas } = await analyzer.declarations({
-    train_dataset,
-  });
+  const { class_declaration, declarations, output_canvas } =
+    await analyzer.declarations({
+      train_dataset,
+    });
 
+  train_dataset.class_declaration = class_declaration;
   train_dataset.declarations = declarations;
   train_dataset.output_canvas = output_canvas;
 
@@ -81,6 +84,7 @@ export async function start(puzzle_id: string = "3aa6fb7a") {
     }
 
     await object.state({
+      class_declaration,
       declarations,
       input_matrix: dataset.input_matrix,
       input_instances: dataset.instances,
@@ -121,6 +125,7 @@ export async function start(puzzle_id: string = "3aa6fb7a") {
   }
 
   await object.state({
+    class_declaration,
     declarations,
     input_matrix: test_input_matrix,
     input_instances,

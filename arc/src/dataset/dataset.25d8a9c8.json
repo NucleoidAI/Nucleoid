@@ -1,6 +1,6 @@
 {
+  "class_declaration": "# Each object is one full-width row of 3 cells. A row whose cells share one color turns all 5, and any other row is cleared to the background\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, parts: list):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.tag is l3058\n    this.parts is parts",
   "declarations": [
-    "# Each object is one full-width row of 3 cells. A row whose cells share one color turns all 5, and any other row is cleared to the background\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, parts: list):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.tag is l3058\n    this.parts is parts",
     "# A row with one distinct color is filled with 5; any other row gets 0, the background\n$Obj.fill_color is 5 if $Obj.parts.distinct().length is 1 else 0",
     "# A cleared row keeps no cells; a filled row keeps its 3 input cells\n$Obj.volume is 0 if $Obj.fill_color is 0 else $Obj.volume@first"
   ],
