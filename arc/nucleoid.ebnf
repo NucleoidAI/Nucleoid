@@ -1,5 +1,5 @@
-declaration          ::= ( COMMENT NEWLINE )* ( classStmt | ifStmt | classRule )
-implementation       ::= ( COMMENT NEWLINE )* NAME assign NAME
+declaration          ::= classStmt | ifStmt | classRule
+implementation       ::= NAME assign NAME
                          '(' labeledArgument ( ',' labeledArgument )+ ')'
 assign               ::= 'is' | '='
 
@@ -50,6 +50,5 @@ RESERVED             ::= 'and' | 'class' | 'else' | 'if' | 'in' | 'not' | 'of' |
 CLASS_REF            ::= '$' NAME
 INTEGER              ::= [0-9]+
 STRING               ::= "'" [^']* "'"
-COMMENT              ::= '#' [^#xA]*
 NEWLINE              ::= #xA
 INDENT               ::= '    '

@@ -398,15 +398,9 @@ three juxtaposed statements and raises `ReferenceError`. The solver's own
 same. Every snapshot is the state that the same rules give when spelled with
 `=`.
 
-Each snippet starts with `#` comment lines that describe the object it
-constructs, in the style of the declarations' comments: its kind and colors,
-then its size and position and, when it points, its direction. They put the
-instance's own arguments and input mask into words, and Nucleoid skips them,
-so they change no snapshot:
+Snippets and declarations hold executable code alone, with no `#` comment:
 
 ```nuc
-# A corner whose vertex and both segments are color 9,
-# 2 by 2 at x 5, y 1, pointing southeast
 obj7e96305711c2 is Obj(x=5, y=1, width=2, height=2, orientation=135, volume=3, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)
 ```
 
@@ -614,9 +608,8 @@ row, of one color or with its lone color in the middle cell, has no head and
 takes the horizontal axis, 90. The rules leave `orientation` unchanged: each
 bar keeps 90, and each cleared row, which has no output cell, keeps its input
 orientation, 270 for three of the cleared rows and 90 for the other five. The
-declarations hold executable code and one `#` comment, the orientation line
-that every dataset places above its class. The test pair follows the training
-pairs at the same level and is annotated by the same rules.
+test pair follows the training pairs at the same level and is annotated by the
+same rules.
 
 `dataset.25ff71a9.json` annotates the four original training pairs from
 `data\training\25ff71a9.json`, in order, followed by its two test pairs, six
@@ -665,10 +658,8 @@ both states because the figure moves without turning: 90 for the bars,
 horizontal lines without a head; 135 and 45 for the trominoes, corners that
 point toward their vertex, the bottom-right cell of the third figure's box and
 the top-right cell of the fourth's; and 0 for the test pairs' vertical 2-cell
-bar and single cell. The declarations hold executable code and one `#` comment,
-the orientation line that every dataset places above its class. The test pairs
-follow the training pairs at the same level and are annotated by the same
-rules.
+bar and single cell. The test pairs follow the training pairs at the same level
+and are annotated by the same rules.
 
 `dataset.27a28665.json` annotates the seven original training pairs from
 `data\training\27a28665.json`, in order, followed by its three test pairs,
@@ -804,10 +795,8 @@ and keeps that orientation with its inside marker: the training corners point
 at 225 and 45, and at 45, 225, and 135, and the test corners at 45, 315, 225,
 and 135, so only the test pair has a corner at 315. The declarations write
 their assignments with `is` and their tags as bare words, with no quoted
-string, and hold `#` comments: two lines above the class, the orientation line
-among them, and one above the `marker_color` rule. Each implementation starts
-with two comment lines that describe its corner. The test pair follows the
-training pairs at the same level and is annotated by the same rules.
+string. The test pair follows the training pairs at the same level and is
+annotated by the same rules.
 
 `dataset.3c9b0459.json` annotates the four original training pairs from
 `data\training\3c9b0459.json`, in order, followed by its test pair, five
@@ -858,10 +847,8 @@ bounding-box origin, 0 and 0, equal to `output_value.x`/`output_value.y`.
 `output_canvas` is `EXACT` because each output keeps its input's 3 by 3
 canvas; with no zero cell to crop, `FIT` would frame the same grids.
 Orientation is 0 in every input state, where the mosaic is not turned, and
-180 in every output state. The declarations hold executable code and one `#`
-comment, the orientation line that every dataset places above its class. The
-test pair follows the training pairs at the same level and is annotated by the
-same rules.
+180 in every output state. The test pair follows the training pairs at the same
+level and is annotated by the same rules.
 
 `dataset.44f52bb0.json` annotates the six original training pairs from
 `data\training\44f52bb0.json`, in order, followed by its two test pairs,
@@ -1052,14 +1039,11 @@ in that order, where `width` and `height` are the column and row counts of the
 block's box, the nonzero bounding box of its input mask, and `volume` the
 number of its nonzero cells, 3, 3, and 9 in every
 pair, with no color, parts list, canvas size, or matrix of cells, because
-the rules need none: the block's cells travel in its masks. Its declaration,
-comments included, is that of `dataset.6150a2bd.json`. Each implementation
-passes `x=0, y=0, width=3, height=3, orientation=0, volume=9` after comment
-lines that name the block's colors in reading order and its box, such as
-`# The whole block of colors 6, 1 and 8,` and `# 3 by 3 at x 0, y 0` for the
-first training input. Three unconditional, commented class-level rules turn
-every block into the figure it forms with its mirror image:
-`$Obj.tag is l6919` names that geometry,
+the rules need none: the block's cells travel in its masks. Its class
+declaration is that of `dataset.6150a2bd.json`. Each implementation passes
+`x=0, y=0, width=3, height=3, orientation=0, volume=9`. Three unconditional
+class-level rules turn every block into the figure it forms with its mirror
+image: `$Obj.tag is l6919` names that geometry,
 `$Obj.width is $Obj.width@first * 2` makes the figure twice as wide as the
 block, 6 columns, as `dataset.28bf18c6.json` multiplies its shape's width by
 its copies, and `$Obj.volume is $Obj.volume@first * 2` counts the block's
@@ -1179,10 +1163,8 @@ nonzero bounding-box origin, 0 and 0, equal to
 canvas, including the two empty rows below the top-row line that `FIT` would
 crop from the third and fourth training outputs. Orientation is 0 in every
 input state, where the mosaic is not turned, and the line's axis, 90, 135, or
-45, in every output state. The declarations hold executable code and one `#`
-comment, the orientation line that every dataset places above its class. The
-test pair follows the training pairs at the same level and is annotated by the
-same rules.
+45, in every output state. The test pair follows the training pairs at the same
+level and is annotated by the same rules.
 
 `dataset.6fa7a44f.json` annotates the four original training pairs from
 `data\training\6fa7a44f.json`, in order, followed by its test pair, five
@@ -1416,10 +1398,8 @@ three cells, which points toward its bottom-right vertex, at 135; and every
 other pattern, whose cells lie apart or form no line or corner, is 0. In the
 output, the tally is a point, 0, for one cell, a horizontal bar, 90, for two
 or three cells, and 0 as a T, which is neither a line nor a
-corner. The declarations hold executable code and one `#` comment, the
-orientation line that every dataset places above its class. The test pairs
-follow the training pairs at the same level and are annotated by the same
-rules.
+corner. The test pairs follow the training pairs at the same level and are
+annotated by the same rules.
 
 `dataset.8be77c9e.json` annotates the three original training pairs from
 `data\training\8be77c9e.json`, in order, followed by its test pair, four
@@ -1502,10 +1482,8 @@ outputs end in an empty row that neither mode frames: `EXACT` composes them
 5 rows tall. Framing each output on the world model's canvas, `canvas_width`
 columns by twice `canvas_height` rows, needs a solver change. Orientation is 0
 in both states because the pattern is not turned: its mirror image is part of
-the figure that `l7511` names, not a turn. The declarations hold executable
-code and one `#` comment, the orientation line that every dataset places above
-its class. The test pair follows the training pairs at the same level and is
-annotated by the same rules.
+the figure that `l7511` names, not a turn. The test pair follows the training
+pairs at the same level and is annotated by the same rules.
 
 `dataset.9565186b.json` annotates the four original training pairs from
 `data\training\9565186b.json`, in order, followed by its test pair, sixteen
@@ -1573,10 +1551,8 @@ the same in both states because a region keeps its cells when it turns gray:
 corners that point toward the top-left and bottom-right vertices of their
 boxes; 90 for the five horizontal rows of 2 or 3 cells, lines without a head;
 and 0 for the vertical lines, the single cells, the T and C shapes, and the
-regions split into separate cells. The declarations hold executable code and
-one `#` comment, the orientation line that every dataset places above its
-class. The test pair follows the training pairs at the same level and is
-annotated by the same rules.
+regions split into separate cells. The test pair follows the training pairs at
+the same level and is annotated by the same rules.
 
 `dataset.9af7a82c.json` annotates the four original training pairs from
 `data\training\9af7a82c.json`, followed by its test pair, nineteen region
@@ -1693,10 +1669,8 @@ canvas; with no zero cell in any output, `FIT` would frame the same grids.
 Orientation is 0 in the input state because the marker is a single point,
 and 90 in the output state, where `$Obj.orientation is 90` sets it, because
 the bar is a horizontal line without a head, which points along its
-horizontal axis. The declarations hold executable code and one `#` comment, the
-orientation line that every dataset places above its class. The test pair
-follows the training pairs at the same level and is annotated by the same
-rules.
+horizontal axis. The test pair follows the training pairs at the same level and
+is annotated by the same rules.
 
 `dataset.a9f96cdd.json` annotates the four original training pairs from
 `data\training\a9f96cdd.json`, in order, followed by its test pair, five
@@ -1786,10 +1760,8 @@ canvas, while `FIT` would crop every output to its corners, such as the
 single cell of the second training output. Orientation is 0 in both states
 because the point is symmetric and the figure is not turned: its corner
 colors keep their places on the canvas in every pair, so `corner_colors`, not
-`orientation`, records them. The declarations hold executable code and one `#`
-comment, the orientation line that every dataset places above its class. The
-test pair follows the training pairs at the same level and is annotated by the
-same rules.
+`orientation`, records them. The test pair follows the training pairs at the
+same level and is annotated by the same rules.
 
 `dataset.c8f0f002.json` annotates the three original training pairs from
 `data\training\c8f0f002.json`, in order, followed by its test pair, twelve
@@ -1859,10 +1831,8 @@ merging them reproduces each pair's input and output. The
 unchanged from its input and equal to `output_value.x`/`output_value.y`.
 `output_canvas` is `EXACT` because each output keeps its input's canvas; with
 no zero cell to crop, `FIT` would frame the same grids. Orientation is 0 in
-both states because no region is turned. The declarations hold executable code
-and one `#` comment, the orientation line that every dataset places above its
-class. The test pair follows the training pairs at the same level and is
-annotated by the same rules.
+both states because no region is turned. The test pair follows the training
+pairs at the same level and is annotated by the same rules.
 
 `dataset.c9e6f938.json` annotates the three original training pairs from
 `data\training\c9e6f938.json`, in order, followed by its test pair, four
@@ -1956,9 +1926,8 @@ turn. It is 90 in the second training pair, whose 2-cell row and 4-cell
 figure are horizontal lines without a head, and 0 in the other pairs, where
 the third training pattern is a single cell and the other patterns and
 figures are neither lines, corners, nor chevrons.
-The declarations hold executable code and one `#` comment, the orientation line
-that every dataset places above its class. The test pair follows the training
-pairs at the same level and is annotated by the same rules.
+The test pair follows the training pairs at the same level and is annotated by
+the same rules.
 
 `dataset.d037b0a7.json` annotates the three original training pairs from
 `data\training\d037b0a7.json`, in order, followed by its test pair, eleven
@@ -2154,9 +2123,8 @@ share of the checkerboard is a two-row pattern that points no way. The two
 shares of a pair are mirror images of each other, but no turn carries one onto
 the other, since a half turn leaves each of them unchanged and a quarter turn
 stands it upright, so `parity`, not `orientation`, tells them apart. The
-declarations hold executable code and one `#` comment, the orientation line
-that every dataset places above its class. The test pair follows the training
-pairs at the same level and is annotated by the same rules.
+test pair follows the training pairs at the same level and is annotated by the
+same rules.
 
 `dataset.ed36ccf7.json` annotates the four original training pairs from
 `data\training\ed36ccf7.json`, in order, followed by its test pair, five
@@ -2244,10 +2212,8 @@ pattern is a corner, whose full bottom row and right column meet at the
 bottom-right vertex of its box, so it points 135 in its input state and 45 in
 its output state, where its top row and right column meet at the top-right
 vertex. Every other pattern is neither a line, a corner, nor a chevron, so it
-is 0 in its input state and 270 in its output state. The declarations hold
-executable code and one `#` comment, the orientation line that every dataset
-places above its class. The test pair follows the training pairs at the same
-level and is annotated by the same rules.
+is 0 in its input state and 270 in its output state. The test pair follows the
+training pairs at the same level and is annotated by the same rules.
 
 `dataset.fafffa47.json` annotates the five exact original training pairs from
 `data\training\fafffa47.json`, in order, followed by its test pair at the same
@@ -2336,11 +2302,8 @@ others. No rule sets `orientation`. The test output's two cells touch only at
 a corner, a line that falls to the right, which the shape convention reads as
 135; the rules, fixed from training outputs that all read 0, do not turn it,
 so its output state keeps 0. The declarations write their assignments with
-`is` and their tags as bare words, with no quoted string, and hold `#`
-comments: three lines above the class, the orientation line among them, and
-one above the `points` rule. Each implementation starts with two comment lines
-that describe its figure. The test pair follows the training pairs at the same
-level and is annotated by the same rules.
+`is` and their tags as bare words, with no quoted string. The test pair follows
+the training pairs at the same level and is annotated by the same rules.
 
 ## ARC proposal agent
 
@@ -2589,13 +2552,9 @@ object adds its clockwise turn, as in `($Obj.orientation@first + 180) % 360`.
 Wherever an output's shape points another way, a class-level rule sets its
 orientation, as `$Obj.orientation is 90` does for the rows that
 `dataset.a85d4709.json` paints. A line in `dataset.line.json` points toward its
-color-8 endpoint, so it needs no separate endpoint property. The first
-declaration of every dataset states the convention for the model in one
-shared comment line, directly above its class:
-
-```nuc
-# Orientation is the direction an object points, in degrees clockwise from north (0 up, 90 right, 180 down, 270 left)
-```
+color-8 endpoint, so it needs no separate endpoint property. No dataset states
+the convention in words, because no declaration carries a comment: the model
+infers it from the orientations that the datasets record.
 
 | Dataset | Descriptive properties |
 | --- | --- |
