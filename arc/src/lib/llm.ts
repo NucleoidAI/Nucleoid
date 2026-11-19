@@ -4,6 +4,23 @@ import { v4 as uuid } from "uuid";
 import * as dataset from "../dataset";
 import * as openrouter from "./openrouter";
 
+const init_class: string = [
+  "# Each object is one group of cells on the grid, located by its bounding box",
+  "class Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int):",
+  "    # Left column of its bounding box",
+  "    this.x is x",
+  "    # Top row of its bounding box",
+  "    this.y is y",
+  "    # Columns of its bounding box",
+  "    this.width is width",
+  "    # Rows of its bounding box",
+  "    this.height is height",
+  "    # Direction it points, in degrees clockwise from up: 0 up, 90 right, 180 down, 270 left, 45 up-right, 135 down-right, 225 down-left, 315 up-left",
+  "    this.orientation is orientation",
+  "    # Number of its cells",
+  "    this.volume is volume",
+].join("\n");
+
 export async function generate({
   puzzle_id = "3aa6fb7a",
   only_puzzle_dataset = false,
@@ -27,8 +44,7 @@ export async function generate({
   if (grammar) {
     messages.unshift({
       role: "system",
-      content:
-        "init_class:\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int):\n   this.x is x\n   this.y is y\n   this.width is width\n   this.height is height\n   this.orientation is orientation\n   this.volume is volume\n\n",
+      content: JSON.stringify({ init_class: { declarations: [init_class] } }),
     });
 
     messages.unshift({

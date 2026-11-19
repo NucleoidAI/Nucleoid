@@ -47,16 +47,20 @@ export function training_objects_segmented({ instances }) {
   });
 }
 
+export function synthesizing_training_dataset() {
+  terminal.step("Synthesizing training pairs");
+}
+
 export function training_dataset_synthesized({ dataset }) {
   terminal.step(`${dataset.length} training pairs synthesized`);
   dataset.forEach(
-    ({ input_max_matrix, output_max_matrix, instances }, index: number) => {
+    ({ input_matrix, output_matrix, instances }, index: number) => {
       const pair: string = `Synthesized ${index + 1}`;
-      terminal.grid(`${pair} · Input`, input_max_matrix, {
+      terminal.grid(`${pair} · Input`, input_matrix, {
         key: "synthesized_input",
         loop: true,
       });
-      terminal.grid(`${pair} · Output`, output_max_matrix, {
+      terminal.grid(`${pair} · Output`, output_matrix, {
         key: "synthesized_output",
         loop: true,
       });

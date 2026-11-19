@@ -64,7 +64,11 @@ export async function start(puzzle_id: string = "3aa6fb7a") {
 
   await analyzer.state(train_dataset);
 
+  milestone.synthesizing_training_dataset();
+
   const synthesized_dataset = await synthesizer.synthesize({ train_dataset });
+
+  milestone.training_dataset_synthesized({ dataset: synthesized_dataset });
 
   for (const dataset of synthesized_dataset) {
     for (const instance of dataset.instances) {

@@ -87,8 +87,6 @@ export async function value({
   instance_name,
   input_instance_matrix,
 }) {
-  milestone.synthesizing_instance({ instance_name });
-
   const instance = {
     instance_name,
     input_instance_matrix,
