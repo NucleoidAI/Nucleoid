@@ -59,6 +59,23 @@ fn median_value(values: &[Value]) -> Value {
     Value::Number(median)
 }
 
+#[must_use]
+fn population_variance(values: &[Value]) -> Option<f64> {
+    if values.iter().any(Value::is_undefined) {
+        return None;
+    }
+
+    let numbers: Vec<f64> = values.iter().map(Value::to_number).collect();
+    let count = number::from_usize(numbers.len());
+    let mean = numbers.iter().fold(0.0, |total, value| total + value) / count;
+    let squares = numbers.iter().fold(0.0, |total, value| {
+        let deviation = value - mean;
+        total + deviation * deviation
+    });
+
+    Some(squares / count)
+}
+
 impl Runtime {
     pub(super) fn aggregate_items(
         &mut self,
@@ -81,6 +98,9 @@ impl Runtime {
             "distinct" => Value::List(self.distinct_values(values)),
             "mode" => self.mode_value(values),
             "median" => median_value(&values),
+            "variance" => population_variance(&values).map_or(Value::Undefined, Value::Number),
+            "stdev" => population_variance(&values)
+                .map_or(Value::Undefined, |variance| Value::Number(variance.sqrt())),
             _ => builtins::math(property, &values)?,
         })
     }

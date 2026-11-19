@@ -2694,7 +2694,7 @@ Full detail: [NUC 9](nuc-0009.md), [NUC 46](nuc-0046.md), [NUC 119](nuc-0119.md)
 | `Math` | `pow`, `sqrt`, `floor`, `round`, `max`, `min`, `clamp` ([NUC 21](nuc-0021.md)), `lerp` ([NUC 22](nuc-0022.md)), `saturate` ([NUC 23](nuc-0023.md)), `smoothstep(lower, upper, value)` (accepted [NUC 33](nuc-0033.md)), `smootherstep(lower, upper, value)` (accepted [NUC 35](nuc-0035.md)), `remap(start, end, targetStart, targetEnd, value)` (accepted [NUC 39](nuc-0039.md)) |
 | `String` | `String.fromCharCode`; instance `charAt`, `length`, `lower`, `replace`, `replaceAll` (accepted [NUC 42](nuc-0042.md)), `repeat`, `split`, `padStart` and `padEnd` ([NUC 111](nuc-0111.md)), Python's `startswith`, `endswith` and `join(items)`, with the separator as the receiver ([NUC 110](nuc-0110.md)), the size and emptiness methods `length()`, `size()`, `len()`, `isEmpty()`, `is_empty()` and `isNotEmpty()` ([NUC 116](nuc-0116.md)), and the case conversion aliases `uppercase()`, `to_uppercase()` and `uppercased()` of `toUpperCase()`, and `lowercase()`, `to_lowercase()` and `lowercased()` of `toLowerCase()` ([NUC 118](nuc-0118.md)) |
 | `Date` | `Date()`, `Date(string)`, `Date(number)`, `Date.now()`, `Date.parse()`; instance `getTime`, `getYear`, `toDateString` |
-| `List` | `push`, `pop`, `filter`, `map`, `flatMap` (accepted [NUC 41](nuc-0041.md)), `flat` ([NUC 103](nuc-0103.md)), `reduce`, `find`, `some`, `every`, `slice`, `sort` (in place, [NUC 58](nuc-0058.md)), `join`, `length`, and the queries `at`, `includes`, `indexOf`, `lastIndexOf`, `findIndex`, `findLast`, `findLastIndex` and `concat` ([NUC 61](nuc-0061.md)), `sum` ([NUC 68](nuc-0068.md)), `max` and `min` ([NUC 69](nuc-0069.md)), `distinct` ([NUC 71](nuc-0071.md)), `count(predicate)` ([NUC 73](nuc-0073.md)), `mode` ([NUC 75](nuc-0075.md)), `maxBy` and `minBy` ([NUC 77](nuc-0077.md)), `average` ([NUC 80](nuc-0080.md)), `median` ([NUC 84](nuc-0084.md)), `sortBy` ([NUC 105](nuc-0105.md)), `partition` ([NUC 108](nuc-0108.md)), `product` ([NUC 114](nuc-0114.md)), the size and emptiness aliases `size()`, `len()`, `isEmpty()`, `is_empty()` and `isNotEmpty()` ([NUC 116](nuc-0116.md)), and the first and last element aliases `first()`, `last()`, `first(predicate)` and `last(predicate)` ([NUC 117](nuc-0117.md)); `sum`, `max`, `min` and `mode` also read as `sum of list` ([NUC 75](nuc-0075.md) revision 2) |
+| `List` | `push`, `pop`, `filter`, `map`, `flatMap` (accepted [NUC 41](nuc-0041.md)), `flat` ([NUC 103](nuc-0103.md)), `reduce`, `find`, `some`, `every`, `slice`, `sort` (in place, [NUC 58](nuc-0058.md)), `join`, `length`, and the queries `at`, `includes`, `indexOf`, `lastIndexOf`, `findIndex`, `findLast`, `findLastIndex` and `concat` ([NUC 61](nuc-0061.md)), `sum` ([NUC 68](nuc-0068.md)), `max` and `min` ([NUC 69](nuc-0069.md)), `distinct` ([NUC 71](nuc-0071.md)), `count(predicate)` ([NUC 73](nuc-0073.md)), `mode` ([NUC 75](nuc-0075.md)), `maxBy` and `minBy` ([NUC 77](nuc-0077.md)), `average` ([NUC 80](nuc-0080.md)), `median` ([NUC 84](nuc-0084.md)), `sortBy` ([NUC 105](nuc-0105.md)), `partition` ([NUC 108](nuc-0108.md)), `product` ([NUC 114](nuc-0114.md)), `variance` and `stdev` ([NUC 123](nuc-0123.md)), the size and emptiness aliases `size()`, `len()`, `isEmpty()`, `is_empty()` and `isNotEmpty()` ([NUC 116](nuc-0116.md)), and the first and last element aliases `first()`, `last()`, `first(predicate)` and `last(predicate)` ([NUC 117](nuc-0117.md)); `sum`, `max`, `min` and `mode` also read as `sum of list` ([NUC 75](nuc-0075.md) revision 2) |
 | `Class` | the global list of declared types; `Class.length` |
 
 ```
@@ -4235,6 +4235,60 @@ volume
   [list and population products](../nucleoid.spec.md#list-and-population-products)
   section.
 
+### List and population variances and standard deviations
+
+```
+temps = [18, 21, 24]
+swing = temps.stdev()
+class Shot(score):
+    this.score = score
+Shot(7)
+Shot(9)
+spread = Shot.variance(shot -> shot.score)
+assert([swing, spread], [2.449489742783178, 1])
+temps.push(17)
+Shot(5)
+assert([swing, spread], [2.7386127875258306, 2.6666666666666665])
+spread
+```
+
+- This is the complete
+  `Nucleoid measures the spread of lists and populations with variance and stdev`
+  program in `tests/reference.md`, without its title and expected-return
+  metadata; it returns `2.6666666666666665`.
+- [NUC 123](nuc-0123.md) adds `variance()`, `variance(selector)`, `stdev()`
+  and `stdev(selector)` to lists and class instance lists: the population
+  variance, the mean of the squared deviations from the mean, and its square
+  root, the population standard deviation. Both divide by the number of
+  values, so a single value gives `0`.
+- The mean is computed as `average` computes it, and the deviations are taken
+  from it in a second pass, so a list of numbers has exactly the variance that
+  `xs.average(x -> (x - xs.average()) * (x - xs.average()))` gives, and
+  exactly `Math.sqrt` of it as its standard deviation. Large values with a
+  small spread keep it: `[1000000001, 1000000002, 1000000003].variance()` is
+  `0.6666666666666666`, where `xs.average(x -> x * x) - xs.average() ** 2`
+  cancels to `0`.
+- Values convert as `sum` converts them. An empty list or class, any value
+  that converts to NaN and any infinite value give NaN, and a square or a
+  total beyond the largest number gives `Infinity`, as in
+  `[1e308, 1e308].variance()`. An undefined value makes both results
+  undefined, stored as `null`, and wins over a NaN value, as in `average`. A
+  `null` item counts `0` without settling a declaration to `null`, while the
+  reads inside a selector follow the existing rules.
+- The selector is called once per item, in order, with only the item. A
+  supplied selector that is not a function, including `null`, raises
+  `TypeError("variance expects a function")` or
+  `TypeError("stdev expects a function")`, even on an empty receiver.
+- Variances and standard deviations are read-only and live: a declaration
+  follows the list or population, the arguments and what the selector reads,
+  in class-level rules too. On a class name, `Name.variance(...)` and
+  `Name.stdev(...)` are the population queries even when the class declares
+  instance methods with those names; instances keep calling the methods.
+  Neither is a noun query, so `variance of xs` stays a syntax error.
+- The authoritative contract is the
+  [list and population variances and standard deviations](../nucleoid.spec.md#list-and-population-variances-and-standard-deviations)
+  section.
+
 ---
 
 ## 12. Reasoning Operations
@@ -4874,6 +4928,7 @@ Messages are exact and are part of the observable behaviour of the language.
 | A supplied `average` selector that is not a function, including `null`, even on an empty receiver | `average expects a function` |
 | A supplied `median` selector that is not a function, including `null`, even on an empty receiver | `median expects a function` |
 | A supplied `product` selector that is not a function, including `null`, even on an empty receiver | `product expects a function` |
+| A supplied `variance` or `stdev` selector that is not a function, including `null`, even on an empty receiver | `variance expects a function` or `stdev expects a function` |
 | A supplied `max` or `min` selector that is not a function, including `null`, even on an empty receiver | `max expects a function` or `min expects a function` |
 | A supplied `distinct` selector that is not a function, including `null`, even on an empty receiver | `distinct expects a function` |
 | Missing or non-function `count` predicate, including `null`, even on an empty receiver | `count expects a function` |
@@ -5144,6 +5199,7 @@ items.median()  Name.median(selector)  live middle value; even counts take (lowe
 items.sortBy(key)  Name.sortBy(key)   live new list in ascending key order; ties keep receiver order (NUC 105)
 items.partition(test)  Name.partition(test) live [kept, rest]: what filter(test) keeps, then the others (NUC 108)
 items.product()  Name.product(selector) live product from 1: exactly items.reduce((t, x) => t * x, 1) (NUC 114)
+items.variance()  Name.stdev(selector) live population variance from the mean, and its square root (NUC 123)
 text.startswith(p)  text.endswith(s)  Python spellings: exactly text.startsWith(p), text.endsWith(s) (NUC 110)
 ", ".join(items)  ", ".join(Name)      Python spelling: exactly items.join(", "), Name.join(", ") (NUC 110)
 text.padStart(n, fill)  text.padEnd(n)  live text padded before or after to n characters; fill defaults to " " (NUC 111)

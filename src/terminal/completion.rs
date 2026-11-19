@@ -69,6 +69,8 @@ const LIST_MEMBERS: &[&str] = &[
     "product",
     "average",
     "median",
+    "variance",
+    "stdev",
     "max",
     "min",
     "distinct",

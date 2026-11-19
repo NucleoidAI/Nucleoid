@@ -4176,6 +4176,34 @@ transfer(ana, ben, 20)
   [NUC 122](nuc-0122.md) and the
   [root contract](../nucleoid.spec.md#python-style-except-clauses).
 
+## List and population variances and standard deviations
+
+**Standard deviations flag the machines whose readings drift**
+
+```nuc
+class Machine(name, readings):
+    this.name = name
+    this.readings = readings
+$Machine.drift = $Machine.readings.stdev()
+$Machine.unstable = $Machine.drift > 2
+press = Machine("press", [50, 54, 46])
+lathe = Machine("lathe", [30, 31, 29])
+assert([press.drift, lathe.unstable], [3.265986323710904, false])
+lathe.readings.push(35)
+press.readings.push(50)
+[lathe.unstable, press.drift]
+# return: [true,2.8284271247461903]
+```
+
+- Each machine keeps the standard deviation of its own readings in a
+  class-level rule, and a second rule flags the machines whose readings
+  scatter with a standard deviation above 2.
+- Both rules follow every reading: a reading of 35 makes the lathe unstable,
+  and a reading at the press's mean narrows its drift from
+  `3.265986323710904` to `2.8284271247461903`. See [NUC 123](nuc-0123.md)
+  and the
+  [root contract](../nucleoid.spec.md#list-and-population-variances-and-standard-deviations).
+
 ## Reactive list flattening
 
 **Flattening keeps the dirty tiles of every room counted**

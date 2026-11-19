@@ -21212,6 +21212,99 @@ check(120)
 # return: "HIGH ALARM""#);
 }
 
+/// Nucleoid measures the spread of lists with variance and stdev
+#[rustfmt::skip]
+#[test]
+fn measures_the_spread_of_lists_with_variance_and_stdev() {
+    let mut run = runner();
+    run("scores = [2, 4, 4, 4, 5, 5, 7, 9]");
+    run("spread = scores.variance()");
+    run("deviation = scores.stdev()");
+    assert_eq!(run("[spread, deviation]"), serde_json::json!([4, 2]));
+    run("scores.push(11)");
+    assert_eq!(run("[spread, deviation]"), serde_json::json!([7.111111111111111, 2.6666666666666665]));
+    run("scores = [6]");
+    assert_eq!(run("[spread, deviation]"), serde_json::json!([0, 0]));
+    run("team = {laps: [61, 58, 64]}");
+    run("wobble = team.laps.stdev()");
+    assert_eq!(run("wobble"), 2.449489742783178);
+    run("team.laps.push(57)");
+    assert_eq!(run("wobble"), 2.7386127875258306);
+}
+
+/// Nucleoid measures the spread of class instance populations with variance and stdev
+#[rustfmt::skip]
+#[test]
+fn measures_the_spread_of_class_instance_populations_with_variance_and_stdev() {
+    let mut run = runner();
+    run(r#"class Reading(level):
+    this.level = level"#);
+    run("Reading(3)");
+    run("Reading(5)");
+    run("spike = Reading(10)");
+    run("gain = 2");
+    run("spread = Reading.variance(reading -> reading.level)");
+    run("recent = Reading[-3:].stdev(reading -> reading.level * gain)");
+    assert_eq!(run("[spread, recent]"), serde_json::json!([8.666666666666666, 5.887840577551898]));
+    run("Reading(6)");
+    assert_eq!(run("[spread, recent]"), serde_json::json!([6.5, 4.320493798938574]));
+    run("spike.level = 4");
+    run("gain = 3");
+    assert_eq!(run("[spread, recent]"), serde_json::json!([1.25, 2.449489742783178]));
+}
+
+/// Nucleoid computes the variances of large values from their deviations
+#[rustfmt::skip]
+#[test]
+fn computes_the_variances_of_large_values_from_their_deviations() {
+    let mut run = runner();
+    run("stamps = [1000000001, 1000000002, 1000000003]");
+    run("jitter = stamps.variance()");
+    run("wobble = stamps.stdev()");
+    assert_eq!(run("[jitter, wobble]"), serde_json::json!([0.6666666666666666, 0.816496580927726]));
+    run("stamps.push(1000000004)");
+    assert_eq!(run("[jitter, wobble]"), serde_json::json!([1.25, 1.118033988749895]));
+}
+
+/// Nucleoid rolls back failed variance updates
+#[rustfmt::skip]
+#[test]
+fn rolls_back_failed_variance_updates() {
+    let mut run = runner();
+    run(r#"def checked(level):
+    if level < 0:
+        throw "NEGATIVE_LEVEL"
+    return level
+levels = [3, 5, 10]
+spread = levels.variance(checked)
+failure = ""
+try:
+    levels.push(-1)
+catch error:
+    failure = error
+assert([failure, levels, spread], ["NEGATIVE_LEVEL", [3, 5, 10], 8.666666666666666])
+try:
+    levels.push(6)
+    assert(spread, 6.5)
+    throw "UNDO"
+catch error:
+    assert(error, "UNDO")
+assert([levels, spread], [[3, 5, 10], 8.666666666666666])
+class Gauge(level): this.level = level
+Gauge(4)
+Gauge(8)
+wobble = Gauge.stdev(gauge -> checked(gauge.level))
+failure = ""
+try:
+    Gauge(-2)
+catch error:
+    failure = error
+assert([failure, Gauge.length, wobble], ["NEGATIVE_LEVEL", 2, 2])
+Gauge(12)
+wobble
+# return: 3.265986323710904"#);
+}
+
 /// Nucleoid flattens nested lists by one level
 #[rustfmt::skip]
 #[test]

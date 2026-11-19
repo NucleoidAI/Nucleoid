@@ -229,6 +229,25 @@ fn completion_offers_product_beside_sum_on_lists_and_instance_lists() {
 }
 
 #[test]
+fn completion_offers_variance_and_stdev_on_lists_and_instance_lists() {
+    let mut runtime = Runtime::new();
+    runtime
+        .run("levels = [3, 1]\nclass Reading\nReading()\nvalley = 1")
+        .unwrap();
+    for (prefix, expected) in [
+        ("levels.var", ["levels.variance"]),
+        ("Reading.var", ["Reading.variance"]),
+        ("levels.std", ["levels.stdev"]),
+        ("Reading.std", ["Reading.stdev"]),
+    ] {
+        let completion = Completion::find(&runtime, &editor::new(prefix), false).unwrap();
+        assert_eq!(completion.candidates, expected, "{prefix}");
+    }
+    let completion = Completion::find(&runtime, &editor::new("va"), false).unwrap();
+    assert_eq!(completion.candidates, ["valley"]);
+}
+
+#[test]
 fn completion_offers_suppose_beside_a_variable_of_the_same_prefix() {
     let mut runtime = Runtime::new();
     runtime.run("supply = 3").unwrap();

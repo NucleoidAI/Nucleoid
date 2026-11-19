@@ -2645,6 +2645,34 @@ assert([kitchen, heating], [21, false])
   estimate. See the
   [root contract](nucleoid.spec.md#python-style-except-clauses).
 
+## List and population variances and standard deviations
+
+**Standard deviations keep the scatter of delivery times live as orders change**
+
+```nuc
+class Delivery(minutes):
+    this.minutes = minutes
+Delivery(30)
+Delivery(25)
+late = Delivery(35)
+scatter = Delivery.stdev(delivery -> delivery.minutes)
+assert(scatter, 4.08248290463863)
+late.minutes = 90
+Delivery(40)
+assert(scatter, 25.829972899714782)
+```
+
+- [NUC 123](docs/nuc-0123.md) adds `variance()` and `stdev()`, with and
+  without a selector, to lists and class instance lists.
+  `Delivery.stdev(delivery -> delivery.minutes)` is the population standard
+  deviation of the delivery times: the square root of their mean squared
+  distance from their mean.
+- `scatter` is a live declaration, so a slower delivery and a new order both
+  update it. The distances are taken from the mean, which keeps the spread
+  of large values where the mean of the squares minus the square of the mean
+  cancels it, and `variance()` gives the square of the same spread. See the
+  [root contract](nucleoid.spec.md#list-and-population-variances-and-standard-deviations).
+
 ## Reactive list flattening
 
 **Flat turns nested lists into one live list**
