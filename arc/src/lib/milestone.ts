@@ -6,7 +6,12 @@ function oriented(title: string, orientation: unknown): string {
   return direction ? `${title} · ${direction}` : title;
 }
 
+let synthesized:
+  | { instance_name: string; panels: terminal.Panel[] }
+  | undefined;
+
 export function start({ version, puzzle_id, train, test_input_matrix }) {
+  synthesized = undefined;
   terminal.header({ version, puzzle_id });
   terminal.puzzle({ train, testInput: test_input_matrix });
 }
@@ -35,16 +40,19 @@ export function segmenting_training_objects() {
 }
 
 export function training_objects_segmented({ instances }) {
-  instances.forEach((instance) => {
-    terminal.grid("Input", instance.input_instance_matrix, {
-      key: "training_input",
-      loop: true,
-    });
-    terminal.grid("Output", instance.output_instance_matrix, {
-      key: "training_output",
-      loop: true,
-    });
-  });
+  terminal.panels(
+    "",
+    instances.map(({ input_instance_matrix, output_instance_matrix }) => [
+      terminal.gridPanel("Input", input_instance_matrix, {
+        key: "training_input",
+        loop: true,
+      }),
+      terminal.gridPanel("Output", output_instance_matrix, {
+        key: "training_output",
+        loop: true,
+      }),
+    ])
+  );
 }
 
 export function synthesizing_training_dataset() {
@@ -55,25 +63,30 @@ export function training_dataset_synthesized({ dataset }) {
   terminal.step(`${dataset.length} training pairs synthesized`);
   dataset.forEach(
     ({ input_matrix, output_matrix, instances }, index: number) => {
-      const pair: string = `Synthesized ${index + 1}`;
-      terminal.grid(`${pair} · Input`, input_matrix, {
-        key: "synthesized_input",
-        loop: true,
-      });
-      terminal.grid(`${pair} · Output`, output_matrix, {
-        key: "synthesized_output",
-        loop: true,
-      });
-      instances.forEach(({ input_instance_matrix, output_instance_matrix }) => {
-        terminal.grid(`${pair} · Input instance`, input_instance_matrix, {
-          key: "synthesized_input_instance",
-          loop: true,
-        });
-        terminal.grid(`${pair} · Output instance`, output_instance_matrix, {
-          key: "synthesized_output_instance",
-          loop: true,
-        });
-      });
+      terminal.panels(`Synthesized ${index + 1}`, [
+        [
+          terminal.gridPanel("Input", input_matrix, {
+            key: "synthesized_input",
+            loop: true,
+          }),
+          terminal.gridPanel("Output", output_matrix, {
+            key: "synthesized_output",
+            loop: true,
+          }),
+        ],
+        ...instances.map(
+          ({ input_instance_matrix, output_instance_matrix }) => [
+            terminal.gridPanel("Input instance", input_instance_matrix, {
+              key: "synthesized_input_instance",
+              loop: true,
+            }),
+            terminal.gridPanel("Output instance", output_instance_matrix, {
+              key: "synthesized_output_instance",
+              loop: true,
+            }),
+          ]
+        ),
+      ]);
     }
   );
 }
@@ -106,25 +119,27 @@ export function instance_constructed({
   output_instance_matrix,
   input_value,
 }) {
-  terminal.grid(
-    `Input crop · ${instance_name}`,
-    Matrix.crop(input_instance_matrix),
-    { key: "input_crop", loop: true }
-  );
-  terminal.grid(
-    `Output crop · ${instance_name}`,
-    Matrix.crop(output_instance_matrix),
-    { key: "output_crop", loop: true }
-  );
-  terminal.code(`Implementation · ${instance_name}`, implementation, {
-    key: "implementation",
-    loop: true,
-  });
-  terminal.value(
-    oriented(`Input state · ${instance_name}`, input_value?.orientation),
-    input_value,
-    { key: "input_state", loop: true }
-  );
+  terminal.panels(instance_name, [
+    [
+      terminal.gridPanel("Input crop", Matrix.crop(input_instance_matrix), {
+        key: "input_crop",
+        loop: true,
+      }),
+      terminal.gridPanel("Output crop", Matrix.crop(output_instance_matrix), {
+        key: "output_crop",
+        loop: true,
+      }),
+      terminal.codePanel("Implementation", implementation, {
+        key: "implementation",
+        loop: true,
+      }),
+      terminal.valuePanel(
+        oriented("Input state", input_value?.orientation),
+        input_value,
+        { key: "input_state", loop: true }
+      ),
+    ],
+  ]);
 }
 
 export function state({
@@ -161,12 +176,14 @@ export function segmenting_test_input({ test_input_matrix }) {
 
 export function test_input_segmented({ instances }) {
   terminal.step(`${instances.length} objects identified`);
-  instances.forEach(({ input_instance_matrix }) => {
-    terminal.grid("Input", input_instance_matrix, {
-      key: "test_input_object",
-      loop: true,
-    });
-  });
+  terminal.panels("", [
+    instances.map(({ input_instance_matrix }) =>
+      terminal.gridPanel("Input", input_instance_matrix, {
+        key: "test_input_object",
+        loop: true,
+      })
+    ),
+  ]);
 }
 
 export function synthesizing_instance({ instance_name }) {
@@ -181,15 +198,26 @@ export function instance_synthesized({
   input_instance_matrix,
   implementation,
 }) {
-  terminal.grid(
-    `Input crop · ${instance_name}`,
-    Matrix.crop(input_instance_matrix),
-    { key: "input_crop", loop: true }
-  );
-  terminal.code(`Implementation · ${instance_name}`, implementation, {
-    key: "implementation",
-    loop: true,
-  });
+  synthesized = {
+    instance_name,
+    panels: [
+      terminal.gridPanel("Input crop", Matrix.crop(input_instance_matrix), {
+        key: "input_crop",
+        loop: true,
+      }),
+      terminal.codePanel("Implementation", implementation, {
+        key: "implementation",
+        loop: true,
+      }),
+    ],
+  };
+}
+
+function flush_synthesized() {
+  if (synthesized) {
+    terminal.panels(synthesized.instance_name, [synthesized.panels]);
+    synthesized = undefined;
+  }
 }
 
 export function executing_transformation({ instance_name }) {
@@ -200,11 +228,21 @@ export function executing_transformation({ instance_name }) {
 }
 
 export function transformation_executed({ instance_name, input_value }) {
-  terminal.value(
-    oriented(`Input state · ${instance_name}`, input_value?.orientation),
-    input_value,
-    { key: "input_state", loop: true }
-  );
+  if (synthesized?.instance_name !== instance_name) {
+    flush_synthesized();
+  }
+  const panels: terminal.Panel[] = synthesized?.panels ?? [];
+  synthesized = undefined;
+  terminal.panels(instance_name, [
+    [
+      ...panels,
+      terminal.valuePanel(
+        oriented("Input state", input_value?.orientation),
+        input_value,
+        { key: "input_state", loop: true }
+      ),
+    ],
+  ]);
 }
 
 export function composing_output({ instance_name }) {
@@ -271,5 +309,6 @@ export function prompt_cache_alert({ cached_tokens }) {
 }
 
 export function failure(error) {
+  flush_synthesized();
   terminal.failure(error);
 }

@@ -84,8 +84,12 @@ function frame(text: string): string {
   return styleText("gray", text);
 }
 
+function expand(text: string): string {
+  return String(text).replace(/\t/g, "    ");
+}
+
 function wrap(text: string, columns: number) {
-  return wrapAnsi(String(text).replace(/\t/g, "    "), Math.max(1, columns), {
+  return wrapAnsi(expand(text), Math.max(1, columns), {
     hard: true,
     trim: false,
   }).split("\n");
@@ -209,32 +213,34 @@ export function step(message: string, milestone?: Milestone) {
   }
 }
 
-export function code(title: string, source, milestone?: Milestone) {
+function codeLines(source): string[] {
   const text: string = Array.isArray(source)
     ? source.join("\n\n")
     : String(source);
-  block(
-    numbered(title, milestone),
-    stripVTControlCharacters(text)
-      .split("\n")
-      .map((line: string) => styleText("whiteBright", line))
-  );
+  return stripVTControlCharacters(text)
+    .split("\n")
+    .map((line: string) => styleText("whiteBright", line));
+}
+
+function valueLines(data): string[] {
+  return inspect(data, {
+    colors: false,
+    depth: null,
+    compact: false,
+    breakLength: Math.max(8, width() - 6),
+    maxArrayLength: null,
+    maxStringLength: null,
+  })
+    .split("\n")
+    .map((line: string) => styleText("whiteBright", line));
+}
+
+export function code(title: string, source, milestone?: Milestone) {
+  block(numbered(title, milestone), codeLines(source));
 }
 
 export function value(title: string, data, milestone?: Milestone) {
-  block(
-    numbered(title, milestone),
-    inspect(data, {
-      colors: false,
-      depth: null,
-      compact: false,
-      breakLength: Math.max(8, width() - 6),
-      maxArrayLength: null,
-      maxStringLength: null,
-    })
-      .split("\n")
-      .map((line: string) => styleText("whiteBright", line))
-  );
+  block(numbered(title, milestone), valueLines(data));
 }
 
 function span(widths): number {
@@ -414,6 +420,258 @@ export function grid(title: string, matrix, milestone?: Milestone) {
       ...matrixLines(matrix, start, end, colored),
     ]);
   }
+}
+
+export type Panel =
+  | { kind: "grid"; title: string; matrix: number[][] }
+  | { kind: "text"; title: string; lines: string[] };
+
+const textMinimum: number = 40;
+const titleMinimum: number = 32;
+const panelGap: number = 3;
+
+export function gridPanel(title: string, matrix, milestone?: Milestone): Panel {
+  return { kind: "grid", title: numbered(title, milestone), matrix };
+}
+
+export function codePanel(title: string, source, milestone?: Milestone): Panel {
+  return {
+    kind: "text",
+    title: numbered(title, milestone),
+    lines: codeLines(source),
+  };
+}
+
+export function valuePanel(title: string, data, milestone?: Milestone): Panel {
+  return {
+    kind: "text",
+    title: numbered(title, milestone),
+    lines: valueLines(data),
+  };
+}
+
+function gridWidth(matrix): number {
+  const rows: number = matrix.length;
+  const columns: number = Math.max(0, ...matrix.map((row) => row.length));
+  return rows === 0 || columns === 0
+    ? stringWidth("(empty)")
+    : String(rows - 1).length + 2 + columns * 3;
+}
+
+function gridLines(matrix, available: number, colored: boolean): string[] {
+  const rows: number = matrix.length;
+  const columns: number = Math.max(0, ...matrix.map((row) => row.length));
+  if (rows === 0 || columns === 0) {
+    return [styleText("gray", "(empty)")];
+  }
+  const chunk: number = Math.max(
+    1,
+    Math.floor((available - String(rows - 1).length - 2) / 3)
+  );
+  if (columns <= chunk) {
+    return matrixLines(matrix, 0, columns, colored);
+  }
+  return Array.from({ length: Math.ceil(columns / chunk) }, (_, index) => {
+    const start: number = index * chunk;
+    const end: number = Math.min(columns, start + chunk);
+    return [
+      ...(index > 0 ? [""] : []),
+      styleText("gray", `Columns ${start}–${end - 1}`),
+      "",
+      ...matrixLines(matrix, start, end, colored),
+    ];
+  }).flat();
+}
+
+function panelContent(panel: Panel): number {
+  return panel.kind === "grid"
+    ? gridWidth(panel.matrix)
+    : Math.max(
+        0,
+        ...panel.lines.map((line: string) => stringWidth(expand(line)))
+      );
+}
+
+function panelNatural(panel: Panel): number {
+  return Math.max(panelContent(panel), stringWidth(panel.title));
+}
+
+function panelMinimum(panel: Panel, available: number): number {
+  const content: number = panelContent(panel);
+  return Math.min(
+    available,
+    Math.max(
+      panel.kind === "grid" ? content : Math.min(content, textMinimum),
+      Math.min(stringWidth(panel.title), titleMinimum)
+    )
+  );
+}
+
+function panelSpan(widths: number[]): number {
+  return widths.reduce(
+    (sum: number, cell: number, index: number) =>
+      sum + cell + (index > 0 ? panelGap : 0),
+    0
+  );
+}
+
+function panelRows(panels: Panel[], available: number): Panel[][] {
+  const rows: Panel[][] = [];
+  let used: number = 0;
+  for (const panel of panels) {
+    const minimum: number = panelMinimum(panel, available);
+    if (rows.length > 0 && used + panelGap + minimum <= available) {
+      rows[rows.length - 1].push(panel);
+      used += panelGap + minimum;
+    } else {
+      rows.push([panel]);
+      used = minimum;
+    }
+  }
+  return rows;
+}
+
+function panelWidths(row: Panel[], available: number, target: number) {
+  const naturals: number[] = row.map(panelNatural);
+  const widths: number[] = row.map((panel: Panel) =>
+    panelMinimum(panel, available)
+  );
+  let remaining: number = target - panelSpan(widths);
+  while (remaining > 0) {
+    const growable: number[] = widths.flatMap((cell: number, column: number) =>
+      cell < naturals[column] ? [column] : []
+    );
+    if (growable.length === 0) {
+      break;
+    }
+    for (const column of growable.slice(0, remaining)) {
+      widths[column] += 1;
+      remaining -= 1;
+    }
+  }
+  return widths;
+}
+
+function panelRules(widths: number[]): number[] {
+  return widths.map(
+    (_, index: number) => panelSpan(widths.slice(0, index + 1)) + 2
+  );
+}
+
+function panelRule(
+  inner: number,
+  upper: number[],
+  lower: number[],
+  left: string,
+  right: string
+): string {
+  const line: string = Array.from({ length: inner + 2 }, (_, offset) => {
+    const above: boolean = upper.includes(offset);
+    const below: boolean = lower.includes(offset);
+    return above ? (below ? "┼" : "┴") : below ? "┬" : "─";
+  }).join("");
+  return `  ${frame(left + line + right)}`;
+}
+
+function panelLines(widths: number[], cells: string[][], tty: boolean) {
+  const rules: number[] = panelRules(widths);
+  const height: number = Math.max(1, ...cells.map((lines) => lines.length));
+  return Array.from({ length: height }, (_, row: number) =>
+    cells
+      .map((lines: string[], index: number) => {
+        const text: string = lines[row] ?? "";
+        return tty
+          ? ` ${text}\x1b[${rules[index] + 4}G${frame("│")}`
+          : ` ${pad(text, widths[index])} ${frame("│")}`;
+      })
+      .join("")
+  ).map((line: string) => `  ${frame("│")}${line}`);
+}
+
+function panelWrap(text: string, columns: number): string[] {
+  return wrap(text, columns).map((row: string, index: number) => {
+    const space: number = row.indexOf(" ");
+    return index > 0 &&
+      space >= 0 &&
+      stripVTControlCharacters(row.slice(0, space)) === ""
+      ? row.slice(0, space) + row.slice(space + 1)
+      : row;
+  });
+}
+
+function panelHeading(title: string, columns: number): string[] {
+  return panelWrap(stripVTControlCharacters(title), columns).map(
+    (line: string) => styleText(["bold", "white"], line)
+  );
+}
+
+function panelBody(panel: Panel, columns: number, colored: boolean) {
+  const lines: string[] =
+    panel.kind === "grid"
+      ? gridLines(panel.matrix, columns, colored)
+      : panel.lines;
+  return lines.flatMap((line: string) => panelWrap(line, columns));
+}
+
+export function panels(title: string, groups: Panel[][]) {
+  const available: number = width() - 4;
+  const rows: Panel[][] = groups.flatMap((group: Panel[]) =>
+    panelRows(group, available)
+  );
+  if (rows.length === 0) {
+    return;
+  }
+
+  const inner: number = Math.max(
+    Math.min(stringWidth(title), available),
+    ...rows.map((row: Panel[]) =>
+      panelSpan(panelWidths(row, available, available))
+    )
+  );
+  const widths: number[][] = rows.map((row: Panel[]) => {
+    const cells: number[] = panelWidths(row, available, inner);
+    cells[cells.length - 1] += inner - panelSpan(cells);
+    return cells;
+  });
+  const rules: number[][] = widths.map((cells: number[]) =>
+    panelRules(cells).slice(0, -1)
+  );
+  const tty: boolean = process.stdout.isTTY === true;
+  const colored: boolean = colors();
+
+  const lines: string[] = [
+    panelRule(inner, [], title === "" ? rules[0] : [], "┌", "┐"),
+  ];
+  if (title !== "") {
+    lines.push(
+      ...panelLines([inner], [panelHeading(title, inner)], tty),
+      panelRule(inner, [], rules[0], "├", "┤")
+    );
+  }
+  rows.forEach((row: Panel[], index: number) => {
+    const cells: number[] = widths[index];
+    lines.push(
+      ...panelLines(
+        cells,
+        row.map((panel: Panel, column: number) =>
+          panelHeading(panel.title, cells[column])
+        ),
+        tty
+      ),
+      panelRule(inner, rules[index], rules[index], "├", "┤"),
+      ...panelLines(
+        cells,
+        row.map((panel: Panel, column: number) =>
+          panelBody(panel, cells[column], colored)
+        ),
+        tty
+      ),
+      index + 1 < rows.length
+        ? panelRule(inner, rules[index], rules[index + 1], "├", "┤")
+        : panelRule(inner, rules[index], [], "└", "┘")
+    );
+  });
+  console.log(`\n${lines.join("\n")}`);
 }
 
 function sideBySide(panels) {

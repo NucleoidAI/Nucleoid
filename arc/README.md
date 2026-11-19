@@ -180,36 +180,50 @@ Milestone steps and panel titles include stage-local subnumbers, such as
 milestones retain the same second number and add a third occurrence number,
 such as `1.3.1` and `1.3.2` for training-object segmentation. Continued grid
 panels keep the same full number. The declarations header includes the
-output canvas instead of adding a separate milestone. Segmented-object panels
-use `Input` and `Output` without object-number labels. After the
-`Analysis · State` table, a `Synthesizing training pairs` step precedes the
-synthesis call, and a `<count> training pairs synthesized` step then shows
-each synthesized pair's `Synthesized <n> · Input` and
-`Synthesized <n> · Output` panels, followed by the
-`Synthesized <n> · Input instance` and `Synthesized <n> · Output instance`
-panels of each of its instances. A synthesized instance's construction then
-starts with a `Constructing <instance>` step, as an extracted instance's does.
+output canvas instead of adding a separate milestone.
+
+Related panels sit side by side in one box, one column per panel, each under
+its own numbered title; a box for one instance names the instance once, in a
+title row above the columns. Each training pair's segmented objects share one
+box with a row per object, its `Input` beside its `Output`, such as
+`1.4.1 Input` and `1.5.1 Output`; segmented-object panels use `Input` and
+`Output` without object-number labels. Each constructed instance, extracted
+or synthesized, shows its `Input crop`, `Output crop`, `Implementation` and
+`Input state` side by side, `1.8.1` through `1.11.1` for the first one. After
+the `Analysis · State` table, a `Synthesizing training pairs` step precedes
+the synthesis call, and a `<count> training pairs synthesized` step then shows
+one box titled `Synthesized <n>` per synthesized pair: its `Input` beside its
+`Output`, then a row per instance with its `Input instance` beside its
+`Output instance`. A synthesized instance's construction then starts with a
+`Constructing <instance>` step, as an extracted instance's does.
 Model token usage remains attached to its active milestone. Instance-specific
-steps, crop and implementation headers, and input- and output-state headers include the
-instance name. In the visualization, each test object's synthesis shows its
-`Input crop` right before its `Implementation`, as in
-`2.6.1 Input crop · <instance>` and
-`2.7.1 Implementation · <instance>`. Its composition shows the same
+steps, and the headers of instance panels shown on their own, include the
+instance name. In the visualization, the segmented test objects' `Input`
+panels sit side by side (`2.4.1`, `2.4.2`, …). Each test object's
+`Executing the object transformation` step, such as `2.7.1`, is followed by
+one box with its `Input crop`, `Implementation` and `Input state` side by
+side, `2.5.1`, `2.6.1` and `2.8.1`; if that execution fails, the crop and
+implementation still print before the error. Its composition shows the same
 `Input crop` again before its `Output crop`, under its own number, such as
-`2.12.1`, rather than continuing the synthesis count, and an `Output state`
+`2.11.1`, rather than continuing the synthesis count, and an `Output state`
 panel right after the `Output crop`: the object's row of the
 `Visualization · State` table, before its `Placed output`.
 The visualization's output-crop header also shows the object's output
 orientation as an arrow emoji and its degrees, such as
-`2.13.1 Output crop · <instance> · ➡️ 90°`, and every input- and
+`2.12.1 Output crop · <instance> · ➡️ 90°`, and every input- and
 output-state header, in both stages, shows the orientation of the state it
-displays the same way, such as `2.9.1 Input state · <instance> · ⬆️ 0°`. An
-orientation that is not a multiple of 45 degrees shows `🧭` instead of an
-arrow, and an object without a numeric `orientation` adds nothing to the
-header.
+displays the same way, such as `2.8.1 Input state · ⬆️ 0°` under its
+instance's title row. An orientation that is not a multiple of 45 degrees
+shows `🧭` instead of an arrow, and an object without a numeric
+`orientation` adds nothing to the header.
+Side-by-side boxes use only the width their panels need. When a row does not
+fit the window, code and state columns wrap first, down to 40 characters,
+and then whole panels move onto further rows of the same box.
 Grid headers and the preview's matrix labels omit the grid's dimensions; its
 row and column coordinates show its size.
-Wide grids split into column panels rather than dropping cells. The final
+Wide grids split into column panels rather than dropping cells; inside a
+side-by-side box, a grid wider than the window splits into column sections
+within its own column. The final
 comparison keeps **Expected** before **Result**, followed by an
 exact-match badge in green or a mismatch badge in red, the unchanged difference
 score rendered with keycap digit emojis and padded to at least two digits
@@ -222,8 +236,9 @@ Colors follow the terminal automatically. Set `NO_COLOR=1` for uncolored output;
 redirected output is uncolored unless `FORCE_COLOR=1` is set. Styling uses
 Node.js's built-in utilities. `string-width` measures terminal display cells,
 and `wrap-ansi` wraps long output without breaking colors. In interactive
-output, summary boxes pin the right border to a terminal column instead of
-relying on font-dependent emoji widths. Redirected output uses whitespace
+output, summary boxes pin the right border, and side-by-side boxes every
+column rule, to a terminal column instead of relying on font-dependent emoji
+widths. Redirected output uses whitespace
 padding without cursor commands. Difference scores wrap between whole keycap
 emojis, reserving PowerShell's three buffer cells per digit on Windows.
 Formatting does not change
