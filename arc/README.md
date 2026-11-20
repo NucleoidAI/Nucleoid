@@ -192,7 +192,12 @@ box with a row per object, its `Input` beside its `Output`, such as
 `1.8.1` through `1.11.1` for the first one. After the `Analysis · State`
 table, a `Synthesizing training pairs` step precedes the synthesis call. Each
 synthesized instance's output is then composed as a test object's is, from its
-`Composing the output object · <instance>` step to its `Placed output`. A
+`Composing the output object · <instance>` step to its `Placed output`. When
+validation rejects the instance, because its `Output state` and the measured
+`Placed output` disagree on `x`, `y`, `width`, `height` or `volume`, a red `✗`
+step follows at once, such as
+`1.18.1 Rejected <instance> · Output state ≠ Placed output · volume 5 ≠ 4`,
+naming each disagreeing property with the state's value first. A
 `<count> training pairs synthesized` step (`pair` for one) follows, with one
 box per synthesized instance that passed validation, titled
 `Synthesized <n> · <instance>`, where `<n>` numbers its synthesized pair: its

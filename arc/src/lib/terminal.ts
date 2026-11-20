@@ -202,15 +202,28 @@ export function section(index: number, title: string, detail: string) {
   console.log("");
 }
 
-export function step(message: string, milestone?: Milestone) {
+function bullet(
+  marker: string,
+  style: Parameters<typeof styleText>[0],
+  message: string,
+  milestone?: Milestone
+) {
   const [first, ...continuation] = wrap(
     numbered(stripVTControlCharacters(String(message)), milestone),
     width() - 2
   );
-  console.log(`  ${frame("›")} ${styleText("white", first)}`);
+  console.log(`  ${marker} ${styleText(style, first)}`);
   for (const line of continuation) {
-    console.log(`    ${styleText("white", line)}`);
+    console.log(`    ${styleText(style, line)}`);
   }
+}
+
+export function step(message: string, milestone?: Milestone) {
+  bullet(frame("›"), "white", message, milestone);
+}
+
+export function rejection(message: string, milestone?: Milestone) {
+  bullet(styleText(["bold", "red"], "✗"), "red", message, milestone);
 }
 
 function codeLines(source): string[] {

@@ -5,21 +5,12 @@ import * as nucleoid from "./lib/nucleoid.ts";
 import * as milestone from "./lib/milestone.ts";
 
 const SYNTHESIZING_ROUTINE = [
-  {
-    x: 1,
-    y: 0,
-    rotation: 90,
-  },
-  {
-    x: 1,
-    y: 1,
-    rotation: 180,
-  },
-  {
-    x: 0,
-    y: 1,
-    rotation: 270,
-  },
+  { x: 1, y: 0, rotation: 90 },
+  { x: 1, y: 1, rotation: 180 },
+  { x: 0, y: 1, rotation: 270 },
+  // { x: 1, y: 0, rotation: 270 },
+  // { x: 0, y: 0, rotation: 180 },
+  // { x: 0, y: 1, rotation: 90 },
 ];
 
 async function synthesize({ train }) {
@@ -127,6 +118,17 @@ async function synthesize({ train }) {
           synthesized_instance.output_value.volume === output_volume
         ) {
           synthesized_dataset.instances.push(synthesized_instance);
+        } else {
+          milestone.synthesized_instance_rejected({
+            ...synthesized_instance,
+            output_measurement: {
+              x: output_x,
+              y: output_y,
+              width: output_width,
+              height: output_height,
+              volume: output_volume,
+            },
+          });
         }
       }
 

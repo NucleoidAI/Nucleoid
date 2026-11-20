@@ -1,3 +1,4 @@
+import { inspect } from "node:util";
 import * as Matrix from "./Matrix.ts";
 import * as terminal from "./terminal.ts";
 
@@ -57,6 +58,29 @@ export function training_objects_segmented({ instances }) {
 
 export function synthesizing_training_dataset() {
   terminal.step("Synthesizing training pairs");
+}
+
+export function synthesized_instance_rejected({
+  instance_name,
+  output_value,
+  output_measurement,
+}) {
+  const mismatches: string[] = Object.entries(output_measurement).flatMap(
+    ([property, measured]) => {
+      const state: unknown = output_value?.[property];
+      return state === measured
+        ? []
+        : [`${property} ${inspect(state)} ≠ ${inspect(measured)}`];
+    }
+  );
+  terminal.rejection(
+    [
+      `Rejected ${instance_name}`,
+      "Output state ≠ Placed output",
+      ...mismatches,
+    ].join(" · "),
+    { key: "synthesized_instance_rejected", loop: true }
+  );
 }
 
 export function training_dataset_synthesized({ dataset }) {
