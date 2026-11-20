@@ -147,7 +147,7 @@ formatting exactly:
   `$Obj.width = $Obj.width@first + 1`. Use them for an object's size instead
   of separate size properties such as `bar_height` or `bar_width`.
 - `volume` is the number of nonzero cells in the object's input mask, not the
-  area of its bounding box; the solver measures it with `Matrix.locate` and
+  area of its bounding box; the solver measures it with `Matrix.measure` and
   sends it to the implementation call as `input_volume`. Like `width` and
   `height`, it does not change when only the orientation changes. When the
   transformation adds or removes cells, a rule recomputes it, so that every

@@ -1,4 +1,5 @@
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers, MouseButton, MouseEvent, MouseEventKind};
+use ratatui::layout::Rect;
 use ratatui::{Terminal, backend::TestBackend};
 
 use super::*;
@@ -816,6 +817,226 @@ fn black_surfaces_preserve_readable_selection_and_explicit_error_markers() {
     assert!(screen_line(&terminal, history.y).contains("value = 7"));
     assert!(screen_line(&terminal, result.y - 1).contains("Error"));
     assert!(screen_line(&terminal, result.y).contains("ReferenceError"));
+}
+
+#[test]
+fn paging_uses_visible_diagnostic_and_table_rows() {
+    for (width, height) in [(100, 30), (40, 14)] {
+        let mut app = App::new(false, false);
+        let mut runtime = Runtime::new();
+        app.entries.push(multiline_entry());
+        let mut terminal = Terminal::new(TestBackend::new(width, height)).unwrap();
+        key(&mut app, &mut runtime, KeyCode::F(4), KeyModifiers::NONE);
+        terminal.draw(|frame| app.draw(frame)).unwrap();
+        let result_page = app.regions.output.height;
+        key(
+            &mut app,
+            &mut runtime,
+            KeyCode::PageDown,
+            KeyModifiers::NONE,
+        );
+        assert_eq!(app.scroll, result_page);
+        terminal.draw(|frame| app.draw(frame)).unwrap();
+        assert!(
+            screen_line(&terminal, app.regions.output.y)
+                .contains(&format!("line {result_page:02}"))
+        );
+        key(&mut app, &mut runtime, KeyCode::PageUp, KeyModifiers::NONE);
+        assert_eq!(app.scroll, 0);
+
+        key(&mut app, &mut runtime, KeyCode::F(4), KeyModifiers::NONE);
+        terminal.draw(|frame| app.draw(frame)).unwrap();
+        let diagnostic_page = app.regions.diagnostics.height;
+        key(
+            &mut app,
+            &mut runtime,
+            KeyCode::PageDown,
+            KeyModifiers::NONE,
+        );
+        assert_eq!(app.diagnostic_scroll, diagnostic_page);
+        assert_eq!(app.scroll, 0);
+        terminal.draw(|frame| app.draw(frame)).unwrap();
+        assert!(
+            screen_line(&terminal, app.regions.diagnostics.y)
+                .contains(&format!("line {diagnostic_page:02}"))
+        );
+        key(&mut app, &mut runtime, KeyCode::PageUp, KeyModifiers::NONE);
+        assert_eq!(app.diagnostic_scroll, 0);
+
+        run(&mut app, &mut runtime, &array_source());
+        app.set_view(View::Table);
+        key(&mut app, &mut runtime, KeyCode::F(4), KeyModifiers::NONE);
+        terminal.draw(|frame| app.draw(frame)).unwrap();
+        let table_page = app.regions.output.height - 1;
+        assert!(table_page > 0);
+        key(
+            &mut app,
+            &mut runtime,
+            KeyCode::PageDown,
+            KeyModifiers::NONE,
+        );
+        assert_eq!(app.scroll, table_page);
+        terminal.draw(|frame| app.draw(frame)).unwrap();
+        assert!(screen_line(&terminal, app.regions.output.y).contains("Index"));
+        key(&mut app, &mut runtime, KeyCode::PageUp, KeyModifiers::NONE);
+        assert_eq!(app.scroll, 0);
+    }
+}
+
+#[test]
+fn history_without_diagnostics_returns_focus_to_the_result() {
+    for mouse in [false, true] {
+        let mut app = App::new(false, false);
+        let mut runtime = Runtime::new();
+        app.entries.push(multiline_entry());
+        app.entries.push(Entry {
+            source: ".clear".into(),
+            output: output::Output::Message("State cleared.".into()),
+            diagnostics: String::new(),
+        });
+        app.editor = editor::new("unfinished draft");
+        let mut terminal = Terminal::new(TestBackend::new(100, 30)).unwrap();
+        key(&mut app, &mut runtime, KeyCode::F(4), KeyModifiers::NONE);
+        key(&mut app, &mut runtime, KeyCode::F(4), KeyModifiers::NONE);
+        terminal.draw(|frame| app.draw(frame)).unwrap();
+        assert!(app.focus == Focus::Diagnostics);
+        if mouse {
+            app.mouse(MouseEvent {
+                kind: MouseEventKind::Down(MouseButton::Left),
+                column: app.regions.history.x,
+                row: app.regions.history.y + 1,
+                modifiers: KeyModifiers::NONE,
+            });
+        } else {
+            key(&mut app, &mut runtime, KeyCode::Down, KeyModifiers::CONTROL);
+        }
+        assert_eq!(app.selected, 1);
+        assert!(app.focus == Focus::Result);
+        terminal.draw(|frame| app.draw(frame)).unwrap();
+        assert!(screen_line(&terminal, 29).contains("RESULT"));
+        key(&mut app, &mut runtime, KeyCode::Down, KeyModifiers::NONE);
+        assert_eq!((app.scroll, app.diagnostic_scroll), (1, 0));
+        assert_eq!(app.editor.lines(), ["unfinished draft"]);
+        assert_eq!(app.entries.len(), 2);
+    }
+}
+
+#[test]
+fn completion_popup_captures_wheels_including_its_border() {
+    let mut app = App::new(false, false);
+    let mut runtime = Runtime::new();
+    app.entries.push(multiline_entry());
+    app.entries.push(multiline_entry());
+    app.editor = editor::new("Math.");
+    app.edited(&runtime);
+    let mut terminal = Terminal::new(TestBackend::new(100, 30)).unwrap();
+    terminal.draw(|frame| app.draw(frame)).unwrap();
+    let inner = app.regions.completions;
+    let popup = app.regions.completion_popup;
+    for (kind, column, row, expected) in [
+        (MouseEventKind::ScrollDown, inner.x, inner.y, 1),
+        (MouseEventKind::ScrollUp, popup.x + 2, popup.y, 0),
+        (MouseEventKind::ScrollRight, inner.x, inner.y, 0),
+        (MouseEventKind::ScrollLeft, popup.x + 2, popup.y, 0),
+        (MouseEventKind::ScrollDown, inner.x, inner.y, 1),
+    ] {
+        app.mouse(MouseEvent {
+            kind,
+            column,
+            row,
+            modifiers: KeyModifiers::NONE,
+        });
+        assert_eq!(app.completion.as_ref().unwrap().selected, expected);
+        assert_eq!((app.selected, app.scroll, app.horizontal), (0, 0, 0));
+        assert_eq!((app.diagnostic_scroll, app.diagnostic_horizontal), (0, 0));
+        assert_eq!(app.editor.lines(), ["Math."]);
+        terminal.draw(|frame| app.draw(frame)).unwrap();
+    }
+    let selected = app.completion.as_ref().unwrap().candidates[1].clone();
+    key(&mut app, &mut runtime, KeyCode::Tab, KeyModifiers::NONE);
+    assert_eq!(app.editor.lines(), [selected]);
+    assert!(app.completion.is_none());
+    assert_eq!(app.entries.len(), 2);
+}
+
+#[test]
+fn gutter_scrollbars_follow_overflow_and_disappear_when_content_fits() {
+    let mut app = App::new(false, false);
+    let mut runtime = Runtime::new();
+    app.entries.push(multiline_entry());
+    let mut terminal = Terminal::new(TestBackend::new(100, 30)).unwrap();
+    key(&mut app, &mut runtime, KeyCode::F(4), KeyModifiers::NONE);
+    terminal.draw(|frame| app.draw(frame)).unwrap();
+    let top = gutter_symbols(&terminal, app.regions.output);
+    assert!(!top.trim().is_empty());
+    key(
+        &mut app,
+        &mut runtime,
+        KeyCode::PageDown,
+        KeyModifiers::NONE,
+    );
+    terminal.draw(|frame| app.draw(frame)).unwrap();
+    assert_ne!(gutter_symbols(&terminal, app.regions.output), top);
+
+    key(&mut app, &mut runtime, KeyCode::F(4), KeyModifiers::NONE);
+    terminal.draw(|frame| app.draw(frame)).unwrap();
+    let top = gutter_symbols(&terminal, app.regions.diagnostics);
+    assert!(!top.trim().is_empty());
+    key(&mut app, &mut runtime, KeyCode::End, KeyModifiers::NONE);
+    terminal.draw(|frame| app.draw(frame)).unwrap();
+    assert_ne!(gutter_symbols(&terminal, app.regions.diagnostics), top);
+
+    run(&mut app, &mut runtime, &array_source());
+    app.set_view(View::Table);
+    key(&mut app, &mut runtime, KeyCode::F(4), KeyModifiers::NONE);
+    terminal.draw(|frame| app.draw(frame)).unwrap();
+    let output = app.regions.output;
+    let body = Rect::new(output.x, output.y + 1, output.width, output.height - 1);
+    assert_eq!(
+        terminal.backend().buffer()[(output.right(), output.y)].symbol(),
+        " "
+    );
+    let top = gutter_symbols(&terminal, body);
+    assert!(!top.trim().is_empty());
+    key(&mut app, &mut runtime, KeyCode::End, KeyModifiers::NONE);
+    terminal.draw(|frame| app.draw(frame)).unwrap();
+    assert_ne!(gutter_symbols(&terminal, body), top);
+
+    let mut expanded = Terminal::new(TestBackend::new(100, 120)).unwrap();
+    expanded.draw(|frame| app.draw(frame)).unwrap();
+    assert_eq!(app.scroll, 0);
+    assert!(
+        gutter_symbols(&expanded, app.regions.output)
+            .trim()
+            .is_empty()
+    );
+}
+
+fn multiline_entry() -> Entry {
+    let lines = (0..60)
+        .map(|row| format!("line {row:02}"))
+        .collect::<Vec<_>>()
+        .join("\n");
+    Entry {
+        source: ".help".into(),
+        output: output::Output::Message(lines.clone()),
+        diagnostics: lines,
+    }
+}
+
+fn array_source() -> String {
+    let items = (0..60)
+        .map(|value| value.to_string())
+        .collect::<Vec<_>>()
+        .join(",");
+    format!("[{items}]")
+}
+
+fn gutter_symbols(terminal: &Terminal<TestBackend>, area: Rect) -> String {
+    let screen = terminal.backend().buffer();
+    (area.y..area.bottom())
+        .map(|row| screen[(area.right(), row)].symbol())
+        .collect()
 }
 
 fn screen_line(terminal: &Terminal<TestBackend>, row: u16) -> String {

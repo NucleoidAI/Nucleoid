@@ -2933,16 +2933,16 @@ top, bottom, left, and right. Internal zeros and empty rows or columns between
 occupied cells are preserved. Empty and all-zero matrices return `[]`. The input
 is not modified. Ragged matrices are rejected explicitly.
 This standalone utility does not change the full-size instance masks or return
-position metadata. Use `Matrix.locate` to retain the original position with
+position metadata. Use `Matrix.measure` to retain the original position with
 the crop.
 
-`Matrix.locate(matrix)` returns `{ matrix, x, y, width, height, volume }`,
+`Matrix.measure(matrix)` returns `{ matrix, x, y, width, height, volume }`,
 pairing the same tight crop with its zero-based top-left position in the
 original matrix, its size, and its volume: `x` is the column, `y` is the row,
 `width` is the crop's column count, `height` is its row count, and `volume` is
 the number of its nonzero cells. Empty and all-zero matrices return
 `{ matrix: [], x: 0, y: 0, width: 0, height: 0, volume: 0 }`. It uses the same
-validation as `Matrix.crop` and does not modify the input. For a located
+validation as `Matrix.crop` and does not modify the input. For a measured
 result, `Matrix.pad(result.matrix, rows, cols, result.x, result.y)` restores
 the crop to its original position on a canvas at least as large as the supplied
 dimensions.
@@ -2974,7 +2974,7 @@ rejects any other angle, such as the diagonal 45, and ragged matrices, returns
 
 `Matrix.move(matrix, x, y)` returns a new matrix in which the nonzero cells
 keep their shape and move together so that their bounding box starts at column
-`x` and row `y`, the position `Matrix.locate` reports. It equals
+`x` and row `y`, the position `Matrix.measure` reports. It equals
 `Matrix.pad(Matrix.crop(matrix), rows, cols, x, y)` with the matrix's own row
 and column counts: the cells left behind become zeros, and the canvas keeps its
 size unless the moved cells need more room to the right or below. An all-zero

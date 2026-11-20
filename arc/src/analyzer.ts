@@ -91,7 +91,7 @@ export async function value({
 
   instance.instance_name = instance_name;
 
-  const { x, y, width, height, volume } = Matrix.locate(
+  const { x, y, width, height, volume } = Matrix.measure(
     instance.input_instance_matrix
   );
 

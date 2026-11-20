@@ -1,8 +1,8 @@
 export function crop(matrix) {
-  return locate(matrix).matrix;
+  return measure(matrix).matrix;
 }
 
-export function locate(matrix) {
+export function measure(matrix) {
   const rows: number = matrix.length;
   const cols: number = matrix[0]?.length ?? 0;
   let top: number = rows;
@@ -143,7 +143,7 @@ export function rotate(matrix, degrees: number) {
 }
 
 // Moves the nonzero cells together so that their bounding box starts at
-// column x and row y, the position locate reports. The canvas keeps the
+// column x and row y, the position measure reports. The canvas keeps the
 // matrix's size and grows right or down, as pad does, when the moved cells
 // need more room.
 export function move(matrix, x: number, y: number) {

@@ -173,7 +173,7 @@ Run every check that applies and record each result:
 - **Values.** Every instance has an `implementation`, an `input_value` whose
   `id` is its name, and an `output_value`. The state steps matched every
   instance; none is missing, unmatched or duplicated. `input_value` agrees with
-  its input instance matrix, for example its `x` and `y` with `Matrix.locate`
+  its input instance matrix, for example its `x` and `y` with `Matrix.measure`
   when the model has those properties. A synthesized instance's
   `implementation` equals its source's with the instance's name, and with
   `x`, `y`, `width` and `height` set to its located input object. Its
