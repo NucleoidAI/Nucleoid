@@ -51,6 +51,8 @@ async function synthesize({ train }) {
 
         const synthesized_instance = {
           instance_name: synthesized_instance_name,
+          input_value: undefined,
+          output_value: undefined,
           input_instance_matrix: input_instance_matrix,
           output_instance_matrix: undefined,
         };
