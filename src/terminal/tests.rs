@@ -704,6 +704,128 @@ fn rendering_handles_small_resized_and_scrolled_table_workspaces() {
 }
 
 #[test]
+fn compact_workspaces_keep_results_and_editor_visible_with_optional_diagnostics() {
+    for (width, height) in [(40, 12), (60, 14), (80, 18)] {
+        let mut app = App::new(false, true);
+        let mut runtime = Runtime::new();
+        let mut terminal = Terminal::new(TestBackend::new(width, height)).unwrap();
+        terminal.draw(|frame| app.draw(frame)).unwrap();
+        assert!(app.regions.output.height > 0);
+        assert!(screen_line(&terminal, app.regions.output.y).contains("F5 runs it."));
+        assert!(app.regions.editor.height > 0);
+
+        app.mouse(MouseEvent {
+            kind: MouseEventKind::Down(MouseButton::Left),
+            column: app.regions.output.x,
+            row: app.regions.output.y,
+            modifiers: KeyModifiers::NONE,
+        });
+        assert!(app.focus == Focus::Result);
+
+        run(&mut app, &mut runtime, "assert(7, 7)\n7");
+        assert_eq!(runtime.assertions_run(), 1);
+        terminal.draw(|frame| app.draw(frame)).unwrap();
+        let result = app.regions.output;
+        assert!(result.height > 0);
+        assert_eq!(
+            terminal.backend().buffer()[(result.x, result.y)].symbol(),
+            "7"
+        );
+        if app.regions.diagnostics.height == 0 {
+            assert!(screen_line(&terminal, result.y - 1).contains("F4 diagnostics"));
+        }
+
+        key(&mut app, &mut runtime, KeyCode::F(4), KeyModifiers::NONE);
+        key(&mut app, &mut runtime, KeyCode::F(4), KeyModifiers::NONE);
+        terminal.draw(|frame| app.draw(frame)).unwrap();
+        assert!(app.focus == Focus::Diagnostics);
+        assert!(app.regions.diagnostics.height > 0);
+        assert!(screen_line(&terminal, app.regions.diagnostics.y).contains("logic graph"));
+        assert!(app.regions.editor.height > 0);
+
+        key(&mut app, &mut runtime, KeyCode::F(4), KeyModifiers::NONE);
+        terminal.draw(|frame| app.draw(frame)).unwrap();
+        assert!(app.regions.output.height > 0);
+        assert_eq!(runtime.assertions_run(), 1);
+        assert_eq!(app.entries.len(), 1);
+    }
+}
+
+#[test]
+fn status_bar_tracks_focus_and_completion_without_hiding_run_or_quit() {
+    for width in [40, 80, 100] {
+        let mut app = App::new(false, true);
+        let mut runtime = Runtime::new();
+        run(&mut app, &mut runtime, "1");
+        let mut terminal = Terminal::new(TestBackend::new(width, 24)).unwrap();
+        for label in [
+            "EDITOR",
+            "RESULT",
+            if width >= 80 { "DIAGNOSTICS" } else { "DIAG" },
+        ] {
+            terminal.draw(|frame| app.draw(frame)).unwrap();
+            let status = screen_line(&terminal, 23);
+            for hint in [label, "F5 run", "F4 focus", "Ctrl-Q quit"] {
+                assert!(status.contains(hint), "{status:?} missing {hint:?}");
+            }
+            if label == "RESULT" && width >= 80 {
+                assert!(status.contains("PgUp/Dn scroll"), "{status:?}");
+            }
+            key(&mut app, &mut runtime, KeyCode::F(4), KeyModifiers::NONE);
+        }
+        app.editor = editor::new("Mat");
+        app.edited(&runtime);
+        assert!(app.completion.is_some());
+        terminal.draw(|frame| app.draw(frame)).unwrap();
+        if width >= 80 {
+            let status = screen_line(&terminal, 23);
+            assert!(status.contains("Tab accept"), "{status:?}");
+            assert!(status.contains("Esc dismiss"), "{status:?}");
+        }
+    }
+}
+
+#[test]
+fn black_surfaces_preserve_readable_selection_and_explicit_error_markers() {
+    use ratatui::style::Color;
+
+    let mut app = App::new(false, false);
+    let mut runtime = Runtime::new();
+    run(&mut app, &mut runtime, "\n\nvalue = 7");
+    run(&mut app, &mut runtime, "unknown_name");
+    let mut terminal = Terminal::new(TestBackend::new(100, 30)).unwrap();
+    terminal.draw(|frame| app.draw(frame)).unwrap();
+    let screen = terminal.backend().buffer();
+    assert_eq!(screen[(0, 0)].bg, Color::Black);
+    let history = app.regions.history;
+    let result = app.regions.output;
+    let result_cell = &screen[(result.x, result.y)];
+    let selected_cell = &screen[(history.x, history.y + 1)];
+    let unselected_cell = &screen[(history.x, history.y)];
+    for background in [result_cell.bg, selected_cell.bg, unselected_cell.bg] {
+        assert!(
+            matches!(background, Color::Rgb(red, green, blue)
+                if red == green && green == blue && red <= 34),
+            "{background:?}"
+        );
+    }
+    assert_ne!(selected_cell.bg, unselected_cell.bg);
+    assert_ne!(selected_cell.fg, selected_cell.bg);
+    assert_ne!(result_cell.fg, unselected_cell.fg);
+    assert_eq!(screen[(history.x + 4, history.y + 1)].symbol(), "!");
+    assert!(screen_line(&terminal, history.y).contains("value = 7"));
+    assert!(screen_line(&terminal, result.y - 1).contains("Error"));
+    assert!(screen_line(&terminal, result.y).contains("ReferenceError"));
+}
+
+fn screen_line(terminal: &Terminal<TestBackend>, row: u16) -> String {
+    let screen = terminal.backend().buffer();
+    (0..screen.area.width)
+        .map(|column| screen[(column, row)].symbol())
+        .collect()
+}
+
+#[test]
 fn universal_claims_reach_terminal_submission_and_indent_every_quantifier_headers() {
     let mut app = App::new(false, false);
     let mut runtime = Runtime::new();

@@ -39,6 +39,10 @@ at the bottom, autocomplete for keywords, built-ins and model properties, and
 in-session input/result history. Click **Text**, **JSON** or **Table** to
 inspect a result without running the program again. Arrays of objects become
 table rows; other JSON values have property/value or index/value views.
+The workspace uses a black and charcoal palette with subtle green focus
+accents, an active editor line, and explicit error markers in result history.
+The status bar shows the focused pane and its relevant shortcuts, keeping
+**F5 run** and **Ctrl-Q quit** visible even in compact terminals.
 
 Enter inserts a newline; F5 runs the whole editor. Blank lines and
 pasted newlines never submit code or add indentation. Ctrl-J inserts an
@@ -51,6 +55,8 @@ F1-F3 changes tabs, F6 changes the result view, and Ctrl-Up / Ctrl-Down selects
 earlier results. Mouse clicks select tabs, views and results; click/drag edits
 the cursor/selection, and the wheel scrolls individual panes. Ctrl-C cancels
 input, Ctrl-Q exits, and `.help` lists all controls.
+At compact heights, results and diagnostics share a pane; F4 switches between
+them without hiding the editor.
 
 `nucleoid --plain` keeps the line-oriented interface below. Piped stdin or
 redirected stdout selects it automatically; file execution and the `--json`

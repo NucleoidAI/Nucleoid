@@ -83,6 +83,12 @@ captured result; switching views never reruns a program or changes its state.
 Table rows union the keys of object-array results, preserve missing cells
 separately from JSON nulls, and keep nested values in individual cells.
 Serialization errors, runtime errors and assertion failures remain visible.
+Black and charcoal surfaces keep the workspace subdued, with green focus
+accents, a highlighted editor line and explicit error markers in history.
+The status bar follows the focused pane and completion state; run and quit
+shortcuts stay visible at the minimum supported size of 40 columns by 12 rows.
+When results and diagnostics cannot both fit, F4 switches their shared pane
+while the editor remains visible.
 
 Enter inserts a newline without changing pasted indentation, including on
 empty lines; F5 submits the complete editor. Ctrl-Enter also submits on

@@ -4,7 +4,9 @@ use ratatui::style::{Modifier, Style};
 use ratatui::widgets::{Clear, List, ListItem, Paragraph, Row, Table};
 use unicode_width::UnicodeWidthStr;
 
-use super::{ACCENT, BACKGROUND, ERROR, FOREGROUND, MUTED, PANEL, Regions, as_u16, base, panel};
+use super::{
+    ACCENT, BACKGROUND, ERROR, FOREGROUND, HIGHLIGHT, MUTED, PANEL, Regions, as_u16, base, panel,
+};
 use crate::terminal::App;
 use crate::terminal::output::{Output, TableData, View, visible};
 
@@ -157,7 +159,10 @@ pub(super) fn completions(
         .take(visible_count)
         .map(|(index, candidate)| {
             ListItem::new(candidate.as_str()).style(if index == completion.selected {
-                Style::default().fg(BACKGROUND).bg(ACCENT)
+                Style::default()
+                    .fg(ACCENT)
+                    .bg(HIGHLIGHT)
+                    .add_modifier(Modifier::BOLD)
             } else {
                 base().bg(PANEL)
             })
