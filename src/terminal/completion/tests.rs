@@ -248,6 +248,23 @@ fn completion_offers_variance_and_stdev_on_lists_and_instance_lists() {
 }
 
 #[test]
+fn completion_offers_quantile_on_lists_and_instance_lists() {
+    let mut runtime = Runtime::new();
+    runtime
+        .run("waits = [3, 1]\nclass Trip\nTrip()\nquota = 1")
+        .unwrap();
+    for (prefix, expected) in [
+        ("waits.qua", ["waits.quantile"]),
+        ("Trip.qua", ["Trip.quantile"]),
+    ] {
+        let completion = Completion::find(&runtime, &editor::new(prefix), false).unwrap();
+        assert_eq!(completion.candidates, expected, "{prefix}");
+    }
+    let completion = Completion::find(&runtime, &editor::new("qu"), false).unwrap();
+    assert_eq!(completion.candidates, ["quota"]);
+}
+
+#[test]
 fn completion_offers_suppose_beside_a_variable_of_the_same_prefix() {
     let mut runtime = Runtime::new();
     runtime.run("supply = 3").unwrap();

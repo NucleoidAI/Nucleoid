@@ -2687,6 +2687,37 @@ assert(scatter, 25.829972899714782)
   cancels it, and `variance()` gives the square of the same spread. See the
   [root contract](nucleoid.spec.md#list-and-population-variances-and-standard-deviations).
 
+## List and population quantiles
+
+**The ninetieth percentile keeps the slow tail of response times live**
+
+```nuc
+class Request(millis):
+    this.millis = millis
+Request(120)
+Request(80)
+spike = Request(300)
+Request(95)
+Request(110)
+Request(140)
+p90 = Request.quantile(0.9, request -> request.millis)
+assert(p90, 220)
+spike.millis = 100
+Request(150)
+assert(p90, 144)
+```
+
+- [NUC 124](docs/nuc-0124.md) adds `quantile(q)` and `quantile(q, selector)`
+  to lists and class instance lists.
+  `Request.quantile(0.9, request -> request.millis)` is the time that nine in
+  ten requests stay within: the rank `0.9` lies halfway between the fifth and
+  the sixth of the six sorted times, so the result interpolates between them,
+  as NumPy's and pandas' `quantile` do.
+- `p90` is a live declaration. Once the spike settles at 100 ms the slow tail
+  shrinks, and a new 150 ms request moves the rank between the sixth and the
+  seventh sorted time, which gives `0.6 * 140 + 0.4 * 150`. See the
+  [root contract](nucleoid.spec.md#list-and-population-quantiles).
+
 ## Reactive list flattening
 
 **Flat turns nested lists into one live list**

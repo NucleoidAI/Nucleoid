@@ -21305,6 +21305,101 @@ wobble
 # return: 3.265986323710904"#);
 }
 
+/// Nucleoid finds the quantiles of lists with quantile
+#[rustfmt::skip]
+#[test]
+fn finds_the_quantiles_of_lists_with_quantile() {
+    let mut run = runner();
+    run("waits = [12, 3, 45, 7, 30, 18]");
+    run("slow = waits.quantile(0.9)");
+    run("quick = waits.quantile(0.2)");
+    assert_eq!(run("[slow, quick, waits]"), serde_json::json!([37.5, 7, [12, 3, 45, 7, 30, 18]]));
+    run("waits.push(50)");
+    assert_eq!(run("[slow, quick]"), serde_json::json!([47, 8]));
+    run("waits.shift()");
+    assert_eq!(run("[slow, quick]"), serde_json::json!([47.5, 7]));
+}
+
+/// Nucleoid finds the quartiles of class instance populations with quantile
+#[rustfmt::skip]
+#[test]
+fn finds_the_quartiles_of_class_instance_populations_with_quantile() {
+    let mut run = runner();
+    run(r#"class Parcel(weight):
+    this.weight = weight"#);
+    run("Parcel(4)");
+    run("Parcel(9)");
+    run("heavy = Parcel(15)");
+    run("Parcel(6)");
+    run("Parcel(2)");
+    run("lower = Parcel.quantile(0.25, parcel -> parcel.weight)");
+    run("upper = Parcel.quantile(0.75, parcel -> parcel.weight)");
+    assert_eq!(run("[lower, upper]"), serde_json::json!([4, 9]));
+    run("Parcel(11)");
+    assert_eq!(run("[lower, upper]"), serde_json::json!([4.5, 10.5]));
+    run("heavy.weight = 1");
+    assert_eq!(run("[lower, upper]"), serde_json::json!([2.5, 8.25]));
+}
+
+/// Nucleoid follows the rank and the selector of quantiles
+#[rustfmt::skip]
+#[test]
+fn follows_the_rank_and_the_selector_of_quantiles() {
+    let mut run = runner();
+    run("scores = [70, 85, 90, 60, 75, 80]");
+    run("rank = 0.9");
+    run("top = scores.quantile(rank)");
+    run("bonus = 5");
+    run("curved = scores.quantile(0.75, score -> score + bonus)");
+    assert_eq!(run("[top, curved]"), serde_json::json!([87.5, 88.75]));
+    run("rank = 0.2");
+    assert_eq!(run("[top, curved]"), serde_json::json!([70, 88.75]));
+    run("bonus = 10");
+    assert_eq!(run("[top, curved]"), serde_json::json!([70, 93.75]));
+    run("scores.push(95)");
+    assert_eq!(run("[top, curved]"), serde_json::json!([71, 97.5]));
+}
+
+/// Nucleoid rolls back failed quantile updates
+#[rustfmt::skip]
+#[test]
+fn rolls_back_failed_quantile_updates() {
+    let mut run = runner();
+    run(r#"def checked(level):
+    if level < 0:
+        throw "NEGATIVE_LEVEL"
+    return level
+levels = [3, 5, 10, 8]
+high = levels.quantile(0.75, checked)
+failure = ""
+try:
+    levels.push(-1)
+catch error:
+    failure = error
+assert([failure, levels, high], ["NEGATIVE_LEVEL", [3, 5, 10, 8], 8.5])
+try:
+    levels.push(6)
+    assert(high, 8)
+    throw "UNDO"
+catch error:
+    assert(error, "UNDO")
+assert([levels, high], [[3, 5, 10, 8], 8.5])
+class Tank(level): this.level = level
+Tank(4)
+Tank(8)
+Tank(6)
+low = Tank.quantile(0.25, tank -> checked(tank.level))
+failure = ""
+try:
+    Tank(-2)
+catch error:
+    failure = error
+assert([failure, Tank.length, low], ["NEGATIVE_LEVEL", 3, 5])
+Tank(12)
+low
+# return: 5.5"#);
+}
+
 /// Nucleoid flattens nested lists by one level
 #[rustfmt::skip]
 #[test]
