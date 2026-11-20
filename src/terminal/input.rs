@@ -3,7 +3,7 @@ use nucleoid::Runtime;
 
 use super::completion::Completion;
 use super::output::{Entry, Output, View};
-use super::{App, Focus, HELP, HISTORY_LIMIT, editor, output};
+use super::{App, Focus, HELP, HISTORY_LIMIT, editor, indentation, output};
 
 impl App {
     pub(super) fn key(&mut self, key: KeyEvent, runtime: &mut Runtime) -> bool {
@@ -120,10 +120,7 @@ impl App {
             KeyCode::Up if self.editor.lines().len() == 1 => self.recall(false),
             KeyCode::Down if self.editor.lines().len() == 1 => self.recall(true),
             KeyCode::Tab => self.complete_or_indent(runtime),
-            KeyCode::BackTab => {
-                editor::dedent(&mut self.editor);
-                self.completion = None;
-            }
+            KeyCode::BackTab => self.unindent(),
             KeyCode::Backspace if editor::dedent(&mut self.editor) => self.edited(runtime),
             KeyCode::Enter => {
                 self.completion = None;
@@ -146,6 +143,11 @@ impl App {
     }
 
     fn complete_or_indent(&mut self, runtime: &Runtime) {
+        self.history_index = None;
+        if indentation::indent_selection(&mut self.editor) {
+            self.completion = None;
+            return;
+        }
         if self.completion.is_none() {
             self.completion = Completion::find(runtime, &self.editor, false);
         }
@@ -154,7 +156,13 @@ impl App {
         } else {
             self.editor.insert_str(crate::INDENT);
         }
-        self.history_index = None;
+    }
+
+    fn unindent(&mut self) {
+        if indentation::unindent(&mut self.editor) {
+            self.history_index = None;
+        }
+        self.completion = None;
     }
 
     pub(super) fn edited(&mut self, runtime: &Runtime) {

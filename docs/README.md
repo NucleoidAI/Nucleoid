@@ -95,7 +95,12 @@ empty lines; F5 submits the complete editor. Ctrl-Enter also submits on
 non-Windows terminals that report it distinctly. Native Windows input maps
 pasted LF to Ctrl-Enter, so that key inserts a newline on Windows rather than
 submitting a partial pasted program. Ctrl-J inserts an automatically indented
-newline when typing by hand. Tab completes or indents;
+newline when typing by hand. Tab completes or inserts four spaces; with
+selected text it indents the selected lines without replacing them.
+Shift-Tab removes one leading indentation level from selected lines, or the
+current line regardless of cursor position. A selection ending at the start
+of a line leaves that line unchanged. Selection direction and cut/paste text
+are preserved; each shifted line is an ordinary undoable editor edit.
 Ctrl-Space opens suggestions. Ctrl-P / Ctrl-N navigates input history.
 Use F1-F3 for tabs, F6 or the view buttons for result formats, Ctrl-Up /
 Ctrl-Down for earlier results, and F4 to focus the editor, results or

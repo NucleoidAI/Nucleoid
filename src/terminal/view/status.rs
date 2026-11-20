@@ -27,6 +27,15 @@ pub(super) fn draw(frame: &mut Frame<'_>, area: Rect, app: &App) {
     hint(&mut spans, "F5", "run");
     if area.width >= 80 {
         match app.focus {
+            Focus::Editor
+                if app
+                    .editor
+                    .selection_range()
+                    .is_some_and(|(start, end)| start != end) =>
+            {
+                hint(&mut spans, "Tab", "indent");
+                hint(&mut spans, "Shift-Tab", "unindent");
+            }
             Focus::Editor if app.completion.is_some() => {
                 hint(&mut spans, "Tab", "accept");
                 hint(&mut spans, "Esc", "dismiss");

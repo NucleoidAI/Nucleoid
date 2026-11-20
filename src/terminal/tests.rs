@@ -387,6 +387,98 @@ fn familiar_undo_redo_and_cut_paste_shortcuts_work_in_the_editor() {
 }
 
 #[test]
+fn selected_code_indents_without_replacing_or_running_it() {
+    let mut app = App::new(false, false);
+    let mut runtime = Runtime::new();
+    let source = "value = 7\nvalue + 1";
+    app.editor = editor::new(source);
+    app.editor.select_all();
+    app.editor.set_yank_text("previous cut");
+
+    key(&mut app, &mut runtime, KeyCode::Tab, KeyModifiers::NONE);
+    assert_eq!(app.editor.lines(), ["    value = 7", "    value + 1"]);
+    assert!(app.editor.is_selecting());
+    for (width, height) in [(40, 12), (100, 30)] {
+        let mut terminal = Terminal::new(TestBackend::new(width, height)).unwrap();
+        terminal.draw(|frame| app.draw(frame)).unwrap();
+        let screen: String = terminal
+            .backend()
+            .buffer()
+            .content
+            .iter()
+            .map(ratatui::buffer::Cell::symbol)
+            .collect();
+        assert!(screen.contains("Tab indent"));
+        assert!(screen.contains("Shift-Tab unindent"));
+        assert!(screen.contains("F5 run"));
+        assert!(screen.contains("Ctrl-Q quit"));
+    }
+    key(
+        &mut app,
+        &mut runtime,
+        KeyCode::BackTab,
+        KeyModifiers::SHIFT,
+    );
+    assert_eq!(app.editor.lines().join("\n"), source);
+    assert_eq!(app.editor.yank_text(), "previous cut");
+
+    for _ in 0..2 {
+        key(
+            &mut app,
+            &mut runtime,
+            KeyCode::Char('z'),
+            KeyModifiers::CONTROL,
+        );
+    }
+    assert_eq!(app.editor.lines(), ["    value = 7", "    value + 1"]);
+    for _ in 0..2 {
+        key(
+            &mut app,
+            &mut runtime,
+            KeyCode::Char('y'),
+            KeyModifiers::CONTROL,
+        );
+    }
+    assert_eq!(app.editor.lines().join("\n"), source);
+    assert!(app.entries.is_empty());
+    assert!(!runtime.state.has_variable("value"));
+
+    key(&mut app, &mut runtime, KeyCode::F(5), KeyModifiers::NONE);
+    assert_eq!(app.entries.len(), 1);
+    assert_eq!(app.entries[0].output.text(View::Text), "8");
+}
+
+#[test]
+fn unindenting_recalled_input_keeps_the_edited_buffer() {
+    let mut app = App::new(false, false);
+    let mut runtime = Runtime::new();
+    app.history.push("    value = 7".into());
+    app.editor = editor::new("unfinished draft");
+    key(
+        &mut app,
+        &mut runtime,
+        KeyCode::Char('p'),
+        KeyModifiers::CONTROL,
+    );
+    assert_eq!(app.editor.lines(), ["    value = 7"]);
+    key(
+        &mut app,
+        &mut runtime,
+        KeyCode::BackTab,
+        KeyModifiers::SHIFT,
+    );
+    key(
+        &mut app,
+        &mut runtime,
+        KeyCode::Char('n'),
+        KeyModifiers::CONTROL,
+    );
+    assert_eq!(app.editor.lines(), ["value = 7"]);
+    assert_eq!(app.draft, "unfinished draft");
+    assert!(app.entries.is_empty());
+}
+
+#[test]
 fn windows_control_enter_is_a_pasted_lf_not_an_execution_shortcut() {
     let mut app = App::new(false, false);
     let mut runtime = Runtime::new();

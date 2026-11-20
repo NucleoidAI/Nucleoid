@@ -49,7 +49,9 @@ pasted newlines never submit code or add indentation. Ctrl-J inserts an
 automatically indented newline when writing a block by hand.
 Ctrl-Enter also runs on non-Windows terminals that report it distinctly;
 Windows treats it as a newline because pasted LF produces the same key event.
-Tab accepts autocomplete (or indents); Ctrl-Space opens suggestions.
+Tab accepts autocomplete (or inserts four spaces); with selected text it
+indents the selected lines without replacing them. Shift-Tab unindents the
+selection or current line. Ctrl-Space opens suggestions.
 Ctrl-P / Ctrl-N recalls input while preserving an unfinished draft.
 F1-F3 changes tabs, F6 changes the result view, and Ctrl-Up / Ctrl-Down selects
 earlier results. Mouse clicks select tabs, views and results; click/drag edits

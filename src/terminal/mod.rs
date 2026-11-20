@@ -1,5 +1,6 @@
 mod completion;
 mod editor;
+mod indentation;
 mod input;
 mod output;
 mod pointer;
@@ -40,9 +41,12 @@ Windows delivers pasted LF as Ctrl-Enter, so both insert a newline there.
 Ctrl-J inserts an automatically indented newline.
 
 Tab accepts a completion, or inserts four spaces when none is available.
+With selected text, Tab indents its lines without replacing the selection.
+Shift-Tab unindents the selected lines, or the current line from any position.
 Ctrl-Space opens completions; Up/Down selects; Escape dismisses.
 Ctrl-P / Ctrl-N recalls history and restores your unfinished draft.
-Ctrl-Z / Ctrl-Y undoes / redoes edits. Shift-arrows selects text.
+Ctrl-Z / Ctrl-Y undoes / redoes edits, including each shifted line.
+Shift-arrows selects text.
 Ctrl-X cuts; Ctrl-V pastes the editor's last cut text.
 Ctrl-C cancels input. Ctrl-D on an empty editor / Ctrl-Q exits.
 

@@ -103,11 +103,19 @@ fn editor_panel(frame: &mut Frame<'_>, area: Rect, app: &mut App, regions: &mut 
             )
             .alignment(Alignment::Right),
         )
-        .title_bottom(Line::from(if area.width >= 70 {
-            " Enter newline  Tab complete  Ctrl-J autoindent "
-        } else {
-            " Enter newline  Tab complete "
-        }));
+        .title_bottom(Line::from(
+            if app
+                .editor
+                .selection_range()
+                .is_some_and(|(start, end)| start != end)
+            {
+                " Tab indent  Shift-Tab unindent "
+            } else if area.width >= 70 {
+                " Enter newline  Tab complete  Ctrl-J autoindent "
+            } else {
+                " Enter newline  Tab complete "
+            },
+        ));
     regions.editor = editor_block.inner(area);
     app.editor.set_block(editor_block);
     app.editor.set_style(base().bg(PANEL));
