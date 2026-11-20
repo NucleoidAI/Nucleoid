@@ -74,6 +74,7 @@ const LIST_MEMBERS: &[&str] = &[
     "median",
     "variance",
     "stdev",
+    "quantile",
     "max",
     "min",
     "distinct",

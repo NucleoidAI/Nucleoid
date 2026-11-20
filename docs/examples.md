@@ -4204,6 +4204,34 @@ press.readings.push(50)
   and the
   [root contract](../nucleoid.spec.md#list-and-population-variances-and-standard-deviations).
 
+## List and population quantiles
+
+**Ninetieth percentiles flag the routes whose trips run late**
+
+```nuc
+class Route(name, times):
+    this.name = name
+    this.times = times
+$Route.slow = $Route.times.quantile(0.9)
+$Route.late = $Route.slow > 40
+north = Route("north", [22, 25, 31, 28, 35, 24])
+south = Route("south", [30, 41, 38, 33, 36, 52])
+assert([north.late, south.slow, south.late], [false, 46.5, true])
+north.times.push(50)
+south.times.pop()
+[north.slow, north.late, south.slow, south.late]
+# return: [41,true,39.8,false]
+```
+
+- Each route keeps the ninetieth percentile of its own trip times in a
+  class-level rule, and a second rule flags the routes whose slowest tenth
+  runs past 40 minutes.
+- Both rules follow every trip: a 50-minute trip on the north route lifts its
+  percentile from `33` to `41` and flags it, and dropping the south route's
+  52-minute trip lowers its percentile from `46.5` to `39.8`, which clears its
+  flag. See [NUC 124](nuc-0124.md) and the
+  [root contract](../nucleoid.spec.md#list-and-population-quantiles).
+
 ## Reactive list flattening
 
 **Flattening keeps the dirty tiles of every room counted**

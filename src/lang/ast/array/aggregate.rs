@@ -2,7 +2,7 @@ use std::cmp::Ordering;
 use std::sync::Arc;
 
 use super::query::{expect_function, optional_selector};
-use crate::error::Result;
+use crate::error::{Error, Result};
 use crate::lang::ast::operator::{binary, compare};
 use crate::lang::ast::{BinaryOp, Function};
 use crate::runtime::Runtime;
@@ -34,7 +34,7 @@ pub(super) fn is_unordered(key: &Value) -> bool {
 }
 
 #[must_use]
-fn median_value(values: &[Value]) -> Value {
+fn sorted_statistic(values: &[Value], statistic: impl FnOnce(&[f64]) -> f64) -> Value {
     if values.iter().any(Value::is_undefined) {
         return Value::Undefined;
     }
@@ -46,17 +46,19 @@ fn median_value(values: &[Value]) -> Value {
     }
 
     numbers.sort_by(|left, right| left.partial_cmp(right).unwrap_or(Ordering::Equal));
+    Value::Number(statistic(&numbers))
+}
 
-    let median = match numbers.split_at_checked(numbers.len() / 2) {
+#[must_use]
+fn median(numbers: &[f64]) -> f64 {
+    match numbers.split_at_checked(numbers.len() / 2) {
         Some((lower, upper)) => match (lower.last(), upper.first()) {
             (Some(low), Some(high)) if lower.len() == upper.len() => (low + high) / 2.0,
             (_, Some(center)) => *center,
             (_, None) => f64::NAN,
         },
         None => f64::NAN,
-    };
-
-    Value::Number(median)
+    }
 }
 
 #[must_use]
@@ -74,6 +76,28 @@ fn population_variance(values: &[Value]) -> Option<f64> {
     });
 
     Some(squares / count)
+}
+
+fn quantile_rank(rank: Option<&Value>) -> Result<f64> {
+    match rank {
+        Some(Value::Number(rank)) if (0.0..=1.0).contains(rank) => Ok(*rank),
+        _ => Err(Error::type_error("quantile expects a number from 0 to 1")),
+    }
+}
+
+#[must_use]
+fn interpolate(numbers: &[f64], rank: f64) -> f64 {
+    let position = number::from_usize(numbers.len().saturating_sub(1)) * rank;
+    let lower = number::to_usize(position);
+    let fraction = position - number::from_usize(lower);
+
+    match numbers.get(lower..) {
+        Some([low, high, ..]) if !number::equal(fraction, 0.0) && !number::equal(*low, *high) => {
+            (1.0 - fraction) * low + fraction * high
+        }
+        Some([low, ..]) => *low,
+        Some([]) | None => f64::NAN,
+    }
 }
 
 impl Runtime {
@@ -97,12 +121,24 @@ impl Runtime {
         Ok(match property {
             "distinct" => Value::List(self.distinct_values(values)),
             "mode" => self.mode_value(values),
-            "median" => median_value(&values),
+            "median" => sorted_statistic(&values, median),
             "variance" => population_variance(&values).map_or(Value::Undefined, Value::Number),
             "stdev" => population_variance(&values)
                 .map_or(Value::Undefined, |variance| Value::Number(variance.sqrt())),
             _ => builtins::math(property, &values)?,
         })
+    }
+
+    pub(super) fn quantile_items(
+        &mut self,
+        items: Vec<Value>,
+        arguments: &[Value],
+    ) -> Result<Value> {
+        let rank = quantile_rank(arguments.first())?;
+        let selector = optional_selector(arguments.get(1).cloned(), "quantile")?;
+        let values = self.select_items(items, selector.as_ref())?;
+        let quantile = sorted_statistic(&values, |numbers| interpolate(numbers, rank));
+        Ok(quantile)
     }
 
     pub(super) fn extreme_item(

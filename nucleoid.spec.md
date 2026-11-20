@@ -6851,6 +6851,102 @@ t.promote(bob)
   `Nucleoid rolls back failed variance updates` specify the executable
   behavior. `tests/list_variances.rs` executes the rest.
 
+## List and population quantiles
+
+- [NUC 124](docs/nuc-0124.md) adds the read-only list query `quantile` to lists
+  and class instance lists. No syntax, keyword or error type is added.
+- `RECEIVER.quantile(q)` returns the `q` quantile of the receiver's items, for a
+  number `q` from `0` to `1`, and `RECEIVER.quantile(q, selector)` that of
+  `selector(item)` for every item: `0` gives the smallest value and `1` the
+  largest. Between them the values are interpolated linearly between the two
+  closest ranks, the default method of NumPy's and pandas' `quantile`, R's
+  type 7 and Excel's `PERCENTILE.INC`.
+- The values are converted to numbers once and ordered by a stable ascending
+  sort of a private list `s`. With `n` values the rank is `h = (n - 1) * q`,
+  `lo` is its whole part and `t = h - lo` its fraction, in 64-bit floating
+  point. A whole rank, where `t` is `0`, gives the value at `lo` itself, and
+  so do two equal neighbours, where `s[lo] == s[lo + 1]`; otherwise the result
+  is `(1 - t) * s[lo] + t * s[lo + 1]`, R's type 7 computation. So
+  `[2, 4, 4, 4, 5, 5, 7, 9].quantile(0.9)` is `7.6`,
+  `[12, 3, 45, 7, 30, 18].quantile(0.2)` is `7`, the second smallest value,
+  and `[3, 3].quantile(0.01)` is `3`.
+- For a list of finite numbers, `xs.quantile(q)` is exactly what
+  `(1 - h % 1) * s[h] + h % 1 * s[Math.ceil(h)]` gives with
+  `s = xs.sortBy(v -> v)` and `h = (s.length - 1) * q` wherever the rank is
+  whole or its two neighbours differ, apart from the sign of a zero, which
+  the next rule describes. Where they are equal the query gives
+  their value, while the spelling can land one unit in the last place off, as
+  `2.9999999999999996` for `[3, 3]` at `0.01`. The whole-rank rule keeps a
+  whole rank from reading `0 * Infinity`, so `[1, x].quantile(0)` is `1` and
+  `[1, x].quantile(1)` is `x` for any number `x`, `Infinity` included.
+- `-0` and `0` are equal neighbours, so the result takes the sign of the lower
+  one in the sorted order, which keeps the receiver order of equal values:
+  `[-0, 0].quantile(0.5)` is `-0` and `[0, -0].quantile(0.5)` is `0`. The
+  accepted spelling gives `0` for both, and at the rank `-0` it turns a `-0`
+  value into `0`.
+- The receiver is never sorted or written: after
+  `waits = [12, 3, 45, 7, 30, 18]`, `waits.quantile(0.9)` is `37.5` and `waits`
+  keeps its order.
+- A single value gives that value for every rank, and an empty receiver gives
+  NaN. A value that converts to NaN makes the result NaN. An undefined value
+  makes it undefined, which a declaration stores as `null`, ahead of NaN; every
+  item is still visited. Infinities take their places in the order and the
+  interpolation follows 64-bit floating point, so `-Infinity` and `Infinity`
+  at the two closest ranks give NaN.
+- **Ranks.** The first argument is required and must be a number from `0` to
+  `1`, both included. Anything else raises
+  `TypeError("quantile expects a number from 0 to 1")`, even on an empty
+  receiver: a missing argument, NaN, a number outside the range, a numeric
+  string, a boolean, `null`, undefined, a list, an object or a function. The
+  rank is checked before the selector.
+- **Selectors.** The optional second argument is a selector. It is called once
+  for every item, in order, with only the item; further parameters are `null`.
+  A supplied second argument that is not a function, including `null`, raises
+  `TypeError("quantile expects a function")`, even on an empty receiver.
+- The receivers and the numeric conversion are those of `median`: a list
+  however it is reached, or a class's instance list in population order, named
+  by the class, by a variable that holds the class or by `$Name`; `null`,
+  `false`, empty strings and empty lists are `0`, `true` is `1`, numeric
+  strings and one-item lists are their number, and objects, other strings and
+  longer lists are NaN. On a class name, `quantile` is the population query
+  even when the class declares an instance method `quantile`; its instances
+  keep calling that method.
+- `quantile` reads items, not bindings, so a `null` item counts `0` without
+  settling a declaration to `null`, while the reads inside a selector follow
+  the existing rules.
+- `quantile` follows the shared rules of the list queries: it reads its
+  receiver before its arguments, evaluates every supplied argument once, left
+  to right, including unused extras, and never writes the receiver. A
+  declaration that uses it depends on the list or population, on its argument
+  expressions, the rank included, and on whatever the selector reads, so list
+  mutations, new and deleted instances, property changes and a changed rank
+  re-evaluate it, in class-level rules too. Selector errors and a rank that a
+  change makes invalid roll back through the existing transaction. A null or
+  undefined receiver yields undefined without evaluating the arguments.
+- `xs.quantile(0.5)` is the middle value with an odd count, as `xs.median()`
+  is. With an even count it is `0.5 * a + 0.5 * b` of the two middle values,
+  or `a` when they are equal, where `median` computes `(a + b) / 2`. The two
+  agree unless the sum `a + b` overflows, as for `[1e308, 1.5e308]` and
+  `[1e308, 1e308]`, whose medians are `Infinity` and whose `0.5` quantiles are
+  `1.25e308` and `1e308`; unless halving rounds a subnormal value, as for
+  `[5e-324, 1e-323]`, whose median is `1e-323` and whose `0.5` quantile is
+  `5e-324`; and unless the middle values are `-0` and `0` in that order, where
+  the median is `0` and the quantile `-0`.
+- A call converts every value once and sorts one list of numbers, in
+  O(n log n) time, without recursion.
+- The call keeps its ordinary rendering, so `p90 = xs.quantile(0.9)` explains
+  as `p90 = xs.quantile(0.9)`, and `why` lists the receiver among the
+  declaration's dependencies.
+- `quantile of xs` stays `SyntaxError("Unexpected keyword 'of'")`: `quantile`
+  is not one of the noun queries. Property reads such as `xs.quantile`,
+  bindings and object properties named `quantile`, `quantile(...)` without a
+  definition, `Math.quantile`, `xs.percentile(...)`, `xs.quantiles(...)`,
+  `xs.median(0.5)` and instance methods named `quantile` called on an instance
+  keep their accepted results. The four entries beginning
+  `Nucleoid finds the quantiles of lists with quantile` through
+  `Nucleoid rolls back failed quantile updates` specify the executable
+  behavior. `tests/list_quantiles.rs` executes the rest.
+
 ## Object entry loops with ordered rollback
 
 - [NUC 72](docs/nuc-0072.md) adds loops over an object's entries:
@@ -26964,6 +27060,85 @@ assert([failure, Gauge.length, wobble], ["NEGATIVE_LEVEL", 2, 2])
 Gauge(12)
 wobble
 # return: 3.265986323710904
+---
+# Nucleoid finds the quantiles of lists with quantile
+
+waits = [12, 3, 45, 7, 30, 18]
+slow = waits.quantile(0.9)
+quick = waits.quantile(0.2)
+assert([slow, quick, waits], [37.5, 7, [12, 3, 45, 7, 30, 18]])
+waits.push(50)
+assert([slow, quick], [47, 8])
+waits.shift()
+assert([slow, quick], [47.5, 7])
+---
+# Nucleoid finds the quartiles of class instance populations with quantile
+
+class Parcel(weight):
+    this.weight = weight
+Parcel(4)
+Parcel(9)
+heavy = Parcel(15)
+Parcel(6)
+Parcel(2)
+lower = Parcel.quantile(0.25, parcel -> parcel.weight)
+upper = Parcel.quantile(0.75, parcel -> parcel.weight)
+assert([lower, upper], [4, 9])
+Parcel(11)
+assert([lower, upper], [4.5, 10.5])
+heavy.weight = 1
+assert([lower, upper], [2.5, 8.25])
+---
+# Nucleoid follows the rank and the selector of quantiles
+
+scores = [70, 85, 90, 60, 75, 80]
+rank = 0.9
+top = scores.quantile(rank)
+bonus = 5
+curved = scores.quantile(0.75, score -> score + bonus)
+assert([top, curved], [87.5, 88.75])
+rank = 0.2
+assert([top, curved], [70, 88.75])
+bonus = 10
+assert([top, curved], [70, 93.75])
+scores.push(95)
+assert([top, curved], [71, 97.5])
+---
+# Nucleoid rolls back failed quantile updates
+
+def checked(level):
+    if level < 0:
+        throw "NEGATIVE_LEVEL"
+    return level
+levels = [3, 5, 10, 8]
+high = levels.quantile(0.75, checked)
+failure = ""
+try:
+    levels.push(-1)
+catch error:
+    failure = error
+assert([failure, levels, high], ["NEGATIVE_LEVEL", [3, 5, 10, 8], 8.5])
+try:
+    levels.push(6)
+    assert(high, 8)
+    throw "UNDO"
+catch error:
+    assert(error, "UNDO")
+assert([levels, high], [[3, 5, 10, 8], 8.5])
+class Tank(level): this.level = level
+Tank(4)
+Tank(8)
+Tank(6)
+low = Tank.quantile(0.25, tank -> checked(tank.level))
+failure = ""
+try:
+    Tank(-2)
+catch error:
+    failure = error
+assert([failure, Tank.length, low], ["NEGATIVE_LEVEL", 3, 5])
+Tank(12)
+low
+# return: 5.5
 ---
 # Nucleoid flattens nested lists by one level
 

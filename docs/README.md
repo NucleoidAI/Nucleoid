@@ -2719,7 +2719,7 @@ Full detail: [NUC 9](nuc-0009.md), [NUC 46](nuc-0046.md), [NUC 119](nuc-0119.md)
 | `Math` | `pow`, `sqrt`, `floor`, `round`, `max`, `min`, `clamp` ([NUC 21](nuc-0021.md)), `lerp` ([NUC 22](nuc-0022.md)), `saturate` ([NUC 23](nuc-0023.md)), `smoothstep(lower, upper, value)` (accepted [NUC 33](nuc-0033.md)), `smootherstep(lower, upper, value)` (accepted [NUC 35](nuc-0035.md)), `remap(start, end, targetStart, targetEnd, value)` (accepted [NUC 39](nuc-0039.md)) |
 | `String` | `String.fromCharCode`; instance `charAt`, `length`, `lower`, `replace`, `replaceAll` (accepted [NUC 42](nuc-0042.md)), `repeat`, `split`, `padStart` and `padEnd` ([NUC 111](nuc-0111.md)), Python's `startswith`, `endswith` and `join(items)`, with the separator as the receiver ([NUC 110](nuc-0110.md)), the size and emptiness methods `length()`, `size()`, `len()`, `isEmpty()`, `is_empty()` and `isNotEmpty()` ([NUC 116](nuc-0116.md)), and the case conversion aliases `uppercase()`, `to_uppercase()` and `uppercased()` of `toUpperCase()`, and `lowercase()`, `to_lowercase()` and `lowercased()` of `toLowerCase()` ([NUC 118](nuc-0118.md)) |
 | `Date` | `Date()`, `Date(string)`, `Date(number)`, `Date.now()`, `Date.parse()`; instance `getTime`, `getYear`, `toDateString` |
-| `List` | `push`, `pop`, `filter`, `map`, `flatMap` (accepted [NUC 41](nuc-0041.md)), `flat` ([NUC 103](nuc-0103.md)), `reduce`, `find`, `some`, `every`, `slice`, `sort` (in place, [NUC 58](nuc-0058.md)), `join`, `length`, and the queries `at`, `includes`, `indexOf`, `lastIndexOf`, `findIndex`, `findLast`, `findLastIndex` and `concat` ([NUC 61](nuc-0061.md)), `sum` ([NUC 68](nuc-0068.md)), `max` and `min` ([NUC 69](nuc-0069.md)), `distinct` ([NUC 71](nuc-0071.md)), `count(predicate)` ([NUC 73](nuc-0073.md)), `mode` ([NUC 75](nuc-0075.md)), `maxBy` and `minBy` ([NUC 77](nuc-0077.md)), `average` ([NUC 80](nuc-0080.md)), `median` ([NUC 84](nuc-0084.md)), `sortBy` ([NUC 105](nuc-0105.md)), `partition` ([NUC 108](nuc-0108.md)), `product` ([NUC 114](nuc-0114.md)), `variance` and `stdev` ([NUC 123](nuc-0123.md)), the size and emptiness aliases `size()`, `len()`, `isEmpty()`, `is_empty()` and `isNotEmpty()` ([NUC 116](nuc-0116.md)), and the first and last element aliases `first()`, `last()`, `first(predicate)` and `last(predicate)` ([NUC 117](nuc-0117.md)); `sum`, `max`, `min` and `mode` also read as `sum of list` ([NUC 75](nuc-0075.md) revision 2) |
+| `List` | `push`, `pop`, `filter`, `map`, `flatMap` (accepted [NUC 41](nuc-0041.md)), `flat` ([NUC 103](nuc-0103.md)), `reduce`, `find`, `some`, `every`, `slice`, `sort` (in place, [NUC 58](nuc-0058.md)), `join`, `length`, and the queries `at`, `includes`, `indexOf`, `lastIndexOf`, `findIndex`, `findLast`, `findLastIndex` and `concat` ([NUC 61](nuc-0061.md)), `sum` ([NUC 68](nuc-0068.md)), `max` and `min` ([NUC 69](nuc-0069.md)), `distinct` ([NUC 71](nuc-0071.md)), `count(predicate)` ([NUC 73](nuc-0073.md)), `mode` ([NUC 75](nuc-0075.md)), `maxBy` and `minBy` ([NUC 77](nuc-0077.md)), `average` ([NUC 80](nuc-0080.md)), `median` ([NUC 84](nuc-0084.md)), `sortBy` ([NUC 105](nuc-0105.md)), `partition` ([NUC 108](nuc-0108.md)), `product` ([NUC 114](nuc-0114.md)), `variance` and `stdev` ([NUC 123](nuc-0123.md)), `quantile` ([NUC 124](nuc-0124.md)), the size and emptiness aliases `size()`, `len()`, `isEmpty()`, `is_empty()` and `isNotEmpty()` ([NUC 116](nuc-0116.md)), and the first and last element aliases `first()`, `last()`, `first(predicate)` and `last(predicate)` ([NUC 117](nuc-0117.md)); `sum`, `max`, `min` and `mode` also read as `sum of list` ([NUC 75](nuc-0075.md) revision 2) |
 | `Class` | the global list of declared types; `Class.length` |
 
 ```
@@ -4314,6 +4314,70 @@ spread
   [list and population variances and standard deviations](../nucleoid.spec.md#list-and-population-variances-and-standard-deviations)
   section.
 
+### List and population quantiles
+
+```
+rain = [18, 21, 24, 15]
+wet = rain.quantile(0.75)
+class Lap(seconds):
+    this.seconds = seconds
+Lap(7)
+Lap(9)
+Lap(4)
+quick = Lap.quantile(0.25, lap -> lap.seconds)
+assert([wet, quick], [21.75, 5.5])
+rain.push(30)
+Lap(5)
+assert([wet, quick], [24, 4.75])
+quick
+```
+
+- This is the complete
+  `Nucleoid finds the quantiles of lists and populations with quantile`
+  program in `tests/reference.md`, without its title and expected-return
+  metadata; it returns `4.75`.
+- [NUC 124](nuc-0124.md) adds `quantile(q)` and `quantile(q, selector)` to
+  lists and class instance lists: the `q` quantile, for a number `q` from `0`
+  to `1`, with linear interpolation between the two closest ranks, the default
+  method of NumPy's and pandas' `quantile`, R's type 7 and Excel's
+  `PERCENTILE.INC`. `0` gives the smallest value and `1` the largest.
+- The values are sorted in a private list `s`, and the rank is
+  `h = (n - 1) * q` for `n` values. A whole rank gives the value at it, two
+  equal neighbours give their value, and any other rank between two values
+  gives `(1 - t) * s[lo] + t * s[lo + 1]` for its whole part `lo` and
+  fraction `t`, as R computes type 7. For finite numbers `xs.quantile(q)` is
+  therefore exactly `(1 - h % 1) * s[h] + h % 1 * s[Math.ceil(h)]` with
+  `s = xs.sortBy(v -> v)` and `h = (s.length - 1) * q` wherever the rank is
+  whole or its neighbours differ, apart from the sign of a zero, and
+  `[3, 3].quantile(0.01)` is `3` where that spelling gives
+  `2.9999999999999996`.
+- `xs.quantile(0.5)` is `xs.median()` with an odd count; with an even count it
+  takes `0.5 * a + 0.5 * b` of the two middle values, or `a` when they are
+  equal, which agrees with the median's `(a + b) / 2` unless `a + b`
+  overflows, as for `[1e308, 1e308]`, halving rounds a subnormal value, or
+  the middle values are `-0` and `0` in that order.
+- Values convert as `sum` converts them. A single value gives itself for every
+  rank and an empty list or class gives NaN. A value that converts to NaN
+  makes the result NaN. An undefined value makes it undefined, stored as
+  `null`, and wins over a NaN value, as in `median`. A `null` item counts `0`
+  without settling a declaration to `null`, while the reads inside a selector
+  follow the existing rules.
+- The rank is required: anything but a number from `0` to `1` raises
+  `TypeError("quantile expects a number from 0 to 1")`, even on an empty
+  receiver, before the selector is checked. The selector is the optional second
+  argument, called once per item, in order, with only the item; a supplied
+  selector that is not a function, including `null`, raises
+  `TypeError("quantile expects a function")`, even on an empty receiver.
+- Quantiles are read-only and live: a declaration follows the list or
+  population, the rank, the arguments and what the selector reads, in
+  class-level rules too. On a class name, `Name.quantile(...)` is the
+  population query even when the class declares an instance method
+  `quantile`; instances keep calling the method. `quantile` is not a noun
+  query, so `quantile of xs` stays a syntax error.
+- The authoritative contract is the
+  [list and population quantiles](../nucleoid.spec.md#list-and-population-quantiles)
+  section.
+
 ---
 
 ## 12. Reasoning Operations
@@ -4954,6 +5018,8 @@ Messages are exact and are part of the observable behaviour of the language.
 | A supplied `median` selector that is not a function, including `null`, even on an empty receiver | `median expects a function` |
 | A supplied `product` selector that is not a function, including `null`, even on an empty receiver | `product expects a function` |
 | A supplied `variance` or `stdev` selector that is not a function, including `null`, even on an empty receiver | `variance expects a function` or `stdev expects a function` |
+| A `quantile` rank that is not a number from `0` to `1`, including a missing rank, NaN, `null`, a numeric string or a boolean, even on an empty receiver | `quantile expects a number from 0 to 1` |
+| A supplied `quantile` selector that is not a function, including `null`, even on an empty receiver | `quantile expects a function` |
 | A supplied `max` or `min` selector that is not a function, including `null`, even on an empty receiver | `max expects a function` or `min expects a function` |
 | A supplied `distinct` selector that is not a function, including `null`, even on an empty receiver | `distinct expects a function` |
 | Missing or non-function `count` predicate, including `null`, even on an empty receiver | `count expects a function` |
@@ -5225,6 +5291,7 @@ items.sortBy(key)  Name.sortBy(key)   live new list in ascending key order; ties
 items.partition(test)  Name.partition(test) live [kept, rest]: what filter(test) keeps, then the others (NUC 108)
 items.product()  Name.product(selector) live product from 1: exactly items.reduce((t, x) => t * x, 1) (NUC 114)
 items.variance()  Name.stdev(selector) live population variance from the mean, and its square root (NUC 123)
+items.quantile(q)  Name.quantile(q, f) live q quantile, linear between the two closest ranks of the sorted values (NUC 124)
 text.startswith(p)  text.endswith(s)  Python spellings: exactly text.startsWith(p), text.endsWith(s) (NUC 110)
 ", ".join(items)  ", ".join(Name)      Python spelling: exactly items.join(", "), Name.join(", ") (NUC 110)
 text.padStart(n, fill)  text.padEnd(n)  live text padded before or after to n characters; fill defaults to " " (NUC 111)

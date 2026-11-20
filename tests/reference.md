@@ -2853,6 +2853,23 @@ assert([swing, spread], [2.7386127875258306, 2.6666666666666665])
 spread
 # return: 2.6666666666666665
 ---
+# Nucleoid finds the quantiles of lists and populations with quantile
+
+rain = [18, 21, 24, 15]
+wet = rain.quantile(0.75)
+class Lap(seconds):
+    this.seconds = seconds
+Lap(7)
+Lap(9)
+Lap(4)
+quick = Lap.quantile(0.25, lap -> lap.seconds)
+assert([wet, quick], [21.75, 5.5])
+rain.push(30)
+Lap(5)
+assert([wet, quick], [24, 4.75])
+quick
+# return: 4.75
+---
 # Nucleoid flattens nested lists with flat
 
 pallets = [[["bolt", "nut"], ["gear"]], [["cog"]]]
