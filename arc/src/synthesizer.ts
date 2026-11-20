@@ -8,7 +8,11 @@ async function synthesize({ train }) {
   const validated_dataset = [];
 
   for (const dataset of train.dataset) {
-    const synthesized_dataset = { instances: [] };
+    const synthesized_dataset = {
+      input_matrix: undefined,
+      output_matrix: undefined,
+      instances: [],
+    };
 
     for (const instance of dataset.instances) {
       const input_instance_matrix = Matrix.rotate_instance(
@@ -27,8 +31,6 @@ async function synthesize({ train }) {
       } = Matrix.measure(input_instance_matrix);
 
       const synthesized_instance = {
-        input_matrix: undefined,
-        output_matrix: undefined,
         instance_name: synthesized_instance_name,
         input_value: undefined,
         output_value: undefined,
