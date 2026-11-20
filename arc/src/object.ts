@@ -3,10 +3,10 @@ import * as Matrix from "./lib/Matrix.ts";
 import * as nucleoid from "./lib/nucleoid";
 import * as milestone from "./lib/milestone.ts";
 
-async function orientation({ train_dataset, instance }) {
+async function orientation({ train, instance }) {
   const { orientation } = await llm.generate({
-    few_shot: (train_dataset) =>
-      train_dataset.dataset
+    few_shot: (train) =>
+      train.dataset
         .flat()
         .flatMap(({ instances }) => instances)
         .map(({ input_instance_matrix, input_value }) => ({
@@ -19,7 +19,7 @@ async function orientation({ train_dataset, instance }) {
         content: `
           current:
           ${JSON.stringify(
-            train_dataset.dataset
+            train.dataset
               .flat()
               .filter(({ instances }) => instances)
               .flatMap(({ instances }) => instances)
@@ -55,7 +55,7 @@ async function orientation({ train_dataset, instance }) {
 
 async function implementation({
   few_shot = true,
-  train_dataset,
+  train,
   instance,
   x,
   y,
@@ -64,10 +64,10 @@ async function implementation({
   orientation,
   volume,
 }) {
-  const few_shot_function = (train_dataset) => ({
-    ...train_dataset,
+  const few_shot_function = (train) => ({
+    ...train,
     declarations: undefined,
-    dataset: train_dataset.dataset.map(({ instances }) => ({
+    dataset: train.dataset.map(({ instances }) => ({
       instances: instances.map((instance) => ({
         ...instance,
         input_instance_matrix: Matrix.crop(instance.input_instance_matrix),
@@ -84,9 +84,9 @@ async function implementation({
         content: `
           current:
           ${JSON.stringify({
-            ...train_dataset,
+            ...train,
             declarations: undefined,
-            dataset: train_dataset.dataset
+            dataset: train.dataset
               .filter(({ instances }) => instances)
               .map(({ instances }) => ({
                 instances: instances

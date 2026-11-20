@@ -7,8 +7,8 @@ const FIELD_GUIDE = `
 - "class_declaration", "declarations" and "output_canvas" are fixed for this task. Every new example must be valid under them. Do not change them or repeat them in your answer.
 `.trim();
 
-async function synthesize({ train_dataset }) {
-  const count = train_dataset.length;
+async function synthesize({ train }) {
+  const count = train.length;
 
   const { result } = await llm.generate({
     few_shot: null,
@@ -19,8 +19,8 @@ async function synthesize({ train_dataset }) {
 
         <current_dataset>
         ${JSON.stringify({
-          ...train_dataset,
-          dataset: train_dataset.dataset.map(
+          ...train,
+          dataset: train.dataset.map(
             ({ input_matrix, output_matrix, instances }) => ({
               input_matrix,
               output_matrix,
@@ -70,9 +70,9 @@ async function synthesize({ train_dataset }) {
         content: `
           synthesize:
           ${JSON.stringify({
-            class_declaration: train_dataset.class_declaration,
-            declarations: train_dataset.declarations,
-            output_canvas: train_dataset.output_canvas,
+            class_declaration: train.class_declaration,
+            declarations: train.declarations,
+            output_canvas: train.output_canvas,
             dataset: [
               {
                 input_matrix: "<INPUT_MATRIX>",

@@ -4,7 +4,7 @@ import * as milestone from "./lib/milestone.ts";
 import * as Matrix from "./lib/Matrix.ts";
 import object from "./object.ts";
 
-export async function declarations({ train_dataset }) {
+export async function declarations({ train }) {
   milestone.inferring_declarations();
 
   const {
@@ -17,7 +17,7 @@ export async function declarations({ train_dataset }) {
         content: `
           query:
           ${JSON.stringify({
-            ...train_dataset,
+            ...train,
             class_declaration: "<CLASS_DECLARATION>",
             declarations: "<DECLARATIONS>",
             output_canvas: "<OUTPUT_CANVAS>",
@@ -43,7 +43,7 @@ export async function declarations({ train_dataset }) {
   return { class_declaration, declarations, output_canvas };
 }
 
-export async function instances({ train_dataset }) {
+export async function instances({ train }) {
   milestone.segmenting_training_objects();
 
   const { result: instances } = await llm.generate({
@@ -53,8 +53,8 @@ export async function instances({ train_dataset }) {
         content: `
           query:
           ${JSON.stringify({
-            ...train_dataset,
-            dataset: train_dataset.dataset.map((dataset) => ({
+            ...train,
+            dataset: train.dataset.map((dataset) => ({
               ...dataset,
               instances: [
                 {
@@ -81,12 +81,7 @@ export async function instances({ train_dataset }) {
   return { instances };
 }
 
-export async function value({
-  instance_name,
-  train_dataset,
-  input_matrix,
-  instance,
-}) {
+export async function value({ instance_name, train, input_matrix, instance }) {
   milestone.constructing_instance({ instance_name });
 
   instance.instance_name = instance_name;
@@ -95,10 +90,10 @@ export async function value({
     instance.input_instance_matrix
   );
 
-  const orientation = await object.orientation({ train_dataset, instance });
+  const orientation = await object.orientation({ train, instance });
 
   const implementation = await object.implementation({
-    train_dataset,
+    train,
     instance,
     x,
     y,
@@ -116,7 +111,7 @@ export async function value({
     [
       `canvas_width = ${canvas_width}`,
       `canvas_height = ${canvas_height}`,
-      train_dataset.class_declaration,
+      train.class_declaration,
       implementation,
     ].join("\n\n")
   );
@@ -133,10 +128,10 @@ export async function value({
   instance.input_value = input_value;
 }
 
-export async function state(train_dataset) {
+export async function state(train) {
   const objects = [];
 
-  for (const dataset of train_dataset.dataset) {
+  for (const dataset of train.dataset) {
     const implementations = dataset.instances.map(
       ({ implementation }) => implementation
     );
@@ -147,8 +142,8 @@ export async function state(train_dataset) {
       [
         `canvas_width = ${canvas_width}`,
         `canvas_height = ${canvas_height}`,
-        train_dataset.class_declaration,
-        ...train_dataset.declarations,
+        train.class_declaration,
+        ...train.declarations,
         ...implementations,
         "Obj[:]",
       ].join("\n\n")

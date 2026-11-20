@@ -73,10 +73,11 @@ Derive the exact schema from the current `arc/src/app.ts`, `analyzer.ts`,
 between that code and the log. At the time of writing, `start()` writes
 `JSON.stringify(debug, null, 2)`, and the stages fill these fields:
 
-1. Load: `train_dataset.dataset[].input_matrix` / `output_matrix`,
-   `test_input_matrix`, `test_output_matrix`.
-2. `analyzer.declarations` (LLM): `train_dataset.declarations`,
-   `train_dataset.output_canvas`.
+1. Load: `train.dataset[].input_matrix` / `output_matrix`,
+   `test_input_matrix`, `test_output_matrix`. Logs written before
+   20-Nov-2026 hold `train` as `train_dataset`.
+2. `analyzer.declarations` (LLM): `train.declarations`,
+   `train.output_canvas`.
 3. `analyzer.instances` (LLM, per training pair): each instance's
    `input_instance_matrix` and `output_instance_matrix`. The extracted
    instances get their `instance_name`, then `analyzer.synthesize` (no LLM)
@@ -85,7 +86,7 @@ between that code and the log. At the time of writing, `start()` writes
    x+1 y+1, x-1 y+1 or x-1 y-1, except an instance whose object, its input
    object or its output object when the input is empty, is a single pixel.
    A training pair without other instances gains none. They follow the
-   training pairs in `train_dataset.dataset`, three per training pair in
+   training pairs in `train.dataset`, three per training pair in
    turn, in that order. Each holds one instance per synthesized extracted
    instance of its source pair, in source order, with `synthesis` (`source`,
    `rotation`, `offset`), named
@@ -96,7 +97,7 @@ between that code and the log. At the time of writing, `start()` writes
    source pair, with `input_instance_epoch` and `output_instance_epoch` and
    each synthesis a world of its own on the pair's canvas, or hold one
    synthesized instance per synthesized pair. Only the analysis synthesizes. The
-   visualizer's prompts read the synthesized pairs from `train_dataset` as
+   visualizer's prompts read the synthesized pairs from `train` as
    training examples, like the others, which is intended and not an
    abnormality.
 4. `analyzer.value` (LLM, then Nucleoid on `declarations[0]` plus the

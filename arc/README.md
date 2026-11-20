@@ -294,7 +294,7 @@ any request, with a JSON syntax error that does not name the file.
 Each model call can pass `llm.generate` a `few_shot` function that maps every
 instruction dataset to only the properties of that call's own prompt; a call
 without one receives every instruction dataset with all its properties. A call
-that sends a `train_dataset` builds it and its few-shot examples with the same
+that sends `train` builds it and its few-shot examples with the same
 projection, so both carry the same properties in the same order. Every solver
 call passes its own:
 
@@ -306,7 +306,7 @@ call passes its own:
 | `visualizer.value` | `class_declaration`, and the instances of every pair in one list, with `implementation`, `input_value`, and `input_instance_matrix` |
 | `visualizer.output_instance_matrix` | The instances of every pair in one list, with `input_value`, `input_instance_matrix`, `output_value`, and `output_instance_matrix` |
 
-`analyzer.value` sends no `train_dataset`, so its examples carry the
+`analyzer.value` sends no `train`, so its examples carry the
 properties of the `instances` it sends, the instances of the same pair
 constructed before it. The calls that crop their own instance matrices,
 `analyzer.value`, `visualizer.value`, and `visualizer.output_instance_matrix`,

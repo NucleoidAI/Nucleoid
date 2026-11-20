@@ -4,7 +4,7 @@ import * as milestone from "./lib/milestone.ts";
 import object from "./object.ts";
 import * as nucleoid from "./lib/nucleoid";
 
-export async function instances({ train_dataset, test_input_matrix }) {
+export async function instances({ train, test_input_matrix }) {
   milestone.segmenting_test_input({ test_input_matrix });
 
   let {
@@ -18,26 +18,24 @@ export async function instances({ train_dataset, test_input_matrix }) {
         content: `
           current:
           ${JSON.stringify({
-            class_declaration: train_dataset.class_declaration,
-            dataset: train_dataset.dataset.map(
-              ({ input_matrix, instances }) => ({
-                input_matrix,
-                instances: instances.map((instance) => ({
-                  instance_matrix: instance.input_instance_matrix,
-                  instance_crop_matrix: Matrix.crop(
-                    instance.input_instance_matrix
-                  ),
-                  implementation: instance.implementation,
-                  x: instance.input_value.x,
-                  y: instance.input_value.y,
-                  width: instance.input_value.width,
-                  height: instance.input_value.height,
-                  orientation: instance.input_value.orientation,
-                  volume: instance.input_value.volume,
-                  value: instance.input_value,
-                })),
-              })
-            ),
+            class_declaration: train.class_declaration,
+            dataset: train.dataset.map(({ input_matrix, instances }) => ({
+              input_matrix,
+              instances: instances.map((instance) => ({
+                instance_matrix: instance.input_instance_matrix,
+                instance_crop_matrix: Matrix.crop(
+                  instance.input_instance_matrix
+                ),
+                implementation: instance.implementation,
+                x: instance.input_value.x,
+                y: instance.input_value.y,
+                width: instance.input_value.width,
+                height: instance.input_value.height,
+                orientation: instance.input_value.orientation,
+                volume: instance.input_value.volume,
+                value: instance.input_value,
+              })),
+            })),
           })}
         `,
       },
@@ -46,7 +44,7 @@ export async function instances({ train_dataset, test_input_matrix }) {
         content: `
           query:
           ${JSON.stringify({
-            class_declaration: train_dataset.class_declaration,
+            class_declaration: train.class_declaration,
             dataset: [
               {
                 instance_matrix: test_input_matrix,
@@ -85,7 +83,7 @@ export async function instances({ train_dataset, test_input_matrix }) {
 }
 
 export async function value({
-  train_dataset,
+  train,
   test_input_matrix,
   instance_name,
   input_instance_matrix,
@@ -97,11 +95,11 @@ export async function value({
 
   const { x, y, width, height, volume } = Matrix.measure(input_instance_matrix);
 
-  const orientation = await object.orientation({ train_dataset, instance });
+  const orientation = await object.orientation({ train, instance });
 
   const implementation = await object.implementation({
     few_shot: false,
-    train_dataset,
+    train,
     instance,
     x,
     y,
@@ -124,7 +122,7 @@ export async function value({
     [
       `canvas_width = ${canvas_width}`,
       `canvas_height = ${canvas_height}`,
-      train_dataset.class_declaration,
+      train.class_declaration,
       implementation,
     ].join("\n\n")
   );
@@ -136,7 +134,7 @@ export async function value({
 
 export async function output_instance_matrix({
   test_input_matrix,
-  train_dataset,
+  train,
   instance,
 }) {
   const { x, y } = instance.output_value;
@@ -151,8 +149,8 @@ export async function output_instance_matrix({
         content: `
           current:
           ${JSON.stringify({
-            ...train_dataset,
-            dataset: train_dataset.dataset.map(({ instances }) => ({
+            ...train,
+            dataset: train.dataset.map(({ instances }) => ({
               instances: instances.map((instance) => ({
                 ...instance,
                 input_instance_matrix: Matrix.crop(

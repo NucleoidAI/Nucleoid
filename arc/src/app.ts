@@ -13,7 +13,7 @@ export async function start(puzzle_id: string = "3aa6fb7a") {
   const { arc_train, test_input_matrix, test_output_matrix } =
     await arc_dataset.load(puzzle_id);
 
-  const train_dataset = {
+  const train = {
     dataset: arc_train.map(({ input, output }) => ({
       input_matrix: input,
       output_matrix: output,
@@ -41,22 +41,22 @@ export async function start(puzzle_id: string = "3aa6fb7a") {
 
   const { class_declaration, declarations, output_canvas } =
     await analyzer.declarations({
-      train_dataset,
+      train,
     });
 
-  train_dataset.class_declaration = class_declaration;
-  train_dataset.declarations = declarations;
-  train_dataset.output_canvas = output_canvas;
+  train.class_declaration = class_declaration;
+  train.declarations = declarations;
+  train.output_canvas = output_canvas;
 
-  for (const dataset of train_dataset.dataset) {
+  for (const dataset of train.dataset) {
     const { instances } = await analyzer.instances({
-      train_dataset: { ...train_dataset, dataset: [dataset] },
+      train: { ...train, dataset: [dataset] },
     });
 
     for (const instance of instances) {
       await analyzer.value({
         instance_name: next_instance_name(),
-        train_dataset,
+        train,
         input_matrix: dataset.input_matrix,
         instance,
       });
@@ -65,11 +65,11 @@ export async function start(puzzle_id: string = "3aa6fb7a") {
     dataset.instances = instances;
   }
 
-  await analyzer.state(train_dataset);
+  await analyzer.state(train);
 
   milestone.synthesizing_training_dataset();
 
-  const synthesized_dataset = await synthesizer.synthesize({ train_dataset });
+  const synthesized_dataset = await synthesizer.synthesize({ train });
 
   milestone.training_dataset_synthesized({ dataset: synthesized_dataset });
 
@@ -77,7 +77,7 @@ export async function start(puzzle_id: string = "3aa6fb7a") {
     for (const instance of dataset.instances) {
       await analyzer.value({
         instance_name: next_instance_name(),
-        train_dataset,
+        train,
         input_matrix: dataset.input_matrix,
         instance,
       });
@@ -90,13 +90,13 @@ export async function start(puzzle_id: string = "3aa6fb7a") {
       input_instances: dataset.instances,
     });
 
-    train_dataset.dataset.push(dataset);
+    train.dataset.push(dataset);
   }
 
   milestone.visualization();
 
   const { instances } = await visualizer.instances({
-    train_dataset,
+    train,
     test_input_matrix,
   });
 
@@ -110,7 +110,7 @@ export async function start(puzzle_id: string = "3aa6fb7a") {
     const instance_name: string = next_instance_name();
 
     const { implementation, input_value } = await visualizer.value({
-      train_dataset,
+      train,
       test_input_matrix,
       instance_name,
       input_instance_matrix,
@@ -134,7 +134,7 @@ export async function start(puzzle_id: string = "3aa6fb7a") {
   for (const input_instance of input_instances) {
     const { output_instance_matrix } = await visualizer.output_instance_matrix({
       test_input_matrix,
-      train_dataset,
+      train,
       instance: input_instance,
     });
 
@@ -156,7 +156,7 @@ export async function start(puzzle_id: string = "3aa6fb7a") {
 
   const debug = {
     puzzle_id,
-    train_dataset,
+    train,
     test_input_instances: input_instances,
     test_input_matrix,
     test_output_matrix,
