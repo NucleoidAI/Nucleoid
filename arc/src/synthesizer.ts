@@ -4,6 +4,8 @@ import object from "./object.ts";
 import * as nucleoid from "./lib/nucleoid.ts";
 
 async function synthesize({ train }) {
+  const validated_dataset = [];
+
   for (const dataset of train.dataset) {
     const synthesized_dataset = { instances: [] };
 
@@ -67,7 +69,7 @@ async function synthesize({ train }) {
         output_instance_matrix
       );
 
-      const implementation = await object.implementation({
+      instance.implementation = await object.implementation({
         train,
         instance: synthesized_instance,
         x,
@@ -77,8 +79,6 @@ async function synthesize({ train }) {
         orientation,
         volume,
       });
-
-      instance.implementation = implementation;
 
       if (
         output_value.x === x &&
@@ -103,9 +103,11 @@ async function synthesize({ train }) {
         [[0]]
       );
 
-      train.dataset.push(synthesized_dataset);
+      validated_dataset.push(synthesized_dataset);
     }
   }
+
+  train.dataset.push(...validated_dataset);
 }
 
 export default { synthesize };
