@@ -155,7 +155,8 @@ Run every check that applies and record each result:
   in source order, whose `source` names it; a training pair whose instances
   are all single pixels has no synthesized pairs, and no `source` names a
   single pixel. Recompute each instance from its source with the
-  `Matrix.ts` helpers: turn the input and output crops with `Matrix.rotate`,
+  `Matrix.ts` helpers: turn the input and output crops with
+  `Matrix.rotate_instance`,
   place the input crop at the source's located position plus the offset, and
   place the output crop so that its gaps to the input object's bounding box
   turn with it, its new left gap being the old bottom gap and its new top gap

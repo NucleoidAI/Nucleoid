@@ -107,10 +107,14 @@ export function pad(
   return result;
 }
 
-// Turns the matrix clockwise by a multiple of 90 degrees, the direction in
-// which orientation counts, so the turn from one orientation to another is
-// their difference. A quarter turn swaps the row and column counts.
-export function rotate(matrix, degrees: number) {
+// Turns the instance inside the matrix, all of its nonzero cells, clockwise by
+// a multiple of 90 degrees, the direction in which orientation counts, so the
+// turn from one orientation to another is their difference. The matrix is
+// cropped to the instance, which turns in place: its bounding box keeps the
+// top-left corner that measure reports, and a quarter turn swaps its width and
+// height. The canvas keeps the matrix's size and grows right or down, as pad
+// does, when the turned instance needs more room.
+export function rotate_instance(matrix, degrees: number) {
   if (!Number.isInteger(degrees) || degrees % 90 !== 0) {
     throw new Error(
       `Rotation ${JSON.stringify(degrees)} is not a multiple of 90 degrees`
@@ -124,35 +128,50 @@ export function rotate(matrix, degrees: number) {
     }
   }
 
+  const { matrix: instance, x, y, width, height } = measure(matrix);
   const turns: number = (((degrees / 90) % 4) + 4) % 4;
   const quarter: boolean = turns % 2 === 1;
-  return Array.from({ length: quarter ? cols : rows }, (_, y: number) =>
-    Array.from({ length: quarter ? rows : cols }, (_, x: number) => {
-      switch (turns) {
-        case 1:
-          return matrix[rows - 1 - x][y];
-        case 2:
-          return matrix[rows - 1 - y][cols - 1 - x];
-        case 3:
-          return matrix[x][cols - 1 - y];
-        default:
-          return matrix[y][x];
-      }
-    })
+  const rotated = Array.from(
+    { length: quarter ? width : height },
+    (_, row: number) =>
+      Array.from({ length: quarter ? height : width }, (_, column: number) => {
+        switch (turns) {
+          case 1:
+            return instance[height - 1 - column][row];
+          case 2:
+            return instance[height - 1 - row][width - 1 - column];
+          case 3:
+            return instance[column][width - 1 - row];
+          default:
+            return instance[row][column];
+        }
+      })
   );
+  return pad(rotated, rows, cols, x, y);
 }
 
-// Moves the nonzero cells together so that their bounding box starts at
-// column x and row y, the position measure reports. The canvas keeps the
-// matrix's size and grows right or down, as pad does, when the moved cells
-// need more room.
-export function move(matrix, x: number, y: number) {
-  if (!Number.isInteger(x) || !Number.isInteger(y) || x < 0 || y < 0) {
+// Pushes the instance inside the matrix, all of its nonzero cells, by x columns
+// and y rows. The matrix is cropped to the instance, whose bounding box leaves
+// the position measure reports by that offset; negative offsets push left or
+// up. The canvas keeps the matrix's size and grows right or down, as pad does,
+// when the pushed instance needs more room.
+export function move_instance(matrix, x: number, y: number) {
+  const offset: string = JSON.stringify({ x, y });
+  if (!Number.isInteger(x) || !Number.isInteger(y)) {
+    throw new Error(`Move offset ${offset} must be integers`);
+  }
+  const rows: number = matrix.length;
+  const cols: number = matrix[0]?.length ?? 0;
+  const { matrix: instance, x: left, y: top, volume } = measure(matrix);
+  if (volume === 0) {
+    return pad(instance, rows, cols, 0, 0);
+  }
+  if (left + x < 0 || top + y < 0) {
     throw new Error(
-      `Move position ${JSON.stringify({ x, y })} must be non-negative integers`
+      `Move offset ${offset} pushes the instance past the left or top edge`
     );
   }
-  return pad(crop(matrix), matrix.length, matrix[0]?.length ?? 0, x, y);
+  return pad(instance, rows, cols, left + x, top + y);
 }
 
 export function merge(...matrices) {

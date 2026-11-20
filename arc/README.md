@@ -187,15 +187,16 @@ its own numbered title; a box for one instance names the instance once, in a
 title row above the columns. Each training pair's segmented objects share one
 box with a row per object, its `Input` beside its `Output`, such as
 `1.4.1 Input` and `1.5.1 Output`; segmented-object panels use `Input` and
-`Output` without object-number labels. Each constructed instance, extracted
-or synthesized, shows its `Input crop`, `Output crop`, `Implementation` and
-`Input state` side by side, `1.8.1` through `1.11.1` for the first one. After
-the `Analysis · State` table, a `Synthesizing training pairs` step precedes
-the synthesis call, and a `<count> training pairs synthesized` step then shows
-one box titled `Synthesized <n>` per synthesized pair: its `Input` beside its
-`Output`, then a row per instance with its `Input instance` beside its
-`Output instance`. A synthesized instance's construction then starts with a
-`Constructing <instance>` step, as an extracted instance's does.
+`Output` without object-number labels. Each constructed instance shows its
+`Input crop`, `Output crop`, `Implementation` and `Input state` side by side,
+`1.8.1` through `1.11.1` for the first one. After the `Analysis · State`
+table, a `Synthesizing training pairs` step precedes the synthesis call. Each
+synthesized instance's output is then composed as a test object's is, from its
+`Composing the output object · <instance>` step to its `Placed output`. A
+`<count> training pairs synthesized` step (`pair` for one) follows, with one
+box per synthesized instance that passed validation, titled
+`Synthesized <n> · <instance>`, where `<n>` numbers its synthesized pair: its
+full-size `Input` and `Output` matrices side by side, then its `Output state`.
 Model token usage remains attached to its active milestone. Instance-specific
 steps, and the headers of instance panels shown on their own, include the
 instance name. In the visualization, the segmented test objects' `Input`
@@ -246,8 +247,9 @@ prompts, programs, matrices, provider settings, or scoring.
 
 Milestone functions in `src\lib\milestone.ts` mark each point in a run that shows
 output, such as a stage, a step about to start, or a step's result, and are the
-only callers of the `src\lib\terminal.ts` renderer. The analyzer, visualizer,
-OpenRouter client, and entry point report progress only through them.
+only callers of the `src\lib\terminal.ts` renderer. The analyzer, synthesizer,
+visualizer, OpenRouter client, and entry point report progress only through
+them.
 
 `milestone.state` displays exactly one `Analysis · State` table containing
 objects from all training pairs, in pair order, after the analysis state passes
@@ -2962,26 +2964,37 @@ color that comes first in reading order. Every `0` stays `0`. It rejects any
 cell that is not an integer from 0 to 9, and it does not crop or modify the
 input.
 
-`Matrix.rotate(matrix, degrees)` returns a new matrix turned clockwise by
-`degrees`, the direction in which `orientation` counts, so the turn from an
-input orientation to an output orientation is their difference: each
-`ed36ccf7` training input, at orientation 0, becomes its output, at 270, with
-`Matrix.rotate(input, 270)`. `degrees` must be an integer multiple of 90.
+`Matrix.rotate_instance(matrix, degrees)` returns a new matrix in which the
+instance inside the matrix, all of its nonzero cells, turns clockwise in place
+by `degrees`, the direction in which `orientation` counts, so the turn from an
+input orientation to an output orientation is their difference. It crops the
+matrix to the instance before turning it, so an instance matrix such as
+`input_instance_matrix` is passed as it is. The instance's bounding box keeps
+the top-left corner that `Matrix.measure` reports, so `x` and `y` stay the
+same, and a quarter turn swaps its `width` and `height`. The canvas keeps its
+size unless the turned instance needs more room to the right or below, as with
+`Matrix.move_instance`. An instance that fills its square grid turns with the
+whole grid: each `ed36ccf7` training input, at orientation 0, becomes its
+output, at 270, with `Matrix.rotate_instance(input, 270)`. `degrees` must be
+an integer multiple of 90.
 Negative turns go counterclockwise and whole turns wrap around, so `-90` and
-`270` give the same matrix. A quarter turn swaps the row and column counts. It
-rejects any other angle, such as the diagonal 45, and ragged matrices, returns
-`[]` for an empty matrix, and does not modify the input.
+`270` give the same matrix. It rejects any other angle, such as the diagonal
+45, and ragged matrices, returns `[]` for an empty matrix and zeros of the
+same size for an all-zero one, and does not modify the input.
 
-`Matrix.move(matrix, x, y)` returns a new matrix in which the nonzero cells
-keep their shape and move together so that their bounding box starts at column
-`x` and row `y`, the position `Matrix.measure` reports. It equals
-`Matrix.pad(Matrix.crop(matrix), rows, cols, x, y)` with the matrix's own row
-and column counts: the cells left behind become zeros, and the canvas keeps its
-size unless the moved cells need more room to the right or below. An all-zero
-matrix has no cells to move and gives zeros. It rejects negative or non-integer
-positions and ragged matrices, and it does not modify the input. Together,
-`Matrix.move(Matrix.rotate(Matrix.crop(matrix), turn), x, y)` turns an object
-and places it at an output position.
+`Matrix.move_instance(matrix, x, y)` returns a new matrix in which the instance
+inside the matrix, all of its nonzero cells, keeps its shape and is pushed by
+`x` columns and `y` rows, so its bounding box leaves the position
+`Matrix.measure` reports by that offset: `Matrix.move_instance(matrix, 1, 1)`
+pushes the instance one cell right and one cell down, and negative offsets push
+left or up. It crops the matrix to the instance before pushing it. The cells
+left behind become zeros, and the canvas keeps its size unless the pushed
+instance needs more room to the right or below. An all-zero matrix has no
+instance to push and gives zeros of the same size. It rejects non-integer
+offsets, offsets that would push the instance past the left or top edge, and
+ragged matrices, and it does not modify the input. Together,
+`Matrix.move_instance(Matrix.rotate_instance(matrix, turn), x, y)` turns an
+instance in place and then pushes it by an offset.
 
 The same prediction path replays every training pair before predicting the
 held-out input. A training mismatch stops the run. Held-out predictions are

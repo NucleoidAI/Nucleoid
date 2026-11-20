@@ -60,35 +60,34 @@ export function synthesizing_training_dataset() {
 }
 
 export function training_dataset_synthesized({ dataset }) {
-  terminal.step(`${dataset.length} training pairs synthesized`);
-  dataset.forEach(
-    ({ input_matrix, output_matrix, instances }, index: number) => {
-      terminal.panels(`Synthesized ${index + 1}`, [
+  const pairs: string = dataset.length === 1 ? "pair" : "pairs";
+  terminal.step(`${dataset.length} training ${pairs} synthesized`);
+  dataset.forEach(({ instances }, index: number) => {
+    for (const {
+      instance_name,
+      input_instance_matrix,
+      output_instance_matrix,
+      output_value,
+    } of instances) {
+      terminal.panels(`Synthesized ${index + 1} · ${instance_name}`, [
         [
-          terminal.gridPanel("Input", input_matrix, {
+          terminal.gridPanel("Input", input_instance_matrix, {
             key: "synthesized_input",
             loop: true,
           }),
-          terminal.gridPanel("Output", output_matrix, {
+          terminal.gridPanel("Output", output_instance_matrix, {
             key: "synthesized_output",
             loop: true,
           }),
+          terminal.valuePanel(
+            oriented("Output state", output_value?.orientation),
+            output_value,
+            { key: "synthesized_output_state", loop: true }
+          ),
         ],
-        ...instances.map(
-          ({ input_instance_matrix, output_instance_matrix }) => [
-            terminal.gridPanel("Input instance", input_instance_matrix, {
-              key: "synthesized_input_instance",
-              loop: true,
-            }),
-            terminal.gridPanel("Output instance", output_instance_matrix, {
-              key: "synthesized_output_instance",
-              loop: true,
-            }),
-          ]
-        ),
       ]);
     }
-  );
+  });
 }
 
 export function constructing_instance({ instance_name }) {
