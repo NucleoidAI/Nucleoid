@@ -13,6 +13,23 @@ fn scrolled(offset: u16, forward: bool) -> u16 {
 }
 
 impl App {
+    pub(super) fn page_scroll(&mut self, forward: bool) {
+        let height = if self.focus == Focus::Diagnostics {
+            self.regions.diagnostics.height
+        } else {
+            let table_header = self.view == View::Table
+                && self
+                    .entries
+                    .get(self.selected)
+                    .is_some_and(|entry| entry.output.table().is_some());
+            self.regions
+                .output
+                .height
+                .saturating_sub(u16::from(table_header))
+        };
+        self.scroll_vertical(forward, height.max(1));
+    }
+
     pub(super) fn scroll_vertical(&mut self, forward: bool, amount: u16) {
         let scroll = if self.focus == Focus::Diagnostics {
             &mut self.diagnostic_scroll
@@ -75,16 +92,8 @@ impl App {
     }
 
     fn click(&mut self, mouse: MouseEvent, position: Position) {
-        if self.regions.completions.contains(position) {
-            if let Some(mut completion) = self.completion.take() {
-                let index = self.regions.completion_start
-                    + usize::from(mouse.row - self.regions.completions.y);
-                if index < completion.candidates.len() {
-                    completion.selected = index;
-                    completion.apply(&mut self.editor);
-                    self.history_index = None;
-                }
-            }
+        if self.completion_at(position) {
+            self.click_completion(position);
         } else if let Some(tab) = self
             .regions
             .tabs
@@ -124,9 +133,32 @@ impl App {
         }
     }
 
+    fn completion_at(&self, position: Position) -> bool {
+        self.completion.is_some() && self.regions.completion_popup.contains(position)
+    }
+
+    fn click_completion(&mut self, position: Position) {
+        if !self.regions.completions.contains(position) {
+            return;
+        }
+        if let Some(mut completion) = self.completion.take() {
+            let index = self.regions.completion_start
+                + usize::from(position.y - self.regions.completions.y);
+            if index < completion.candidates.len() {
+                completion.selected = index;
+                completion.apply(&mut self.editor);
+                self.history_index = None;
+            }
+        }
+    }
+
     fn wheel(&mut self, mouse: MouseEvent, position: Position, forward: bool) {
         let sideways = mouse.modifiers.contains(KeyModifiers::SHIFT);
-        if self.regions.editor.contains(position) {
+        if self.completion_at(position) {
+            if let Some(completion) = &mut self.completion {
+                completion.select(forward);
+            }
+        } else if self.regions.editor.contains(position) {
             self.editor.scroll((if forward { 3 } else { -3 }, 0));
             self.completion = None;
         } else if self.regions.history.contains(position) {
@@ -151,6 +183,9 @@ impl App {
     }
 
     fn wheel_sideways(&mut self, position: Position, forward: bool) {
+        if self.completion_at(position) {
+            return;
+        }
         if self.regions.editor.contains(position) {
             self.editor.scroll((0, if forward { 3 } else { -3 }));
             self.completion = None;

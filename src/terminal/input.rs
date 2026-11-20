@@ -58,8 +58,8 @@ impl App {
             KeyCode::Enter if ctrl && !cfg!(windows) => return Some(self.submit(runtime)),
             KeyCode::Up if ctrl => self.select_entry(self.selected.saturating_sub(1)),
             KeyCode::Down if ctrl => self.select_entry(self.selected.saturating_add(1)),
-            KeyCode::PageUp => self.scroll_vertical(false, self.regions.output.height.max(1)),
-            KeyCode::PageDown => self.scroll_vertical(true, self.regions.output.height.max(1)),
+            KeyCode::PageUp => self.page_scroll(false),
+            KeyCode::PageDown => self.page_scroll(true),
             KeyCode::Esc => {
                 if self.completion.take().is_none() {
                     self.editor.cancel_selection();
@@ -248,6 +248,14 @@ impl App {
 
     pub(super) fn select_entry(&mut self, selected: usize) {
         self.selected = selected.min(self.entries.len().saturating_sub(1));
+        if self.focus == Focus::Diagnostics
+            && self
+                .entries
+                .get(self.selected)
+                .is_none_or(|entry| entry.diagnostics.is_empty())
+        {
+            self.focus = Focus::Result;
+        }
         self.scroll = 0;
         self.horizontal = 0;
         self.diagnostic_scroll = 0;

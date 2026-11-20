@@ -1,11 +1,14 @@
 use ratatui::Frame;
 use ratatui::layout::{Constraint, Rect};
 use ratatui::style::{Modifier, Style};
-use ratatui::widgets::{Clear, List, ListItem, Paragraph, Row, Table};
+use ratatui::widgets::{
+    Clear, List, ListItem, Paragraph, Row, Scrollbar, ScrollbarOrientation, ScrollbarState, Table,
+};
 use unicode_width::UnicodeWidthStr;
 
 use super::{
-    ACCENT, BACKGROUND, ERROR, FOREGROUND, HIGHLIGHT, MUTED, PANEL, Regions, as_u16, base, panel,
+    ACCENT, BACKGROUND, BORDER, ERROR, FOREGROUND, HIGHLIGHT, MUTED, PANEL, Regions, as_u16, base,
+    panel,
 };
 use crate::terminal::App;
 use crate::terminal::output::{Output, TableData, View, visible};
@@ -19,7 +22,7 @@ pub(super) fn draw_text(
     horizontal: &mut u16,
 ) {
     let text = output.text(view);
-    clamp_scroll(text, area, scroll, horizontal);
+    let lines = clamp_scroll(text, area, scroll, horizontal);
     frame.render_widget(
         Paragraph::new(text)
             .style(
@@ -34,6 +37,7 @@ pub(super) fn draw_text(
             .scroll((*scroll, *horizontal)),
         area,
     );
+    gutter_scrollbar(frame, area, lines, *scroll);
 }
 
 pub(super) fn draw_diagnostics(
@@ -46,7 +50,7 @@ pub(super) fn draw_diagnostics(
 ) -> Rect {
     let block = panel(" Diagnostics / graph ", focused);
     let inner = block.inner(area);
-    clamp_scroll(diagnostics, inner, scroll, horizontal);
+    let lines = clamp_scroll(diagnostics, inner, scroll, horizontal);
     frame.render_widget(
         Paragraph::new(diagnostics)
             .block(block)
@@ -54,6 +58,7 @@ pub(super) fn draw_diagnostics(
             .scroll((*scroll, *horizontal)),
         area,
     );
+    gutter_scrollbar(frame, inner, lines, *scroll);
     inner
 }
 
@@ -64,14 +69,44 @@ pub(super) fn draw_table(
     scroll: &mut u16,
     column: &mut u16,
 ) {
+    let visible_rows = area.height.saturating_sub(1);
     *column = (*column).min(as_u16(data.headers.len().saturating_sub(1)));
     *scroll = (*scroll).min(as_u16(
-        data.rows
-            .len()
-            .saturating_sub(usize::from(area.height.saturating_sub(1))),
+        data.rows.len().saturating_sub(usize::from(visible_rows)),
     ));
     let start = usize::from(*column);
-    let mut remaining = area.width;
+    let widths = column_widths(data, start, area.width);
+    let count = widths.len();
+    let headers = data
+        .headers
+        .iter()
+        .skip(start)
+        .take(count)
+        .map(|name| visible(name, false));
+    let rows = data
+        .rows
+        .iter()
+        .skip(usize::from(*scroll))
+        .take(usize::from(visible_rows))
+        .enumerate()
+        .map(|(index, row)| {
+            Row::new(row.iter().skip(start).take(count).map(String::as_str))
+                .style(Style::default().bg(if index % 2 == 0 { PANEL } else { BACKGROUND }))
+        });
+    frame.render_widget(
+        Table::new(rows, widths)
+            .header(
+                Row::new(headers).style(Style::default().fg(ACCENT).add_modifier(Modifier::BOLD)),
+            )
+            .column_spacing(1)
+            .style(base()),
+        area,
+    );
+    let body = Rect::new(area.x, area.y.saturating_add(1), area.width, visible_rows);
+    gutter_scrollbar(frame, body, data.rows.len(), *scroll);
+}
+
+fn column_widths(data: &TableData, start: usize, mut remaining: u16) -> Vec<Constraint> {
     let mut widths = Vec::new();
     for (index, header) in data.headers.iter().enumerate().skip(start) {
         if remaining == 0 {
@@ -89,32 +124,7 @@ pub(super) fn draw_table(
         widths.push(Constraint::Length(width));
         remaining = remaining.saturating_sub(width.saturating_add(1));
     }
-    let count = widths.len();
-    let headers = data
-        .headers
-        .iter()
-        .skip(start)
-        .take(count)
-        .map(|name| visible(name, false));
-    let rows = data
-        .rows
-        .iter()
-        .skip(usize::from(*scroll))
-        .take(usize::from(area.height.saturating_sub(1)))
-        .enumerate()
-        .map(|(index, row)| {
-            Row::new(row.iter().skip(start).take(count).map(String::as_str))
-                .style(Style::default().bg(if index % 2 == 0 { PANEL } else { BACKGROUND }))
-        });
-    frame.render_widget(
-        Table::new(rows, widths)
-            .header(
-                Row::new(headers).style(Style::default().fg(ACCENT).add_modifier(Modifier::BOLD)),
-            )
-            .column_spacing(1)
-            .style(base()),
-        area,
-    );
+    widths
 }
 
 pub(super) fn completions(
@@ -145,6 +155,7 @@ pub(super) fn completions(
     .min(editor_area.width);
     let area = Rect::new(editor_area.x, editor_area.y - height, width, height);
     let block = panel(" Complete / Tab ", true);
+    regions.completion_popup = area;
     regions.completions = block.inner(area);
     let visible_count = usize::from(regions.completions.height);
     let start = completion
@@ -171,16 +182,34 @@ pub(super) fn completions(
     frame.render_widget(List::new(items).block(block).style(base().bg(PANEL)), area);
 }
 
-fn clamp_scroll(text: &str, area: Rect, vertical: &mut u16, horizontal: &mut u16) {
-    *vertical = (*vertical).min(as_u16(
-        text.lines()
-            .count()
-            .saturating_sub(usize::from(area.height)),
-    ));
+fn clamp_scroll(text: &str, area: Rect, vertical: &mut u16, horizontal: &mut u16) -> usize {
+    let lines = text.lines().count();
+    *vertical = (*vertical).min(as_u16(lines.saturating_sub(usize::from(area.height))));
     let width = text
         .lines()
         .map(UnicodeWidthStr::width)
         .max()
         .unwrap_or_default();
     *horizontal = (*horizontal).min(as_u16(width.saturating_sub(usize::from(area.width))));
+    lines
+}
+
+fn gutter_scrollbar(frame: &mut Frame<'_>, viewport: Rect, lines: usize, scroll: u16) {
+    let visible = usize::from(viewport.height);
+    if visible == 0 || lines <= visible {
+        return;
+    }
+    let gutter = Rect::new(viewport.right(), viewport.y, 1, viewport.height);
+    let mut state = ScrollbarState::new(lines)
+        .position(usize::from(scroll))
+        .viewport_content_length(visible);
+    frame.render_stateful_widget(
+        Scrollbar::new(ScrollbarOrientation::VerticalRight)
+            .begin_symbol(None)
+            .end_symbol(None)
+            .track_style(Style::default().fg(BORDER))
+            .thumb_style(Style::default().fg(MUTED)),
+        gutter,
+        &mut state,
+    );
 }

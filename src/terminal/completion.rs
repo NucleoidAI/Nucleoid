@@ -2,7 +2,10 @@ use std::collections::BTreeSet;
 
 use nucleoid::Runtime;
 use nucleoid::graph::NodeKind;
+use nucleoid::lang::ast::lexer::{Token, tokenize};
 use tui_textarea::{CursorMove, TextArea};
+
+use super::editor;
 
 const WORDS: &[&str] = &[
     "and",
@@ -135,7 +138,7 @@ impl Completion {
             return None;
         }
         let before: String = before.iter().collect();
-        if in_literal_or_comment(head) {
+        if !code_position(editor, row, column) {
             return None;
         }
         let candidates = if row == 0 && before.trim().is_empty() && prefix.starts_with('.') {
@@ -206,23 +209,18 @@ fn word(character: char) -> bool {
     character.is_ascii_alphanumeric() || matches!(character, '_' | '$' | '.')
 }
 
-fn in_literal_or_comment(line: &[char]) -> bool {
-    let mut quote = None;
-    let mut escaped = false;
-    for &character in line {
-        if escaped {
-            escaped = false;
-        } else if character == '\\' && quote.is_some() {
-            escaped = true;
-        } else if quote == Some(character) {
-            quote = None;
-        } else if quote.is_none() && character == '#' {
-            return true;
-        } else if quote.is_none() && matches!(character, '\'' | '"' | '`') {
-            quote = Some(character);
-        }
-    }
-    quote.is_some()
+fn code_position(editor: &TextArea<'_>, row: usize, column: usize) -> bool {
+    const CURSOR_MARKER: &str = "__nucleoid_completion_cursor";
+    let mut source = editor::source_before_cursor(editor);
+    source.push(' ');
+    source.push_str(CURSOR_MARKER);
+    tokenize(&source).is_ok_and(|tokens| {
+        tokens.into_iter().any(|spanned| {
+            spanned.position.line == row + 1
+                && spanned.position.column == column + 2
+                && matches!(spanned.token, Token::Identifier(name) if name == CURSOR_MARKER)
+        })
+    })
 }
 
 fn add_members(runtime: &Runtime, owner: &str, candidates: &mut BTreeSet<String>) {

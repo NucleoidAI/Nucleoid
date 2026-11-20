@@ -333,6 +333,65 @@ fn strings_comments_and_whitespace_do_not_trigger_automatic_completion() {
 }
 
 #[test]
+fn completion_stays_out_of_comments_and_multiline_literals_even_when_requested() {
+    let runtime = Runtime::new();
+    for source in [
+        "// Math.sq",
+        "value = 1 // Math.sq",
+        "/* Math.sq",
+        "/* ignored\nMath.sq",
+        "/* closed */ # Math.sq",
+        "\"open\nMath.sq",
+        "'open\nMath.sq",
+        "`open\nMath.sq",
+        r#"value = "escaped \" quote Math.sq"#,
+        "__nucleoid_completion_cursor # Math.sq",
+    ] {
+        let editor = editor::new(source);
+        for explicit in [false, true] {
+            assert!(
+                Completion::find(&runtime, &editor, explicit).is_none(),
+                "{source:?}, explicit: {explicit}"
+            );
+        }
+    }
+}
+
+#[test]
+fn completion_resumes_after_literals_comments_and_division_without_running_code() {
+    let runtime = Runtime::new();
+    for source in [
+        "// ignored \"\nMath.sq",
+        "# ignored '\nMath.sq",
+        "/* ignored ' # */ Math.sq",
+        "/* ignored\n*/ Math.sq",
+        "\"closed\ntext\"; Math.sq",
+        "`closed\ntext`; Math.sq",
+        "pattern = /[#]/; Math.sq",
+        "value = 8 / 2; Math.sq",
+        "\"/* // #\"; Math.sq",
+    ] {
+        let editor = editor::new(source);
+        let completion = Completion::find(&runtime, &editor, false).unwrap();
+        assert_eq!(completion.candidates, ["Math.sqrt"], "{source:?}");
+    }
+}
+
+#[test]
+fn completion_checks_only_source_before_the_cursor() {
+    let runtime = Runtime::new();
+    let mut editor = editor::new("Math.sq\n/* unterminated");
+    editor.move_cursor(CursorMove::Jump(0, 7));
+    let completion = Completion::find(&runtime, &editor, false).unwrap();
+    completion.apply(&mut editor);
+    assert_eq!(editor.lines(), ["Math.sqrt", "/* unterminated"]);
+
+    let mut editor = editor::new("/* Math.sq */\nMath.sq");
+    editor.move_cursor(CursorMove::Jump(0, 10));
+    assert!(Completion::find(&runtime, &editor, true).is_none());
+}
+
+#[test]
 fn completion_offers_repeat_as_it_offers_while() {
     let mut runtime = Runtime::new();
     runtime.run("reply = 1").unwrap();

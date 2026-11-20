@@ -101,6 +101,20 @@ Use F1-F3 for tabs, F6 or the view buttons for result formats, Ctrl-Up /
 Ctrl-Down for earlier results, and F4 to focus the editor, results or
 diagnostics. PageUp / PageDown and the mouse wheel scroll; focused-result
 Left / Right (or Shift-wheel) moves across text or table columns.
+PageUp / PageDown uses the focused result or diagnostic viewport, excluding
+the table header from the page size. Subtle gutter scrollbars indicate overflow
+without reducing content width. Selecting a history entry without diagnostics
+returns diagnostic focus to its result. The autocomplete popup captures mouse
+events across its full bounds; its wheel selects suggestions, never the pane
+underneath.
+Long buffers grow the focused editor to at most half the terminal while keeping
+result content visible; focusing results or diagnostics restores the normal
+editor height. Wide editors show the total line count beside the cursor position.
+Autocomplete checks the accepted lexer's context up to the cursor, including
+multiline strings, templates and `#`, `//` and `/* ... */` comments. No
+suggestions appear inside those regions, even with Ctrl-Space; code after
+closed literals and comments completes normally. Incomplete text after the
+cursor does not affect suggestions before it.
 Click/drag positions/selects editor text. `.help` documents all controls;
 `.json`, `.table` and `.graph` accept optional `on` / `off` arguments.
 

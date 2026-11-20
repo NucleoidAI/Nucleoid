@@ -14,20 +14,26 @@ pub(super) fn new(source: &str) -> TextArea<'static> {
     editor
 }
 
-pub(super) fn newline(editor: &mut TextArea<'_>) {
+pub(super) fn source_before_cursor(editor: &TextArea<'_>) -> String {
     let (row, column) = editor.cursor();
     let prefix: String = line(editor, row).chars().take(column).collect();
-    let source = editor
+    editor
         .lines()
         .iter()
         .take(row)
         .map(String::as_str)
         .chain(std::iter::once(prefix.as_str()))
         .collect::<Vec<_>>()
-        .join("\n");
+        .join("\n")
+}
+
+pub(super) fn newline(editor: &mut TextArea<'_>) {
+    let (row, column) = editor.cursor();
+    let source = source_before_cursor(editor);
     let indentation = if unterminated_block_comment(&source) {
-        prefix
+        line(editor, row)
             .chars()
+            .take(column)
             .take_while(|character| matches!(character, ' ' | '\t'))
             .collect()
     } else {

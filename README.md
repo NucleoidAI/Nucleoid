@@ -57,6 +57,12 @@ the cursor/selection, and the wheel scrolls individual panes. Ctrl-C cancels
 input, Ctrl-Q exits, and `.help` lists all controls.
 At compact heights, results and diagnostics share a pane; F4 switches between
 them without hiding the editor.
+Subtle scrollbars mark long results and diagnostics; PageUp / PageDown moves
+by the visible rows of the selected pane. Scrolling over autocomplete changes
+the selected suggestion without moving the panes behind it.
+Long drafts expand the focused editor to at most half the terminal, while
+result focus returns that space to output. Autocomplete respects strings and
+comments across lines, so Tab does not replace text inside them.
 
 `nucleoid --plain` keeps the line-oriented interface below. Piped stdin or
 redirected stdout selects it automatically; file execution and the `--json`

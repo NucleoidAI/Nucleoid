@@ -48,12 +48,13 @@ Ctrl-C cancels input. Ctrl-D on an empty editor / Ctrl-Q exits.
 
 F1-F3 changes tabs; the extra tabs are reserved for later.
 F6 changes Text / JSON / Table. Ctrl-Up / Ctrl-Down selects earlier results.
-F4 cycles editor, result and diagnostics focus. PgUp/PgDn scrolls the focused
-result; Left/Right scrolls text or moves table columns.
+F4 cycles editor, result and diagnostics focus. PgUp/PgDn scrolls by a visible
+page; Left/Right scrolls text or moves table columns. Scrollbars mark overflow.
 
 Click tabs, result views or history entries. Click/drag in the editor to
 position/select text. Use the mouse wheel to scroll each pane; Shift-wheel
-scrolls results horizontally. Pasted code is never executed automatically.";
+scrolls results horizontally. Over completions, the wheel selects suggestions
+without scrolling the pane underneath. Pasted code is never executed automatically.";
 
 pub(super) fn run(runtime: &mut Runtime, json: bool, graph: bool) -> io::Result<()> {
     let _session = Session;

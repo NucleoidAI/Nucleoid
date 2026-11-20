@@ -515,7 +515,7 @@ fn mouse_hits_real_tab_view_history_and_editor_regions() {
     run(&mut app, &mut runtime, "[{name: \"Ada\"}, {name: \"Lin\"}]");
     let mut terminal = Terminal::new(TestBackend::new(100, 30)).unwrap();
     terminal.draw(|frame| app.draw(frame)).unwrap();
-    let click = |area: ratatui::layout::Rect| MouseEvent {
+    let click = |area: Rect| MouseEvent {
         kind: MouseEventKind::Down(MouseButton::Left),
         column: area.x,
         row: area.y,
@@ -820,6 +820,68 @@ fn black_surfaces_preserve_readable_selection_and_explicit_error_markers() {
 }
 
 #[test]
+fn long_drafts_expand_the_editor_then_yield_space_to_results_without_losing_text() {
+    let source = (0..60)
+        .map(|row| format!("# draft {row}"))
+        .collect::<Vec<_>>()
+        .join("\n");
+    for (width, height) in [(40, 12), (40, 18), (80, 30), (100, 60)] {
+        let mut app = App::new(false, false);
+        let mut runtime = Runtime::new();
+        app.entries.push(multiline_entry());
+        let mut terminal = Terminal::new(TestBackend::new(width, height)).unwrap();
+        terminal.draw(|frame| app.draw(frame)).unwrap();
+        let baseline = app.regions.editor;
+        let result_height = app.regions.output.height;
+
+        app.editor = editor::new(&source);
+        let cursor = app.editor.cursor();
+        terminal.draw(|frame| app.draw(frame)).unwrap();
+        let expanded = app.regions.editor;
+        assert!(expanded.height >= baseline.height);
+        assert!(expanded.height + 2 <= height / 2);
+        assert!(app.regions.output.height > 0);
+        if height > 12 {
+            assert!(expanded.height > baseline.height);
+        }
+        if width >= 70 {
+            let title = screen_line(&terminal, expanded.y - 1);
+            assert!(title.contains("60 lines"), "{title:?}");
+            assert!(title.contains("F5 run"), "{title:?}");
+        }
+
+        key(&mut app, &mut runtime, KeyCode::F(4), KeyModifiers::NONE);
+        terminal.draw(|frame| app.draw(frame)).unwrap();
+        assert_eq!(app.regions.editor.height, baseline.height);
+        assert_eq!(app.regions.output.height, result_height);
+        key(&mut app, &mut runtime, KeyCode::Esc, KeyModifiers::NONE);
+        terminal.draw(|frame| app.draw(frame)).unwrap();
+        assert_eq!(app.regions.editor, expanded);
+        assert_eq!(app.editor.cursor(), cursor);
+        assert_eq!(app.editor.lines().join("\n"), source);
+        assert_eq!(app.entries.len(), 1);
+    }
+}
+
+#[test]
+fn pasted_comments_are_not_completed_or_run_before_explicit_submission() {
+    let mut app = App::new(false, false);
+    let mut runtime = Runtime::new();
+    app.event(Event::Paste("/*\nMath.sq".into()), &mut runtime);
+    assert!(app.completion.is_none());
+    key(&mut app, &mut runtime, KeyCode::Tab, KeyModifiers::NONE);
+    assert_eq!(app.editor.lines(), ["/*", "Math.sq    "]);
+    app.event(Event::Paste(" */\nMath.sq".into()), &mut runtime);
+    assert_eq!(app.completion.as_ref().unwrap().candidates, ["Math.sqrt"]);
+    key(&mut app, &mut runtime, KeyCode::Tab, KeyModifiers::NONE);
+    app.editor.insert_str("(9)");
+    assert!(app.entries.is_empty());
+    key(&mut app, &mut runtime, KeyCode::F(5), KeyModifiers::NONE);
+    assert_eq!(app.entries.len(), 1);
+    assert_eq!(app.entries[0].output.text(View::Text), "3");
+}
+
+#[test]
 fn paging_uses_visible_diagnostic_and_table_rows() {
     for (width, height) in [(100, 30), (40, 14)] {
         let mut app = App::new(false, false);
@@ -968,7 +1030,7 @@ fn gutter_scrollbars_follow_overflow_and_disappear_when_content_fits() {
     key(&mut app, &mut runtime, KeyCode::F(4), KeyModifiers::NONE);
     terminal.draw(|frame| app.draw(frame)).unwrap();
     let top = gutter_symbols(&terminal, app.regions.output);
-    assert!(!top.trim().is_empty());
+    assert_ne!(top.trim(), "");
     key(
         &mut app,
         &mut runtime,
@@ -981,7 +1043,7 @@ fn gutter_scrollbars_follow_overflow_and_disappear_when_content_fits() {
     key(&mut app, &mut runtime, KeyCode::F(4), KeyModifiers::NONE);
     terminal.draw(|frame| app.draw(frame)).unwrap();
     let top = gutter_symbols(&terminal, app.regions.diagnostics);
-    assert!(!top.trim().is_empty());
+    assert_ne!(top.trim(), "");
     key(&mut app, &mut runtime, KeyCode::End, KeyModifiers::NONE);
     terminal.draw(|frame| app.draw(frame)).unwrap();
     assert_ne!(gutter_symbols(&terminal, app.regions.diagnostics), top);
@@ -997,7 +1059,7 @@ fn gutter_scrollbars_follow_overflow_and_disappear_when_content_fits() {
         " "
     );
     let top = gutter_symbols(&terminal, body);
-    assert!(!top.trim().is_empty());
+    assert_ne!(top.trim(), "");
     key(&mut app, &mut runtime, KeyCode::End, KeyModifiers::NONE);
     terminal.draw(|frame| app.draw(frame)).unwrap();
     assert_ne!(gutter_symbols(&terminal, body), top);
@@ -1005,11 +1067,7 @@ fn gutter_scrollbars_follow_overflow_and_disappear_when_content_fits() {
     let mut expanded = Terminal::new(TestBackend::new(100, 120)).unwrap();
     expanded.draw(|frame| app.draw(frame)).unwrap();
     assert_eq!(app.scroll, 0);
-    assert!(
-        gutter_symbols(&expanded, app.regions.output)
-            .trim()
-            .is_empty()
-    );
+    assert_eq!(gutter_symbols(&expanded, app.regions.output).trim(), "");
 }
 
 fn multiline_entry() -> Entry {

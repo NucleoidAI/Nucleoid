@@ -32,6 +32,7 @@ pub(super) struct Regions {
     pub output: Rect,
     pub diagnostics: Rect,
     pub editor: Rect,
+    pub completion_popup: Rect,
     pub completions: Rect,
     pub completion_start: usize,
 }
@@ -48,13 +49,10 @@ pub(super) fn draw(frame: &mut Frame<'_>, app: &mut App) -> Regions {
         );
         return Regions::default();
     }
-    let editor_height = (area.height / 3)
-        .clamp(3, 12)
-        .min(area.height.saturating_sub(9));
     let [top, body, editor, status] = Layout::vertical([
         Constraint::Length(4),
         Constraint::Min(4),
-        Constraint::Length(editor_height),
+        Constraint::Length(editor_height(area, app)),
         Constraint::Length(1),
     ])
     .areas(area);
@@ -91,22 +89,25 @@ fn reserved(frame: &mut Frame<'_>, area: Rect, app: &App) {
 
 fn editor_panel(frame: &mut Frame<'_>, area: Rect, app: &mut App, regions: &mut Regions) {
     let (row, column) = app.editor.cursor();
-    let editor_block = panel(
-        &format!(" Editor  {}:{} ", row + 1, column + 1),
-        app.focus == Focus::Editor,
-    )
-    .title(
-        Line::styled(
-            " F5 run ",
-            Style::default().fg(ACCENT).add_modifier(Modifier::BOLD),
-        )
-        .alignment(Alignment::Right),
-    )
-    .title_bottom(Line::from(if area.width >= 70 {
-        " Enter newline  Tab complete  Ctrl-J autoindent "
+    let lines = app.editor.lines().len();
+    let title = if lines > 1 && area.width >= 70 {
+        format!(" Editor  {}:{} / {lines} lines ", row + 1, column + 1)
     } else {
-        " Enter newline  Tab complete "
-    }));
+        format!(" Editor  {}:{} ", row + 1, column + 1)
+    };
+    let editor_block = panel(&title, app.focus == Focus::Editor)
+        .title(
+            Line::styled(
+                " F5 run ",
+                Style::default().fg(ACCENT).add_modifier(Modifier::BOLD),
+            )
+            .alignment(Alignment::Right),
+        )
+        .title_bottom(Line::from(if area.width >= 70 {
+            " Enter newline  Tab complete  Ctrl-J autoindent "
+        } else {
+            " Enter newline  Tab complete "
+        }));
     regions.editor = editor_block.inner(area);
     app.editor.set_block(editor_block);
     app.editor.set_style(base().bg(PANEL));
@@ -125,6 +126,20 @@ fn editor_panel(frame: &mut Frame<'_>, area: Rect, app: &mut App, regions: &mut 
         .set_selection_style(Style::default().fg(FOREGROUND).bg(HIGHLIGHT));
     app.editor.set_placeholder_style(Style::default().fg(MUTED));
     frame.render_widget(&app.editor, area);
+}
+
+fn editor_height(area: Rect, app: &App) -> u16 {
+    let baseline = (area.height / 3).clamp(3, 12);
+    let height = if app.focus == Focus::Editor {
+        baseline.max(
+            as_u16(app.editor.lines().len())
+                .saturating_add(2)
+                .min(area.height / 2),
+        )
+    } else {
+        baseline
+    };
+    height.min(area.height.saturating_sub(9))
 }
 
 fn header(frame: &mut Frame<'_>, area: Rect, app: &App, regions: &mut Regions) {
