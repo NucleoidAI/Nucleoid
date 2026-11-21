@@ -199,6 +199,82 @@ export function merge(...matrices) {
   return result;
 }
 
+const SIDES: number[][] = [
+  [1, 0],
+  [-1, 0],
+  [0, 1],
+  [0, -1],
+];
+
+const CORNERS: number[][] = [
+  [1, 1],
+  [1, -1],
+  [-1, 1],
+  [-1, -1],
+];
+
+// Separates the nonzero cells of the matrix into groups of adjacent cells, one
+// matrix per group. Connectivity 4 joins cells that share a side, and 8 also
+// joins cells that share only a corner. Any two adjacent nonzero cells join,
+// whatever their colors, unless same_color asks them to have the same color.
+// Each group keeps the matrix's size, with its cells where they are and 0
+// everywhere else, as instance matrices do, so merge puts the groups back
+// together. Groups come in reading order of their first cell.
+export function separate(
+  matrix,
+  connectivity: number = 8,
+  same_color: boolean = false
+) {
+  if (connectivity !== 4 && connectivity !== 8) {
+    throw new Error(
+      `Connectivity ${JSON.stringify(connectivity)} is not 4 or 8`
+    );
+  }
+  const rows: number = matrix.length;
+  const cols: number = matrix[0]?.length ?? 0;
+  for (const row of matrix) {
+    if (row.length !== cols) {
+      throw new Error("Matrix must be rectangular for separating");
+    }
+  }
+
+  const steps: number[][] = connectivity === 8 ? [...SIDES, ...CORNERS] : SIDES;
+  const grouped = Array.from({ length: rows }, () => Array(cols).fill(false));
+  const groups = [];
+
+  for (let y: number = 0; y < rows; y++) {
+    for (let x: number = 0; x < cols; x++) {
+      if (matrix[y][x] === 0 || grouped[y][x]) continue;
+
+      const group = Array.from({ length: rows }, () => Array(cols).fill(0));
+      const pending: number[][] = [[x, y]];
+      grouped[y][x] = true;
+
+      while (pending.length > 0) {
+        const [cell_x, cell_y] = pending.pop();
+        group[cell_y][cell_x] = matrix[cell_y][cell_x];
+
+        for (const [step_x, step_y] of steps) {
+          const next_x: number = cell_x + step_x;
+          const next_y: number = cell_y + step_y;
+          if (next_x < 0 || next_y < 0 || next_x >= cols || next_y >= rows) {
+            continue;
+          }
+          const value: number = matrix[next_y][next_x];
+          if (value === 0 || grouped[next_y][next_x]) continue;
+          if (same_color && value !== matrix[cell_y][cell_x]) continue;
+          grouped[next_y][next_x] = true;
+          pending.push([next_x, next_y]);
+        }
+      }
+
+      groups.push(group);
+    }
+  }
+
+  return groups;
+}
+
 export function canvas(matrix, type: string) {
   switch (type) {
     case "EXACT":

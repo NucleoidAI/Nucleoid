@@ -2910,16 +2910,14 @@ The LLM also represents identified instances in `nuc` lang. This step is crucial
 ##### 5. Extract instances from Test Input
 
 This step is slight different then from extracting instances in analysis because now the LLM has to use instances list from previous step as a reference.
-Each training instance appears with the `x` and `y` of its nonzero bounding
-box and that box's `instance_crop_matrix`, as `Matrix.measure` returns them,
-beside its `implementation` and `input_value`, and the LLM returns each test
-object the same way, as `x`, `y`, and `instance_crop_matrix`. `Matrix.pad`
-then places every crop at its `x` and `y` on a canvas of the test input's
-size, which gives the object's full-size `input_instance_matrix`, so the LLM
-never writes a full-size mask. In a mask written row by row, the end of one row
-sits next to the start of the next, which can join two objects at opposite
-edges of the grid. Expected test grids and their dimensions are never part of
-prediction requests.
+Each training instance appears as its full-size `instance_matrix` and its
+`instance_crop_matrix`, the nonzero bounding box that `Matrix.crop` cuts from
+it, beside its `implementation`, the `x`, `y`, `width`, `height`,
+`orientation`, and `volume` of its `input_value`, and the `input_value`
+itself. The LLM returns each test object's `instance_crop_matrix` and
+full-size `instance_matrix`, and that `instance_matrix` becomes the object's
+`input_instance_matrix`. Expected test grids and their dimensions are never
+part of prediction requests.
 
 ##### 6. Initialize Nucleoid session for test input
 
@@ -3012,6 +3010,17 @@ offsets, offsets that would push the instance past the left or top edge, and
 ragged matrices, and it does not modify the input. Together,
 `Matrix.move_instance(Matrix.rotate_instance(matrix, turn), x, y)` turns an
 instance in place and then pushes it by an offset.
+
+`Matrix.separate(matrix, connectivity, same_color)` returns one matrix per
+group of adjacent nonzero cells, in reading order of each group's first cell.
+With the default `connectivity` of `8`, cells that share a side or only a
+corner are adjacent; with `4`, only cells that share a side are. Adjacent
+nonzero cells join whatever their colors, unless `same_color` is `true`, which
+joins only cells of the same color. Each group keeps the input's size, with its
+cells where they are and zeros everywhere else, like the full-size instance
+masks, so `Matrix.merge(...Matrix.separate(matrix))` gives back any matrix
+with a nonzero cell. Empty and all-zero matrices return `[]`. It rejects any
+other `connectivity` and ragged matrices, and it does not modify the input.
 
 The same prediction path replays every training pair before predicting the
 held-out input. A training mismatch stops the run. Held-out predictions are

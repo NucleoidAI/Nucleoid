@@ -4,17 +4,6 @@ import { v4 as uuid } from "uuid";
 import * as dataset from "../dataset";
 import * as openrouter from "./openrouter";
 
-const init_class: string = [
-  "# Each object is one group of cells on the grid, located by its bounding box",
-  "class Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int):",
-  "    this.x is x",
-  "    this.y is y",
-  "    this.width is width",
-  "    this.height is height",
-  "    this.orientation is orientation",
-  "    this.volume is volume",
-].join("\n");
-
 export async function generate({
   puzzle_id = "3aa6fb7a",
   only_puzzle_dataset = false,
@@ -36,13 +25,6 @@ export async function generate({
   }
 
   if (grammar) {
-    messages.unshift({
-      role: "system",
-      content: JSON.stringify({
-        init_class: { class_declaration: init_class },
-      }),
-    });
-
     messages.unshift({
       role: "system",
       content: `
