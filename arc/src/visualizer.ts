@@ -7,25 +7,45 @@ import * as nucleoid from "./lib/nucleoid";
 export async function instances({ train, test_input_matrix }) {
   milestone.segmenting_test_input({ test_input_matrix });
 
-  const parts = Matrix.separate(test_input_matrix);
-  const parted_instances = [];
+  const partial_matrices = Matrix.separate(test_input_matrix);
+  const partial_instances = [];
 
-  for (const part of parts) {
+  for (const partial_matrix of partial_matrices) {
     milestone.test_input_segmented({
-      instances: [{ input_instance_matrix: part }],
+      instances: [{ input_instance_matrix: partial_matrix }],
     });
 
-    const {
+    let {
       result: { instances },
     } = await llm.generate({
       reasoning: false,
+      few_shot: null,
       grammar: true,
       messages: [
         {
           role: "assistant",
           content: `
           current:
-          ${JSON.stringify(train)}
+          ${JSON.stringify({
+            class_declaration: train.class_declaration,
+            dataset: train.dataset.map(({ input_matrix, instances }) => ({
+              input_matrix,
+              instances: instances.map((instance) => ({
+                instance_matrix: instance.input_instance_matrix,
+                instance_crop_matrix: Matrix.crop(
+                  instance.input_instance_matrix
+                ),
+                implementation: instance.implementation,
+                x: instance.input_value.x,
+                y: instance.input_value.y,
+                width: instance.input_value.width,
+                height: instance.input_value.height,
+                orientation: instance.input_value.orientation,
+                volume: instance.input_value.volume,
+                value: instance.input_value,
+              })),
+            })),
+          })}
         `,
         },
         {
@@ -34,15 +54,13 @@ export async function instances({ train, test_input_matrix }) {
           query:
           ${JSON.stringify({
             class_declaration: train.class_declaration,
-            declarations: train.declarations,
-            output_canvas: train.output_canvas,
             dataset: [
               {
-                input_matrix: part,
+                input_matrix: partial_matrix,
                 instances: [
                   {
-                    input_instance_crop_matrix: "<INPUT_INSTANCE_CROP_MATRIX>",
-                    input_instance_matrix: "<INPUT_INSTANCE_MATRIX>",
+                    instance_crop_matrix: "<INPUT_INSTANCE_CROP_MATRIX>",
+                    instance_matrix: "<INSTANCE_MATRIX>",
                   },
                 ],
               },
@@ -52,8 +70,8 @@ export async function instances({ train, test_input_matrix }) {
           {
             "result": {
               "instances": [{
-                "input_instance_crop_matrix": "<INSTANCE_CROP_MATRIX>",
-                "input_instance_matrix": "<INSTANCE_MATRIX>"
+                "instance_crop_matrix": "<INPUT_INSTANCE_CROP_MATRIX>",
+                "instance_matrix": "<INSTANCE_MATRIX>"
               }]
             }
           }
@@ -62,12 +80,18 @@ export async function instances({ train, test_input_matrix }) {
       ],
     });
 
-    parted_instances.push(...instances);
+    instances = instances.map((instance) => ({
+      ...instance,
+      input_instance_matrix: instance.instance_matrix,
+      instance_matrix: undefined,
+    }));
+
+    partial_instances.push(...instances);
   }
 
-  milestone.test_input_segmented({ instances: parted_instances });
+  milestone.test_input_segmented({ instances: partial_instances });
 
-  return { instances: parted_instances };
+  return { instances: partial_instances };
 }
 
 export async function value({
