@@ -2910,12 +2910,16 @@ The LLM also represents identified instances in `nuc` lang. This step is crucial
 ##### 5. Extract instances from Test Input
 
 This step is slight different then from extracting instances in analysis because now the LLM has to use instances list from previous step as a reference.
-It returns cropped input objects with instance-level `input_x`, `input_y`,
-and numeric `input_orientation`, matching the coordinates and `orientation`
-in `input_value`,
-plus `output_dimensions: { "width": ..., "height": ... }` inferred from
-training pairs and the supplied input only. Expected test grids and their
-dimensions are never part of prediction requests.
+Each training instance appears with the `x` and `y` of its nonzero bounding
+box and that box's `instance_crop_matrix`, as `Matrix.measure` returns them,
+beside its `implementation` and `input_value`, and the LLM returns each test
+object the same way, as `x`, `y`, and `instance_crop_matrix`. `Matrix.pad`
+then places every crop at its `x` and `y` on a canvas of the test input's
+size, which gives the object's full-size `input_instance_matrix`, so the LLM
+never writes a full-size mask. In a mask written row by row, the end of one row
+sits next to the start of the next, which can join two objects at opposite
+edges of the grid. Expected test grids and their dimensions are never part of
+prediction requests.
 
 ##### 6. Initialize Nucleoid session for test input
 

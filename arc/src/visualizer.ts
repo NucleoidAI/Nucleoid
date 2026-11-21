@@ -22,20 +22,23 @@ export async function instances({ train, test_input_matrix }) {
             class_declaration: train.class_declaration,
             dataset: train.dataset.map(({ input_matrix, instances }) => ({
               input_matrix,
-              instances: instances.map((instance) => ({
-                instance_matrix: instance.input_instance_matrix,
-                instance_crop_matrix: Matrix.crop(
+              instances: instances.map((instance) => {
+                const { matrix, x, y } = Matrix.measure(
                   instance.input_instance_matrix
-                ),
-                implementation: instance.implementation,
-                x: instance.input_value.x,
-                y: instance.input_value.y,
-                width: instance.input_value.width,
-                height: instance.input_value.height,
-                orientation: instance.input_value.orientation,
-                volume: instance.input_value.volume,
-                value: instance.input_value,
-              })),
+                );
+
+                return {
+                  x,
+                  y,
+                  instance_crop_matrix: matrix,
+                  implementation: instance.implementation,
+                  width: instance.input_value.width,
+                  height: instance.input_value.height,
+                  orientation: instance.input_value.orientation,
+                  volume: instance.input_value.volume,
+                  value: instance.input_value,
+                };
+              }),
             })),
           })}
         `,
@@ -51,8 +54,9 @@ export async function instances({ train, test_input_matrix }) {
                 input_matrix: test_input_matrix,
                 instances: [
                   {
+                    x: "<X>",
+                    y: "<Y>",
                     instance_crop_matrix: "<INPUT_INSTANCE_CROP_MATRIX>",
-                    instance_matrix: "<INSTANCE_MATRIX>",
                   },
                 ],
               },
@@ -62,8 +66,9 @@ export async function instances({ train, test_input_matrix }) {
           {
             "result": {
               "instances": [{
-                "instance_crop_matrix": "<INPUT_INSTANCE_CROP_MATRIX>",
-                "instance_matrix": "<INSTANCE_MATRIX>"
+                "x": <X>,
+                "y": <Y>,
+                "instance_crop_matrix": <INPUT_INSTANCE_CROP_MATRIX>
               }]
             }
           }
@@ -74,8 +79,13 @@ export async function instances({ train, test_input_matrix }) {
 
   instances = instances.map((instance) => ({
     ...instance,
-    input_instance_matrix: instance.instance_matrix,
-    instance_matrix: undefined,
+    input_instance_matrix: Matrix.pad(
+      instance.instance_crop_matrix,
+      test_input_matrix.length,
+      test_input_matrix[0].length,
+      instance.x,
+      instance.y
+    ),
   }));
 
   milestone.test_input_segmented({ instances });
