@@ -22,7 +22,7 @@ use tui_textarea::TextArea;
 
 use completion::Completion;
 use output::{Entry, View};
-use view::Regions;
+use view::{Regions, Transcript};
 
 const HISTORY_LIMIT: usize = 200;
 const REPL_LOGO: &str = " ⣿⠋⢻⡄⣿ ⢸⡇⢰⡟⠙⠷\n ⣿ ⢸⡇⢻⣄⣼⡇⠸⣧⣠⡶";
@@ -32,10 +32,16 @@ const HELP: &str = "\
 .json [on|off]   Toggle the JSON result view
 .table [on|off]  Toggle the table result view
 .graph [on|off]  Include the logic graph with subsequent results
+.editor          Switch to editor mode
+.chat            Switch to chat mode
 .clear           Clear runtime state and graph
 .exit, .quit     Exit
 
-Enter inserts a newline, never submits code. F5 runs the entire editor buffer.
+F1 selects editor mode; F2 selects chat mode. Ctrl-Tab switches modes.
+Both modes share runtime state, input history, results and the unfinished draft.
+Editor: Enter inserts a newline. Chat: Enter submits code to the transcript.
+Shift-Enter inserts a newline when the terminal reports it distinctly.
+F5 runs the entire input in either mode.
 Ctrl-Enter also runs on non-Windows terminals that report it distinctly.
 Windows delivers pasted LF as Ctrl-Enter, so both insert a newline there.
 Ctrl-J inserts an automatically indented newline.
@@ -50,12 +56,13 @@ Shift-arrows selects text.
 Ctrl-X cuts; Ctrl-V pastes the editor's last cut text.
 Ctrl-C cancels input. Ctrl-D on an empty editor / Ctrl-Q exits.
 
-F1-F3 changes tabs; the extra tabs are reserved for later.
 F6 changes Text / JSON / Table. Ctrl-Up / Ctrl-Down selects earlier results.
 F4 cycles editor, result and diagnostics focus. PgUp/PgDn scrolls by a visible
 page; Left/Right scrolls text or moves table columns. Scrollbars mark overflow.
+Chat includes diagnostics in the transcript; F4 switches input/transcript focus.
+Home/End with transcript focus jumps to the start/end of chat history.
 
-Click tabs, result views or history entries. Click/drag in the editor to
+Click modes, result views or history entries. Click/drag in the editor to
 position/select text. Use the mouse wheel to scroll each pane; Shift-wheel
 scrolls results horizontally. Over completions, the wheel selects suggestions
 without scrolling the pane underneath. Pasted code is never executed automatically.";
@@ -124,6 +131,12 @@ impl LogoSparkle {
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
+enum Mode {
+    Editor,
+    Chat,
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
 enum Focus {
     Editor,
     Result,
@@ -139,7 +152,8 @@ struct App {
     history_index: Option<usize>,
     draft: String,
     list_state: ListState,
-    tab: usize,
+    mode: Mode,
+    transcript: Transcript,
     view: View,
     graph: bool,
     focus: Focus,
@@ -163,7 +177,8 @@ impl App {
             history_index: None,
             draft: String::new(),
             list_state: ListState::default(),
-            tab: 0,
+            mode: Mode::Editor,
+            transcript: Transcript::default(),
             view: if json { View::Json } else { View::Text },
             graph,
             focus: Focus::Editor,

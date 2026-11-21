@@ -5,11 +5,13 @@ use ratatui::text::{Line, Span};
 use ratatui::widgets::Paragraph;
 
 use super::{ACCENT, FOREGROUND, HIGHLIGHT, MUTED, PANEL};
-use crate::terminal::{App, Focus};
+use crate::terminal::{App, Focus, Mode};
 
 pub(super) fn draw(frame: &mut Frame<'_>, area: Rect, app: &App) {
     let label = match app.focus {
+        Focus::Editor if app.mode == Mode::Chat => "INPUT",
         Focus::Editor => "EDITOR",
+        Focus::Result if app.mode == Mode::Chat => "CHAT",
         Focus::Result => "RESULT",
         Focus::Diagnostics if area.width >= 80 => "DIAGNOSTICS",
         Focus::Diagnostics => "DIAG",
@@ -41,7 +43,11 @@ pub(super) fn draw(frame: &mut Frame<'_>, area: Rect, app: &App) {
                 hint(&mut spans, "Esc", "dismiss");
             }
             Focus::Editor => {
-                hint(&mut spans, "Enter", "newline");
+                let action = match app.mode {
+                    Mode::Editor => "newline",
+                    Mode::Chat => "send",
+                };
+                hint(&mut spans, "Enter", action);
                 hint(&mut spans, "Tab", "complete");
             }
             Focus::Result | Focus::Diagnostics => {

@@ -58,7 +58,7 @@ const WORDS: &[&str] = &[
     "String",
 ];
 const COMMANDS: &[&str] = &[
-    ".clear", ".exit", ".graph", ".help", ".json", ".quit", ".table",
+    ".chat", ".clear", ".editor", ".exit", ".graph", ".help", ".json", ".quit", ".table",
 ];
 /// Read-only queries that lists and class instance lists share.
 const LIST_MEMBERS: &[&str] = &[

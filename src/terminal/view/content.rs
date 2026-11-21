@@ -37,7 +37,7 @@ pub(super) fn draw_text(
             .scroll((*scroll, *horizontal)),
         area,
     );
-    gutter_scrollbar(frame, area, lines, *scroll);
+    gutter_scrollbar(frame, area, lines, usize::from(*scroll));
 }
 
 pub(super) fn draw_diagnostics(
@@ -58,7 +58,7 @@ pub(super) fn draw_diagnostics(
             .scroll((*scroll, *horizontal)),
         area,
     );
-    gutter_scrollbar(frame, inner, lines, *scroll);
+    gutter_scrollbar(frame, inner, lines, usize::from(*scroll));
     inner
 }
 
@@ -103,7 +103,7 @@ pub(super) fn draw_table(
         area,
     );
     let body = Rect::new(area.x, area.y.saturating_add(1), area.width, visible_rows);
-    gutter_scrollbar(frame, body, data.rows.len(), *scroll);
+    gutter_scrollbar(frame, body, data.rows.len(), usize::from(*scroll));
 }
 
 fn column_widths(data: &TableData, start: usize, mut remaining: u16) -> Vec<Constraint> {
@@ -194,14 +194,14 @@ fn clamp_scroll(text: &str, area: Rect, vertical: &mut u16, horizontal: &mut u16
     lines
 }
 
-fn gutter_scrollbar(frame: &mut Frame<'_>, viewport: Rect, lines: usize, scroll: u16) {
+pub(super) fn gutter_scrollbar(frame: &mut Frame<'_>, viewport: Rect, lines: usize, scroll: usize) {
     let visible = usize::from(viewport.height);
     if visible == 0 || lines <= visible {
         return;
     }
     let gutter = Rect::new(viewport.right(), viewport.y, 1, viewport.height);
     let mut state = ScrollbarState::new(lines)
-        .position(usize::from(scroll))
+        .position(scroll)
         .viewport_content_length(visible);
     frame.render_stateful_widget(
         Scrollbar::new(ScrollbarOrientation::VerticalRight)

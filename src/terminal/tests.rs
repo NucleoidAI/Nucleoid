@@ -480,22 +480,25 @@ fn unindenting_recalled_input_keeps_the_edited_buffer() {
 
 #[test]
 fn windows_control_enter_is_a_pasted_lf_not_an_execution_shortcut() {
-    let mut app = App::new(false, false);
-    let mut runtime = Runtime::new();
-    app.editor = editor::new("value = 7");
-    key(
-        &mut app,
-        &mut runtime,
-        KeyCode::Enter,
-        KeyModifiers::CONTROL,
-    );
-    if cfg!(windows) {
-        assert_eq!(app.editor.lines(), ["value = 7", ""]);
-        assert!(app.entries.is_empty());
-        assert!(!runtime.state.has_variable("value"));
-    } else {
-        assert_eq!(app.entries.len(), 1);
-        assert!(runtime.state.has_variable("value"));
+    for mode in [Mode::Editor, Mode::Chat] {
+        let mut app = App::new(false, false);
+        let mut runtime = Runtime::new();
+        app.set_mode(mode);
+        app.editor = editor::new("value = 7");
+        key(
+            &mut app,
+            &mut runtime,
+            KeyCode::Enter,
+            KeyModifiers::CONTROL,
+        );
+        if cfg!(windows) {
+            assert_eq!(app.editor.lines(), ["value = 7", ""]);
+            assert!(app.entries.is_empty());
+            assert!(!runtime.state.has_variable("value"));
+        } else {
+            assert_eq!(app.entries.len(), 1);
+            assert!(runtime.state.has_variable("value"));
+        }
     }
 }
 
@@ -550,7 +553,7 @@ fn result_focus_scrolls_output_without_editing_or_recalling() {
     assert!(app.focus == Focus::Result);
     key(&mut app, &mut runtime, KeyCode::Esc, KeyModifiers::NONE);
     assert!(app.focus == Focus::Editor);
-    assert_eq!(app.tab, 0);
+    assert!(app.mode == Mode::Chat);
 
     app.editor = editor::new(".exit now");
     assert!(!app.submit(&mut runtime));
@@ -616,9 +619,10 @@ fn mouse_hits_real_tab_view_history_and_editor_regions() {
     app.mouse(click(app.regions.views[2]));
     assert!(app.view == View::Table);
     app.mouse(click(app.regions.tabs[1]));
-    assert_eq!(app.tab, 1);
+    assert!(app.mode == Mode::Chat);
     terminal.draw(|frame| app.draw(frame)).unwrap();
-    assert_eq!(app.regions.output.width, 0);
+    assert!(app.regions.output.width > 0);
+    assert_eq!(app.regions.history.width, 0);
     app.mouse(click(app.regions.tabs[0]));
     app.editor = editor::new("value = 1");
     terminal.draw(|frame| app.draw(frame)).unwrap();
@@ -649,7 +653,7 @@ fn original_branding_renders_top_left_above_the_tabs() {
         assert!(line(1).contains("Nucleoid - Logic Language for World Models"));
         assert_eq!(screen[(15, 2)].symbol(), "🌎");
         assert!(line(2).contains("Inspired by Nature"));
-        for label in ["F1 REPL", "F2 Tab 2", "F3 Tab 3"] {
+        for label in ["F1 Editor", "F2 Chat"] {
             assert!(line(3).contains(label));
         }
         assert!(
@@ -709,7 +713,8 @@ fn original_wordmark_stays_top_left_after_results_and_tab_changes() {
         key(&mut app, &mut runtime, KeyCode::F(2), KeyModifiers::NONE);
         terminal.draw(|frame| app.draw(frame)).unwrap();
         assert_wordmark(terminal.backend().buffer());
-        assert_eq!(app.regions.editor, editor_area);
+        assert_eq!(app.regions.editor.bottom(), editor_area.bottom());
+        assert!(app.regions.editor.height <= editor_area.height);
     }
 }
 
@@ -1332,4 +1337,323 @@ fn indented_newlines_open_a_repeat_suite_and_submission_runs_the_loop_once() {
     );
     run(&mut app, &mut runtime, "count = 0\ncount");
     assert_eq!(app.entries.last().unwrap().output.text(View::Text), "0");
+}
+
+#[test]
+fn chat_and_editor_share_state_drafts_history_and_frozen_results() {
+    let mut app = App::new(false, false);
+    let mut runtime = Runtime::new();
+    run(&mut app, &mut runtime, "value = 41");
+    app.editor = editor::new("value + 1");
+    app.editor.select_all();
+    let selection = app.editor.selection_range();
+    key(&mut app, &mut runtime, KeyCode::F(2), KeyModifiers::NONE);
+    assert!(app.mode == Mode::Chat);
+    assert_eq!(app.editor.lines(), ["value + 1"]);
+    assert_eq!(app.editor.selection_range(), selection);
+    assert_eq!(app.entries.len(), 1);
+    key(&mut app, &mut runtime, KeyCode::Enter, KeyModifiers::NONE);
+    assert!(app.mode == Mode::Chat);
+    assert!(app.editor.is_empty());
+    assert_eq!(app.entries.len(), 2);
+    assert_eq!(app.entries[1].output.text(View::Text), "42");
+
+    app.editor = editor::new("unfinished\n    draft");
+    key(
+        &mut app,
+        &mut runtime,
+        KeyCode::Char('p'),
+        KeyModifiers::CONTROL,
+    );
+    assert_eq!(app.editor.lines(), ["value + 1"]);
+    key(&mut app, &mut runtime, KeyCode::F(1), KeyModifiers::NONE);
+    assert!(app.mode == Mode::Editor);
+    key(
+        &mut app,
+        &mut runtime,
+        KeyCode::Char('n'),
+        KeyModifiers::CONTROL,
+    );
+    assert_eq!(app.editor.lines(), ["unfinished", "    draft"]);
+    key(&mut app, &mut runtime, KeyCode::Tab, KeyModifiers::CONTROL);
+    assert!(app.mode == Mode::Chat);
+    key(&mut app, &mut runtime, KeyCode::Tab, KeyModifiers::CONTROL);
+    assert!(app.mode == Mode::Editor);
+    run(&mut app, &mut runtime, "value = 99");
+    assert_eq!(app.entries[0].output.text(View::Text), "41");
+    assert_eq!(app.entries[1].output.text(View::Text), "42");
+}
+
+#[test]
+fn chat_multiline_input_and_paste_wait_for_an_explicit_send() {
+    let mut app = App::new(false, false);
+    let mut runtime = Runtime::new();
+    key(&mut app, &mut runtime, KeyCode::F(2), KeyModifiers::NONE);
+    app.editor = editor::new("if true:");
+    key(
+        &mut app,
+        &mut runtime,
+        KeyCode::Char('j'),
+        KeyModifiers::CONTROL,
+    );
+    assert_eq!(app.editor.lines(), ["if true:", "    "]);
+    app.editor.insert_str("value = 7");
+    key(&mut app, &mut runtime, KeyCode::Enter, KeyModifiers::SHIFT);
+    assert_eq!(app.editor.lines(), ["if true:", "    value = 7", ""]);
+    assert!(!app.event(Event::Paste("\r\nvalue + 1".into()), &mut runtime));
+    assert!(app.entries.is_empty());
+    assert!(!runtime.state.has_variable("value"));
+    key(&mut app, &mut runtime, KeyCode::Enter, KeyModifiers::NONE);
+    assert_eq!(app.entries.len(), 1);
+    assert_eq!(app.entries[0].output.text(View::Text), "8");
+    assert!(app.mode == Mode::Chat);
+    key(&mut app, &mut runtime, KeyCode::Enter, KeyModifiers::NONE);
+    assert_eq!(app.entries.len(), 1);
+}
+
+#[test]
+fn chat_commands_complete_switch_modes_and_preserve_error_recovery() {
+    let mut app = App::new(false, false);
+    let mut runtime = Runtime::new();
+    app.editor = editor::new(".ch");
+    key(&mut app, &mut runtime, KeyCode::Tab, KeyModifiers::NONE);
+    assert_eq!(app.editor.lines(), [".chat"]);
+    key(&mut app, &mut runtime, KeyCode::F(5), KeyModifiers::NONE);
+    assert!(app.mode == Mode::Chat);
+    for source in ["value = 7", "value = (", ".chat now", "value", ".json on"] {
+        app.editor = editor::new(source);
+        assert!(!key(
+            &mut app,
+            &mut runtime,
+            KeyCode::Enter,
+            KeyModifiers::NONE
+        ));
+    }
+    assert!(app.entries[2].output.is_error(View::Text));
+    assert!(app.entries[3].output.is_error(View::Text));
+    assert_eq!(app.entries[4].output.text(View::Text), "7");
+    assert!(app.view == View::Json);
+    app.editor = editor::new(".ed");
+    key(&mut app, &mut runtime, KeyCode::Tab, KeyModifiers::NONE);
+    assert_eq!(app.editor.lines(), [".editor"]);
+    key(&mut app, &mut runtime, KeyCode::Enter, KeyModifiers::NONE);
+    assert!(app.mode == Mode::Editor);
+    assert!(app.view == View::Json);
+    run(&mut app, &mut runtime, "value");
+    assert_eq!(app.entries.last().unwrap().output.text(View::Text), "7");
+    run(&mut app, &mut runtime, ".chat");
+    app.editor = editor::new(".exit");
+    assert!(key(
+        &mut app,
+        &mut runtime,
+        KeyCode::Enter,
+        KeyModifiers::NONE
+    ));
+}
+
+#[test]
+fn chat_renders_ordered_sources_results_errors_diagnostics_and_result_formats() {
+    let mut app = App::new(false, false);
+    let mut runtime = Runtime::new();
+    app.set_mode(Mode::Chat);
+    for source in [
+        "item = {count: 1}\n[item]",
+        "item.count = 2",
+        "unknown_name",
+        "assert(1, 2)",
+    ] {
+        run(&mut app, &mut runtime, source);
+    }
+    app.graph = true;
+    run(&mut app, &mut runtime, "value = 3");
+    let mut terminal = Terminal::new(TestBackend::new(100, 100)).unwrap();
+    for view in View::ALL {
+        app.set_view(view);
+        terminal.draw(|frame| app.draw(frame)).unwrap();
+        let text = (app.regions.output.y..app.regions.output.bottom())
+            .map(|row| screen_line(&terminal, row))
+            .collect::<Vec<_>>()
+            .join("\n");
+        let mut previous = 0;
+        for marker in [
+            "You 1",
+            "item = {count: 1}",
+            "Nucleoid",
+            "You 2",
+            "item.count = 2",
+            "You 3",
+            "Nucleoid / Error",
+            "ReferenceError",
+            "You 4",
+            "assertion failed: expected 2, got 1",
+            "You 5",
+            "logic graph",
+        ] {
+            let position = text[previous..].find(marker).unwrap_or_else(|| {
+                panic!(
+                    "{} transcript missing ordered marker {marker:?}:\n{text}",
+                    view.label()
+                )
+            });
+            previous += position + marker.len();
+        }
+        let response = text
+            .split_once("Nucleoid")
+            .unwrap()
+            .1
+            .split_once("You 2")
+            .unwrap()
+            .0;
+        match view {
+            View::Text => assert!(
+                response.contains(app.entries[0].output.text(view)),
+                "{response}"
+            ),
+            View::Json => assert!(response.contains("\"count\": 1.0"), "{response}"),
+            View::Table => {
+                assert!(response.contains("count"), "{response}");
+                assert!(response.contains("1.0"), "{response}");
+            }
+        }
+        assert_eq!(runtime.assertions_run(), 1);
+        assert_eq!(app.entries.len(), 5);
+        assert_eq!(app.regions.history.width, 0);
+        assert_eq!(app.regions.diagnostics.height, 0);
+    }
+}
+
+#[test]
+fn chat_tables_keep_graphemes_and_columns_aligned() {
+    let family = "👨‍👩‍👧‍👦";
+    let mut app = App::new(false, false);
+    let mut runtime = Runtime::new();
+    app.set_mode(Mode::Chat);
+    run(
+        &mut app,
+        &mut runtime,
+        &format!("[{{label: \"{family}x\", value: 1}}, {{label: \"plain\", value: 2}}]"),
+    );
+    app.set_view(View::Table);
+    let mut terminal = Terminal::new(TestBackend::new(100, 30)).unwrap();
+    terminal.draw(|frame| app.draw(frame)).unwrap();
+    let output = app.regions.output;
+    let header = (output.y..output.bottom())
+        .find(|&row| screen_line(&terminal, row).contains("label    | value"))
+        .unwrap();
+    let screen = terminal.backend().buffer();
+    let separator = (output.x..output.right())
+        .find(|&column| screen[(column, header)].symbol() == "|")
+        .unwrap();
+    assert_eq!(screen[(output.x, header + 1)].symbol(), family);
+    assert_eq!(screen[(output.x + 2, header + 1)].symbol(), "x");
+    for row in header..=header + 2 {
+        assert_eq!(screen[(separator, row)].symbol(), "|");
+    }
+}
+
+#[test]
+fn chat_scrolls_history_follows_new_results_and_keeps_the_draft() {
+    let mut app = App::new(false, false);
+    let mut runtime = Runtime::new();
+    app.set_mode(Mode::Chat);
+    for index in 0..10 {
+        run(&mut app, &mut runtime, &format!("value = {index}"));
+    }
+    app.editor = editor::new("unfinished draft");
+    let mut terminal = Terminal::new(TestBackend::new(80, 18)).unwrap();
+    terminal.draw(|frame| app.draw(frame)).unwrap();
+    assert!(app.transcript.scroll > 0);
+    assert!(screen_line(&terminal, app.regions.output.bottom() - 1).contains('9'));
+    key(&mut app, &mut runtime, KeyCode::F(4), KeyModifiers::NONE);
+    key(&mut app, &mut runtime, KeyCode::Home, KeyModifiers::NONE);
+    terminal.draw(|frame| app.draw(frame)).unwrap();
+    assert!(screen_line(&terminal, app.regions.output.y).contains("You 1"));
+    let page = app.regions.output.height;
+    key(
+        &mut app,
+        &mut runtime,
+        KeyCode::PageDown,
+        KeyModifiers::NONE,
+    );
+    assert_eq!(app.transcript.scroll, usize::from(page));
+    terminal.draw(|frame| app.draw(frame)).unwrap();
+    app.mouse(MouseEvent {
+        kind: MouseEventKind::ScrollDown,
+        column: app.regions.output.x,
+        row: app.regions.output.y,
+        modifiers: KeyModifiers::NONE,
+    });
+    assert_eq!(app.transcript.scroll, usize::from(page) + 3);
+    assert_eq!(app.scroll, 0);
+    key(&mut app, &mut runtime, KeyCode::Up, KeyModifiers::CONTROL);
+    terminal.draw(|frame| app.draw(frame)).unwrap();
+    assert!(screen_line(&terminal, app.regions.output.y).contains("You 9"));
+    assert_eq!(app.editor.lines(), ["unfinished draft"]);
+    key(&mut app, &mut runtime, KeyCode::End, KeyModifiers::NONE);
+    terminal.draw(|frame| app.draw(frame)).unwrap();
+    assert!(screen_line(&terminal, app.regions.output.bottom() - 1).contains('9'));
+
+    for (width, height) in [(40, 12), (100, 30), (1, 1), (80, 18)] {
+        let mut resized = Terminal::new(TestBackend::new(width, height)).unwrap();
+        resized.draw(|frame| app.draw(frame)).unwrap();
+        if width >= 40 && height >= 12 {
+            assert!(app.regions.output.height > 0);
+            assert!(app.regions.editor.height > 0);
+            assert!(screen_line(&resized, app.regions.output.bottom() - 1).contains('9'));
+            assert!(screen_line(&resized, height - 1).contains("Ctrl-Q quit"));
+        }
+    }
+    key(&mut app, &mut runtime, KeyCode::Home, KeyModifiers::NONE);
+    run(&mut app, &mut runtime, "value = 99");
+    terminal.draw(|frame| app.draw(frame)).unwrap();
+    assert!(screen_line(&terminal, app.regions.output.bottom() - 1).contains("99"));
+}
+
+#[test]
+fn chat_focus_and_escape_stay_in_chat_without_submitting_the_draft() {
+    let mut app = App::new(false, true);
+    let mut runtime = Runtime::new();
+    run(&mut app, &mut runtime, "value = 7");
+    key(&mut app, &mut runtime, KeyCode::F(4), KeyModifiers::NONE);
+    key(&mut app, &mut runtime, KeyCode::F(4), KeyModifiers::NONE);
+    assert!(app.focus == Focus::Diagnostics);
+    key(&mut app, &mut runtime, KeyCode::F(2), KeyModifiers::NONE);
+    app.editor = editor::new("value + 1");
+    assert!(app.focus == Focus::Editor);
+    key(&mut app, &mut runtime, KeyCode::F(4), KeyModifiers::NONE);
+    assert!(app.focus == Focus::Result);
+    key(&mut app, &mut runtime, KeyCode::Enter, KeyModifiers::NONE);
+    assert_eq!(app.entries.len(), 1);
+    assert_eq!(app.editor.lines(), ["value + 1"]);
+    key(&mut app, &mut runtime, KeyCode::F(4), KeyModifiers::NONE);
+    assert!(app.focus == Focus::Editor);
+    key(&mut app, &mut runtime, KeyCode::F(4), KeyModifiers::NONE);
+    key(&mut app, &mut runtime, KeyCode::Esc, KeyModifiers::NONE);
+    assert!(app.focus == Focus::Editor);
+    assert!(app.mode == Mode::Chat);
+    key(&mut app, &mut runtime, KeyCode::F(5), KeyModifiers::NONE);
+    assert_eq!(app.entries.last().unwrap().output.text(View::Text), "8");
+    assert!(app.mode == Mode::Chat);
+}
+
+#[test]
+fn chat_keeps_tail_navigation_available_for_large_transcripts() {
+    let mut app = App::new(false, false);
+    let mut runtime = Runtime::new();
+    app.set_mode(Mode::Chat);
+    app.entries.push(Entry {
+        source: "large_output".into(),
+        output: output::Output::Message(format!("{}tail marker", "earlier line\n".repeat(66_000))),
+        diagnostics: String::new(),
+    });
+    let mut terminal = Terminal::new(TestBackend::new(80, 18)).unwrap();
+    terminal.draw(|frame| app.draw(frame)).unwrap();
+    assert!(screen_line(&terminal, app.regions.output.bottom() - 1).contains("tail marker"));
+    key(&mut app, &mut runtime, KeyCode::F(4), KeyModifiers::NONE);
+    key(&mut app, &mut runtime, KeyCode::Home, KeyModifiers::NONE);
+    terminal.draw(|frame| app.draw(frame)).unwrap();
+    assert!(screen_line(&terminal, app.regions.output.y).contains("You 1"));
+    key(&mut app, &mut runtime, KeyCode::End, KeyModifiers::NONE);
+    terminal.draw(|frame| app.draw(frame)).unwrap();
+    assert!(screen_line(&terminal, app.regions.output.bottom() - 1).contains("tail marker"));
 }

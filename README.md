@@ -34,37 +34,46 @@ cargo install nucleoid
 ```
 
 Run `nucleoid` from any directory to open the full-screen terminal workspace.
-It has top-level tabs (with two reserved for future views), a multiline editor
-at the bottom, autocomplete for keywords, built-ins and model properties, and
-in-session input/result history. Click **Text**, **JSON** or **Table** to
-inspect a result without running the program again. Arrays of objects become
-table rows; other JSON values have property/value or index/value views.
+It has **Editor** and **Chat** modes, autocomplete for keywords, built-ins and
+model properties, and in-session input/result history. **F1** selects the
+editor; **F2** selects chat; **Ctrl-Tab** switches between them. Both modes
+share the same runtime, results, history and unfinished input. Chat is a
+code/result transcript, not an AI conversation, and makes no network calls.
+Click **Text**, **JSON** or **Table** to inspect a result without running the
+program again. Arrays of objects become table rows; other JSON values have
+property/value or index/value views.
 The workspace uses a black and charcoal palette with subtle green focus
 accents, an active editor line, and explicit error markers in result history.
 The status bar shows the focused pane and its relevant shortcuts, keeping
 **F5 run** and **Ctrl-Q quit** visible even in compact terminals.
 
-Enter inserts a newline; F5 runs the whole editor. Blank lines and
-pasted newlines never submit code or add indentation. Ctrl-J inserts an
-automatically indented newline when writing a block by hand.
+In editor mode, Enter inserts a newline; F5 runs the whole editor. Blank lines
+never submit code. In chat mode, Enter sends the input and appends its code,
+result and any errors or diagnostics to a scrollable transcript. Shift-Enter
+inserts a newline when the terminal reports it distinctly; Ctrl-J inserts an
+automatically indented newline in either mode. F5 runs the whole input in
+either mode, and bracketed paste never submits code.
 Ctrl-Enter also runs on non-Windows terminals that report it distinctly;
 Windows treats it as a newline because pasted LF produces the same key event.
 Tab accepts autocomplete (or inserts four spaces); with selected text it
 indents the selected lines without replacing them. Shift-Tab unindents the
 selection or current line. Ctrl-Space opens suggestions.
 Ctrl-P / Ctrl-N recalls input while preserving an unfinished draft.
-F1-F3 changes tabs, F6 changes the result view, and Ctrl-Up / Ctrl-Down selects
-earlier results. Mouse clicks select tabs, views and results; click/drag edits
-the cursor/selection, and the wheel scrolls individual panes. Ctrl-C cancels
-input, Ctrl-Q exits, and `.help` lists all controls.
-At compact heights, results and diagnostics share a pane; F4 switches between
-them without hiding the editor.
+F6 changes the result view, and Ctrl-Up / Ctrl-Down selects earlier results
+or jumps to them in chat. Mouse clicks select modes, views and results;
+click/drag edits the cursor/selection, and the wheel scrolls individual panes.
+Ctrl-C cancels input, Ctrl-Q exits, and `.help` lists all controls. `.editor`
+and `.chat` also switch modes. F4 switches between input and transcript in
+chat. In editor mode at compact heights, results and diagnostics share a pane;
+F4 switches between them without hiding the editor.
 Subtle scrollbars mark long results and diagnostics; PageUp / PageDown moves
 by the visible rows of the selected pane. Scrolling over autocomplete changes
 the selected suggestion without moving the panes behind it.
-Long drafts expand the focused editor to at most half the terminal, while
-result focus returns that space to output. Autocomplete respects strings and
-comments across lines, so Tab does not replace text inside them.
+Long drafts expand the focused input to at most half the terminal, while
+result focus returns that space to output. Chat uses a compact input area and
+follows new results; Home/End while the transcript is focused jumps to its
+start/end. Autocomplete respects strings and comments across lines, so Tab
+does not replace text inside them.
 
 `nucleoid --plain` keeps the line-oriented interface below. Piped stdin or
 redirected stdout selects it automatically; file execution and the `--json`

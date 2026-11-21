@@ -3,10 +3,17 @@ use nucleoid::Runtime;
 
 use super::completion::Completion;
 use super::output::{Entry, Output, View};
-use super::{App, Focus, HELP, HISTORY_LIMIT, editor, indentation, output};
+use super::{App, Focus, HELP, HISTORY_LIMIT, Mode, editor, indentation, output};
 
 impl App {
     pub(super) fn key(&mut self, key: KeyEvent, runtime: &mut Runtime) -> bool {
+        if self.mode == Mode::Chat
+            && self.focus == Focus::Editor
+            && key.code == KeyCode::Enter
+            && key.modifiers.is_empty()
+        {
+            return self.submit(runtime);
+        }
         let ctrl = key.modifiers.contains(KeyModifiers::CONTROL);
         if let Some(quit) = self.global_key(key.code, ctrl, runtime) {
             return quit;
@@ -29,29 +36,15 @@ impl App {
                 self.history_index = None;
                 self.focus = Focus::Editor;
             }
-            KeyCode::F(number @ 1..=3) => {
-                self.tab = usize::from(number - 1);
-                self.completion = None;
-            }
+            KeyCode::F(1) => self.set_mode(Mode::Editor),
+            KeyCode::F(2) => self.set_mode(Mode::Chat),
             KeyCode::Tab if ctrl => {
-                self.tab = (self.tab + 1) % 3;
-                self.completion = None;
+                self.set_mode(match self.mode {
+                    Mode::Editor => Mode::Chat,
+                    Mode::Chat => Mode::Editor,
+                });
             }
-            KeyCode::F(4) => {
-                self.focus = match self.focus {
-                    Focus::Editor => Focus::Result,
-                    Focus::Result
-                        if self
-                            .entries
-                            .get(self.selected)
-                            .is_some_and(|entry| !entry.diagnostics.is_empty()) =>
-                    {
-                        Focus::Diagnostics
-                    }
-                    _ => Focus::Editor,
-                };
-                self.completion = None;
-            }
+            KeyCode::F(4) => self.cycle_focus(),
             KeyCode::F(6) => self.set_view(self.view.next()),
             KeyCode::F(5) => return Some(self.submit(runtime)),
             // Native Windows input maps pasted LF to Ctrl-Enter as well.
@@ -64,12 +57,28 @@ impl App {
                 if self.completion.take().is_none() {
                     self.editor.cancel_selection();
                     self.focus = Focus::Editor;
-                    self.tab = 0;
                 }
             }
             _ => return None,
         }
         Some(false)
+    }
+
+    fn cycle_focus(&mut self) {
+        self.focus = match self.focus {
+            Focus::Editor => Focus::Result,
+            Focus::Result
+                if self.mode == Mode::Editor
+                    && self
+                        .entries
+                        .get(self.selected)
+                        .is_some_and(|entry| !entry.diagnostics.is_empty()) =>
+            {
+                Focus::Diagnostics
+            }
+            Focus::Result | Focus::Diagnostics => Focus::Editor,
+        };
+        self.completion = None;
     }
 
     fn result_key(&mut self, code: KeyCode) {
@@ -78,12 +87,14 @@ impl App {
             KeyCode::Down => self.scroll_vertical(true, 1),
             KeyCode::Left => self.scroll_horizontal(false, self.focus == Focus::Diagnostics),
             KeyCode::Right => self.scroll_horizontal(true, self.focus == Focus::Diagnostics),
+            KeyCode::Home if self.mode == Mode::Chat => self.transcript.home(),
             KeyCode::Home => {
                 self.scroll = 0;
                 self.diagnostic_scroll = 0;
                 self.horizontal = 0;
                 self.diagnostic_horizontal = 0;
             }
+            KeyCode::End if self.mode == Mode::Chat => self.transcript.end(),
             KeyCode::End => self.scroll_vertical(true, u16::MAX),
             _ => {}
         }
@@ -177,7 +188,6 @@ impl App {
         self.completion = None;
         self.history_index = None;
         self.focus = Focus::Editor;
-        self.tab = 0;
         if source.trim().is_empty() {
             return false;
         }
@@ -210,6 +220,14 @@ impl App {
         Some(match words.next().unwrap_or_default() {
             ".exit" | ".quit" if words.next().is_none() => return None,
             ".help" if words.next().is_none() => Output::Message(HELP.into()),
+            name @ (".editor" | ".chat") if words.next().is_none() => {
+                self.set_mode(if name == ".chat" {
+                    Mode::Chat
+                } else {
+                    Mode::Editor
+                });
+                Output::Message(format!("{} mode.", name.trim_start_matches('.')))
+            }
             ".clear" if words.next().is_none() => {
                 runtime.clear();
                 Output::Message("State cleared.".into())
@@ -252,6 +270,7 @@ impl App {
         }
         self.entries.push(entry);
         self.select_entry(self.entries.len() - 1);
+        self.transcript.follow();
     }
 
     pub(super) fn select_entry(&mut self, selected: usize) {
@@ -268,12 +287,21 @@ impl App {
         self.horizontal = 0;
         self.diagnostic_scroll = 0;
         self.diagnostic_horizontal = 0;
+        self.transcript.select(self.selected);
+    }
+
+    pub(super) fn set_mode(&mut self, mode: Mode) {
+        self.mode = mode;
+        self.focus = Focus::Editor;
+        self.completion = None;
+        self.dragging = false;
     }
 
     pub(super) fn set_view(&mut self, view: View) {
         self.view = view;
         self.scroll = 0;
         self.horizontal = 0;
+        self.transcript.horizontal = 0;
         self.completion = None;
     }
 

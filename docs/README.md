@@ -77,9 +77,14 @@ runnable as written.
 ## Terminal workspace
 
 With terminal stdin and stdout, `nucleoid` opens a full-screen REPL with
-reserved top tabs, a bottom multiline editor, autocomplete, result history,
-and mouse support. Text, JSON and Table are alternate views of the same
-captured result; switching views never reruns a program or changes its state.
+Editor and Chat modes, a bottom multiline input, autocomplete, result history,
+and mouse support. F1 selects Editor, F2 selects Chat, and Ctrl-Tab switches
+between them; `.editor` and `.chat` do the same. Switching preserves runtime
+state, input/result history and the unfinished draft, including selection and
+undo history. Editor is the default mode. Chat is a local code/result
+transcript, not AI chat; it makes no network calls.
+Text, JSON and Table are alternate views of the same captured result;
+switching views never reruns a program or changes its state.
 Table rows union the keys of object-array results, preserve missing cells
 separately from JSON nulls, and keep nested values in individual cells.
 Serialization errors, runtime errors and assertion failures remain visible.
@@ -87,31 +92,45 @@ Black and charcoal surfaces keep the workspace subdued, with green focus
 accents, a highlighted editor line and explicit error markers in history.
 The status bar follows the focused pane and completion state; run and quit
 shortcuts stay visible at the minimum supported size of 40 columns by 12 rows.
-When results and diagnostics cannot both fit, F4 switches their shared pane
-while the editor remains visible.
+In Editor, when results and diagnostics cannot both fit, F4 switches their
+shared pane while the input remains visible.
 
-Enter inserts a newline without changing pasted indentation, including on
-empty lines; F5 submits the complete editor. Ctrl-Enter also submits on
-non-Windows terminals that report it distinctly. Native Windows input maps
-pasted LF to Ctrl-Enter, so that key inserts a newline on Windows rather than
-submitting a partial pasted program. Ctrl-J inserts an automatically indented
-newline when typing by hand. Tab completes or inserts four spaces; with
-selected text it indents the selected lines without replacing them.
+In Editor, Enter inserts a newline without changing pasted indentation,
+including on empty lines. In Chat, unmodified Enter submits the complete input;
+Shift-Enter inserts a newline when the terminal reports it distinctly.
+F5 submits the complete input in either mode. Bracketed paste only edits the
+input, never submits it. Ctrl-Enter also submits on non-Windows terminals
+that report it distinctly. Native Windows input maps pasted LF to Ctrl-Enter,
+so that key inserts a newline on Windows rather than submitting a partial pasted
+program. Ctrl-J inserts an automatically indented newline when typing by hand.
+Tab completes or inserts four spaces; with selected text it indents the selected
+lines without replacing them.
 Shift-Tab removes one leading indentation level from selected lines, or the
 current line regardless of cursor position. A selection ending at the start
 of a line leaves that line unchanged. Selection direction and cut/paste text
 are preserved; each shifted line is an ordinary undoable editor edit.
 Ctrl-Space opens suggestions. Ctrl-P / Ctrl-N navigates input history.
-Use F1-F3 for tabs, F6 or the view buttons for result formats, Ctrl-Up /
-Ctrl-Down for earlier results, and F4 to focus the editor, results or
-diagnostics. PageUp / PageDown and the mouse wheel scroll; focused-result
-Left / Right (or Shift-wheel) moves across text or table columns.
+Use F6 or the view buttons for result formats, Ctrl-Up / Ctrl-Down for
+earlier results, and F4 to focus the editor, results or diagnostics.
+PageUp / PageDown and the mouse wheel scroll; focused-result Left / Right
+(or Shift-wheel) moves across text or table columns.
 PageUp / PageDown uses the focused result or diagnostic viewport, excluding
-the table header from the page size. Subtle gutter scrollbars indicate overflow
-without reducing content width. Selecting a history entry without diagnostics
-returns diagnostic focus to its result. The autocomplete popup captures mouse
-events across its full bounds; its wheel selects suggestions, never the pane
-underneath.
+the table header from the page size in Editor. Subtle gutter scrollbars
+indicate overflow without reducing content width. Selecting a history entry
+without diagnostics returns diagnostic focus to its result. The autocomplete
+popup captures mouse events across its full bounds; its wheel selects
+suggestions, never the pane underneath.
+
+Chat shows each submitted source followed by its captured result, including
+serialization/runtime errors, assertion failures and enabled graph diagnostics.
+Its compact input expands for multiline drafts. F4 switches only between input
+and transcript; diagnostics appear inline. PageUp / PageDown and the wheel
+scroll the transcript, Left / Right or Shift-wheel pans it horizontally, and
+Home / End with transcript focus jumps to its start/end. Ctrl-Up / Ctrl-Down
+jumps to the selected submission. New submissions scroll to the latest result;
+rendering, resizing, changing modes and changing result formats never reruns
+code. Tables appear as aligned text columns in the transcript.
+
 Long buffers grow the focused editor to at most half the terminal while keeping
 result content visible; focusing results or diagnostics restores the normal
 editor height. Wide editors show the total line count beside the cursor position.

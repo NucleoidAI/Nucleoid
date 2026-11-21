@@ -2,7 +2,7 @@ use crossterm::event::{KeyModifiers, MouseButton, MouseEvent, MouseEventKind};
 use ratatui::layout::Position;
 
 use super::output::View;
-use super::{App, Focus, editor};
+use super::{App, Focus, Mode, editor};
 
 fn scrolled(offset: u16, forward: bool) -> u16 {
     if forward {
@@ -17,7 +17,8 @@ impl App {
         let height = if self.focus == Focus::Diagnostics {
             self.regions.diagnostics.height
         } else {
-            let table_header = self.view == View::Table
+            let table_header = self.mode == Mode::Editor
+                && self.view == View::Table
                 && self
                     .entries
                     .get(self.selected)
@@ -31,6 +32,10 @@ impl App {
     }
 
     pub(super) fn scroll_vertical(&mut self, forward: bool, amount: u16) {
+        if self.mode == Mode::Chat {
+            self.transcript.scroll(forward, amount);
+            return;
+        }
         let scroll = if self.focus == Focus::Diagnostics {
             &mut self.diagnostic_scroll
         } else {
@@ -46,6 +51,8 @@ impl App {
     pub(super) fn scroll_horizontal(&mut self, forward: bool, diagnostics: bool) {
         let scroll = if diagnostics {
             &mut self.diagnostic_horizontal
+        } else if self.mode == Mode::Chat {
+            &mut self.transcript.horizontal
         } else {
             &mut self.horizontal
         };
@@ -94,14 +101,12 @@ impl App {
     fn click(&mut self, mouse: MouseEvent, position: Position) {
         if self.completion_at(position) {
             self.click_completion(position);
-        } else if let Some(tab) = self
-            .regions
-            .tabs
-            .iter()
-            .position(|tab| tab.contains(position))
+        } else if let Some(mode) = [Mode::Editor, Mode::Chat]
+            .into_iter()
+            .zip(self.regions.tabs)
+            .find_map(|(mode, area)| area.contains(position).then_some(mode))
         {
-            self.tab = tab;
-            self.completion = None;
+            self.set_mode(mode);
         } else if let Some(view) = View::ALL
             .into_iter()
             .zip(self.regions.views)
@@ -176,6 +181,8 @@ impl App {
         } else if self.regions.output.contains(position) {
             if sideways {
                 self.scroll_horizontal(forward, false);
+            } else if self.mode == Mode::Chat {
+                self.transcript.scroll(forward, 3);
             } else {
                 self.scroll = scrolled(self.scroll, forward);
             }

@@ -1,5 +1,8 @@
+mod chat;
 mod content;
 mod status;
+
+pub(super) use chat::Transcript;
 
 use ratatui::Frame;
 use ratatui::layout::{Alignment, Constraint, Layout, Rect};
@@ -11,7 +14,7 @@ use unicode_width::UnicodeWidthStr;
 use crate::{REPL_TAGLINE, REPL_TITLE};
 
 use super::output::{View, visible};
-use super::{App, Focus, REPL_LOGO};
+use super::{App, Focus, Mode, REPL_LOGO};
 use content::{completions, draw_diagnostics, draw_table, draw_text};
 
 const BACKGROUND: Color = Color::Black;
@@ -26,7 +29,7 @@ const ERROR: Color = Color::Rgb(245, 139, 139);
 
 #[derive(Default)]
 pub(super) struct Regions {
-    pub tabs: [Rect; 3],
+    pub tabs: [Rect; 2],
     pub views: [Rect; 3],
     pub history: Rect,
     pub output: Rect,
@@ -59,46 +62,35 @@ pub(super) fn draw(frame: &mut Frame<'_>, app: &mut App) -> Regions {
     let mut regions = Regions::default();
     header(frame, top, app, &mut regions);
 
-    if app.tab == 0 {
-        results(frame, body, app, &mut regions);
-    } else {
-        reserved(frame, body, app);
-    }
-
+    results(frame, body, app, &mut regions);
     editor_panel(frame, editor, app, &mut regions);
     status::draw(frame, status, app);
 
-    if app.tab == 0 && app.focus == Focus::Editor {
+    if app.focus == Focus::Editor {
         completions(frame, editor, app, &mut regions);
     }
     regions
 }
 
-fn reserved(frame: &mut Frame<'_>, area: Rect, app: &App) {
-    frame.render_widget(
-        Paragraph::new(format!(
-            "\nTab {} is reserved for a future workspace.\n\nF1 or click REPL to return.",
-            app.tab + 1
-        ))
-        .alignment(Alignment::Center)
-        .style(Style::default().fg(MUTED))
-        .block(panel(" Reserved ", false)),
-        area,
-    );
-}
-
 fn editor_panel(frame: &mut Frame<'_>, area: Rect, app: &mut App, regions: &mut Regions) {
     let (row, column) = app.editor.cursor();
     let lines = app.editor.lines().len();
+    let label = match app.mode {
+        Mode::Editor => "Editor",
+        Mode::Chat => "Input",
+    };
     let title = if lines > 1 && area.width >= 70 {
-        format!(" Editor  {}:{} / {lines} lines ", row + 1, column + 1)
+        format!(" {label}  {}:{} / {lines} lines ", row + 1, column + 1)
     } else {
-        format!(" Editor  {}:{} ", row + 1, column + 1)
+        format!(" {label}  {}:{} ", row + 1, column + 1)
     };
     let editor_block = panel(&title, app.focus == Focus::Editor)
         .title(
             Line::styled(
-                " F5 run ",
+                match app.mode {
+                    Mode::Editor => " F5 run ",
+                    Mode::Chat => " Enter send ",
+                },
                 Style::default().fg(ACCENT).add_modifier(Modifier::BOLD),
             )
             .alignment(Alignment::Right),
@@ -110,6 +102,8 @@ fn editor_panel(frame: &mut Frame<'_>, area: Rect, app: &mut App, regions: &mut 
                 .is_some_and(|(start, end)| start != end)
             {
                 " Tab indent  Shift-Tab unindent "
+            } else if app.mode == Mode::Chat {
+                " Ctrl-J newline  Tab complete "
             } else if area.width >= 70 {
                 " Enter newline  Tab complete  Ctrl-J autoindent "
             } else {
@@ -137,7 +131,10 @@ fn editor_panel(frame: &mut Frame<'_>, area: Rect, app: &mut App, regions: &mut 
 }
 
 fn editor_height(area: Rect, app: &App) -> u16 {
-    let baseline = (area.height / 3).clamp(3, 12);
+    let baseline = match app.mode {
+        Mode::Editor => (area.height / 3).clamp(3, 12),
+        Mode::Chat => 3,
+    };
     let height = if app.focus == Focus::Editor {
         baseline.max(
             as_u16(app.editor.lines().len())
@@ -182,17 +179,16 @@ fn header(frame: &mut Frame<'_>, area: Rect, app: &App, regions: &mut Regions) {
         .style(base()),
         title,
     );
-    let [first, second, third, version] = Layout::horizontal([
-        Constraint::Length(12),
+    let [first, second, version] = Layout::horizontal([
         Constraint::Length(12),
         Constraint::Length(12),
         Constraint::Min(0),
     ])
     .areas(tabs);
-    regions.tabs = [first, second, third];
-    let labels = ["F1 REPL", "F2 Tab 2", "F3 Tab 3"];
-    for (index, (label, tab)) in labels.into_iter().zip(regions.tabs).enumerate() {
-        button(frame, label, tab, app.tab == index);
+    regions.tabs = [first, second];
+    let labels = [(Mode::Editor, "F1 Editor"), (Mode::Chat, "F2 Chat")];
+    for ((mode, label), tab) in labels.into_iter().zip(regions.tabs) {
+        button(frame, label, tab, app.mode == mode);
     }
     frame.render_widget(
         Paragraph::new(format!("v{} ", env!("CARGO_PKG_VERSION")))
@@ -227,6 +223,21 @@ fn logo_lines(app: &App) -> Vec<Line<'static>> {
 }
 
 fn results(frame: &mut Frame<'_>, area: Rect, app: &mut App, regions: &mut Regions) {
+    let body = result_toolbar(frame, area, app, regions);
+    if app.mode == Mode::Chat {
+        chat::draw(frame, body, app, regions);
+        return;
+    }
+    let history_width = if area.width >= 80 { 24 } else { 0 };
+    let [history, output] =
+        Layout::horizontal([Constraint::Length(history_width), Constraint::Min(0)]).areas(body);
+    if history_width > 0 {
+        history_panel(frame, history, app, regions);
+    }
+    entry_panels(frame, output, app, regions);
+}
+
+fn result_toolbar(frame: &mut Frame<'_>, area: Rect, app: &App, regions: &mut Regions) -> Rect {
     let [toolbar, body] = Layout::vertical([Constraint::Length(1), Constraint::Min(0)]).areas(area);
     let [text, json, table, summary] = Layout::horizontal([
         Constraint::Length(9),
@@ -254,13 +265,7 @@ fn results(frame: &mut Frame<'_>, area: Rect, app: &mut App, regions: &mut Regio
             .style(Style::default().fg(MUTED)),
         summary,
     );
-    let history_width = if area.width >= 80 { 24 } else { 0 };
-    let [history, output] =
-        Layout::horizontal([Constraint::Length(history_width), Constraint::Min(0)]).areas(body);
-    if history_width > 0 {
-        history_panel(frame, history, app, regions);
-    }
-    entry_panels(frame, output, app, regions);
+    body
 }
 
 fn history_panel(frame: &mut Frame<'_>, area: Rect, app: &mut App, regions: &mut Regions) {
