@@ -2895,6 +2895,22 @@ days.push(3)
 today
 # return: 4
 ---
+# Nucleoid keeps the ends of selections with origins and outcomes
+
+price = 10
+qty = 3
+shipping = 5
+subtotal = price * qty
+total = subtotal + shipping
+unit = total / qty
+starts = qty |> affects |> origins
+ends = model |> outcomes
+assert(starts.map(step => step.node), ["subtotal"])
+assert(ends.map(step => step.node), ["unit"])
+fee = qty * 2
+[starts.map(step => step.node), ends.map(step => step.node)]
+# return: [["subtotal","fee"],["unit","fee"]]
+---
 # Nucleoid flattens nested lists with flat
 
 pallets = [[["bolt", "nut"], ["gear"]], [["cog"]]]

@@ -2790,6 +2790,39 @@ assert([lift.floor, stopped], [4, true])
   `until` stay ordinary names everywhere else. See the
   [root contract](nucleoid.spec.md#exit-controlled-repeat-until-loops).
 
+## Origins and outcomes of reasoning selections
+
+**Origins and outcomes show where a change of pressure enters and which alarms it ends at**
+
+```nuc
+pressure = 5
+flow = 3
+temperature = 70
+strain = pressure * flow
+leak = flow > 2 && pressure > 4
+overheat = temperature + strain > 80
+shutdown = pressure > 9 || overheat
+enters = pressure |> affects |> origins
+alarms = pressure |> affects |> outcomes
+assert(enters.map(step -> step.node), ["strain", "leak"])
+assert(alarms.map(step -> step.node), ["leak", "shutdown"])
+leak = flow > 2 && strain > 12
+panel = [leak, shutdown]
+assert([enters.map(step -> step.node), alarms.map(step -> step.node)], [["strain"], ["panel"]])
+```
+
+- [NUC 128](docs/nuc-0128.md) adds the reasoning stages `|> origins` and
+  `|> outcomes`, which keep the two ends of a selection.
+  `pressure |> affects |> origins` keeps where a change of the pressure
+  enters the model: the strain and the leak check, which read it and rest
+  on nothing else it moves. The shutdown reads the pressure too, but it
+  also rests on the overheat, which the pressure moves through the strain.
+- `pressure |> affects |> outcomes` keeps where the change ends: the leak
+  check and the shutdown, which nothing reads. Both stay live: once the
+  leak check reads the strain, the change enters at the strain alone, and
+  once a panel shows both alarms, it ends at the panel. See the
+  [root contract](nucleoid.spec.md#origins-and-outcomes-of-reasoning-selections).
+
 ## Reactive list flattening
 
 **Flat turns nested lists into one live list**

@@ -3097,7 +3097,8 @@ statement positions; caught values and transaction recovery are unchanged.
   node, so after a union they keep what they keep of each side:
   `S |> union(O) |> stated` is `(S |> stated).concat(O |> except(S) |> stated)`.
   A later `why` or `affects` walks from every step of the union, `nodes`
-  names them and `holds` gives their values.
+  names them, `holds` gives their values, and `origins` and `outcomes` keep
+  the ends of the union as one selection.
 - Each step keeps the distance of the walk that selected it: the steps of
   `SELECTION` their own, and the steps added from `OTHER` the distances they
   have in `OTHER`'s own selection. So `S |> union(O) |> depth(n)` is
@@ -3169,6 +3170,116 @@ statement positions; caught values and transaction recovery are unchanged.
   `Nucleoid restores unions after failed changes` specify the executable
   behavior. `tests/union_selections.rs` executes the rest.
 
+## Origins and outcomes of reasoning selections
+
+- [NUC 128](docs/nuc-0128.md) adds two pipeline stages that keep the steps
+  at the two ends of a selection. `SELECTION |> origins` keeps the steps of
+  `SELECTION` that rest on no step of it, and `SELECTION |> outcomes` keeps
+  the steps that no step of it rests on. Both keep the steps they keep in
+  their order and with their `node`, `holds`, `rule`, `state` and `from`
+  fields unchanged, and drop the others.
+- Step `t` of a selection rests on step `s` of it when `t` depends on `s`
+  through one or more dependency edges, directly or through nodes that the
+  selection does not hold, along the edges that `why`, `affects` and `path`
+  follow: through pending nodes and through no reasoning observer. So a
+  step rests on itself exactly when it lies on a cycle of those edges, as
+  each step of a cycle of
+  [fixed cross-property class anchors](#fixed-cross-property-class-anchors)
+  does: after `$Box.width = $Box.height@first` and
+  `$Box.height = $Box.width@first`,
+  the width and the height of each `Box` instance rest on themselves. A
+  step on a cycle is neither an origin nor an outcome of any selection that
+  holds it, so for an instance `box`, `box.width |> origins`,
+  `box.width |> outcomes` and `box.width |> why |> outcomes` are empty, as
+  the accepted `box.width |> except(box.width |> affects)` is. A property
+  anchored only on itself, as in `$Box.width = $Box.width@first`, records
+  no edge to itself and lies on no cycle.
+- So `price |> affects |> origins` selects where a change of the price
+  enters the model, the steps it reaches that rest on no step it reaches,
+  and `price |> affects |> outcomes` selects where it ends, the steps it
+  reaches that no step it reaches rests on. `model |> origins` and
+  `model |> outcomes` select the model's sources and sinks, and
+  `x |> why |> outcomes` selects the step of `x` alone, or nothing when `x`
+  lies on a cycle.
+- `S |> origins` is exactly the accepted `S |> except(S |> affects)`. Over a
+  selection that `affects`, `why` or `model` produced, `S |> outcomes` keeps
+  exactly the steps whose node no step's `from` names. Over a selection that
+  a filter thinned, both follow the chains through the steps it dropped:
+  after `price = 10`, `quantity = 3`, `rate = 0.2`,
+  `subtotal = price * quantity`, `tax = subtotal * rate` and
+  `total = subtotal + tax`, `total |> why |> except(subtotal) |> outcomes`
+  is the total alone, which rests on the price and the quantity through the
+  dropped subtotal.
+- A step is an origin whatever its state: over the explanation of an
+  instance property, the instance's own properties, which the class
+  governs, are origins although `stated` leaves them out, and so is a
+  derived step whose every input was deleted or is a reasoning observer.
+- The kept steps keep their distances and the direction of the most recent
+  walk, so `depth`, `path`, `stated`, `derived`, `diff`, `intersect`,
+  `except`, `union`, `nodes`, `holds` and later walks apply to the result as
+  to the results of the accepted filters. The two stages keep a step by its
+  relation to the steps of the selection, not by a property of its own, so
+  they do not commute with the filters: `total |> why |> derived |> origins`
+  is the subtotal, while `total |> why |> origins |> derived` is empty. A
+  reference alone denotes its own one-step selection, which both stages
+  keep unless its step lies on a cycle, and an empty selection stays empty.
+- Both may stand in an `intersect`, `except` or `union` argument as a
+  selection. A `path` target is a reference, so
+  `path(a |> why |> origins)` raises
+  `TypeError("Cannot explain a|>why|>origins")`, as any pipeline target does.
+- A `depth` stage whose limit is `null` or undefined makes the selection
+  undefined, and the stages after it are not applied, so both stages leave
+  it undefined, which a declaration stores as `null`.
+- Only `|>` followed by the name `origins` or `outcomes` is a stage. Both
+  names remain ordinary lexer identifiers: variables, parameters,
+  properties, keys, functions and methods named `origins` or `outcomes`
+  keep their accepted meanings, and there is no prefix form, so
+  `origins total` remains the two statements `origins` and `total`.
+  `|> Origins` and `|> outcome` keep their parse-time
+  `TypeError("<name> is not an operation")`, a line break after `|>` keeps
+  `SyntaxError("Expected an operation")`, and what follows the name reads as
+  it reads after `stated`: `|> origins(1)` is the stage followed by the
+  statement `(1)`, and `|> origins.length` raises
+  `SyntaxError("Unexpected '.'")`.
+- A local or parameter, state variable, function or class named `origins`
+  or `outcomes` shadows its stage, as for `stated`, `derived`, `depth`,
+  `diff`, `path`, `intersect`, `except`, `union`, `nodes` and `holds`: the
+  pipeline then raises `TypeError("origins is not an operation")` or
+  `TypeError("outcomes is not an operation")` at the running statement,
+  before its source is selected. A binding declared after a standing
+  declaration makes its next evaluation raise, which fails and rolls back
+  the statement that triggered it. Methods, properties and object keys are
+  not bindings, and a binding of one name does not shadow the other stage.
+  The accepted `why` and `affects` shadowing behavior does not change.
+- An invalid source keeps its diagnostic: `1 |> origins` raises
+  `TypeError("Cannot explain 1")`, `missing |> outcomes` raises
+  `ReferenceError("missing is not defined")`, and outside a `suppose` block
+  `total |> why |> diff |> origins` raises
+  `TypeError("Cannot use 'diff' outside suppose")`. These errors are
+  positioned at the running top-level statement and roll back its
+  transaction.
+- Both stages keep every value and structural observation that their
+  selection made, including those of the steps they drop, and observe the
+  structure of every node their walk visits, so a standing selection
+  refreshes when an edge that decides its ends appears or disappears, such
+  as a new dependent of an outcome. A declaration, property, class-level
+  rule, condition or quantifier that holds either stage is a reasoning
+  observer. Functions, methods and lambdas evaluate it in place, and
+  class-level rules give each instance its own selection. `.value`
+  snapshots it, and propagation order, `suppose` blocks and rollback behave
+  as for the accepted stages.
+- The stages render as `SOURCE|>origins` and `SOURCE|>outcomes` in graph
+  keys, block keys, conditions, `rule` text and the errors that quote an
+  expression, so a stage and its accepted spelling are different graph keys.
+  Each stage walks once from the selection's steps over the nodes they reach
+  through their dependents, in time linear in those nodes and edges.
+  Programs without the stages do no work for them.
+- The four appended entries from
+  `Nucleoid finds where a change enters and where it ends with origins and outcomes`
+  through `Nucleoid rolls back failed updates through origins and outcomes`
+  specify the executable behavior. `tests/origins_and_outcomes.rs` executes
+  the rest.
+
 ## Node names of reasoning selections
 
 - [NUC 112](docs/nuc-0112.md) adds the final pipeline stage
@@ -3193,7 +3304,7 @@ statement positions; caught values and transaction recovery are unchanged.
 - `SELECTION` is written as the source of a pipeline is: a reference, which
   selects its own step; `model`; a prefix stage, as in `why total |> nodes`;
   or a pipeline of the stages `why`, `affects`, `stated`, `derived`, `depth`,
-  `path`, `intersect`, `except`, `union` and `diff`. An empty selection gives `[]`. A selection that a `depth` stage
+  `path`, `intersect`, `except`, `union`, `diff`, `origins` and `outcomes`. An empty selection gives `[]`. A selection that a `depth` stage
   with a `null` or undefined limit makes undefined gives undefined, which a
   declaration stores as `null`, as a read from that selection does.
 - The stage ends the pipeline: its result is a list of names, not a
@@ -3284,8 +3395,8 @@ statement positions; caught values and transaction recovery are unchanged.
 - `SELECTION` is written as the source of a pipeline is: a reference, which
   selects its own step; `model`; a prefix stage, as in `why total |> holds`;
   or a pipeline of the stages `why`, `affects`, `stated`, `derived`,
-  `depth`, `path`, `intersect`, `except`, `union` and `diff`. An empty
-  selection gives `[]`. A selection that a `depth` stage with a `null` or
+  `depth`, `path`, `intersect`, `except`, `union`, `diff`, `origins` and
+  `outcomes`. An empty selection gives `[]`. A selection that a `depth` stage with a `null` or
   undefined limit makes undefined gives undefined, which a declaration
   stores as `null`, as a read from that selection does.
 - The stage ends the pipeline, as `nodes` does: its result is a list of
@@ -27487,6 +27598,101 @@ marks.push(190)
 oven.heat()
 [oven.temp, oven.steps]
 # return: [190,4]
+---
+# Nucleoid finds where a change enters and where it ends with origins and outcomes
+
+price = 10
+quantity = 3
+rate = 0.2
+subtotal = price * quantity
+tax = subtotal * rate
+total = subtotal + tax
+unit = total / quantity
+starts = quantity |> affects |> origins
+ends = quantity |> affects |> outcomes
+assert(starts.map(s -> s.node), ["subtotal"])
+assert(ends.map(s -> s.node), ["unit"])
+shipping = quantity * 2
+assert(starts.map(s -> s.node), ["subtotal", "shipping"])
+assert(ends.map(s -> s.node), ["unit", "shipping"])
+total = subtotal + tax + shipping
+assert(ends.map(s -> s.node), ["unit"])
+quantity = 5
+assert(ends.map(s -> s.holds), [14])
+starts.map(s -> s.holds)
+# return: [50,10]
+---
+# Nucleoid finds the inputs and the results of the model with origins and outcomes
+
+rate = 0.2
+price = 10
+qty = 3
+subtotal = price * qty
+tax = subtotal * rate
+inputs = model |> origins
+results = model |> outcomes
+assert(inputs.map(s -> s.node), ["rate", "price", "qty"])
+assert(results.map(s -> s.node), ["tax"])
+fee = 2
+shipping = fee * 2
+total = subtotal + tax + shipping
+assert(inputs.map(s -> s.node), ["rate", "price", "qty", "fee"])
+assert(results.map(s -> s.node), ["total"])
+delete fee
+assert(inputs.map(s -> s.node), ["rate", "price", "qty", "shipping"])
+fee = 3
+qty = 4
+[inputs.map(s -> s.holds), results.map(s -> s.holds)]
+# return: [[0.2,10,4,3],[54]]
+---
+# Nucleoid finds the inputs and the results behind class level rules with origins and outcomes
+
+fee = 2
+class Order(price, qty):
+    this.price = price
+    this.qty = qty
+$Order.subtotal = $Order.price * $Order.qty
+$Order.total = $Order.subtotal + fee
+$Order.inputs = $Order.total |> why |> origins
+first = Order(10, 2)
+second = Order(4, 5)
+ends = fee |> affects |> outcomes
+assert(first.inputs.map(s -> s.node), ["fee", "first.price", "first.qty"])
+assert(ends.map(s -> s.node), ["first.total", "second.total"])
+revenue = first.total + second.total
+assert(ends.map(s -> s.node), ["revenue"])
+first.qty = 3
+assert(first.inputs.map(s -> s.holds), [2, 10, 3])
+assert(ends.map(s -> s.holds), [54])
+second.inputs.map(s -> s.node)
+# return: ["fee","second.price","second.qty"]
+---
+# Nucleoid rolls back failed updates through origins and outcomes
+
+price = 10
+qty = 3
+subtotal = price * qty
+total = subtotal + 5
+unit = total / qty
+starts = qty |> affects |> origins
+ends = qty |> affects |> outcomes
+failure = ""
+try:
+    ends = 1 |> outcomes
+catch error:
+    failure = error
+assert(failure, TypeError("Cannot explain 1"))
+assert([starts.map(s -> s.node), ends.map(s -> s.node)], [["subtotal"], ["unit"]])
+try:
+    shipping = qty * 2
+    assert([starts.map(s -> s.node), ends.map(s -> s.node)], [["subtotal", "shipping"], ["unit", "shipping"]])
+    throw "UNDO"
+catch error:
+    assert(error, "UNDO")
+assert([starts.map(s -> s.node), ends.map(s -> s.node)], [["subtotal"], ["unit"]])
+qty = 4
+[starts.map(s -> s.holds), ends.map(s -> s.holds)]
+# return: [[40],[11.25]]
 ---
 # Nucleoid flattens nested lists by one level
 

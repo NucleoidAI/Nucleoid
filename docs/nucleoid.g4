@@ -547,7 +547,9 @@ stage
     | DERIVED
     | DIFF
     | NODES
-    | HOLDS                                               // Expr::Reason
+    | HOLDS
+    | ORIGINS
+    | OUTCOMES                                            // Expr::Reason
     | DEPTH LPAREN expression RPAREN                       // Expr::Depth
     | PATH LPAREN expression RPAREN                        // Expr::Path
     | (INTERSECT | EXCEPT) LPAREN expression RPAREN        // Expr::Combine
@@ -969,6 +971,8 @@ enumName
     | UNION
     | NODES
     | HOLDS
+    | ORIGINS
+    | OUTCOMES
     | MODEL
     | FIRST
     | LAST
@@ -1062,6 +1066,8 @@ AS               : 'as';
 UNION            : 'union';
 NODES            : 'nodes';
 HOLDS            : 'holds';
+ORIGINS          : 'origins';
+OUTCOMES         : 'outcomes';
 MODEL            : 'model';
 FIRST            : 'first';
 LAST             : 'last';
@@ -1271,6 +1277,13 @@ fragment REGEX_CHAR
  *                             s's steps hold. It ends the pipeline as nodes
  *                             does, and a binding named holds shadows it at
  *                             run time.
+ * s |> origins             -> Expr::Reason with Stage::Origins, the steps of s
+ *                             that rest on no step of s, and
+ *                             s |> outcomes -> Stage::Outcomes, the steps that
+ *                             no step of s rests on; a step on a dependency
+ *                             cycle rests on itself. Both keep a
+ *                             selection, and a binding of either name
+ *                             shadows its stage at run time.
  * An object containing spread uses Expr::SpreadObject, with later entries
  * winning; otherwise it uses Expr::ObjectLiteral. Numeric keys become text.
  *

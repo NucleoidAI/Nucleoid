@@ -21,6 +21,8 @@ pub enum Stage {
     Diff,
     Nodes,
     Holds,
+    Origins,
+    Outcomes,
 }
 
 impl Stage {
@@ -39,7 +41,13 @@ impl Stage {
         match self {
             Stage::Why => Some(Direction::Dependencies),
             Stage::Affects => Some(Direction::Dependents),
-            Stage::Stated | Stage::Derived | Stage::Diff | Stage::Nodes | Stage::Holds => None,
+            Stage::Stated
+            | Stage::Derived
+            | Stage::Diff
+            | Stage::Nodes
+            | Stage::Holds
+            | Stage::Origins
+            | Stage::Outcomes => None,
         }
     }
 
@@ -47,7 +55,13 @@ impl Stage {
         match self {
             Stage::Nodes => Some(StepField::Node),
             Stage::Holds => Some(StepField::Holds),
-            Stage::Why | Stage::Affects | Stage::Stated | Stage::Derived | Stage::Diff => None,
+            Stage::Why
+            | Stage::Affects
+            | Stage::Stated
+            | Stage::Derived
+            | Stage::Diff
+            | Stage::Origins
+            | Stage::Outcomes => None,
         }
     }
 
@@ -61,6 +75,8 @@ impl Stage {
             Stage::Diff => "diff",
             Stage::Nodes => "nodes",
             Stage::Holds => "holds",
+            Stage::Origins => "origins",
+            Stage::Outcomes => "outcomes",
         }
     }
 }
@@ -88,6 +104,12 @@ pub struct Step {
     pub rule: String,
     pub state: StepState,
     pub from: Vec<NodeKey>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum End {
+    Origins,
+    Outcomes,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -255,6 +277,8 @@ impl Runtime {
             }
             Stage::Why => self.traverse(selection, Direction::Dependencies),
             Stage::Affects => self.traverse(selection, Direction::Dependents),
+            Stage::Origins => self.ended(selection, End::Origins),
+            Stage::Outcomes => self.ended(selection, End::Outcomes),
             Stage::Nodes | Stage::Holds => selection.clone(),
         })
     }
@@ -269,8 +293,27 @@ impl Runtime {
             }
             Stage::Why => self.walk(&ranked.selection, Direction::Dependencies),
             Stage::Affects => self.walk(&ranked.selection, Direction::Dependents),
+            Stage::Origins => self.ranked_ends(ranked, End::Origins),
+            Stage::Outcomes => self.ranked_ends(ranked, End::Outcomes),
             Stage::Nodes | Stage::Holds => ranked,
         })
+    }
+
+    fn ended(&mut self, selection: &Selection, end: End) -> Selection {
+        let kept = self.ends(&selection.steps, end);
+        Selection {
+            steps: selection
+                .steps
+                .iter()
+                .filter(|step| kept.contains(&step.node))
+                .cloned()
+                .collect(),
+        }
+    }
+
+    fn ranked_ends(&mut self, ranked: Ranked, end: End) -> Ranked {
+        let kept = self.ends(&ranked.selection.steps, end);
+        ranked.retained(|step, _| kept.contains(&step.node))
     }
 
     fn origin(&self) -> Result<Origin<'_>> {

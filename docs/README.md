@@ -4514,6 +4514,10 @@ route.shift()
 - A selection is an ordered list of steps with `node`, `holds`, `rule`, `state`, and `from` fields.
 - `state` is `"stated"` for an independent fact or `"derived"` for a relationship or class-level rule.
 - List functions such as `map`, `find`, and `some` can inspect the steps.
+- `selection |> origins` keeps the steps that rest on no step of the
+  selection, and `selection |> outcomes` the steps that no step of it rests
+  on, so `price |> affects |> outcomes` is where a change of the price
+  ends ([NUC 128](nuc-0128.md)).
 - `selection |> nodes` lists the steps' `node` names, as
   `(selection).map(step => step.node)` does for the selection the pipeline
   denotes ([NUC 112](nuc-0112.md)).
@@ -4788,6 +4792,69 @@ facts.map(step => step.node)
   [union reasoning selections](../nucleoid.spec.md#union-reasoning-selections)
   section.
 
+### Origins and outcomes of reasoning selections
+
+```
+price = 10
+qty = 3
+shipping = 5
+subtotal = price * qty
+total = subtotal + shipping
+unit = total / qty
+starts = qty |> affects |> origins
+ends = model |> outcomes
+assert(starts.map(step => step.node), ["subtotal"])
+assert(ends.map(step => step.node), ["unit"])
+fee = qty * 2
+[starts.map(step => step.node), ends.map(step => step.node)]
+```
+
+- This is the complete `Nucleoid keeps the ends of selections with origins and outcomes`
+  program in `tests/reference.md`, without its title and expected-return
+  metadata; it returns `[["subtotal","fee"],["unit","fee"]]`.
+- [NUC 128](nuc-0128.md) adds the stages `selection |> origins` and
+  `selection |> outcomes`. `origins` keeps the steps of the selection that
+  rest on no step of it, and `outcomes` the steps that no step of it rests
+  on, in their order and with their fields unchanged, so
+  `qty |> affects |> origins` is where a change of the quantity enters the
+  model and `model |> outcomes` is the model's results. A step rests on
+  another when it depends on it through one or more dependency edges,
+  directly or through nodes that the selection does not hold, along the
+  edges that the walks follow, through no reasoning observer. A step on a
+  cycle of those edges, such as the width and the height of an
+  instance after `$Box.width = $Box.height@first` and
+  `$Box.height = $Box.width@first`, rests on itself, so neither stage keeps
+  it from any selection that holds it.
+- `selection |> origins` is exactly
+  `selection |> except(selection |> affects)`, which names the selection
+  twice. Over a selection that `affects`, `why` or `model` produced,
+  `selection |> outcomes` keeps the steps whose node no step's `from`
+  names; over a thinned selection both stages also follow the chains
+  through the steps a filter dropped, which `from` does not name.
+- Here the unit reads the quantity, but it rests on the total, which rests
+  on the subtotal, so the change enters at the subtotal alone. Once the fee
+  reads the quantity and nothing reads the fee, the fee is both where the
+  change enters and one of the model's results.
+- The result is a selection: the kept steps keep their distances and the
+  direction of the selection's most recent walk, so every stage applies to
+  it, and both stages may stand in an `intersect`, `except` or `union`
+  argument. A `path` target is a reference, so a `path` argument that ends
+  with either stage raises `TypeError("Cannot explain <target>")`. A
+  selection that a `depth(null)` makes undefined stays undefined.
+- Only `|>` followed by `origins` or `outcomes` is a stage; both names stay
+  ordinary everywhere else, and there is no prefix form. A local or
+  parameter, variable, function or class named `origins` or `outcomes`
+  shadows its stage, as bindings shadow the other stages: the pipeline then
+  raises `TypeError("origins is not an operation")` or
+  `TypeError("outcomes is not an operation")` before selecting its source.
+- The selection stays live through every observation its source made and
+  through the structure of every node the stage walks, and a declaration
+  that holds it is a reasoning observer. It renders as
+  `selection|>origins` and `selection|>outcomes`.
+- The authoritative contract is the
+  [origins and outcomes of reasoning selections](../nucleoid.spec.md#origins-and-outcomes-of-reasoning-selections)
+  section.
+
 ### Node names of reasoning selections
 
 ```
@@ -4938,10 +5005,13 @@ c = b * 2
   [NUC 112](nuc-0112.md) candidate adds a final `nodes` stage, which names
   the nodes of a selection and, unlike NUC 11's operations, returns a list
   rather than a selection, the [NUC 120](nuc-0120.md) candidate adds a
-  `union(other)` stage, which NUC 11 does not plan either, and the
+  `union(other)` stage, which NUC 11 does not plan either, the
   [NUC 121](nuc-0121.md) candidate adds a final `holds` stage, which gives
-  the values of a selection's steps and, like `nodes`, returns a list. Other
-  NUC 11 operations remain proposals, not dependencies.
+  the values of a selection's steps and, like `nodes`, returns a list, and
+  the [NUC 128](nuc-0128.md) candidate adds `origins` and `outcomes`
+  stages, which keep the steps at the two ends of a selection and which
+  NUC 11 does not plan either. Other NUC 11 operations remain proposals, not
+  dependencies.
 
 ### Quantifiers
 
@@ -5464,6 +5534,12 @@ why a |> union(why b)                 what a or b rests on, each node once (NUC 
 affects a |> union(affects b)         what a change of a or of b reaches (NUC 120)
 selection |> union(other)             the steps, then other's steps whose node they lack (NUC 120)
 selection |> union(other) |> stated   the stated steps of either selection (NUC 120)
+reference |> affects |> origins       where a change of the reference enters the model (NUC 128)
+reference |> affects |> outcomes      where a change of the reference ends (NUC 128)
+model |> origins                      the model's sources, which rest on no node (NUC 128)
+model |> outcomes                     the model's results, which no node rests on (NUC 128)
+selection |> origins                  steps that rest on no step of the selection (NUC 128)
+selection |> outcomes                 steps that no step of the selection rests on (NUC 128)
 reference |> why |> nodes             the node names of an explanation, in its order (NUC 112)
 reference |> why |> stated |> nodes   the names of the facts an explanation rests on (NUC 112)
 reference |> affects |> nodes         the names of what a change of the reference reaches (NUC 112)

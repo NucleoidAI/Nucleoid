@@ -401,7 +401,7 @@ fn only_the_appended_cases_measure_spread_and_they_run_every_assertion() {
     }
     assert_eq!(calls, 13);
     assert_eq!(assertions, 20);
-    assert_eq!(cases, 1237);
+    assert_eq!(cases, 1244);
 }
 
 #[test]
@@ -413,7 +413,7 @@ fn the_appended_cases_stand_after_nuc_122_and_before_nuc_103() {
         "Nucleoid reads except clauses in methods, functions and nested try statements"
     );
     assert_eq!(titles[804..808], SPEC_TITLES);
-    assert_eq!(titles[820], "Nucleoid flattens nested lists by one level");
+    assert_eq!(titles[824], "Nucleoid flattens nested lists by one level");
     for (cases, title, previous, following) in [
         (
             &reference,
@@ -435,9 +435,9 @@ fn the_appended_cases_stand_after_nuc_122_and_before_nuc_103() {
         ),
     ] {
         let index = cases.iter().position(|case| case.title == title).unwrap();
-        assert_eq!(index, cases.len() - 7, "{title}");
+        assert_eq!(index, cases.len() - 8, "{title}");
         assert_eq!(cases[index - 1].title, previous);
-        assert_eq!(cases[index + 4].title, following);
+        assert_eq!(cases[index + 5].title, following);
     }
 }
 

@@ -21592,6 +21592,120 @@ oven.heat()
 # return: [190,4]"#);
 }
 
+/// Nucleoid finds where a change enters and where it ends with origins and outcomes
+#[rustfmt::skip]
+#[test]
+fn finds_where_a_change_enters_and_where_it_ends_with_origins_and_outcomes() {
+    let mut run = runner();
+    run("price = 10");
+    run("quantity = 3");
+    run("rate = 0.2");
+    run("subtotal = price * quantity");
+    run("tax = subtotal * rate");
+    run("total = subtotal + tax");
+    run("unit = total / quantity");
+    run("starts = quantity |> affects |> origins");
+    run("ends = quantity |> affects |> outcomes");
+    assert_eq!(run("starts.map(s -> s.node)"), serde_json::json!(["subtotal"]));
+    assert_eq!(run("ends.map(s -> s.node)"), serde_json::json!(["unit"]));
+    run("shipping = quantity * 2");
+    assert_eq!(run("starts.map(s -> s.node)"), serde_json::json!(["subtotal", "shipping"]));
+    assert_eq!(run("ends.map(s -> s.node)"), serde_json::json!(["unit", "shipping"]));
+    run("total = subtotal + tax + shipping");
+    assert_eq!(run("ends.map(s -> s.node)"), serde_json::json!(["unit"]));
+    run("quantity = 5");
+    assert_eq!(run("ends.map(s -> s.holds)"), serde_json::json!([14]));
+    run(r#"starts.map(s -> s.holds)
+
+# return: [50,10]"#);
+}
+
+/// Nucleoid finds the inputs and the results of the model with origins and outcomes
+#[rustfmt::skip]
+#[test]
+fn finds_the_inputs_and_the_results_of_the_model_with_origins_and_outcomes() {
+    let mut run = runner();
+    run("rate = 0.2");
+    run("price = 10");
+    run("qty = 3");
+    run("subtotal = price * qty");
+    run("tax = subtotal * rate");
+    run("inputs = model |> origins");
+    run("results = model |> outcomes");
+    assert_eq!(run("inputs.map(s -> s.node)"), serde_json::json!(["rate", "price", "qty"]));
+    assert_eq!(run("results.map(s -> s.node)"), serde_json::json!(["tax"]));
+    run("fee = 2");
+    run("shipping = fee * 2");
+    run("total = subtotal + tax + shipping");
+    assert_eq!(run("inputs.map(s -> s.node)"), serde_json::json!(["rate", "price", "qty", "fee"]));
+    assert_eq!(run("results.map(s -> s.node)"), serde_json::json!(["total"]));
+    run("delete fee");
+    assert_eq!(run("inputs.map(s -> s.node)"), serde_json::json!(["rate", "price", "qty", "shipping"]));
+    run("fee = 3");
+    run("qty = 4");
+    run(r#"[inputs.map(s -> s.holds), results.map(s -> s.holds)]
+
+# return: [[0.2,10,4,3],[54]]"#);
+}
+
+/// Nucleoid finds the inputs and the results behind class level rules with origins and outcomes
+#[rustfmt::skip]
+#[test]
+fn finds_the_inputs_and_the_results_behind_class_level_rules_with_origins_and_outcomes() {
+    let mut run = runner();
+    run("fee = 2");
+    run(r#"class Order(price, qty):
+    this.price = price
+    this.qty = qty"#);
+    run("$Order.subtotal = $Order.price * $Order.qty");
+    run("$Order.total = $Order.subtotal + fee");
+    run("$Order.inputs = $Order.total |> why |> origins");
+    run("first = Order(10, 2)");
+    run("second = Order(4, 5)");
+    run("ends = fee |> affects |> outcomes");
+    assert_eq!(run("first.inputs.map(s -> s.node)"), serde_json::json!(["fee", "first.price", "first.qty"]));
+    assert_eq!(run("ends.map(s -> s.node)"), serde_json::json!(["first.total", "second.total"]));
+    run("revenue = first.total + second.total");
+    assert_eq!(run("ends.map(s -> s.node)"), serde_json::json!(["revenue"]));
+    run("first.qty = 3");
+    assert_eq!(run("first.inputs.map(s -> s.holds)"), serde_json::json!([2, 10, 3]));
+    assert_eq!(run("ends.map(s -> s.holds)"), serde_json::json!([54]));
+    run(r#"second.inputs.map(s -> s.node)
+
+# return: ["fee","second.price","second.qty"]"#);
+}
+
+/// Nucleoid rolls back failed updates through origins and outcomes
+#[rustfmt::skip]
+#[test]
+fn rolls_back_failed_updates_through_origins_and_outcomes() {
+    let mut run = runner();
+    run(r#"price = 10
+qty = 3
+subtotal = price * qty
+total = subtotal + 5
+unit = total / qty
+starts = qty |> affects |> origins
+ends = qty |> affects |> outcomes
+failure = ""
+try:
+    ends = 1 |> outcomes
+catch error:
+    failure = error
+assert(failure, TypeError("Cannot explain 1"))
+assert([starts.map(s -> s.node), ends.map(s -> s.node)], [["subtotal"], ["unit"]])
+try:
+    shipping = qty * 2
+    assert([starts.map(s -> s.node), ends.map(s -> s.node)], [["subtotal", "shipping"], ["unit", "shipping"]])
+    throw "UNDO"
+catch error:
+    assert(error, "UNDO")
+assert([starts.map(s -> s.node), ends.map(s -> s.node)], [["subtotal"], ["unit"]])
+qty = 4
+[starts.map(s -> s.holds), ends.map(s -> s.holds)]
+# return: [[40],[11.25]]"#);
+}
+
 /// Nucleoid flattens nested lists by one level
 #[rustfmt::skip]
 #[test]

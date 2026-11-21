@@ -57,8 +57,13 @@ impl Link<'_> {
     fn operation(self) -> Option<&'static str> {
         match self {
             Link::Stage(
-                stage
-                @ (Stage::Stated | Stage::Derived | Stage::Diff | Stage::Nodes | Stage::Holds),
+                stage @ (Stage::Stated
+                | Stage::Derived
+                | Stage::Diff
+                | Stage::Nodes
+                | Stage::Holds
+                | Stage::Origins
+                | Stage::Outcomes),
             ) => Some(stage.as_str()),
             Link::Stage(Stage::Why | Stage::Affects) => None,
             Link::Depth(_) => Some("depth"),

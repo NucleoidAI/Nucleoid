@@ -4,7 +4,7 @@ use std::collections::{HashMap, HashSet, VecDeque};
 use indexmap::IndexSet;
 
 use super::rules::rule_of;
-use super::{Direction, Selection, Step, StepState};
+use super::{Direction, End, Selection, Step, StepState};
 use crate::graph::{NodeKey, ShapeKey};
 use crate::runtime::Runtime;
 
@@ -15,23 +15,54 @@ struct Region {
 
 impl Region {
     fn back_from(&self, target: &NodeKey) -> HashSet<NodeKey> {
-        let mut kept: HashSet<&NodeKey> = HashSet::new();
+        let start = self.reached.contains_key(target).then_some(target);
+        self.trace_back(start).into_iter().cloned().collect()
+    }
+
+    fn origins(&self, steps: &[Step]) -> HashSet<NodeKey> {
+        steps
+            .iter()
+            .filter(|step| self.reached.get(&step.node).is_some_and(Vec::is_empty))
+            .map(|step| step.node.clone())
+            .collect()
+    }
+
+    fn outcomes(&self, steps: &[Step]) -> HashSet<NodeKey> {
+        let sources = steps.iter().flat_map(|step| self.sources(&step.node));
+        let resting = self.trace_back(sources);
+        steps
+            .iter()
+            .filter(|step| !resting.contains(&step.node))
+            .map(|step| step.node.clone())
+            .collect()
+    }
+
+    fn trace_back<'region>(
+        &'region self,
+        keys: impl IntoIterator<Item = &'region NodeKey>,
+    ) -> HashSet<&'region NodeKey> {
+        let mut traced: HashSet<&NodeKey> = HashSet::new();
         let mut returning: Vec<&NodeKey> = Vec::new();
-        if let Some((key, _)) = self.reached.get_key_value(target) {
-            kept.insert(key);
-            returning.push(key);
+        for key in keys {
+            if traced.insert(key) {
+                returning.push(key);
+            }
         }
 
         while let Some(current) = returning.pop() {
-            for source in self.reached.get(current).into_iter().flatten() {
-                if kept.insert(source) {
+            for source in self.sources(current) {
+                if traced.insert(source) {
                     returning.push(source);
                 }
             }
         }
 
-        debug_assert!(kept.iter().all(|key| self.reached.contains_key(*key)));
-        kept.into_iter().cloned().collect()
+        debug_assert!(traced.iter().all(|key| self.reached.contains_key(*key)));
+        traced
+    }
+
+    fn sources(&self, key: &NodeKey) -> &[NodeKey] {
+        self.reached.get(key).map(Vec::as_slice).unwrap_or_default()
     }
 }
 
@@ -51,6 +82,14 @@ impl Runtime {
             return HashSet::new();
         }
         self.region(steps, direction).back_from(target)
+    }
+
+    pub(super) fn ends(&mut self, steps: &[Step], end: End) -> HashSet<NodeKey> {
+        let region = self.region(steps, Direction::Dependents);
+        match end {
+            End::Origins => region.origins(steps),
+            End::Outcomes => region.outcomes(steps),
+        }
     }
 
     fn region(&mut self, steps: &[Step], direction: Direction) -> Region {

@@ -4292,6 +4292,38 @@ big.passengers = 60
   the method is called. See [NUC 126](nuc-0126.md) and the
   [root contract](../nucleoid.spec.md#exit-controlled-repeat-until-loops).
 
+## Origins and outcomes of reasoning selections
+
+**Origins and outcomes show where more nights enter a trip budget and the figures they end at**
+
+```nuc
+nights = 4
+flight = 300
+hotel = nights * 120
+meals = nights * 40
+trip = flight + hotel + meals
+daily = trip / nights
+enters = nights |> affects |> origins
+ends = nights |> affects |> outcomes
+assert([enters.map(step -> step.node), ends.map(step -> step.node)], [["hotel", "meals"], ["daily"]])
+taxis = nights * 15
+assert(ends.map(step -> step.node), ["daily", "taxis"])
+trip = flight + hotel + meals + taxis
+nights = 6
+[enters.map(step -> step.node), ends.map(step -> step.holds)]
+# return: [["hotel","meals","taxis"],[225]]
+```
+
+- `nights |> affects |> origins` keeps where another night enters the
+  budget: the hotel and the meals, which the nights price directly. The
+  daily cost reads the nights too, but it rests on the trip, so the change
+  does not enter there.
+- `nights |> affects |> outcomes` keeps the figures the change ends at: the
+  daily cost, and the taxis until the trip adds them. The taxis join where
+  the change enters, and six nights cost 225 a day. See
+  [NUC 128](nuc-0128.md) and the
+  [root contract](../nucleoid.spec.md#origins-and-outcomes-of-reasoning-selections).
+
 ## Reactive list flattening
 
 **Flattening keeps the dirty tiles of every room counted**
