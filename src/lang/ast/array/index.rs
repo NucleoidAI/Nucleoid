@@ -83,26 +83,30 @@ impl Runtime {
         end: Option<&Expr>,
         scope: &mut Scope,
     ) -> Result<Value> {
+        let base = self.slice_base(object, scope)?;
+        let start = self.slice_part(start, scope)?;
+        let end = self.slice_part(end, scope)?;
+        Ok(slice(&base, start.as_ref(), end.as_ref()))
+    }
+
+    pub(super) fn slice_base(&mut self, object: &Expr, scope: &mut Scope) -> Result<Value> {
         // A class's instances are read before the bounds, as `Name.slice()`
         // reads them before its arguments, and sliced like a list.
-        let base = match self.evaluate(object, scope)? {
+        Ok(match self.evaluate(object, scope)? {
             Value::Class(name) => match self.population(&name) {
                 Some(instances) => Value::List(instances),
                 None => Value::Class(name),
             },
             base => base,
-        };
+        })
+    }
 
-        let start = match start {
-            Some(start) => Some(self.evaluate(start, scope)?),
-            None => None,
-        };
-        let end = match end {
-            Some(end) => Some(self.evaluate(end, scope)?),
-            None => None,
-        };
-
-        Ok(slice(&base, start.as_ref(), end.as_ref()))
+    pub(super) fn slice_part(
+        &mut self,
+        part: Option<&Expr>,
+        scope: &mut Scope,
+    ) -> Result<Option<Value>> {
+        part.map(|part| self.evaluate(part, scope)).transpose()
     }
 
     pub(crate) fn evaluate_index(

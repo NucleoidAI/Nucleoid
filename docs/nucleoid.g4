@@ -182,10 +182,11 @@ valueAssignment
  *   argument of a call whose callee is a plain name, of a 'NEW primary' call
  *   and of 'SUPER call'. They lie anywhere in the value, through every
  *   construct, including conditions, branches, grouping parentheses,
- *   subscripts, slice bounds, stage arguments, quantifiers and comprehension
- *   sources, except inside function, lambda and arrow bodies, comprehension
- *   elements and filters, template interpolations, the value of an inner
- *   assignment operator and the target of an assignment operator.
+ *   subscripts, slice bounds and steps, stage arguments, quantifiers and
+ *   comprehension sources, except inside function, lambda and arrow
+ *   bodies, comprehension elements and filters, template interpolations,
+ *   the value of an inner assignment operator and the target of an
+ *   assignment operator.
  * - Conditions, grouping parentheses, operands of other operators,
  *   positional call arguments, the 'name ASSIGN expression' arguments of
  *   other calls, objectKey, shorthand 'name' entries, spread sources,
@@ -462,9 +463,9 @@ receiver
  *   Their top-level ':' belongs to the enclosing construct; 'lambda'
  *   therefore stays an ordinary name there.
  * - Enclosed positions additionally include grouping, lists, comprehension
- *   parts, object values, call/stage arguments and slice ends. Nested
- *   expressions inherit context. Statement-level assignment values are
- *   not enclosed.
+ *   parts, object values, call/stage arguments, slice ends and slice steps.
+ *   Nested expressions inherit context. Statement-level assignment values
+ *   are not enclosed.
  * - 'is'/'is not' compare only in enclosed positions and in an enabled
  *   parse pass. A single-name right operand is a word comparison;
  *   otherwise they mean '=='/'!='. The right operand is an atVariable
@@ -631,10 +632,24 @@ property
     | keyword
     ;
 
+/*
+ * Subscript contract (NUC 125):
+ * - The start is a clause and the stop and the step are enclosed
+ *   expressions, so a COLON that a conditional, a quantifier or a lambda
+ *   inside a part consumes stays that part's: 'xs[c ? 1 : 2 : 4]' is the
+ *   slice from 'c ? 1 : 2' to 4.
+ * - Only a COLON left after the first COLON or after the stop starts a
+ *   step, building Expr::SteppedSlice, whose omitted step stays omitted:
+ *   'xs[1:5:]' keeps its second COLON. A third COLON is an error.
+ */
 subscript
     : LBRACK
-      (COLON expression? | clauseExpression (COLON expression?)?)
-      RBRACK                                              // Expr::Index or Expr::Slice
+      (COLON sliceTail | clauseExpression (COLON sliceTail)?)
+      RBRACK                                              // Expr::Index, Expr::Slice or Expr::SteppedSlice
+    ;
+
+sliceTail
+    : expression? (COLON expression?)?                    // a second COLON: Expr::SteppedSlice
     ;
 
 call

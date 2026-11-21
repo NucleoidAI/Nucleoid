@@ -5,6 +5,7 @@ mod flat;
 mod index;
 mod query;
 mod sort_by_key;
+mod stepped;
 
 use crate::error::{Error, Result};
 use crate::graph::NodeKey;
@@ -65,6 +66,18 @@ impl<'a> Array<'a> {
             Expr::Slice { object, start, end } => {
                 runtime.evaluate_slice(object, start.as_deref(), end.as_deref(), scope)
             }
+            Expr::SteppedSlice {
+                object,
+                start,
+                end,
+                step,
+            } => runtime.evaluate_stepped_slice(
+                object,
+                start.as_deref(),
+                end.as_deref(),
+                step.as_deref(),
+                scope,
+            ),
             other => Err(Error::type_error(format!("{other} is not a list"))),
         }
     }

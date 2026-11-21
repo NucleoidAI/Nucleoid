@@ -1127,6 +1127,7 @@ Full detail: [NUC 97](nuc-0097.md).
 - A range is written `[start:end]`; either bound may be omitted, and a negative bound counts from the end.
 - A range on a class's instance list, such as `Task[-2:]` or `Task[:]`, returns its instances in population order with the same bound rules, and depends on the population ([NUC 61](nuc-0061.md)).
 - Both slice bounds are expressions whose references are checked when a class-level rule is declared.
+- A step after a second colon, `[start:stop:step]`, takes every step-th item, and a negative step walks backward, as in Python: `xs[::2]`, `xs[1::2]` and `s[::-1]` ([Stepped slices](#stepped-slices), [NUC 125](nuc-0125.md)).
 - `.length` is a dependency on the collection.
 
 ```
@@ -2757,7 +2758,7 @@ doubled = prices.map(p => p * rate)
 
 - `doubled[2]` is `60`; after `rate = 3`, `90`; after `prices.push(40)`, `doubled[3]` is `120`.
 
-- Class lists support the same functions and depend on the population. Ranges such as `Task[1:]` slice them, and `Task.list()` or `Task.all()` returns one as a list.
+- Class lists support the same functions and depend on the population. Ranges such as `Task[1:]` slice them, stepped slices such as `Task[::2]` stride them ([NUC 125](nuc-0125.md)), and `Task.list()` or `Task.all()` returns one as a list.
 
 ```
 open = Task.filter(t => not t.done).length
@@ -3647,6 +3648,8 @@ everyone.map(task => task.title)
   rules of list slices, equals `Task.slice(start, end)`, and depends on the
   population and its bounds. `Task.list()` and `Task.all()` return every
   instance; plain lists have neither method.
+- A range also takes a step after a second colon: `Task[::2]` takes every
+  other instance in population order ([Stepped slices](#stepped-slices)).
 - Lists and instance lists gain `at`, `lastIndexOf`, `findIndex`, `findLast`
   and `findLastIndex`, beside the existing `includes`, `indexOf`, `concat` and
   `slice`. All are read-only and live: a declaration follows the list or
@@ -4404,6 +4407,56 @@ quick
 - The authoritative contract is the
   [list and population quantiles](../nucleoid.spec.md#list-and-population-quantiles)
   section.
+
+### Stepped slices
+
+```
+route = ["Harbor", "Mill", "Oak", "Central", "Park", "Airport"]
+here = 2
+ahead = route[here::2]
+back = route[here::-1]
+assert([ahead, back], [["Oak", "Park"], ["Oak", "Mill", "Harbor"]])
+here = 3
+assert([ahead, back], [["Central", "Airport"], ["Central", "Oak", "Mill", "Harbor"]])
+route.shift()
+[ahead, back]
+```
+
+- This is the complete
+  `Nucleoid walks lists from a position with stepped slices` program in
+  `tests/reference.md`, without its title and expected-return metadata; it
+  returns `[["Park"],["Park","Central","Oak","Mill"]]`.
+- [NUC 125](nuc-0125.md) adds an optional step after a second colon:
+  `SEQUENCE[start:stop:step]`. Every part may be omitted, as in `xs[::2]`,
+  `xs[1::2]`, `xs[:4:2]` and `s[::-1]`. A slice with one colon keeps its
+  meaning, and a conditional, a quantifier or a `lambda` inside a subscript
+  keeps its own colon, so `xs[c ? 1 : 2 : 4]` stays the one-colon slice from
+  `c ? 1 : 2` to `4`.
+- The step is converted to a number and truncated toward zero, and an omitted
+  step is `1`. A positive step keeps the bounds of a one-colon slice and takes
+  every step-th position from the start that lies below the stop, so
+  `xs[a:b:1]` is `xs[a:b]`. A negative step walks backward: an omitted start
+  is the last position and an omitted stop lies before the first, a negative
+  bound counts from the end, and the positions are clamped from one before the
+  first to the last, as in Python. A step at least as long as the sequence
+  takes only the start.
+- A step that converts to NaN or truncates to `0` raises
+  `TypeError("Slice step must be a nonzero number")`, on every receiver, once
+  the object, the bounds and the step are evaluated. The step converts as a
+  bound does: numbers of magnitude `1` or more, `true`, strings that parse as
+  such a number, such as `"2"` and `"-1"`, one-item lists of a step, such as
+  `[2]`, and dates other than the epoch are steps; numbers below `1` in
+  magnitude, NaN, `false`, `null`, undefined, blank strings, `"0"` and other
+  strings that are not such a number, empty lists and one-item lists of a
+  value that raises, lists of two or more items, objects, classes,
+  functions, regular expressions and `Date(0)` raise.
+- Lists give lists, strings give strings walked by Unicode scalar value, and a
+  class gives its instances in population order; every other value gives
+  undefined, as a one-colon slice does. Stepped slices are live: a declaration
+  follows the sequence, the bounds and the step, in class-level rules too,
+  `.value` freezes a part, and the slice renders as written.
+- The authoritative contract is the
+  [stepped slices](../nucleoid.spec.md#stepped-slices) section.
 
 ---
 
@@ -5304,6 +5357,7 @@ Math.cot(value)                         static reciprocal of tangent in radians 
 Name[0]  Name["id"]  Name.find(...)    address an instance
 value[start:end]  value[-n:]           slice, negative counts from the end
 Name[start:end]  Name[:]  Name[-n:]    instance list range (NUC 61)
+value[start:stop:step]  value[::-1]    stepped slice; a negative step walks backward (NUC 125)
 Name.list()  Name.all()                every instance, in population order (NUC 61)
 items.at(-1)  items.findLast(callback) read or search from the end (NUC 61)
 items.sum()  Name.sum(selector)        live numeric total (NUC 68)

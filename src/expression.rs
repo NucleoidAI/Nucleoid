@@ -294,11 +294,14 @@ pub(crate) fn visit_children<'a>(expression: &'a Expr, visit: &mut impl FnMut(&'
             visit(index);
         }
         Expr::Slice { object, start, end } => {
-            visit(object);
-            for bound in start.iter().chain(end) {
-                visit(bound);
-            }
+            visit_parts(object, [start, end].map(Option::as_deref), visit);
         }
+        Expr::SteppedSlice {
+            object,
+            start,
+            end,
+            step,
+        } => visit_parts(object, [start, end, step].map(Option::as_deref), visit),
         Expr::Call { callee, arguments } => {
             visit(callee);
             visit_all(arguments, visit);
@@ -335,6 +338,17 @@ pub(crate) fn visit_children<'a>(expression: &'a Expr, visit: &mut impl FnMut(&'
         | Expr::Function(_)
         | Expr::Enum(_)
         | Expr::Model => {}
+    }
+}
+
+fn visit_parts<'a>(
+    object: &'a Expr,
+    parts: impl IntoIterator<Item = Option<&'a Expr>>,
+    visit: &mut impl FnMut(&'a Expr),
+) {
+    visit(object);
+    for part in parts.into_iter().flatten() {
+        visit(part);
     }
 }
 
@@ -402,6 +416,7 @@ fn visit_operands<'a>(expression: &'a Expr, visit: &mut impl FnMut(&'a Expr)) {
         | Expr::Union { .. }
         | Expr::Index { .. }
         | Expr::Slice { .. }
+        | Expr::SteppedSlice { .. }
         | Expr::Call { .. }
         | Expr::List(_)
         | Expr::Super(_)

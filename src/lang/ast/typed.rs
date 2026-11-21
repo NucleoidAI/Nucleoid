@@ -38,7 +38,7 @@ impl<'a> Ast<'a> {
             | Expr::ObjectRef(_)
             | Expr::This
             | Expr::Member { .. } => Ast::Identifier(identifier::Identifier::new(node)),
-            Expr::List(_) | Expr::Index { .. } | Expr::Slice { .. } => {
+            Expr::List(_) | Expr::Index { .. } | Expr::Slice { .. } | Expr::SteppedSlice { .. } => {
                 Ast::Array(array::Array::new(node))
             }
             Expr::ObjectLiteral(_) | Expr::SpreadObject(_) | Expr::Enum(_) => {

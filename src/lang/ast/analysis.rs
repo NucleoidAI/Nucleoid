@@ -51,7 +51,8 @@ impl Expr {
             Expr::Identifier(_) | Expr::ClassRef(_) | Expr::ObjectRef(_) | Expr::This => Some(self),
             Expr::Member { object, .. }
             | Expr::Index { object, .. }
-            | Expr::Slice { object, .. } => object.first(),
+            | Expr::Slice { object, .. }
+            | Expr::SteppedSlice { object, .. } => object.first(),
             Expr::Version { reference, .. } => reference.first(),
             Expr::Call { callee, .. } => callee.first(),
             Expr::Of { operand, .. } => operand.first(),
@@ -65,7 +66,8 @@ impl Expr {
         match self {
             Expr::Member { object, .. }
             | Expr::Index { object, .. }
-            | Expr::Slice { object, .. } => Some(object),
+            | Expr::Slice { object, .. }
+            | Expr::SteppedSlice { object, .. } => Some(object),
             Expr::Version { reference, .. } => Some(reference),
             _ => None,
         }
@@ -82,7 +84,8 @@ impl Expr {
             | Expr::Model => true,
             Expr::Member { object, .. }
             | Expr::Index { object, .. }
-            | Expr::Slice { object, .. } => object.contains_reasoning(),
+            | Expr::Slice { object, .. }
+            | Expr::SteppedSlice { object, .. } => object.contains_reasoning(),
             Expr::Version { reference, .. } => reference.contains_reasoning(),
             Expr::Unary { operand, .. } | Expr::Delete(operand) | Expr::Of { operand, .. } => {
                 operand.contains_reasoning()
@@ -128,7 +131,8 @@ impl Expr {
             Expr::Version { .. } => true,
             Expr::Member { object, .. }
             | Expr::Index { object, .. }
-            | Expr::Slice { object, .. } => object.version_view(),
+            | Expr::Slice { object, .. }
+            | Expr::SteppedSlice { object, .. } => object.version_view(),
             _ => false,
         }
     }

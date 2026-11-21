@@ -109,13 +109,17 @@ impl<'a> Shown<'a> {
         write!(f, "{}[{}]", self.grouped(object), self.inner(index))
     }
 
-    fn slice(
-        self,
-        f: &mut fmt::Formatter<'_>,
-        object: &'a Expr,
-        start: Option<&'a Expr>,
-        end: Option<&'a Expr>,
-    ) -> fmt::Result {
+    fn slice(self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let (object, start, end, step) = match self.expression {
+            Expr::Slice { object, start, end } => (object, start, end, None),
+            Expr::SteppedSlice {
+                object,
+                start,
+                end,
+                step,
+            } => (object, start, end, Some(step)),
+            _ => return Ok(()),
+        };
         write!(f, "{}[", self.grouped(object))?;
         if let Some(start) = start {
             write!(f, "{}", self.inner(start))?;
@@ -123,6 +127,12 @@ impl<'a> Shown<'a> {
         f.write_str(":")?;
         if let Some(end) = end {
             write!(f, "{}", self.inner(end))?;
+        }
+        if let Some(step) = step {
+            f.write_str(":")?;
+            if let Some(step) = step {
+                write!(f, "{}", self.inner(step))?;
+            }
         }
         f.write_str("]")
     }
@@ -279,9 +289,7 @@ impl fmt::Display for Shown<'_> {
                 selector,
             } => shown.version(f, reference, *selector),
             Expr::Index { object, index } => shown.index(f, object, index),
-            Expr::Slice { object, start, end } => {
-                shown.slice(f, object, start.as_deref(), end.as_deref())
-            }
+            Expr::Slice { .. } | Expr::SteppedSlice { .. } => shown.slice(f),
             Expr::Call { callee, arguments } => shown.call(f, callee, arguments),
             Expr::Unary { operator, operand } => write_unary(f, *operator, shown.inner(operand)),
             Expr::Binary {

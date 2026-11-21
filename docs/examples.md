@@ -4232,6 +4232,30 @@ south.times.pop()
   flag. See [NUC 124](nuc-0124.md) and the
   [root contract](../nucleoid.spec.md#list-and-population-quantiles).
 
+## Stepped slices
+
+**Stepped slices mirror the rows of every sprite**
+
+```nuc
+class Sprite(rows):
+    this.rows = rows
+$Sprite.mirrored = $Sprite.rows.map(row -> row[::-1])
+$Sprite.symmetric = $Sprite.mirrored == $Sprite.rows
+arrow = Sprite(["#..", "##.", "#.."])
+heart = Sprite([".#.#.", "#####", ".###.", "..#.."])
+assert([arrow.mirrored, arrow.symmetric, heart.symmetric], [["..#", ".##", "..#"], false, true])
+heart.rows.push("#....")
+[heart.mirrored, heart.symmetric]
+# return: [[".#.#.","#####",".###.","..#..","....#"],false]
+```
+
+- Each sprite keeps its rows mirrored in a class-level rule: `row[::-1]`
+  reverses the characters of a row, and a second rule compares the mirror
+  with the sprite to flag symmetric shapes.
+- Both rules follow every row: a new bottom row `#....` appears mirrored as
+  `....#` and breaks the heart's symmetry. See [NUC 125](nuc-0125.md) and the
+  [root contract](../nucleoid.spec.md#stepped-slices).
+
 ## Reactive list flattening
 
 **Flattening keeps the dirty tiles of every room counted**

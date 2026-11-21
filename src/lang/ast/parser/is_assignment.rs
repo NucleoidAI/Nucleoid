@@ -85,10 +85,13 @@ fn push_children<'a>(expression: &'a mut Expr, pending: &mut Vec<&'a mut Expr>) 
             condition,
             ..
         } => pending.extend([collection, condition].map(Box::as_mut)),
-        Expr::Slice { object, start, end } => {
-            pending.push(object);
-            pending.extend(start.iter_mut().chain(end).map(Box::as_mut));
-        }
+        Expr::Slice { object, start, end } => push_parts(object, [start, end], pending),
+        Expr::SteppedSlice {
+            object,
+            start,
+            end,
+            step,
+        } => push_parts(object, [start, end, step], pending),
         Expr::Conditional {
             condition,
             consequent,
@@ -119,6 +122,15 @@ fn push_children<'a>(expression: &'a mut Expr, pending: &mut Vec<&'a mut Expr>) 
         | Expr::Model
         | Expr::Enum(_) => {}
     }
+}
+
+fn push_parts<'a, const PARTS: usize>(
+    object: &'a mut Expr,
+    parts: [&'a mut Option<Box<Expr>>; PARTS],
+    pending: &mut Vec<&'a mut Expr>,
+) {
+    pending.push(object);
+    pending.extend(parts.into_iter().flatten().map(Box::as_mut));
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

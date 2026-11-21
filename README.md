@@ -2731,6 +2731,33 @@ assert(p90, 144)
   seventh sorted time, which gives `0.6 * 140 + 0.4 * 150`. See the
   [root contract](nucleoid.spec.md#list-and-population-quantiles).
 
+## Stepped slices
+
+**Stepped slices deal the chores round-robin as roommates move in**
+
+```nuc
+chores = ["dishes", "laundry", "trash", "floors", "plants", "mail"]
+class Roommate(turn):
+    this.turn = turn
+$Roommate.duties = chores[$Roommate.turn::Roommate.length]
+ana = Roommate(0)
+ben = Roommate(1)
+assert([ana.duties, ben.duties], [["dishes", "trash", "plants"], ["laundry", "floors", "mail"]])
+cy = Roommate(2)
+chores.push("cooking")
+assert([ana.duties, cy.duties], [["dishes", "floors", "cooking"], ["trash", "mail"]])
+```
+
+- [NUC 125](docs/nuc-0125.md) adds a step to slices:
+  `SEQUENCE[start:stop:step]` takes every step-th item from the start, and a
+  negative step walks backward, as Python's slices do.
+  `chores[$Roommate.turn::Roommate.length]` starts at each roommate's turn and
+  steps by the number of roommates, which deals the chores round-robin.
+- `duties` is a class-level rule, so every roommate keeps a share of its own.
+  When Cy moves in, the step grows to 3 and every share is dealt again, and
+  the new chore joins the share whose turn it falls on. See the
+  [root contract](nucleoid.spec.md#stepped-slices).
+
 ## Reactive list flattening
 
 **Flat turns nested lists into one live list**

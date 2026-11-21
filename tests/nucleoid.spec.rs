@@ -21400,6 +21400,98 @@ low
 # return: 5.5"#);
 }
 
+/// Nucleoid takes every other item of a list with stepped slices
+#[rustfmt::skip]
+#[test]
+fn takes_every_other_item_of_a_list_with_stepped_slices() {
+    let mut run = runner();
+    run("samples = [12, 15, 17, 11, 14, 16]");
+    run("left = samples[::2]");
+    run("right = samples[1::2]");
+    assert_eq!(run("[left, right]"), serde_json::json!([[12, 17, 14], [15, 11, 16]]));
+    run("samples.push(13)");
+    assert_eq!(run("[left, right]"), serde_json::json!([[12, 17, 14, 13], [15, 11, 16]]));
+    run("samples.shift()");
+    assert_eq!(run("[left, right]"), serde_json::json!([[15, 11, 16], [17, 14, 13]]));
+}
+
+/// Nucleoid reverses strings by character with stepped slices
+#[rustfmt::skip]
+#[test]
+fn reverses_strings_by_character_with_stepped_slices() {
+    let mut run = runner();
+    run(r#"word = "añejo""#);
+    run("mirror = word[::-1]");
+    run("palindrome = mirror == word");
+    assert_eq!(run("[mirror, palindrome]"), serde_json::json!(["ojeña", false]));
+    run(r#"word = "reconocer""#);
+    assert_eq!(run("[mirror, palindrome]"), serde_json::json!(["reconocer", true]));
+    run(r#"word = "Øresund""#);
+    assert_eq!(run("[mirror, palindrome]"), serde_json::json!(["dnuserØ", false]));
+    run(r#"word = "über""#);
+    assert_eq!(run("[mirror, palindrome]"), serde_json::json!(["rebü", false]));
+}
+
+/// Nucleoid strides class instance populations with stepped slices
+#[rustfmt::skip]
+#[test]
+fn strides_class_instance_populations_with_stepped_slices() {
+    let mut run = runner();
+    run(r#"class Lap(seconds):
+    this.seconds = seconds"#);
+    run("Lap(62)");
+    run("Lap(58)");
+    run("Lap(57)");
+    run("Lap(61)");
+    run("stride = 2");
+    run("sampled = Lap[::stride].map(lap -> lap.seconds)");
+    assert_eq!(run("sampled"), serde_json::json!([62, 57]));
+    run("Lap(60)");
+    assert_eq!(run("sampled"), serde_json::json!([62, 57, 60]));
+    run("stride = 3");
+    assert_eq!(run("sampled"), serde_json::json!([62, 61]));
+}
+
+/// Nucleoid rolls back failed updates through stepped slices
+#[rustfmt::skip]
+#[test]
+fn rolls_back_failed_updates_through_stepped_slices() {
+    let mut run = runner();
+    run(r#"def checked(amount):
+    if amount < 0:
+        throw "NEGATIVE"
+    return amount
+prices = [4, 9, 7, 12]
+picked = prices[::2].map(checked)
+failure = ""
+try:
+    prices.push(-3)
+catch error:
+    failure = error
+assert([failure, prices, picked], ["NEGATIVE", [4, 9, 7, 12], [4, 7]])
+try:
+    prices.push(5)
+    assert(picked, [4, 7, 5])
+    throw "UNDO"
+catch error:
+    assert(error, "UNDO")
+assert([prices, picked], [[4, 9, 7, 12], [4, 7]])
+class Crate(weight): this.weight = weight
+Crate(6)
+Crate(2)
+Crate(9)
+latest = Crate[::-2].map(crate -> checked(crate.weight))
+failure = ""
+try:
+    Crate(-1)
+catch error:
+    failure = error
+assert([failure, Crate.length, latest], ["NEGATIVE", 3, [9, 6]])
+Crate(5)
+latest
+# return: [5,2]"#);
+}
+
 /// Nucleoid flattens nested lists by one level
 #[rustfmt::skip]
 #[test]

@@ -87,33 +87,13 @@ impl Parser {
 
     fn subscript(&mut self, object: Expr) -> Result<Expr> {
         if self.eat(&Token::Colon) {
-            let end = if self.check(&Token::RightBracket) {
-                None
-            } else {
-                Some(Box::new(self.within(true, Self::expression)?))
-            };
-            self.expect(&Token::RightBracket)?;
-            return Ok(Expr::Slice {
-                object: Box::new(object),
-                start: None,
-                end,
-            });
+            return self.slice(object, None);
         }
 
         let index = self.clause_expression()?;
 
         if self.eat(&Token::Colon) {
-            let end = if self.check(&Token::RightBracket) {
-                None
-            } else {
-                Some(Box::new(self.within(true, Self::expression)?))
-            };
-            self.expect(&Token::RightBracket)?;
-            return Ok(Expr::Slice {
-                object: Box::new(object),
-                start: Some(Box::new(index)),
-                end,
-            });
+            return self.slice(object, Some(Box::new(index)));
         }
 
         self.expect(&Token::RightBracket)?;
@@ -122,6 +102,37 @@ impl Parser {
             object: Box::new(object),
             index: Box::new(index),
         })
+    }
+
+    fn slice(&mut self, object: Expr, start: Option<Box<Expr>>) -> Result<Expr> {
+        let end = self.slice_part()?;
+
+        if !self.eat(&Token::Colon) {
+            self.expect(&Token::RightBracket)?;
+            return Ok(Expr::Slice {
+                object: Box::new(object),
+                start,
+                end,
+            });
+        }
+
+        let step = self.slice_part()?;
+        self.expect(&Token::RightBracket)?;
+
+        Ok(Expr::SteppedSlice {
+            object: Box::new(object),
+            start,
+            end,
+            step,
+        })
+    }
+
+    fn slice_part(&mut self) -> Result<Option<Box<Expr>>> {
+        if self.check(&Token::RightBracket) || self.check(&Token::Colon) {
+            return Ok(None);
+        }
+
+        Ok(Some(Box::new(self.within(true, Self::expression)?)))
     }
 
     pub(super) fn arguments(&mut self, context: ArgumentContext) -> Result<Vec<Expr>> {

@@ -126,6 +126,17 @@ fn expression_assertions(expression: &Expr, assertions: &mut Vec<String>) {
                 expression_assertions(bound, assertions);
             }
         }
+        Expr::SteppedSlice {
+            object,
+            start,
+            end,
+            step,
+        } => {
+            expression_assertions(object, assertions);
+            for part in start.iter().chain(end).chain(step) {
+                expression_assertions(part, assertions);
+            }
+        }
         Expr::Unary { operand, .. } | Expr::Delete(operand) | Expr::Of { operand, .. } => {
             expression_assertions(operand, assertions)
         }

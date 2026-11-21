@@ -194,6 +194,12 @@ pub enum Expr {
         start: Option<Box<Expr>>,
         end: Option<Box<Expr>>,
     },
+    SteppedSlice {
+        object: Box<Expr>,
+        start: Option<Box<Expr>>,
+        end: Option<Box<Expr>>,
+        step: Option<Box<Expr>>,
+    },
     Call {
         callee: Box<Expr>,
         arguments: Vec<Expr>,

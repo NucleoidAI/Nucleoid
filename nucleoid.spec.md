@@ -5174,6 +5174,8 @@ t.promote(bob)
   accepted results. A range on anything other than a list, a string or a
   declared class, such as `Math[:]` or the global `Class[:]`, still yields
   undefined.
+- A range may also take a step after a second colon, as `Name[::2]` takes
+  every other instance; [Stepped slices](#stepped-slices) specifies it.
 - `Name.list()` and `Name.all()` return every instance in population order,
   with the result and dependency of `Name[:]` and `Name.slice()`. Supplied
   arguments are evaluated once, left to right, and ignored. Plain lists have
@@ -6946,6 +6948,85 @@ t.promote(bob)
   `Nucleoid finds the quantiles of lists with quantile` through
   `Nucleoid rolls back failed quantile updates` specify the executable
   behavior. `tests/list_quantiles.rs` executes the rest.
+
+## Stepped slices
+
+- [NUC 125](docs/nuc-0125.md) adds an optional step to slices:
+  `SEQUENCE[start:stop:step]` takes every step-th item, and a negative step
+  walks backward, with Python's slice rules. No keyword, token or error type
+  is added; the step's error message is new.
+- Inside a subscript, a second colon may follow a slice's first colon and its
+  optional stop, and an optional step follows it. Every part may be omitted:
+  `xs[::2]`, `xs[1::2]`, `xs[:4:2]`, `xs[1:5:2]`, `xs[::-1]`, `xs[1:5:]` and
+  `xs[::]`. The start and the stop are parsed as in a one-colon slice, and the
+  step as the stop, so a conditional, a quantifier or a `lambda` inside a
+  subscript keeps its own colon: `xs[c ? 1 : 2 : 4]` stays the one-colon
+  slice from `c ? 1 : 2` to `4`, and `xs[1:c ? 3 : 4 : 2]` steps by `2` up to
+  `c ? 3 : 4`. A third colon stays a `SyntaxError`.
+- The step is converted with the numeric conversion of the bounds and
+  truncated toward zero, and an omitted step is `1`. A step that converts to
+  NaN or truncates to `0` raises
+  `TypeError("Slice step must be a nonzero number")`.
+- These are steps: numbers of magnitude `1` or more, such as `2`, `-2.7`,
+  `Infinity` and `-Infinity`; `true`; strings whose trimmed text parses as
+  such a number, such as `"2"`, `" -2 "`, `"2.7"`, `"1e1"` and `"inf"`;
+  one-item lists whose item is a step, such as `[2]`, `["2"]` and `[[2]]`;
+  and dates other than the epoch, by their milliseconds.
+- These raise the step error: numbers of magnitude below `1`, such as `0`,
+  `-0` and `0.5`, and NaN; `false`, `null` and undefined; strings whose
+  trimmed text does not parse as a number of magnitude `1` or more, such as
+  `""`, `" "`, `"0"`, `"0.5"`, `"a"`, `"0x10"` and `"NaN"`; empty lists,
+  one-item lists whose item raises, such as `[0]` and `[null]`, and lists of
+  two or more items; objects, instances, classes, functions and regular
+  expressions; and the epoch date `Date(0)`.
+- For a sequence of `n` items, a positive step takes its bounds exactly as a
+  one-colon slice does: an omitted start is `0` and an omitted stop `n`, a
+  negative bound counts from the end, a bound that converts to NaN reads as
+  `0`, and every bound is truncated and clamped to the range from `0` to `n`.
+  The slice takes the positions `start`, `start + step` and so on that lie
+  below the stop. So `xs[a:b:1]` and `xs[a:b:]` equal `xs[a:b]`, and
+  `[10, 20, 30, 40, 50, 60][1:5:2]` is `[20, 40]`.
+- A negative step walks backward. An omitted start is the last position and
+  an omitted stop lies before the first. A negative bound counts from the
+  end, a bound that converts to NaN reads as `0`, and every position is
+  truncated toward zero and clamped to the range from `-1`, one before the
+  first position, to `n - 1`, the last. The slice takes the positions
+  `start`, `start + step` and so on that lie above the stop. So `xs[::-1]`
+  reverses `xs`, `xs[3::-1]` walks back from position 3 to the first item,
+  and `[10, 20, 30, 40, 50, 60][5:1:-2]` is `[60, 40]`. On those six items,
+  `[-2.5::-1]` starts at position 3 and gives `[40, 30, 20, 10]`,
+  `[:-2.5:-1]` stops above position 3 and gives `[60, 50]`, and
+  `[0 / 0::-1]` starts at position 0 and gives `[10]`.
+- A step whose magnitude is at least the sequence's length, `Infinity` and
+  `-Infinity` included, takes only the start position, when it lies in the
+  sequence. A selection visits at most `n` positions, without recursion.
+- Lists give lists. Strings give strings, walked by Unicode scalar value as
+  `slice` walks them, so `"añejo"[::-1]` is `"ojeña"`. On a declared class,
+  `Name[start:stop:step]` gives its instances in population order, as ranges
+  do. Every other value gives undefined, as a one-colon slice gives, once the
+  step is valid.
+- The object is evaluated first, and a class's population is read before the
+  bounds and the step. Then the start, the stop and the step are evaluated,
+  left to right; then the step is checked, for every receiver; then the
+  positions are taken.
+- A declaration or a class-level rule that holds a stepped slice depends on
+  what a one-colon slice depends on and on what its step reads, unless
+  `.value` freezes a bound or the step. List mutations, new and deleted
+  instances and a changed bound or step re-evaluate it. A class-level rule
+  checks the references in its bounds and its step when it is declared. A
+  change that makes the step invalid raises the step error and rolls back,
+  and `suppose` and transactions treat stepped slices as they treat slices.
+- Statements, `why`, `affects` and graph keys show the slice as written, such
+  as `xs[1::2]`, `s[::-1]`, `xs[a:b:c]` and `xs[1:5:]`. Assigning to a stepped
+  slice raises the accepted `SyntaxError("Cannot assign to <target>")`, so
+  `xs[::2] = v` raises `SyntaxError("Cannot assign to xs[::2]")`, as
+  `xs[1:3] = v` raises `SyntaxError("Cannot assign to xs[1:3]")`.
+- One-colon slices, ranges, conditionals inside subscripts and the `slice`
+  method keep their accepted results; `xs.slice(0, 4, 2)` still ignores its
+  third argument. The four entries beginning
+  `Nucleoid takes every other item of a list with stepped slices` through
+  `Nucleoid rolls back failed updates through stepped slices` specify the
+  executable behavior. `tests/stepped_slices.rs` executes the rest.
 
 ## Object entry loops with ordered rollback
 
@@ -27139,6 +27220,82 @@ assert([failure, Tank.length, low], ["NEGATIVE_LEVEL", 3, 5])
 Tank(12)
 low
 # return: 5.5
+---
+# Nucleoid takes every other item of a list with stepped slices
+
+samples = [12, 15, 17, 11, 14, 16]
+left = samples[::2]
+right = samples[1::2]
+assert([left, right], [[12, 17, 14], [15, 11, 16]])
+samples.push(13)
+assert([left, right], [[12, 17, 14, 13], [15, 11, 16]])
+samples.shift()
+assert([left, right], [[15, 11, 16], [17, 14, 13]])
+---
+# Nucleoid reverses strings by character with stepped slices
+
+word = "añejo"
+mirror = word[::-1]
+palindrome = mirror == word
+assert([mirror, palindrome], ["ojeña", false])
+word = "reconocer"
+assert([mirror, palindrome], ["reconocer", true])
+word = "Øresund"
+assert([mirror, palindrome], ["dnuserØ", false])
+word = "über"
+assert([mirror, palindrome], ["rebü", false])
+---
+# Nucleoid strides class instance populations with stepped slices
+
+class Lap(seconds):
+    this.seconds = seconds
+Lap(62)
+Lap(58)
+Lap(57)
+Lap(61)
+stride = 2
+sampled = Lap[::stride].map(lap -> lap.seconds)
+assert(sampled, [62, 57])
+Lap(60)
+assert(sampled, [62, 57, 60])
+stride = 3
+assert(sampled, [62, 61])
+---
+# Nucleoid rolls back failed updates through stepped slices
+
+def checked(amount):
+    if amount < 0:
+        throw "NEGATIVE"
+    return amount
+prices = [4, 9, 7, 12]
+picked = prices[::2].map(checked)
+failure = ""
+try:
+    prices.push(-3)
+catch error:
+    failure = error
+assert([failure, prices, picked], ["NEGATIVE", [4, 9, 7, 12], [4, 7]])
+try:
+    prices.push(5)
+    assert(picked, [4, 7, 5])
+    throw "UNDO"
+catch error:
+    assert(error, "UNDO")
+assert([prices, picked], [[4, 9, 7, 12], [4, 7]])
+class Crate(weight): this.weight = weight
+Crate(6)
+Crate(2)
+Crate(9)
+latest = Crate[::-2].map(crate -> checked(crate.weight))
+failure = ""
+try:
+    Crate(-1)
+catch error:
+    failure = error
+assert([failure, Crate.length, latest], ["NEGATIVE", 3, [9, 6]])
+Crate(5)
+latest
+# return: [5,2]
 ---
 # Nucleoid flattens nested lists by one level
 

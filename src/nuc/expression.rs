@@ -49,7 +49,8 @@ impl Runtime {
             Expr::Member { .. }
             | Expr::Version { .. }
             | Expr::Index { .. }
-            | Expr::Slice { .. } => self.freeze_access(expression, scope),
+            | Expr::Slice { .. }
+            | Expr::SteppedSlice { .. } => self.freeze_access(expression, scope),
             Expr::Binary { .. }
             | Expr::Logical { .. }
             | Expr::Conditional { .. }
@@ -152,17 +153,27 @@ impl Runtime {
             },
             Expr::Slice { object, start, end } => Expr::Slice {
                 object: Box::new(self.freeze(object, scope)?),
-                start: start
-                    .as_ref()
-                    .map(|start| self.freeze(start, scope).map(Box::new))
-                    .transpose()?,
-                end: end
-                    .as_ref()
-                    .map(|end| self.freeze(end, scope).map(Box::new))
-                    .transpose()?,
+                start: self.freeze_part(start.as_deref(), scope)?,
+                end: self.freeze_part(end.as_deref(), scope)?,
+            },
+            Expr::SteppedSlice {
+                object,
+                start,
+                end,
+                step,
+            } => Expr::SteppedSlice {
+                object: Box::new(self.freeze(object, scope)?),
+                start: self.freeze_part(start.as_deref(), scope)?,
+                end: self.freeze_part(end.as_deref(), scope)?,
+                step: self.freeze_part(step.as_deref(), scope)?,
             },
             other => other.clone(),
         })
+    }
+
+    fn freeze_part(&mut self, part: Option<&Expr>, scope: &mut Scope) -> Result<Option<Box<Expr>>> {
+        part.map(|part| self.freeze(part, scope).map(Box::new))
+            .transpose()
     }
 
     fn freeze_operator(&mut self, expression: &Expr, scope: &mut Scope) -> Result<Expr> {

@@ -2870,6 +2870,19 @@ assert([wet, quick], [24, 4.75])
 quick
 # return: 4.75
 ---
+# Nucleoid walks lists from a position with stepped slices
+
+route = ["Harbor", "Mill", "Oak", "Central", "Park", "Airport"]
+here = 2
+ahead = route[here::2]
+back = route[here::-1]
+assert([ahead, back], [["Oak", "Park"], ["Oak", "Mill", "Harbor"]])
+here = 3
+assert([ahead, back], [["Central", "Airport"], ["Central", "Oak", "Mill", "Harbor"]])
+route.shift()
+[ahead, back]
+# return: [["Park"],["Park","Central","Oak","Mill"]]
+---
 # Nucleoid flattens nested lists with flat
 
 pallets = [[["bolt", "nut"], ["gear"]], [["cog"]]]
