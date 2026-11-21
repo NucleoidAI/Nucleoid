@@ -199,35 +199,46 @@ export function merge(...matrices) {
   return result;
 }
 
-const SIDES: number[][] = [
-  [1, 0],
-  [-1, 0],
-  [0, 1],
-  [0, -1],
-];
-
-const CORNERS: number[][] = [
-  [1, 1],
-  [1, -1],
-  [-1, 1],
-  [-1, -1],
-];
+// Lists the steps from a cell to every cell at most reach steps away, moving
+// along sides only with connectivity 4 and across corners as well with 8.
+function neighborhood(connectivity: number, reach: number): number[][] {
+  const steps: number[][] = [];
+  for (let y: number = -reach; y <= reach; y++) {
+    for (let x: number = -reach; x <= reach; x++) {
+      const distance: number =
+        connectivity === 8
+          ? Math.max(Math.abs(x), Math.abs(y))
+          : Math.abs(x) + Math.abs(y);
+      if (distance > 0 && distance <= reach) steps.push([x, y]);
+    }
+  }
+  return steps;
+}
 
 // Separates the nonzero cells of the matrix into groups of adjacent cells, one
 // matrix per group. Connectivity 4 joins cells that share a side, and 8 also
 // joins cells that share only a corner. Any two adjacent nonzero cells join,
 // whatever their colors, unless same_color asks them to have the same color.
-// Each group keeps the matrix's size, with its cells where they are and 0
-// everywhere else, as instance matrices do, so merge puts the groups back
-// together. Groups come in reading order of their first cell.
+// A gap lets cells join across up to that many cells between them, whatever
+// those cells hold: two cells join when one is at most gap + 1 steps from the
+// other, so a gap of 0 joins only adjacent cells. Each group keeps the
+// matrix's size, with its cells where they are and 0 everywhere else, as
+// instance matrices do, so merge puts the groups back together. Groups come in
+// reading order of their first cell.
 export function separate(
   matrix,
   connectivity: number = 8,
-  same_color: boolean = false
+  same_color: boolean = false,
+  gap: number = 0
 ) {
   if (connectivity !== 4 && connectivity !== 8) {
     throw new Error(
       `Connectivity ${JSON.stringify(connectivity)} is not 4 or 8`
+    );
+  }
+  if (!Number.isInteger(gap) || gap < 0) {
+    throw new Error(
+      `Gap ${JSON.stringify(gap)} must be an integer of 0 or more`
     );
   }
   const rows: number = matrix.length;
@@ -238,7 +249,7 @@ export function separate(
     }
   }
 
-  const steps: number[][] = connectivity === 8 ? [...SIDES, ...CORNERS] : SIDES;
+  const neighbors: number[][] = neighborhood(connectivity, gap + 1);
   const grouped = Array.from({ length: rows }, () => Array(cols).fill(false));
   const groups = [];
 
@@ -254,7 +265,7 @@ export function separate(
         const [cell_x, cell_y] = pending.pop();
         group[cell_y][cell_x] = matrix[cell_y][cell_x];
 
-        for (const [step_x, step_y] of steps) {
+        for (const [step_x, step_y] of neighbors) {
           const next_x: number = cell_x + step_x;
           const next_y: number = cell_y + step_y;
           if (next_x < 0 || next_y < 0 || next_x >= cols || next_y >= rows) {

@@ -3011,16 +3011,21 @@ ragged matrices, and it does not modify the input. Together,
 `Matrix.move_instance(Matrix.rotate_instance(matrix, turn), x, y)` turns an
 instance in place and then pushes it by an offset.
 
-`Matrix.separate(matrix, connectivity, same_color)` returns one matrix per
+`Matrix.separate(matrix, connectivity, same_color, gap)` returns one matrix per
 group of adjacent nonzero cells, in reading order of each group's first cell.
 With the default `connectivity` of `8`, cells that share a side or only a
 corner are adjacent; with `4`, only cells that share a side are. Adjacent
 nonzero cells join whatever their colors, unless `same_color` is `true`, which
-joins only cells of the same color. Each group keeps the input's size, with its
-cells where they are and zeros everywhere else, like the full-size instance
-masks, so `Matrix.merge(...Matrix.separate(matrix))` gives back any matrix
-with a nonzero cell. Empty and all-zero matrices return `[]`. It rejects any
-other `connectivity` and ragged matrices, and it does not modify the input.
+joins only cells of the same color. A `gap` above the default `0` lets cells
+join across up to that many cells between them, whatever those cells hold: two
+cells join when one is at most `gap + 1` steps from the other, along sides
+with `4` and across corners as well with `8`, so a `gap` of `1` keeps a dashed
+line in one group. Each group keeps the input's size, with its cells where they
+are and zeros everywhere else, like the full-size instance masks, so
+`Matrix.merge(...Matrix.separate(matrix))` gives back any matrix with a nonzero
+cell. Empty and all-zero matrices return `[]`. It rejects any other
+`connectivity`, a `gap` that is not an integer of 0 or more, and ragged
+matrices, and it does not modify the input.
 
 The same prediction path replays every training pair before predicting the
 held-out input. A training mismatch stops the run. Held-out predictions are
