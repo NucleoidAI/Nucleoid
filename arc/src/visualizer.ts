@@ -10,7 +10,7 @@ export async function instances({ train, test_input_matrix }) {
   let {
     result: { instances },
   } = await llm.generate({
-    reasoning: true,
+    reasoning: false,
     few_shot: null,
     grammar: true,
     messages: [
@@ -48,7 +48,7 @@ export async function instances({ train, test_input_matrix }) {
             class_declaration: train.class_declaration,
             dataset: [
               {
-                instance_matrix: test_input_matrix,
+                input_matrix: test_input_matrix,
                 instances: [
                   {
                     instance_crop_matrix: "<INPUT_INSTANCE_CROP_MATRIX>",
