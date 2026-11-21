@@ -751,6 +751,24 @@ export function puzzle({ train, testInput }) {
   grid("Test input", testInput);
 }
 
+export function reasoning(text: unknown) {
+  const content: string =
+    typeof text === "string" ? stripVTControlCharacters(text).trim() : "";
+  const heading: string =
+    content === "" ? "↳ Model reasoning  none returned" : "↳ Model reasoning";
+  for (const line of wrap(heading, width() - 2)) {
+    console.log(`    ${styleText("gray", line)}`);
+  }
+  if (content === "") {
+    return;
+  }
+  for (const step of content.split(/\r?\n/)) {
+    for (const line of wrap(step, width() - 4)) {
+      console.log(`      ${styleText("gray", line)}`);
+    }
+  }
+}
+
 export function usage({ prompt_tokens, completion_tokens, cached_tokens }) {
   const cached: string =
     typeof cached_tokens === "number" ? ` (${cached_tokens} cached)` : "";

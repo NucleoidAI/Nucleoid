@@ -65,7 +65,13 @@ export async function generate({ reasoning = false, messages = [] }) {
     throw new Error("OpenRouter returned a cached response");
   }
 
-  const content = data.choices[0]?.message.content;
+  const message = data.choices[0]?.message;
+
+  if (reasoning) {
+    milestone.reasoning({ reasoning: message?.reasoning });
+  }
+
+  const content = message?.content;
   if (typeof content !== "string" || !content.trim()) {
     throw new Error("OpenRouter returned no text content");
   }

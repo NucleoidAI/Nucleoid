@@ -240,6 +240,11 @@ score rendered with keycap digit emojis and padded to at least two digits
 Elapsed time is prefixed with `⏱️`.
 Model token usage stays visible underneath the active step, and failures go to
 standard error with a boxed stack trace.
+A call made with reasoning enabled prints the model's reasoning text above its
+usage line, in gray under `↳ Model reasoning`, before its answer is checked, so
+an empty or unparsable answer still shows the reasoning behind it. A response
+without reasoning text prints `↳ Model reasoning  none returned`; calls without
+reasoning print neither.
 
 Colors follow the terminal automatically. Set `NO_COLOR=1` for uncolored output;
 redirected output is uncolored unless `FORCE_COLOR=1` is set. Styling uses

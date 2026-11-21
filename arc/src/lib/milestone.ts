@@ -319,6 +319,10 @@ export function summary({ difference, duration }) {
   terminal.summary(difference, duration);
 }
 
+export function reasoning({ reasoning }) {
+  terminal.reasoning(reasoning);
+}
+
 export function usage({ prompt_tokens, completion_tokens, cached_tokens }) {
   terminal.usage({ prompt_tokens, completion_tokens, cached_tokens });
 }
