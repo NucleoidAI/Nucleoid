@@ -26,7 +26,9 @@ Use type checking, linting, builds, and manual/offline evaluation instead.
 Keep puzzle datasets, instruction examples, and training/held-out scoring intact.
 
 OpenRouter is the only LLM provider. Set `OPENROUTER_API_KEY` in `.env`.
-`src\lib\openrouter.ts` fixes the model to `qwen/qwen3.8-27b`, served only by
+`src\lib\openrouter.ts` calls it through the official `@openrouter/sdk` client
+with the SDK's retries turned off, so each generation is a single request.
+It fixes the model to `qwen/qwen3.8-27b`, served only by
 the `deepinfra/bf16` provider without fallbacks, with reasoning disabled and
 JSON output requested through `response_format: { type: "json_object" }`. No
 setting or request argument changes the model. The legacy `LLM` selector is no

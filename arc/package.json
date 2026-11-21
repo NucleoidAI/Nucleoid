@@ -26,7 +26,7 @@
   },
   "dependencies": {
     "@nucleoidai/expert": "^1.0.3",
-    "axios": "^1.7.7",
+    "@openrouter/sdk": "^1.5.127",
     "dotenv": "^16.4.5",
     "string-width": "^4.2.3",
     "tsx": "^4.20.0",
