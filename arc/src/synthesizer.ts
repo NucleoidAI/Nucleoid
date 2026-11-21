@@ -8,9 +8,9 @@ const SYNTHESIZING_ROUTINE = [
   { x: 1, y: 0, rotation: 90 },
   { x: 1, y: 1, rotation: 180 },
   { x: 0, y: 1, rotation: 270 },
-  { x: 1, y: 0, rotation: 270 },
-  { x: 0, y: 0, rotation: 180 },
   { x: 0, y: 1, rotation: 90 },
+  { x: 0, y: 0, rotation: 180 },
+  { x: 1, y: 0, rotation: 270 },
 ];
 
 async function synthesize({ train }) {
@@ -69,7 +69,7 @@ async function synthesize({ train }) {
         const canvas_height: number = input_instance_matrix.length;
         const class_declaration = train.class_declaration;
         const declarations = train.declarations;
-        const implementations = dataset.instances.map(
+        const implementations = synthesized_dataset.instances.map(
           ({ implementation }) => implementation
         );
 
@@ -78,7 +78,7 @@ async function synthesize({ train }) {
             `canvas_width = ${canvas_width}`,
             `canvas_height = ${canvas_height}`,
             class_declaration,
-            instance.implementation,
+            synthesized_instance.implementation,
             `${synthesized_instance_name}`,
           ].join("\n\n")
         );
@@ -90,6 +90,7 @@ async function synthesize({ train }) {
             class_declaration,
             ...declarations,
             ...implementations,
+            synthesized_instance.implementation,
             `${synthesized_instance_name}`,
           ].join("\n\n")
         );
