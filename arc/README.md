@@ -29,10 +29,11 @@ OpenRouter is the only LLM provider. Set `OPENROUTER_API_KEY` in `.env`.
 `src\lib\openrouter.ts` calls it through the official `@openrouter/sdk` client
 with the SDK's retries turned off, so each generation is a single request.
 It fixes the model to `qwen/qwen3.8-27b`, served only by
-the `deepinfra/bf16` provider without fallbacks, with reasoning disabled and
-JSON output requested through `response_format: { type: "json_object" }`. No
-setting or request argument changes the model. The legacy `LLM` selector is no
-longer needed.
+the `deepinfra/bf16` provider without fallbacks, with JSON output requested
+through `response_format: { type: "json_object" }`. Reasoning stays disabled
+except in `instances` in `src\visualizer.ts`, whose test-input segmentation
+passes `reasoning: true` to `llm.generate`. No setting or request argument
+changes the model. The legacy `LLM` selector is no longer needed.
 
 Sampling defaults to `temperature: 0`, `top_k: 1`, `top_p: 1`, and `seed: 42`,
 with frequency and presence penalties set to `0`. These settings favor greedy,

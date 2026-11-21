@@ -10,6 +10,7 @@ export async function instances({ train, test_input_matrix }) {
   let {
     result: { instances },
   } = await llm.generate({
+    reasoning: true,
     few_shot: null,
     grammar: true,
     messages: [
