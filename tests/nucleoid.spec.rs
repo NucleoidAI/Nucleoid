@@ -21492,6 +21492,106 @@ latest
 # return: [5,2]"#);
 }
 
+/// Nucleoid repeats a block until its condition holds
+#[rustfmt::skip]
+#[test]
+fn repeats_a_block_until_its_condition_holds() {
+    let mut run = runner();
+    run("minute = 0");
+    run("chimes = minute % 15 == 0");
+    run("waited = 0");
+    run(r#"repeat: minute += 5; waited += 5
+until chimes"#);
+    assert_eq!(run("[minute, waited, chimes]"), serde_json::json!([15, 15, true]));
+    run(r#"repeat: minute += 5; waited += 5
+until chimes"#);
+    assert_eq!(run("[minute, waited]"), serde_json::json!([30, 30]));
+    run("minute = 32");
+    assert_eq!(run("[chimes, waited]"), serde_json::json!([false, 30]));
+}
+
+/// Nucleoid returns from inside repeat-until loops in methods
+#[rustfmt::skip]
+#[test]
+fn returns_from_inside_repeat_until_loops_in_methods() {
+    let mut run = runner();
+    run(r#"class Drone(battery):
+    this.battery = battery
+    this.distance = 0
+    def fly(target):
+        repeat:
+            this.battery -= 10
+            this.distance += 3
+            if this.empty: return "stranded"
+        until this.distance >= target"#);
+    run("$Drone.empty = $Drone.battery < 10");
+    run("scout = Drone(40)");
+    assert_eq!(run("[scout.fly(6), scout.distance, scout.empty]"), serde_json::json!([null, 6, false]));
+    assert_eq!(run("[scout.fly(0), scout.distance, scout.battery]"), serde_json::json!([null, 9, 10]));
+    assert_eq!(run("[scout.fly(20), scout.distance, scout.empty]"), serde_json::json!(["stranded", 12, true]));
+    run("spare = Drone(25)");
+    assert_eq!(run("[spare.fly(6), spare.distance]"), serde_json::json!(["stranded", 6]));
+    run("scout.battery = 50");
+    assert_eq!(run("[scout.empty, spare.empty]"), serde_json::json!([false, true]));
+}
+
+/// Nucleoid nests repeat-until loops inside other loops
+#[rustfmt::skip]
+#[test]
+fn nests_repeat_until_loops_inside_other_loops() {
+    let mut run = runner();
+    run(r#"class Truck(minimum):
+    this.minimum = minimum
+    this.load = 0
+    this.crates = 0"#);
+    run("$Truck.full = $Truck.load >= $Truck.minimum");
+    run("Truck(6)");
+    run("Truck(0)");
+    run("Truck(7)");
+    assert_eq!(run("Truck.map(truck -> truck.full)"), serde_json::json!([false, true, false]));
+    run("dock = [4, 3, 5, 2, 6, 1]");
+    run("shipped = []");
+    run(r#"for truck of Truck:
+    repeat: truck.load += dock.shift(); truck.crates += 1
+    until truck.full
+    shipped.push(truck.load)"#);
+    assert_eq!(run("[shipped, dock]"), serde_json::json!([[7, 5, 8], [1]]));
+    run("Truck(3)");
+    assert_eq!(run("Truck.map(truck -> truck.crates)"), serde_json::json!([2, 1, 2, 0]));
+    run(r#"Truck.map(truck -> truck.full)
+
+# return: [true,true,true,false]"#);
+}
+
+/// Nucleoid rolls back a repeat-until loop that fails during an iteration
+#[rustfmt::skip]
+#[test]
+fn rolls_back_a_repeat_until_loop_that_fails_during_an_iteration() {
+    let mut run = runner();
+    run(r#"class Oven(temp):
+    this.temp = temp
+    this.steps = 0
+    def heat():
+        repeat: this.temp += 10; this.steps += 1
+        until this.ready
+marks = [150, 180, 220]
+$Oven.ready = marks.includes($Oven.temp)
+if $Oven.temp > 200:
+    throw "OVERHEAT"
+oven = Oven(150)
+oven.heat()
+assert([oven.temp, oven.steps, oven.ready], [180, 3, true])
+try:
+    oven.heat()
+catch error:
+    failure = error
+assert([failure, oven.temp, oven.steps], ["OVERHEAT", 180, 3])
+marks.push(190)
+oven.heat()
+[oven.temp, oven.steps]
+# return: [190,4]"#);
+}
+
 /// Nucleoid flattens nested lists by one level
 #[rustfmt::skip]
 #[test]

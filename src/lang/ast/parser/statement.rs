@@ -159,6 +159,10 @@ impl Parser {
             return Ok(Stmt::While { condition, body });
         }
 
+        if self.starts_repeat_until() {
+            return self.repeat_until_statement();
+        }
+
         if let Some(count) = self.repeat_count() {
             let body = self.suite()?;
             return Ok(Stmt::Repeat { count, body });

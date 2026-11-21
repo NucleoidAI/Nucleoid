@@ -1795,7 +1795,8 @@ assert(signal.output, 8)
 - `all` and `any` quantifiers test each member's condition the same way; see
   [Quantifiers](#quantifiers).
 - A `while` loop tests its condition the same way before every iteration; see
-  [while](#while).
+  [while](#while). A repeat-until loop tests its condition the same way after
+  every iteration; see [repeat until](#repeat-until).
 
 ```
 if $Device.profile:
@@ -1980,6 +1981,50 @@ savings.balance
   `"ab".repeat(2)` keep working.
 
 Normative detail: [count-controlled repeat loops](../nucleoid.spec.md#count-controlled-repeat-loops).
+
+### repeat until
+
+```
+days = [1, 2, 4, 5]
+today = 2
+open = days.includes(today)
+repeat: today += 1
+until open
+assert([today, open], [4, true])
+days.push(3)
+today
+```
+
+- This is the complete
+  `Nucleoid repeats statements until a condition holds` program in
+  `tests/reference.md`, without its title and expected-return metadata; it
+  returns `4`. Day 2 is already an opening day, yet the loop moves on to the
+  next one, day 4, and opening on day 3 later does not run the loop again.
+- `repeat:` followed by a body and then `until <condition>` on its own line
+  after the body, at the indentation of `repeat`, runs the body until the
+  condition holds, under [NUC 126](nuc-0126.md). The body is an indented
+  block, or statements on the same line separated by `;`. Only blank and
+  comment lines may stand between the body and `until`.
+- The condition is tested after every iteration with the truthiness of `if`,
+  so the body always runs at least once, also when the condition already
+  holds, where a `while` loop would run no iteration.
+- The body runs as a `while` body does: once per iteration, imperatively, in
+  the enclosing scope, with no scope frame and no loop variable. `return`
+  leaves the enclosing function, as from a `while` body, without testing the
+  condition.
+- The loop runs once, like `while`: nothing is filed in the graph, and the
+  loop does not run again when its inputs change later.
+- Each run of a loop runs its body at most 100,000 times: a condition that is
+  still falsy then raises `TypeError("Loop did not terminate")` and the
+  transaction rolls back.
+- `repeat` and `until` are not reserved. `repeat: NAME` before a line end or
+  `;` stays the typed declaration, so a same-line body cannot start with one
+  bare name, and `repeat COUNT:` loops, the string method `"ab".repeat(2)`,
+  and names, calls and properties named `repeat` or `until` keep working, as
+  does `until X` outside a loop. A `repeat:` body that no `until` line follows
+  raises `SyntaxError("Expected 'until' after 'repeat'")`.
+
+Normative detail: [exit-controlled repeat-until loops](../nucleoid.spec.md#exit-controlled-repeat-until-loops).
 
 ---
 
@@ -5121,6 +5166,7 @@ Messages are exact and are part of the observable behaviour of the language.
 | Repeated string output is too large to represent or allocate | `Repeated string is too large` |
 | Padded string output of `padStart` or `padEnd` is too large to represent or allocate | `Padded string is too large` |
 | A `while` loop whose condition still holds after 100,000 iterations of one run | `Loop did not terminate` |
+| A repeat-until loop whose condition is still falsy after 100,000 iterations of one run | `Loop did not terminate` |
 | A `repeat` loop whose count converts to more than 100,000, `Infinity` included, raised before the first iteration | `Repeat count is too large` |
 | An undeclared constructor label | `Unknown constructor argument '<name>' for <class>` |
 | A repeated constructor binding, including positional plus named | `Duplicate constructor argument '<name>' for <class>` |
@@ -5154,6 +5200,7 @@ Messages are exact and are part of the observable behaviour of the language.
 | An `extends` clause whose parent is missing or not a name | `Expected a parent class name but found <what>` |
 | A second parent after `class Name extends Parent:` | `Class '<Name>' already extends '<Parent>'` |
 | A list comprehension whose name is not followed by `in` or `of` | `Expected 'in' or 'of' but found <what>` |
+| A `repeat:` body that no `until` line follows at the indentation of `repeat` | `Expected 'until' after 'repeat'` |
 
 ### Where an error happened
 
@@ -5296,6 +5343,11 @@ while condition: statement             same loop with a same-line body
 repeat count:                          run the body count times; count is read once (NUC 115)
     statement
 repeat count: statement                same loop with a same-line body
+repeat:                                run the body, then again until the condition holds (NUC 126)
+    statement
+until condition
+repeat: statement                      same loop with a same-line body
+until condition
 
 value => expression                    anonymous arrow; also (a, b) => expression
 value => { statement }                 anonymous arrow with a statement body

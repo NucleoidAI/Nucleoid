@@ -2758,6 +2758,38 @@ assert([ana.duties, cy.duties], [["dishes", "floors", "cooking"], ["trash", "mai
   the new chore joins the share whose turn it falls on. See the
   [root contract](nucleoid.spec.md#stepped-slices).
 
+## Repeat-until loops
+
+**Repeat-until loops move a lift to the next call**
+
+```nuc
+class Lift(floor):
+    this.floor = floor
+lift = Lift(1)
+calls = [1, 4, 6]
+stopped = calls.includes(lift.floor)
+repeat: lift.floor += 1
+until stopped
+assert(lift.floor, 4)
+calls.push(2)
+assert([lift.floor, stopped], [4, true])
+```
+
+- [NUC 126](docs/nuc-0126.md) adds `repeat:` with an indented or same-line
+  body, followed by `until CONDITION` on its own line after the body: the
+  exit-controlled sibling of `while`. The body runs first, and the condition
+  is tested after every iteration with the truthiness of `if`, so the body
+  always runs at least once.
+- The lift waits at a call on floor 1, so `stopped` already holds, yet the
+  loop moves it on: one floor at a time, until `stopped`, a standing rule
+  that follows every move, holds again at floor 4. A `while not stopped:`
+  loop would not move it at all. The loop runs once, imperatively: it leaves
+  no standing rule and does not run again when a new call arrives. A loop
+  still unfinished after 100,000 iterations raises
+  `TypeError("Loop did not terminate")` and rolls back, and `repeat` and
+  `until` stay ordinary names everywhere else. See the
+  [root contract](nucleoid.spec.md#exit-controlled-repeat-until-loops).
+
 ## Reactive list flattening
 
 **Flat turns nested lists into one live list**

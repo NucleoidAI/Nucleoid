@@ -2883,6 +2883,18 @@ route.shift()
 [ahead, back]
 # return: [["Park"],["Park","Central","Oak","Mill"]]
 ---
+# Nucleoid repeats statements until a condition holds
+
+days = [1, 2, 4, 5]
+today = 2
+open = days.includes(today)
+repeat: today += 1
+until open
+assert([today, open], [4, true])
+days.push(3)
+today
+# return: 4
+---
 # Nucleoid flattens nested lists with flat
 
 pallets = [[["bolt", "nut"], ["gear"]], [["cog"]]]

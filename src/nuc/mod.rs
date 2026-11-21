@@ -23,6 +23,7 @@ pub mod function;
 pub mod object;
 pub mod property;
 pub mod repeat;
+pub mod repeat_until;
 pub mod suppose;
 pub mod throw;
 pub mod r#try;
@@ -62,6 +63,7 @@ use r#if::If;
 use r#let::Let;
 use property::{Owner, Property};
 use repeat::Repeat;
+use repeat_until::RepeatUntil;
 use r#return::Return;
 use suppose::Suppose;
 use throw::Throw;
@@ -115,6 +117,7 @@ pub enum Nuc {
     For(For),
     While(While),
     Repeat(Repeat),
+    RepeatUntil(RepeatUntil),
     Function(Function),
     Return(Return),
     Throw(Throw),
@@ -170,6 +173,7 @@ impl Nuc {
                 Nuc::While(While::new(condition.clone(), body.clone()))
             }
             Stmt::Repeat { count, body } => Nuc::Repeat(Repeat::new(count.clone(), body.clone())),
+            Stmt::RepeatUntil { body, condition } => repeat_until(body, condition),
             Stmt::Return(value) => Nuc::Return(Return::new(value.clone())),
             Stmt::Throw(exception) => Nuc::Throw(Throw::new(exception.clone())),
             Stmt::Delete(target) => Nuc::Delete(Delete::new(target.clone())),
@@ -307,6 +311,7 @@ impl Nuc {
             Nuc::For(node) => node.run(runtime, scope),
             Nuc::While(node) => node.run(runtime, scope),
             Nuc::Repeat(node) => node.run(runtime, scope),
+            Nuc::RepeatUntil(node) => node.run(runtime, scope),
             Nuc::Function(node) => node.run(runtime, scope),
             Nuc::Return(node) => node.run(runtime, scope),
             Nuc::Throw(node) => node.run(runtime, scope),
@@ -362,6 +367,10 @@ impl Nuc {
             _ => Ok(()),
         }
     }
+}
+
+fn repeat_until(body: &[Stmt], condition: &Expr) -> Nuc {
+    Nuc::RepeatUntil(RepeatUntil::new(body.to_vec(), condition.clone()))
 }
 
 fn try_finally(body: &[Stmt], parameter: &str, catch: &[Stmt], finally: &[Stmt]) -> Nuc {

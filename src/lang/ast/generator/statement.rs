@@ -61,6 +61,7 @@ pub fn generate(statement: &Stmt) -> String {
         } => format!("for {key},{value} of {iterable}"),
         Stmt::While { condition, body } => loop_key("while", condition, body),
         Stmt::Repeat { count, body } => loop_key("repeat", count, body),
+        Stmt::RepeatUntil { body, condition } => until_key(body, condition),
         Stmt::Try { .. } | Stmt::TryFinally { .. } => "try".to_string(),
         Stmt::Declaration { name, type_name } => format!("{name}:{type_name}"),
         Stmt::Pass => "pass".to_string(),
@@ -80,6 +81,14 @@ fn loop_key(word: &str, header: &Expr, body: &[Stmt]) -> String {
 
 fn loop_suite(word: &str, header: &Expr, body: &[Stmt]) -> String {
     format!("{word} {header}:\n{}", indent(&source_all(body)))
+}
+
+fn until_key(body: &[Stmt], condition: &Expr) -> String {
+    format!("repeat{{{}}}until({condition})", generate_all(body))
+}
+
+fn until_suite(body: &[Stmt], condition: &Expr) -> String {
+    format!("repeat:\n{}\nuntil {condition}", indent(&source_all(body)))
 }
 
 fn try_suite(body: &[Stmt], parameter: &str, catch: &[Stmt]) -> String {
@@ -205,6 +214,7 @@ fn source(statement: &Stmt) -> String {
         ),
         Stmt::While { condition, body } => loop_suite("while", condition, body),
         Stmt::Repeat { count, body } => loop_suite("repeat", count, body),
+        Stmt::RepeatUntil { body, condition } => until_suite(body, condition),
         Stmt::Try {
             body,
             parameter,

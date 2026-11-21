@@ -7399,6 +7399,114 @@ t.promote(bob)
   `Nucleoid nests repeat loops and rolls back a failed iteration` specify the
   executable behavior. `tests/repeat_loops.rs` executes the rest.
 
+## Exit-controlled repeat-until loops
+
+- [NUC 126](docs/nuc-0126.md) adds the exit-controlled loop `repeat:`
+  followed by a suite, an indented block or statements on the same line
+  separated by `;`, and then `until CONDITION` on its own line after the
+  suite, at the indentation of `repeat`. The body runs first, and the
+  condition is tested after every iteration. No keyword or lexer token is
+  added, and `repeat` and `until` stay ordinary names everywhere else.
+- A statement is a repeat-until loop when it starts with the name `repeat`
+  immediately followed by `:` and a suite, apart from the typed declaration
+  below. Only blank lines and comment lines may stand between the suite and
+  `until`. A line indented less than the indented body but more than
+  `repeat` closes to the level of `repeat`, as the lexer closes every such
+  width, so an `until` there closes that loop, as an `else` there closes its
+  `if`. When `repeat:` stands in the same-line suite of another statement,
+  as in `for truck of Truck: repeat: ...`, the `until` line at that line's
+  indentation closes it, as an `else` line closes the innermost `if` of a
+  same-line suite. At the accepted revision every such statement was a
+  whole-program `SyntaxError`, such as `Unexpected ':'`.
+- `repeat: NAME` before a newline, `;`, dedent or the end of input keeps its
+  accepted reading as the typed declaration of `repeat`, also when more
+  statements or an `until` line follow it, so a same-line body that starts
+  with one bare name is never a loop. Executing the declaration raises
+  `ReferenceError("Missing definition")`. NAME is any single name, the words
+  `assert`, `lambda`, `suppose`, `until` and `repeat` included. Every other
+  spelling that starts with `repeat` and `:`, such as `repeat: assert: x, 1`,
+  `repeat: lambda: 1` or `repeat: suppose: x`, was a `SyntaxError` and is now
+  a loop whose body holds that statement; in `repeat: suppose: x` it is the
+  typed declaration `suppose: x`, which raises
+  `ReferenceError("Missing definition")` when the loop runs.
+- Every other accepted reading of the two names stays: `repeat := VALUE`,
+  `repeat = VALUE`, `repeat(...)` calls, the string method `TEXT.repeat(n)`,
+  [NUC 115](docs/nuc-0115.md)'s `repeat COUNT:` with its four exceptions, a
+  variable, function, parameter, loop variable, object key or property named
+  `repeat` or `until`, and `until X` as the juxtaposed statements `until` and
+  `X` wherever it does not close a repeat-until suite.
+- The condition is parsed like an `if` header condition, so conditional
+  expressions, quantifiers, `??`, `|>`, arrows and bracketed lambdas pair
+  their own colons. It ends the logical line or the enclosing block: a
+  newline, `;`, a dedent, the `}` that closes an enclosing block or the end
+  of input follows it, and any other token, such as a colon, is a
+  `SyntaxError`. The `}` stays with its block, as after a `return`, `while`
+  or `if` statement, so `{`, `repeat: x += 1` and `until x > 3 }` run as
+  they do with the `}` on its own line. A `}` that closes no block, or that
+  ends the `until` line of a loop inside an indented suite, raises
+  `SyntaxError("Unexpected '}'")`, as it does after any other statement
+  there.
+- A `repeat:` suite that no `until` line follows raises
+  `SyntaxError("Expected 'until' after 'repeat'")` at the token where `until`
+  should stand. Inside parentheses and brackets line breaks carry no meaning,
+  so a loop written in a callback passed as a call argument never meets its
+  `until` line and raises that error.
+- After each iteration the condition is evaluated in the current state and
+  tested with the truthiness of `if`. A truthy condition ends the loop;
+  otherwise the body runs again. The body always runs at least once, also
+  when the condition already holds before the loop starts, where a `while`
+  loop with the negated condition runs no iteration. A completed loop yields
+  `null`.
+- The body runs exactly as a `while` body does. Each iteration is carried out
+  imperatively, in the enclosing scope, with no scope frame and no loop
+  variable, and its assignments, and the propagation they cause, are visible
+  to the rest of the body, to the condition and to the next iteration.
+  Parameters, enclosing loop variables, locals, `this` and `self` behave as in
+  a `while` body.
+- `return` in the body leaves the enclosing function, method, block or loop,
+  and the condition is not evaluated after it. At the top level it ends the
+  program with its value.
+- The loop files nothing in the graph and does not run again when its inputs,
+  or anything its body read, change later. A loop inside the body of a
+  standing rule, such as the branch of a top-level `if` or a function called
+  from a declaration, runs again whenever that rule runs.
+- A repeat-until statement is never kept on a class. Outside a class-level
+  rule, `$Class` in its body or condition reads the declared class, and an
+  undeclared `$Name` raises `ReferenceError("Name is not defined")`. A body
+  statement that is itself a class-level declaration, such as
+  `$Item.flag = true`, is declared on the class when it runs. Inside the body
+  of a class-level rule the loop runs for each instance, and `$Class` reads
+  that instance. `.value` in the condition reads the current value at each
+  test.
+- Each run of a repeat-until loop runs its body at most 100,000 times, the
+  bound of `while`. When the condition is still falsy after the 100,000th
+  iteration, the loop raises `TypeError("Loop did not terminate")` positioned
+  at the running top-level statement, and the transaction rolls back. Each run
+  of a nested loop has its own bound, so nested loops multiply and the bound
+  is not a cap on total work.
+- Errors raised by the body or the condition, and thrown values, propagate
+  through the existing transaction unchanged. A caught failure restores the
+  state from before the enclosing `try` body, including every iteration that
+  already ran.
+- Canonical rendering is `repeat{BODY}until(CONDITION)` in graph keys, and
+  `repeat:` with an indented body and an `until CONDITION` line inside
+  default-bearing declarations.
+- The native REPL already buffers a line that ends in `:` until a blank line,
+  so `repeat:` waits for its indented body and its `until` line, which must
+  come before that blank line.
+- The specification exporter's statement splitter groups a top-level line
+  that starts with the word `until` with the statement before it, as it
+  groups `else`, `elif`, `catch` and `finally:` lines, so an exported loop
+  keeps its `until` line.
+- Malformed suites use existing diagnostics: `repeat:` at the end of input
+  raises `SyntaxError("Unexpected end of input")`, and an unindented line
+  after `repeat:` raises
+  `SyntaxError("Expected an indented block but found ...")`. The four entries
+  beginning `Nucleoid repeats a block until its condition holds` through
+  `Nucleoid rolls back a repeat-until loop that fails during an iteration`
+  specify the executable behavior. `tests/repeat_until_loops.rs` executes the
+  rest.
+
 ## Destructuring declarations
 
 - [NUC 67](docs/nuc-0067.md) adds destructuring declarations: object patterns
@@ -27296,6 +27404,89 @@ assert([failure, Crate.length, latest], ["NEGATIVE", 3, [9, 6]])
 Crate(5)
 latest
 # return: [5,2]
+---
+# Nucleoid repeats a block until its condition holds
+
+minute = 0
+chimes = minute % 15 == 0
+waited = 0
+repeat: minute += 5; waited += 5
+until chimes
+assert([minute, waited, chimes], [15, 15, true])
+repeat: minute += 5; waited += 5
+until chimes
+assert([minute, waited], [30, 30])
+minute = 32
+assert([chimes, waited], [false, 30])
+---
+# Nucleoid returns from inside repeat-until loops in methods
+
+class Drone(battery):
+    this.battery = battery
+    this.distance = 0
+    def fly(target):
+        repeat:
+            this.battery -= 10
+            this.distance += 3
+            if this.empty: return "stranded"
+        until this.distance >= target
+$Drone.empty = $Drone.battery < 10
+scout = Drone(40)
+assert([scout.fly(6), scout.distance, scout.empty], [null, 6, false])
+assert([scout.fly(0), scout.distance, scout.battery], [null, 9, 10])
+assert([scout.fly(20), scout.distance, scout.empty], ["stranded", 12, true])
+spare = Drone(25)
+assert([spare.fly(6), spare.distance], ["stranded", 6])
+scout.battery = 50
+assert([scout.empty, spare.empty], [false, true])
+---
+# Nucleoid nests repeat-until loops inside other loops
+
+class Truck(minimum):
+    this.minimum = minimum
+    this.load = 0
+    this.crates = 0
+$Truck.full = $Truck.load >= $Truck.minimum
+Truck(6)
+Truck(0)
+Truck(7)
+assert(Truck.map(truck -> truck.full), [false, true, false])
+dock = [4, 3, 5, 2, 6, 1]
+shipped = []
+for truck of Truck:
+    repeat: truck.load += dock.shift(); truck.crates += 1
+    until truck.full
+    shipped.push(truck.load)
+assert([shipped, dock], [[7, 5, 8], [1]])
+Truck(3)
+assert(Truck.map(truck -> truck.crates), [2, 1, 2, 0])
+Truck.map(truck -> truck.full)
+# return: [true,true,true,false]
+---
+# Nucleoid rolls back a repeat-until loop that fails during an iteration
+
+class Oven(temp):
+    this.temp = temp
+    this.steps = 0
+    def heat():
+        repeat: this.temp += 10; this.steps += 1
+        until this.ready
+marks = [150, 180, 220]
+$Oven.ready = marks.includes($Oven.temp)
+if $Oven.temp > 200:
+    throw "OVERHEAT"
+oven = Oven(150)
+oven.heat()
+assert([oven.temp, oven.steps, oven.ready], [180, 3, true])
+try:
+    oven.heat()
+catch error:
+    failure = error
+assert([failure, oven.temp, oven.steps], ["OVERHEAT", 180, 3])
+marks.push(190)
+oven.heat()
+[oven.temp, oven.steps]
+# return: [190,4]
 ---
 # Nucleoid flattens nested lists by one level
 

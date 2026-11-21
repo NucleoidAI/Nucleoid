@@ -110,9 +110,10 @@ pub(crate) fn statements(source: &str) -> Vec<String> {
         let top_level = line.len() == line.trim_start().len();
         let comment_or_blank = trimmed.is_empty() || trimmed.starts_with('#');
         // Raw::Word in the lexer is [A-Za-z_][A-Za-z0-9_]*. Keep either
-        // complete Else alias or Catch with its chain, not an identifier prefix.
+        // complete Else alias, Catch with its chain or Until with its loop,
+        // not an identifier prefix.
         // Header validity remains the parser's job, not a second grammar here.
-        let continuation = ["else", "elif", "catch"]
+        let continuation = ["else", "elif", "catch", "until"]
             .iter()
             .any(|keyword| starts_keyword(trimmed, keyword))
             || trimmed.starts_with("finally:")

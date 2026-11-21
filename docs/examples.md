@@ -4256,6 +4256,42 @@ heart.rows.push("#....")
   `....#` and breaks the heart's symmetry. See [NUC 125](nuc-0125.md) and the
   [root contract](../nucleoid.spec.md#stepped-slices).
 
+## Repeat-until loops
+
+**Repeat-until loops give every ferry enough lifeboats**
+
+```nuc
+class Lifeboat(ferry):
+    this.ferry = ferry
+    this.seats = 20
+class Ferry(passengers):
+    this.passengers = passengers
+    this.crew = 0
+    def equip():
+        repeat: Lifeboat(this); this.crew += 2
+        until this.safe
+$Ferry.seats = Lifeboat.filter(boat -> boat.ferry == $Ferry).sum(boat -> boat.seats)
+$Ferry.safe = $Ferry.seats >= $Ferry.passengers + $Ferry.crew
+big = Ferry(50)
+dinghy = Ferry(0)
+big.equip()
+dinghy.equip()
+assert([big.crew, dinghy.crew, Lifeboat.length], [6, 2, 4])
+big.passengers = 60
+[big.seats, big.safe, dinghy.safe]
+# return: [60,false,true]
+```
+
+- Each ferry's `equip` method launches lifeboats until the class-level rule
+  `safe` holds: the seats must cover the passengers and the crew, and every
+  lifeboat brings two more crew. The body runs before the test, so even the
+  dinghy, which carries no passengers, gets one lifeboat and its crew, where a
+  `while` loop would launch none.
+- The rules stay live after the loop: when more passengers board the big
+  ferry, `safe` turns false, and the loop in `equip` does not run again until
+  the method is called. See [NUC 126](nuc-0126.md) and the
+  [root contract](../nucleoid.spec.md#exit-controlled-repeat-until-loops).
+
 ## Reactive list flattening
 
 **Flattening keeps the dirty tiles of every room counted**

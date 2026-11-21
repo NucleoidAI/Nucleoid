@@ -103,10 +103,12 @@ block
 // Statements need no separator where the preceding production ends.
 // At statement start, '{' is a block or pattern, never an object literal.
 // Destructuring, whileStmt and repeatStmt are tentative; other recognized
-// statement headers commit even if a later token fails to match.
+// statement headers commit even if a later token fails to match, as
+// repeatUntilStmt commits at 'REPEAT COLON' outside a typeDeclaration.
 statement
     : destructuring
     | whileStmt
+    | repeatUntilStmt
     | repeatStmt
     | enumStmt
     | ifStmt
@@ -307,6 +309,23 @@ whileStmt
 // header test. It is evaluated once, before the first iteration.
 repeatStmt
     : REPEAT clauseExpression suite     // Stmt::Repeat
+    ;
+
+// REPEAT COLON starts a repeatUntilStmt, except where a typeDeclaration
+// 'REPEAT COLON name' stands before NEWLINE, ';', DEDENT or EOF, which keeps
+// its reading. UNTIL starts the logical line after the body, at the
+// repeatUntilStmt's layout level: only NEWLINEs follow the body, and the
+// token before UNTIL is the NEWLINE that ends an inline suite or the DEDENT
+// that closes an indented block, so the UNTIL line after an inline suite
+// nested in another inline suite closes the innermost one. UNTIL on the
+// body's line, after ';', or inside '(' and '[', which suppress layout,
+// keeps its name reading, and the statement fails with
+// SyntaxError("Expected 'until' after 'repeat'") where UNTIL should stand.
+// The condition must be followed by NEWLINE, ';', DEDENT, EOF or the '}' that
+// closes an enclosing block, which the loop leaves to that block, as
+// returnStmt does.
+repeatUntilStmt
+    : REPEAT suite NEWLINE* UNTIL clauseExpression  // Stmt::RepeatUntil
     ;
 
 // Without finallyClause a tryStmt is Stmt::Try, with it Stmt::TryFinally.
@@ -924,6 +943,7 @@ enumName
     : NAME
     | WHILE
     | REPEAT
+    | UNTIL
     | FINALLY
     | ENUM
     | EXTENDS
@@ -1013,6 +1033,7 @@ TYPEOF           : 'typeof';
 
 WHILE            : 'while';
 REPEAT           : 'repeat';
+UNTIL            : 'until';
 FINALLY          : 'finally';
 ENUM             : 'enum';
 EXTENDS          : 'extends';

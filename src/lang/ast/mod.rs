@@ -78,6 +78,10 @@ pub enum Stmt {
         count: Expr,
         body: Vec<Stmt>,
     },
+    RepeatUntil {
+        body: Vec<Stmt>,
+        condition: Expr,
+    },
     Return(Option<Expr>),
     Throw(Expr),
     Delete(Expr),

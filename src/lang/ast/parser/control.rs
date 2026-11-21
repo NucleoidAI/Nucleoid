@@ -6,6 +6,12 @@ use crate::lang::ast::{Expr, Stmt};
 
 const DEFAULT_PARAMETER: &str = "error";
 
+const REPEAT: &str = "repeat";
+
+const UNTIL: &str = "until";
+
+const MISSING_UNTIL: &str = "Expected 'until' after 'repeat'";
+
 fn is_identifier(token: &Token, name: &str) -> bool {
     matches!(token, Token::Identifier(identifier) if identifier == name)
 }
@@ -110,7 +116,37 @@ impl Parser {
     }
 
     pub(super) fn repeat_count(&mut self) -> Option<Expr> {
-        self.loop_header("repeat")
+        self.loop_header(REPEAT)
+    }
+
+    pub(super) fn starts_repeat_until(&self) -> bool {
+        is_identifier(self.peek(), REPEAT)
+            && self.peek_at(1) == &Token::Colon
+            && !self.is_type_declaration_at(0)
+    }
+
+    pub(super) fn repeat_until_statement(&mut self) -> Result<Stmt> {
+        self.advance();
+        let body = self.suite()?;
+        self.until_line()?;
+        let condition = self.clause_expression()?;
+        match self.peek() {
+            Token::Newline | Token::Semicolon | Token::Dedent | Token::RightBrace | Token::Eof => {
+                Ok(Stmt::RepeatUntil { body, condition })
+            }
+            other => Err(self.error(format!("Unexpected {}", other.describe()))),
+        }
+    }
+
+    fn until_line(&mut self) -> Result<()> {
+        if let Some(offset) = self.line_start() {
+            self.position += offset;
+            if is_identifier(self.peek(), UNTIL) {
+                self.advance();
+                return Ok(());
+            }
+        }
+        Err(self.error(MISSING_UNTIL))
     }
 
     fn loop_header(&mut self, word: &str) -> Option<Expr> {
@@ -332,6 +368,13 @@ impl Parser {
     }
 
     fn finally_clause(&self) -> Option<usize> {
+        let offset = self.line_start()?;
+        let finally = is_identifier(self.peek_at(offset), "finally")
+            && self.peek_at(offset + 1) == &Token::Colon;
+        (finally && !self.is_type_declaration_at(offset)).then_some(offset)
+    }
+
+    fn line_start(&self) -> Option<usize> {
         let offset = self
             .tokens
             .iter()
@@ -342,8 +385,6 @@ impl Parser {
             .checked_sub(1)
             .and_then(|previous| self.tokens.get(previous))
             .is_some_and(|previous| matches!(previous.token, Token::Newline | Token::Dedent));
-        let finally = matches!(self.peek_at(offset), Token::Identifier(name) if name == "finally")
-            && self.peek_at(offset + 1) == &Token::Colon;
-        (starts_line && finally && !self.is_type_declaration_at(offset)).then_some(offset)
+        starts_line.then_some(offset)
     }
 }
