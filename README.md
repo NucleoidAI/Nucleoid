@@ -42,6 +42,10 @@ code/result transcript, not an AI conversation, and makes no network calls.
 Click **Text**, **JSON** or **Table** to inspect a result without running the
 program again. Arrays of objects become table rows; other JSON values have
 property/value or index/value views.
+Object results, including objects nested inside lists, show their contents as
+JSON by default in both modes and in the plain REPL; no `--json` flag is needed.
+Other values keep their normal text output unless JSON is explicitly enabled.
+Circular objects report a serialization error rather than an object placeholder.
 The workspace uses a black and charcoal palette with subtle green focus
 accents, an active editor line, and explicit error markers in result history.
 The status bar shows the focused pane and its relevant shortcuts, keeping

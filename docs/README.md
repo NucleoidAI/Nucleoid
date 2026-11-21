@@ -85,6 +85,14 @@ undo history. Editor is the default mode. Chat is a local code/result
 transcript, not AI chat; it makes no network calls.
 Text, JSON and Table are alternate views of the same captured result;
 switching views never reruns a program or changes its state.
+Text resolves object results and lists containing objects to their JSON contents
+by default, including nested lists; it never substitutes an opaque object ID.
+The plain/piped REPL does the same without `--json`, including with `.json off`.
+Non-object values retain their existing text format; `--json` or `.json on`
+still forces JSON for all values. Circular structures report serialization
+errors in default output too. Captured object contents remain unchanged when
+the runtime is edited later. File execution and language string coercion are
+unchanged.
 Table rows union the keys of object-array results, preserve missing cells
 separately from JSON nulls, and keep nested values in individual cells.
 Serialization errors, runtime errors and assertion failures remain visible.

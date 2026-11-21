@@ -1,6 +1,6 @@
 use std::process::ExitCode;
 
-use nucleoid::Runtime;
+use nucleoid::{Runtime, Value};
 use rustyline::error::ReadlineError;
 use rustyline::{Cmd, DefaultEditor, EventHandler, KeyCode, KeyEvent, Modifiers};
 
@@ -97,7 +97,7 @@ fn repl_command(command: &str, runtime: &mut Runtime, json: &mut bool, graph: &m
 
 fn run_interactive(runtime: &mut Runtime, source: &str, json: bool, graph: bool) {
     match runtime.run(source) {
-        Ok(value) => match render(runtime, &value, json) {
+        Ok(value) => match render(runtime, &value, json || contains_object(&value)) {
             Ok(rendered) => println!("{rendered}"),
             Err(error) => eprintln!("{error}"),
         },
@@ -114,6 +114,27 @@ fn run_interactive(runtime: &mut Runtime, source: &str, json: bool, graph: bool)
             failure.expected, failure.actual
         );
     }
+}
+
+#[must_use]
+pub(super) fn contains_object(value: &Value) -> bool {
+    let mut pending = vec![value];
+    while let Some(current) = pending.pop() {
+        match current {
+            Value::Object(_) => return true,
+            Value::List(values) => pending.extend(values),
+            Value::Undefined
+            | Value::Null
+            | Value::Bool(_)
+            | Value::Number(_)
+            | Value::String(_)
+            | Value::Class(_)
+            | Value::Date(_)
+            | Value::Regex(_)
+            | Value::Function(_) => {}
+        }
+    }
+    false
 }
 
 fn update_repl_setting(command: &str, name: &str, setting: &mut bool) {
@@ -150,6 +171,7 @@ fn print_repl_help() {
 .clear           Clear runtime state and graph
 .exit, .quit     Exit the interactive CLI
 
+Objects and lists containing objects show their contents as JSON by default.
 Use Up/Down for history and Ctrl-C to cancel the current input.
 Body indentation is filled in automatically. Tab inserts four spaces.
 Use Backspace to dedent.

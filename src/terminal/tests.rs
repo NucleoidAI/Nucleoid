@@ -1471,7 +1471,11 @@ fn chat_renders_ordered_sources_results_errors_diagnostics_and_result_formats() 
         app.set_view(view);
         terminal.draw(|frame| app.draw(frame)).unwrap();
         let text = (app.regions.output.y..app.regions.output.bottom())
-            .map(|row| screen_line(&terminal, row))
+            .map(|row| {
+                (app.regions.output.x..app.regions.output.right())
+                    .map(|column| terminal.backend().buffer()[(column, row)].symbol())
+                    .collect::<String>()
+            })
             .collect::<Vec<_>>()
             .join("\n");
         let mut previous = 0;
@@ -1505,11 +1509,11 @@ fn chat_renders_ordered_sources_results_errors_diagnostics_and_result_formats() 
             .unwrap()
             .0;
         match view {
-            View::Text => assert!(
-                response.contains(app.entries[0].output.text(view)),
+            View::Text | View::Json => assert_eq!(
+                serde_json::from_str::<serde_json::Value>(response).unwrap(),
+                serde_json::json!([{"count": 1.0}]),
                 "{response}"
             ),
-            View::Json => assert!(response.contains("\"count\": 1.0"), "{response}"),
             View::Table => {
                 assert!(response.contains("count"), "{response}");
                 assert!(response.contains("1.0"), "{response}");
@@ -1656,4 +1660,34 @@ fn chat_keeps_tail_navigation_available_for_large_transcripts() {
     key(&mut app, &mut runtime, KeyCode::End, KeyModifiers::NONE);
     terminal.draw(|frame| app.draw(frame)).unwrap();
     assert!(screen_line(&terminal, app.regions.output.bottom() - 1).contains("tail marker"));
+}
+
+#[test]
+fn editor_and_chat_show_frozen_object_contents_in_default_text_view() {
+    for mode in [Mode::Editor, Mode::Chat] {
+        let mut app = App::new(false, false);
+        let mut runtime = Runtime::new();
+        app.set_mode(mode);
+        run(
+            &mut app,
+            &mut runtime,
+            "item = {count: 1, nested: {label: \"Ada\"}}\n[[item]]",
+        );
+        runtime.run("item.count = 2").unwrap();
+        assert!(app.view == View::Text);
+        assert_eq!(
+            serde_json::from_str::<serde_json::Value>(app.entries[0].output.text(app.view))
+                .unwrap(),
+            serde_json::json!([[{"count": 1.0, "nested": {"label": "Ada"}}]])
+        );
+        let mut terminal = Terminal::new(TestBackend::new(100, 40)).unwrap();
+        terminal.draw(|frame| app.draw(frame)).unwrap();
+        let result = (app.regions.output.y..app.regions.output.bottom())
+            .map(|row| screen_line(&terminal, row))
+            .collect::<Vec<_>>()
+            .join("\n");
+        assert!(result.contains("\"count\": 1.0"), "{result}");
+        assert!(result.contains("\"label\": \"Ada\""), "{result}");
+        assert!(!result.contains("[object"), "{result}");
+    }
 }

@@ -107,10 +107,15 @@ impl Output {
                     .map(|pretty| (pretty, TableData::from_json(&json)))
                     .map_err(|error| error.to_string())
             });
-        Self::Value {
-            text: visible(&value.to_string(), true),
-            structured,
-        }
+        let text = if crate::interactive::contains_object(value) {
+            match &structured {
+                Ok((json, _)) => json.clone(),
+                Err(error) => return Self::Error(visible(error, true)),
+            }
+        } else {
+            visible(&value.to_string(), true)
+        };
+        Self::Value { text, structured }
     }
 
     pub(super) fn text(&self, view: View) -> &str {
@@ -270,6 +275,10 @@ mod tests {
         assert_eq!(table.headers, ["count"]);
         assert_eq!(table.rows, [vec!["1.0"]]);
         assert!(entry.output.text(View::Json).contains("1.0"));
+        assert_eq!(
+            serde_json::from_str::<Json>(entry.output.text(View::Text)).unwrap(),
+            json!([{"count": 1.0}])
+        );
     }
 
     #[test]
@@ -280,7 +289,8 @@ mod tests {
             "item = {}\nitem.self = item\nitem".into(),
             false,
         );
-        assert!(!cycle.output.is_error(View::Text));
+        assert!(cycle.output.is_error(View::Text));
+        assert!(cycle.output.text(View::Text).contains("circular"));
         assert!(cycle.output.is_error(View::Json));
         assert!(cycle.output.text(View::Json).contains("circular"));
         let assertions = Entry::execute(&mut runtime, "assert(1, 2)".into(), true);

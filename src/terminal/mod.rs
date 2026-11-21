@@ -39,6 +39,7 @@ const HELP: &str = "\
 
 F1 selects editor mode; F2 selects chat mode. Ctrl-Tab switches modes.
 Both modes share runtime state, input history, results and the unfinished draft.
+Objects and lists containing objects show their contents as JSON in Text view.
 Editor: Enter inserts a newline. Chat: Enter submits code to the transcript.
 Shift-Enter inserts a newline when the terminal reports it distinctly.
 F5 runs the entire input in either mode.
