@@ -8,9 +8,9 @@ const SYNTHESIZING_ROUTINE = [
   { x: 1, y: 0, rotation: 90 },
   { x: 1, y: 1, rotation: 180 },
   { x: 0, y: 1, rotation: 270 },
-  // { x: 1, y: 0, rotation: 270 },
-  // { x: 0, y: 0, rotation: 180 },
-  // { x: 0, y: 1, rotation: 90 },
+  { x: 1, y: 0, rotation: 270 },
+  { x: 0, y: 0, rotation: 180 },
+  { x: 0, y: 1, rotation: 90 },
 ];
 
 async function synthesize({ train }) {
@@ -44,6 +44,7 @@ async function synthesize({ train }) {
           instance_name: synthesized_instance_name,
           input_value: undefined,
           output_value: undefined,
+          implementation: undefined,
           input_instance_matrix: input_instance_matrix,
           output_instance_matrix: undefined,
         };
@@ -53,7 +54,7 @@ async function synthesize({ train }) {
           instance: synthesized_instance,
         });
 
-        instance.implementation = await object.implementation({
+        synthesized_instance.implementation = await object.implementation({
           train,
           instance: synthesized_instance,
           x: input_x,
