@@ -7,7 +7,7 @@ import * as nucleoid from "./lib/nucleoid";
 export async function instances({ train, test_input_matrix }) {
   milestone.segmenting_test_input({ test_input_matrix });
 
-  const partial_matrices = Matrix.separate(test_input_matrix, 8, false, 1);
+  const partial_matrices = Matrix.separate(test_input_matrix, 8, false, 0);
   const partial_instances = [];
 
   for (const partial_matrix of partial_matrices) {
