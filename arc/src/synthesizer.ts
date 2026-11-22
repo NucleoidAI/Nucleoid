@@ -6,8 +6,8 @@ import * as milestone from "./lib/milestone.ts";
 
 const SYNTHESIZING_ROUTINE = [
   { x: 1, y: 0, rotation: 90 },
-  { x: 1, y: 1, rotation: 180 },
-  { x: 0, y: 1, rotation: 270 },
+  // { x: 1, y: 1, rotation: 180 },
+  // { x: 0, y: 1, rotation: 270 },
 ];
 
 async function synthesize({ train }) {
@@ -117,6 +117,10 @@ async function synthesize({ train }) {
           synthesized_instance.output_value.volume === output_volume
         ) {
           synthesized_dataset.instances.push(synthesized_instance);
+          milestone.synthesized_instance_validated({
+            pair_number: validated_dataset.length + 1,
+            ...synthesized_instance,
+          });
         } else {
           milestone.synthesized_instance_rejected({
             ...synthesized_instance,

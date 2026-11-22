@@ -160,5 +160,8 @@ The solver's terminal always displays by group and side by side:
   and never print a result on its own before a later group shows it: it
   appears once, in its group. A result that no later group shows, such as a
   rejected synthesized instance, gets its own group where it happens.
+- Display each group as it is generated: it prints as soon as its last result
+  exists, never held back for a later step or summary. Each synthesized
+  instance's box, for example, follows its composition at once.
 - One-line progress steps, model reasoning and usage lines, alerts and the
   failure box stay outside the groups.

@@ -113,16 +113,25 @@ export function synthesized_instance_rejected({
   ]);
 }
 
+export function synthesized_instance_validated({
+  pair_number,
+  instance_name,
+  input_instance_matrix,
+  output_instance_matrix,
+  output_value,
+}) {
+  terminal.panels(`Synthesized ${pair_number} · ${instance_name}`, [
+    synthesized_panels("synthesized", {
+      input_instance_matrix,
+      output_instance_matrix,
+      output_value,
+    }),
+  ]);
+}
+
 export function training_dataset_synthesized({ dataset }) {
   const pairs: string = dataset.length === 1 ? "pair" : "pairs";
   terminal.step(`${dataset.length} training ${pairs} synthesized`);
-  dataset.forEach(({ instances }, index: number) => {
-    for (const instance of instances) {
-      terminal.panels(`Synthesized ${index + 1} · ${instance.instance_name}`, [
-        synthesized_panels("synthesized", instance),
-      ]);
-    }
-  });
 }
 
 export function constructing_instance({ instance_name }) {

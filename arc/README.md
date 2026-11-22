@@ -200,19 +200,20 @@ Each constructed instance shows its `Input crop`, `Output crop`,
 the first one. After the `Analysis · State` table, a
 `Synthesizing training pairs` step precedes the synthesis call. Each
 synthesized instance's output is then composed as a test object's is, under
-its `Composing the output object · <instance>` step, which shows no panels of
-its own. When validation rejects the instance, because its `Output state` and
-the measured placed output disagree on `x`, `y`, `width`, `height` or
-`volume`, a red `✗` step follows at once, such as
-`1.15.1 Rejected <instance> · Output state ≠ Placed output · volume 5 ≠ 4`,
-naming each disagreeing property with the state's value first. One box titled
-with the instance follows it, with the instance's full-size `Input` and
-`Output` matrices and its `Output state` side by side, because no later box
-shows a rejected instance. A `<count> training pairs synthesized` step
-(`pair` for one) follows, with one box per synthesized instance that passed
-validation, titled `Synthesized <n> · <instance>`, where `<n>` numbers its
-synthesized pair: its full-size `Input` and `Output` matrices side by side,
-then its `Output state`. Model token usage remains attached to its active
+its `Composing the output object · <instance>` step, and the instance shows
+as soon as it is generated, before the next one is composed. An instance that
+passes validation shows one box titled `Synthesized <n> · <instance>`, where
+`<n>` numbers its synthesized pair: its full-size `Input` and `Output`
+matrices side by side, then its `Output state`, such as `1.15.1 Input`,
+`1.16.1 Output` and `1.17.1 Output state` for the first one. When validation
+rejects the instance, because its `Output state` and the measured placed
+output disagree on `x`, `y`, `width`, `height` or `volume`, a red `✗` step
+shows instead, such as
+`1.18.1 Rejected <instance> · Output state ≠ Placed output · volume 5 ≠ 4`,
+naming each disagreeing property with the state's value first, followed by
+one box titled with the instance that holds the same three panels. After the
+last instance, a `<count> training pairs synthesized` step (`pair` for one)
+closes the synthesis. Model token usage remains attached to its active
 milestone. Instance-specific steps, and the headers of instance panels shown
 on their own, include the instance name.
 
