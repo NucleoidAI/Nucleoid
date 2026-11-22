@@ -21,6 +21,7 @@ pub enum Stage {
     Diff,
     Nodes,
     Holds,
+    Edges,
     Origins,
     Outcomes,
 }
@@ -46,15 +47,17 @@ impl Stage {
             | Stage::Diff
             | Stage::Nodes
             | Stage::Holds
+            | Stage::Edges
             | Stage::Origins
             | Stage::Outcomes => None,
         }
     }
 
-    pub(crate) fn projection(self) -> Option<StepField> {
+    pub(crate) fn projection(self) -> Option<Projection> {
         match self {
-            Stage::Nodes => Some(StepField::Node),
-            Stage::Holds => Some(StepField::Holds),
+            Stage::Nodes => Some(Projection::Field(StepField::Node)),
+            Stage::Holds => Some(Projection::Field(StepField::Holds)),
+            Stage::Edges => Some(Projection::Edges),
             Stage::Why
             | Stage::Affects
             | Stage::Stated
@@ -75,6 +78,7 @@ impl Stage {
             Stage::Diff => "diff",
             Stage::Nodes => "nodes",
             Stage::Holds => "holds",
+            Stage::Edges => "edges",
             Stage::Origins => "origins",
             Stage::Outcomes => "outcomes",
         }
@@ -123,6 +127,21 @@ impl StepField {
         match self {
             StepField::Node => Value::string(step.node.to_string()),
             StepField::Holds => step.value.clone(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum Projection {
+    Field(StepField),
+    Edges,
+}
+
+impl Projection {
+    pub(crate) fn width(self, step: &Step) -> usize {
+        match self {
+            Projection::Field(_) => 1,
+            Projection::Edges => step.from.len(),
         }
     }
 }
@@ -279,7 +298,7 @@ impl Runtime {
             Stage::Affects => self.traverse(selection, Direction::Dependents),
             Stage::Origins => self.ended(selection, End::Origins),
             Stage::Outcomes => self.ended(selection, End::Outcomes),
-            Stage::Nodes | Stage::Holds => selection.clone(),
+            Stage::Nodes | Stage::Holds | Stage::Edges => selection.clone(),
         })
     }
 
@@ -295,7 +314,7 @@ impl Runtime {
             Stage::Affects => self.walk(&ranked.selection, Direction::Dependents),
             Stage::Origins => self.ranked_ends(ranked, End::Origins),
             Stage::Outcomes => self.ranked_ends(ranked, End::Outcomes),
-            Stage::Nodes | Stage::Holds => ranked,
+            Stage::Nodes | Stage::Holds | Stage::Edges => ranked,
         })
     }
 

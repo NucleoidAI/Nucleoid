@@ -2,7 +2,7 @@ use crate::error::{Error, Result};
 use crate::graph::{NodeKey, ShapeKey};
 use crate::lang::ast::{Expr, SetOperation};
 use crate::number;
-use crate::reasoning::{Direction, Ranked, Selection, Stage, StepField};
+use crate::reasoning::{Direction, Projection, Ranked, Selection, Stage};
 use crate::runtime::{MAX_DEPTH, Runtime};
 use crate::scope::Scope;
 use crate::value::{ObjectId, Value};
@@ -20,8 +20,8 @@ impl<'a> Reason<'a> {
 
     pub fn resolve(&self, runtime: &mut Runtime, scope: &mut Scope) -> Result<Value> {
         if let Expr::Reason { stage, source } = self.node {
-            if let Some(field) = stage.projection() {
-                return runtime.projection_of(*stage, field, source, scope);
+            if let Some(projection) = stage.projection() {
+                return runtime.projection_of(*stage, projection, source, scope);
             }
         }
 
@@ -62,6 +62,7 @@ impl Link<'_> {
                 | Stage::Diff
                 | Stage::Nodes
                 | Stage::Holds
+                | Stage::Edges
                 | Stage::Origins
                 | Stage::Outcomes),
             ) => Some(stage.as_str()),
@@ -157,13 +158,13 @@ impl Runtime {
     fn projection_of(
         &mut self,
         stage: Stage,
-        field: StepField,
+        projection: Projection,
         source: &Expr,
         scope: &mut Scope,
     ) -> Result<Value> {
         self.check_operation(Link::Stage(stage), scope)?;
         Ok(match self.reason(source, scope)? {
-            Some(selection) => self.projected(&selection, field),
+            Some(selection) => self.projected(&selection, projection),
             None => Value::Undefined,
         })
     }

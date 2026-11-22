@@ -1,7 +1,7 @@
 use indexmap::IndexMap;
 use std::fmt;
 
-use super::{Selection, Step, StepField};
+use super::{Projection, Selection, Step, StepField};
 use crate::error::{Error, Result};
 use crate::graph::{NodeKey, NodeKind};
 use crate::lang::ast::Expr;
@@ -45,6 +45,10 @@ pub(super) fn rule_of(node: Option<&Nuc>, key: &NodeKey) -> String {
         },
         _ => key.to_string(),
     }
+}
+
+fn input_name(key: &NodeKey) -> Value {
+    Value::string(key.to_string())
 }
 
 fn declaration_rule(name: &str, value: &Expr) -> String {
@@ -118,14 +122,32 @@ impl Runtime {
         )
     }
 
-    pub(crate) fn projected(&mut self, selection: &Selection, field: StepField) -> Value {
-        let mut values = Vec::with_capacity(selection.steps.len());
+    pub(crate) fn projected(&mut self, selection: &Selection, projection: Projection) -> Value {
+        let size = selection
+            .steps
+            .iter()
+            .map(|step| projection.width(step))
+            .sum();
+        let mut values = Vec::with_capacity(size);
         for step in &selection.steps {
             let _: Value = self.record(step);
-            let value = field.of(step);
-            self.note_nullish(&value);
-            values.push(value);
+            match projection {
+                Projection::Field(field) => {
+                    let value = field.of(step);
+                    self.note_nullish(&value);
+                    values.push(value);
+                }
+                Projection::Edges => {
+                    let node = StepField::Node.of(step);
+                    values.extend(
+                        step.from
+                            .iter()
+                            .map(|input| Value::List(vec![input_name(input), node.clone()])),
+                    );
+                }
+            }
         }
+        debug_assert_eq!(values.len(), size);
         Value::List(values)
     }
 
@@ -137,12 +159,7 @@ impl Runtime {
         properties.insert("state".to_string(), Value::string(step.state.as_str()));
         properties.insert(
             "from".to_string(),
-            Value::List(
-                step.from
-                    .iter()
-                    .map(|key| Value::string(key.to_string()))
-                    .collect(),
-            ),
+            Value::List(step.from.iter().map(input_name).collect()),
         );
 
         self.create_anonymous(properties)

@@ -21925,6 +21925,110 @@ tag.code
 # return: "9YX""#);
 }
 
+/// Nucleoid lists the edges of an explanation with edges
+#[rustfmt::skip]
+#[test]
+fn lists_the_edges_of_an_explanation_with_edges() {
+    let mut run = runner();
+    run("price = 10");
+    run("quantity = 3");
+    run("rate = 0.2");
+    run("subtotal = price * quantity");
+    run("tax = subtotal * rate");
+    run("total = subtotal + tax");
+    run("wiring = total |> why |> edges");
+    run("basis = tax |> why |> edges");
+    assert_eq!(run("wiring"), serde_json::json!([["subtotal", "total"], ["tax", "total"], ["price", "subtotal"], ["quantity", "subtotal"], ["subtotal", "tax"], ["rate", "tax"]]));
+    assert_eq!(run("basis"), serde_json::json!([["subtotal", "tax"], ["rate", "tax"], ["price", "subtotal"], ["quantity", "subtotal"]]));
+    run("fee = 2");
+    run("tax = price * rate + fee");
+    assert_eq!(run("wiring"), serde_json::json!([["subtotal", "total"], ["tax", "total"], ["price", "subtotal"], ["quantity", "subtotal"], ["price", "tax"], ["rate", "tax"], ["fee", "tax"]]));
+    assert_eq!(run("basis"), serde_json::json!([["price", "tax"], ["rate", "tax"], ["fee", "tax"]]));
+    run("price = 12");
+    run(r#"wiring.filter(edge -> edge[0] == "price")
+
+# return: [["price","subtotal"],["price","tax"]]"#);
+}
+
+/// Nucleoid lists the edges that a change travels and the model with edges
+#[rustfmt::skip]
+#[test]
+fn lists_the_edges_that_a_change_travels_and_the_model_with_edges() {
+    let mut run = runner();
+    run("rate = 0.2");
+    run("price = 10");
+    run("quantity = 3");
+    run("subtotal = price * quantity");
+    run("tax = subtotal * rate");
+    run("reach = price |> affects |> edges");
+    run("wiring = model |> edges");
+    assert_eq!(run("[reach, wiring]"), serde_json::json!([[["price", "subtotal"], ["quantity", "subtotal"], ["subtotal", "tax"], ["rate", "tax"]], [["price", "subtotal"], ["quantity", "subtotal"], ["subtotal", "tax"], ["rate", "tax"]]]));
+    run("total = subtotal + tax");
+    assert_eq!(run("reach"), serde_json::json!([["price", "subtotal"], ["quantity", "subtotal"], ["subtotal", "tax"], ["rate", "tax"], ["subtotal", "total"], ["tax", "total"]]));
+    run("tax = quantity * rate");
+    assert_eq!(run("reach"), serde_json::json!([["price", "subtotal"], ["quantity", "subtotal"], ["subtotal", "total"], ["tax", "total"]]));
+    assert_eq!(run("wiring"), serde_json::json!([["price", "subtotal"], ["quantity", "subtotal"], ["quantity", "tax"], ["rate", "tax"], ["subtotal", "total"], ["tax", "total"]]));
+    run("delete total");
+    run(r#"[reach, wiring]
+
+# return: [[["price","subtotal"],["quantity","subtotal"]],[["price","subtotal"],["quantity","subtotal"],["quantity","tax"],["rate","tax"]]]"#);
+}
+
+/// Nucleoid lists the edges behind class level rules with edges
+#[rustfmt::skip]
+#[test]
+fn lists_the_edges_behind_class_level_rules_with_edges() {
+    let mut run = runner();
+    run("markup = 2");
+    run(r#"class Part(cost):
+    this.cost = cost"#);
+    run("$Part.price = $Part.cost * markup");
+    run("$Part.wiring = $Part.price |> why |> edges");
+    run("bolt = Part(3)");
+    assert_eq!(run("bolt.wiring"), serde_json::json!([["bolt.cost", "bolt.price"], ["markup", "bolt.price"]]));
+    run("fee = 1");
+    run("reach = fee |> affects |> edges");
+    assert_eq!(run("reach"), serde_json::json!([]));
+    run("$Part.price = $Part.cost * markup + fee");
+    run("nut = Part(2)");
+    assert_eq!(run("nut.wiring"), serde_json::json!([["nut.cost", "nut.price"], ["markup", "nut.price"], ["fee", "nut.price"]]));
+    assert_eq!(run("reach"), serde_json::json!([["bolt.cost", "bolt.price"], ["markup", "bolt.price"], ["fee", "bolt.price"], ["nut.cost", "nut.price"], ["markup", "nut.price"], ["fee", "nut.price"]]));
+    run("bolt.cost = 5");
+    run(r#"bolt.wiring
+
+# return: [["bolt.cost","bolt.price"],["markup","bolt.price"],["fee","bolt.price"]]"#);
+}
+
+/// Nucleoid rolls back failed updates through edge lists
+#[rustfmt::skip]
+#[test]
+fn rolls_back_failed_updates_through_edge_lists() {
+    let mut run = runner();
+    run(r#"price = 10
+qty = 3
+subtotal = price * qty
+wiring = subtotal |> why |> edges
+failure = ""
+try:
+    wiring = 1 |> edges
+catch error:
+    failure = error
+assert(failure, TypeError("Cannot explain 1"))
+assert(wiring, [["price", "subtotal"], ["qty", "subtotal"]])
+try:
+    fee = 2
+    subtotal = price * qty + fee
+    assert(wiring, [["price", "subtotal"], ["qty", "subtotal"], ["fee", "subtotal"]])
+    throw "UNDO"
+catch error:
+    assert(error, "UNDO")
+assert(wiring, [["price", "subtotal"], ["qty", "subtotal"]])
+discount = 5
+subtotal = price * qty - discount
+wiring
+# return: [["price","subtotal"],["qty","subtotal"],["discount","subtotal"]]"#);
+}
+
 /// Nucleoid flattens nested lists by one level
 #[rustfmt::skip]
 #[test]

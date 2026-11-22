@@ -3272,8 +3272,8 @@ statement positions; caught values and transaction recovery are unchanged.
   node, so after a union they keep what they keep of each side:
   `S |> union(O) |> stated` is `(S |> stated).concat(O |> except(S) |> stated)`.
   A later `why` or `affects` walks from every step of the union, `nodes`
-  names them, `holds` gives their values, and `origins` and `outcomes` keep
-  the ends of the union as one selection.
+  names them, `holds` gives their values, `edges` lists their edges, and
+  `origins` and `outcomes` keep the ends of the union as one selection.
 - Each step keeps the distance of the walk that selected it: the steps of
   `SELECTION` their own, and the steps added from `OTHER` the distances they
   have in `OTHER`'s own selection. So `S |> union(O) |> depth(n)` is
@@ -3391,8 +3391,8 @@ statement positions; caught values and transaction recovery are unchanged.
   derived step whose every input was deleted or is a reasoning observer.
 - The kept steps keep their distances and the direction of the most recent
   walk, so `depth`, `path`, `stated`, `derived`, `diff`, `intersect`,
-  `except`, `union`, `nodes`, `holds` and later walks apply to the result as
-  to the results of the accepted filters. The two stages keep a step by its
+  `except`, `union`, `nodes`, `holds`, `edges` and later walks apply to the
+  result as to the results of the accepted filters. The two stages keep a step by its
   relation to the steps of the selection, not by a property of its own, so
   they do not commute with the filters: `total |> why |> derived |> origins`
   is the subtotal, while `total |> why |> origins |> derived` is empty. A
@@ -3643,6 +3643,133 @@ statement positions; caught values and transaction recovery are unchanged.
   `Nucleoid gives the values of an explanation with holds` through
   `Nucleoid rolls back failed updates through held values` specify the
   executable behavior. `tests/held_values.rs` executes the rest.
+
+## Edge lists of reasoning selections
+
+- [NUC 133](docs/nuc-0133.md) adds the final pipeline stage
+  `SELECTION |> edges`. It lists the dependency edges that the steps of
+  `SELECTION` record: for each step, in the selection's order, and for each
+  name in its `from` list, in that order, the two-item list `[INPUT, NODE]`
+  of the input's name and the step's `node` name, both strings exactly as
+  the step's record holds them. After `price = 10`, `quantity = 3`,
+  `rate = 0.2`, `subtotal = price * quantity`, `tax = subtotal * rate` and
+  `total = subtotal + tax`, `total |> why |> edges` is
+  `[["subtotal", "total"], ["tax", "total"], ["price", "subtotal"], ["quantity", "subtotal"], ["subtotal", "tax"], ["rate", "tax"]]`.
+- It is exactly
+  `(SELECTION).flatMap(step => step.from.reduce((pairs, input) => pairs.concat([[input, pairs[0]]]), [step.node])[1:])`,
+  where `SELECTION` is the selection that the pipeline before `edges`
+  denotes, read as the accepted stages read their source. The direct
+  `(SELECTION).flatMap(step => step.from.map(input => [input, step.node]))`
+  raises `ReferenceError("step is not defined")`, because a callback does
+  not read the parameters of the callback around it.
+- An input is named as the step's `from` list names it: an instance
+  property as `o.total` and a property of an anonymous object as
+  `obj:0.gone`, and a node that a step reads twice gives one edge. An input
+  may be a node that no selection selects, such as a pending property or a
+  reasoning observer that the step reads. A step is stated exactly when it
+  has no inputs and no class governs it, so `SELECTION |> stated |> edges`
+  is always `[]` and `SELECTION |> derived |> edges` always gives the list
+  that `SELECTION |> edges` gives. The steps of a class and of a function
+  declaration have no inputs either, and the step of an `if` block, which
+  is named after its condition, lists the names its condition reads: after
+  `class Box(w)` with `this.w = w`, `b = Box(1)` and `if b.w > 0:` with a
+  body, `model |> edges` is `[["b", "if(b.w>0)"], ["b.w", "if(b.w>0)"]]`.
+- A reference alone denotes its own one-step selection, not its value, so
+  `total |> edges` lists the edges into the total,
+  `[["subtotal", "total"], ["tax", "total"]]`, as the accepted spelling over
+  `total |> why |> depth(0)` does, while the value `(total).flatMap(...)` of
+  a number raises `TypeError("number.flatMap is not a function")`.
+- So `total |> why |> edges` gives the dependency structure of an
+  explanation, which inputs feed which results, `price |> affects |> edges`
+  the edges that a change of the price travels, with the other inputs of the
+  steps it reaches, and `model |> edges` every edge of the model's nodes in
+  model order, without the steps of pending nodes and reasoning observers.
+- The stage lists every input of each step it keeps, whether the selection
+  keeps that input's own step or not, because a step's inputs are what its
+  record's `from` field holds, which no stage rewrites:
+  `total |> why |> depth(1) |> edges` lists all six edges above, and
+  `total |> why |> except(subtotal) |> edges` keeps the edges from the
+  subtotal into the tax and the total. A program that wants only the edges
+  between the steps of a selection `S` filters them by the kept names, as
+  in `(S |> edges).filter(edge => kept.includes(edge[0]))` after
+  `kept = S |> nodes`.
+- `SELECTION` is written as the source of a pipeline is: a reference, which
+  selects its own step; `model`; a prefix stage, as in `why total |> edges`;
+  or a pipeline of the stages `why`, `affects`, `stated`, `derived`,
+  `depth`, `path`, `intersect`, `except`, `union`, `diff`, `origins` and
+  `outcomes`. An empty selection gives `[]`, and so does a selection whose
+  steps have no inputs. A selection that a `depth` stage with a `null` or
+  undefined limit makes undefined gives undefined, which a declaration
+  stores as `null`, as a read from that selection does.
+- The stage ends the pipeline, as `nodes` and `holds` do: its result is a
+  list of pairs, not a selection. A stage written after it has that list as
+  its source, which is neither a reference nor a selection, so
+  `total |> why |> edges |> why` and `total |> why |> edges |> nodes` raise
+  `TypeError("Cannot explain total|>why|>edges")`, as the same stages after
+  the accepted spelling raise for that source, and
+  `total |> why |> nodes |> edges` and `total |> why |> holds |> edges`
+  raise `TypeError("Cannot explain total|>why|>nodes")` and
+  `TypeError("Cannot explain total|>why|>holds")`. An `intersect`,
+  `except`, `union` or `path` argument that ends with `edges` raises
+  `TypeError("Cannot explain <argument>")`, such as
+  `TypeError("Cannot explain shipping|>why|>edges")` for
+  `intersect(shipping |> why |> edges)`. A name that holds the list is a
+  reasoning observer, which no selection holds, so after
+  `wiring = shipping |> why |> edges`, `intersect(wiring)` keeps nothing.
+- Only `|>` followed by the name `edges` is the stage. `edges` remains an
+  ordinary lexer identifier: variables, parameters, properties, keys,
+  functions and methods named `edges` keep their accepted meanings. There is
+  no prefix form, so `edges total` remains the two statements `edges` and
+  `total`. `|> Edges` and `|> edge` keep their parse-time
+  `TypeError("<name> is not an operation")`, and a line break after `|>`
+  keeps `SyntaxError("Expected an operation")`.
+- A local or parameter, state variable, function or class named `edges`
+  shadows the stage, as for `stated`, `derived`, `depth`, `diff`, `path`,
+  `intersect`, `except`, `union`, `nodes`, `holds`, `origins` and
+  `outcomes`: the pipeline then raises `TypeError("edges is not an operation")`
+  at the running statement, before its source is selected. A binding
+  declared after a standing declaration makes its next evaluation raise,
+  which fails and rolls back the statement that triggered it. Methods,
+  properties and object keys named `edges` are not bindings. The accepted
+  `why` and `affects` shadowing behavior does not change.
+- An invalid source keeps its diagnostic: `1 |> edges` raises
+  `TypeError("Cannot explain 1")`, `missing |> why |> edges` raises
+  `ReferenceError("missing is not defined")`, a property path whose base is
+  `null` or undefined raises `ReferenceError("<base> is not defined")`, one
+  whose base is neither an object, `null` nor undefined, such as a number,
+  raises `TypeError("Cannot explain <source>")`, and outside a `suppose`
+  block `total |> why |> diff |> edges` raises
+  `TypeError("Cannot use 'diff' outside suppose")`. These errors are
+  positioned at the running top-level statement and roll back its
+  transaction.
+- The stage keeps every value and structural observation that its selection
+  made, including those of the steps a filter drops, so a declaration,
+  property, class-level rule, condition or quantifier that holds it
+  re-derives whenever its selection would: a rewiring, a new or deleted node
+  and a replaced class-level rule add and drop edges, a change of a value
+  alone leaves them as they are, and an empty result still follows its
+  source. It is a reasoning observer, which walks neither select nor
+  traverse and `model` excludes. Functions, methods and lambdas evaluate it
+  in place, and class-level rules give each instance its own list. `.value`
+  snapshots it, and propagation order, `suppose` blocks and rollback behave
+  as for the accepted stages.
+- The stage builds the step records that the accepted spelling builds, so
+  the anonymous objects that later statements create are numbered as after
+  that spelling, and it reads their `from` and `node` fields without
+  depending on them: a declaration that holds it depends only on what its
+  selection observes, and gains no pending graph node for the records it
+  reads.
+- Every pair holds two strings, so the stage gives no `null` or undefined
+  item, and the null rule of stored declarations, which a `holds` value can
+  meet, never applies to it.
+- The stage renders as `SOURCE|>edges` in graph keys, block keys,
+  conditions, `rule` text and the errors that quote an expression, so a
+  stage and its accepted spelling are different graph keys. Programs
+  without the stage do no work for it.
+- The four appended entries from
+  `Nucleoid lists the edges of an explanation with edges` through
+  `Nucleoid rolls back failed updates through edge lists` specify the
+  executable behavior. `tests/edge_lists.rs` executes the rest.
 
 ## Reactive degree to radian conversion
 
@@ -28119,6 +28246,91 @@ assert([failure, tag.label, tag.code], ["LONG", "AB12", "21BA"])
 tag.label = "XY9"
 tag.code
 # return: "9YX"
+---
+# Nucleoid lists the edges of an explanation with edges
+
+price = 10
+quantity = 3
+rate = 0.2
+subtotal = price * quantity
+tax = subtotal * rate
+total = subtotal + tax
+wiring = total |> why |> edges
+basis = tax |> why |> edges
+assert(wiring, [["subtotal", "total"], ["tax", "total"], ["price", "subtotal"], ["quantity", "subtotal"], ["subtotal", "tax"], ["rate", "tax"]])
+assert(basis, [["subtotal", "tax"], ["rate", "tax"], ["price", "subtotal"], ["quantity", "subtotal"]])
+fee = 2
+tax = price * rate + fee
+assert(wiring, [["subtotal", "total"], ["tax", "total"], ["price", "subtotal"], ["quantity", "subtotal"], ["price", "tax"], ["rate", "tax"], ["fee", "tax"]])
+assert(basis, [["price", "tax"], ["rate", "tax"], ["fee", "tax"]])
+price = 12
+wiring.filter(edge -> edge[0] == "price")
+# return: [["price","subtotal"],["price","tax"]]
+---
+# Nucleoid lists the edges that a change travels and the model with edges
+
+rate = 0.2
+price = 10
+quantity = 3
+subtotal = price * quantity
+tax = subtotal * rate
+reach = price |> affects |> edges
+wiring = model |> edges
+assert([reach, wiring], [[["price", "subtotal"], ["quantity", "subtotal"], ["subtotal", "tax"], ["rate", "tax"]], [["price", "subtotal"], ["quantity", "subtotal"], ["subtotal", "tax"], ["rate", "tax"]]])
+total = subtotal + tax
+assert(reach, [["price", "subtotal"], ["quantity", "subtotal"], ["subtotal", "tax"], ["rate", "tax"], ["subtotal", "total"], ["tax", "total"]])
+tax = quantity * rate
+assert(reach, [["price", "subtotal"], ["quantity", "subtotal"], ["subtotal", "total"], ["tax", "total"]])
+assert(wiring, [["price", "subtotal"], ["quantity", "subtotal"], ["quantity", "tax"], ["rate", "tax"], ["subtotal", "total"], ["tax", "total"]])
+delete total
+[reach, wiring]
+# return: [[["price","subtotal"],["quantity","subtotal"]],[["price","subtotal"],["quantity","subtotal"],["quantity","tax"],["rate","tax"]]]
+---
+# Nucleoid lists the edges behind class level rules with edges
+
+markup = 2
+class Part(cost):
+    this.cost = cost
+$Part.price = $Part.cost * markup
+$Part.wiring = $Part.price |> why |> edges
+bolt = Part(3)
+assert(bolt.wiring, [["bolt.cost", "bolt.price"], ["markup", "bolt.price"]])
+fee = 1
+reach = fee |> affects |> edges
+assert(reach, [])
+$Part.price = $Part.cost * markup + fee
+nut = Part(2)
+assert(nut.wiring, [["nut.cost", "nut.price"], ["markup", "nut.price"], ["fee", "nut.price"]])
+assert(reach, [["bolt.cost", "bolt.price"], ["markup", "bolt.price"], ["fee", "bolt.price"], ["nut.cost", "nut.price"], ["markup", "nut.price"], ["fee", "nut.price"]])
+bolt.cost = 5
+bolt.wiring
+# return: [["bolt.cost","bolt.price"],["markup","bolt.price"],["fee","bolt.price"]]
+---
+# Nucleoid rolls back failed updates through edge lists
+
+price = 10
+qty = 3
+subtotal = price * qty
+wiring = subtotal |> why |> edges
+failure = ""
+try:
+    wiring = 1 |> edges
+catch error:
+    failure = error
+assert(failure, TypeError("Cannot explain 1"))
+assert(wiring, [["price", "subtotal"], ["qty", "subtotal"]])
+try:
+    fee = 2
+    subtotal = price * qty + fee
+    assert(wiring, [["price", "subtotal"], ["qty", "subtotal"], ["fee", "subtotal"]])
+    throw "UNDO"
+catch error:
+    assert(error, "UNDO")
+assert(wiring, [["price", "subtotal"], ["qty", "subtotal"]])
+discount = 5
+subtotal = price * qty - discount
+wiring
+# return: [["price","subtotal"],["qty","subtotal"],["discount","subtotal"]]
 ---
 # Nucleoid flattens nested lists by one level
 

@@ -4383,6 +4383,34 @@ south.stops.push("orchard")
   route's sign. See [NUC 131](nuc-0131.md) and the
   [root contract](../nucleoid.spec.md#reversal-method-aliases).
 
+## Edge lists of reasoning selections
+
+**Edges traces where a supplier's delay travels through a build schedule**
+
+```nuc
+delay = 2
+parts = 5 + delay
+assembly = parts + 3
+testing = 2
+ship = assembly + testing
+moved = delay |> affects |> edges
+assert(moved, [["delay", "parts"], ["parts", "assembly"], ["assembly", "ship"], ["testing", "ship"]])
+paint = assembly + 1
+ship = paint + testing
+moved
+# return: [["delay","parts"],["parts","assembly"],["assembly","paint"],["paint","ship"],["testing","ship"]]
+```
+
+- `delay |> affects |> edges` lists every edge the delay travels along:
+  from the delay to the parts, from the parts to the assembly and from the
+  assembly to the shipping date, which also reads the testing time, so its
+  edge from the testing stays in the list.
+- The edges follow the schedule: once painting sits between the assembly
+  and the shipping date, the delay travels through it, and the direct edge
+  from the assembly to the shipping date is gone. See
+  [NUC 133](nuc-0133.md) and the
+  [root contract](../nucleoid.spec.md#edge-lists-of-reasoning-selections).
+
 ## Reactive list flattening
 
 **Flattening keeps the dirty tiles of every room counted**

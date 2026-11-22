@@ -345,7 +345,7 @@ fn only_the_appended_cases_call_the_aliases_and_they_run_every_assertion() {
     }
     assert!(declared > 0, "an accepted case calls a member it declares");
     assert_eq!(assertions, 28);
-    assert_eq!(cases, 1269);
+    assert_eq!(cases, 1276);
 }
 
 #[test]
@@ -394,7 +394,7 @@ fn the_appended_cases_stand_after_nuc_116_and_before_nuc_103() {
         "Nucleoid rolls back failed updates through size and emptiness aliases"
     );
     assert_eq!(titles[784..787], SPEC_TITLES);
-    assert_eq!(titles[832], "Nucleoid flattens nested lists by one level");
+    assert_eq!(titles[836], "Nucleoid flattens nested lists by one level");
     for (cases, title, previous, following) in [
         (
             &reference,
@@ -416,9 +416,9 @@ fn the_appended_cases_stand_after_nuc_116_and_before_nuc_103() {
         ),
     ] {
         let index = cases.iter().position(|case| case.title == title).unwrap();
-        assert_eq!(index, cases.len() - 18, "{title}");
+        assert_eq!(index, cases.len() - 19, "{title}");
         assert_eq!(cases[index - 1].title, previous);
-        assert_eq!(cases[index + 13].title, following);
+        assert_eq!(cases[index + 14].title, following);
     }
 }
 

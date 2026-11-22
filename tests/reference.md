@@ -2946,6 +2946,21 @@ assert([latest[0], recent.length, readings], [23, 3, [18, 21, 19, 23]])
 ["stressed".reversed(), "café".reverse(), "a😀b".reversed()]
 # return: ["desserts","éfac","b😀a"]
 ---
+# Nucleoid lists the edges of selections with edges
+
+price = 10
+qty = 3
+shipping = 5
+subtotal = price * qty
+total = subtotal + shipping
+wiring = total |> why |> edges
+reach = price |> affects |> edges
+assert(wiring, [["subtotal", "total"], ["shipping", "total"], ["price", "subtotal"], ["qty", "subtotal"]])
+assert(reach, [["price", "subtotal"], ["qty", "subtotal"], ["subtotal", "total"], ["shipping", "total"]])
+shipping = price / 2
+[wiring, reach]
+# return: [[["subtotal","total"],["shipping","total"],["price","subtotal"],["qty","subtotal"],["price","shipping"]],[["price","subtotal"],["qty","subtotal"],["price","shipping"],["subtotal","total"],["shipping","total"]]]
+---
 # Nucleoid flattens nested lists with flat
 
 pallets = [[["bolt", "nut"], ["gear"]], [["cog"]]]

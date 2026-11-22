@@ -4689,6 +4689,9 @@ route.shift()
 - `selection |> holds` lists the steps' `holds` values, as
   `(selection).map(step => step.holds)` does for the selection the pipeline
   denotes ([NUC 121](nuc-0121.md)).
+- `selection |> edges` lists the steps' dependency edges, one
+  `[input, node]` pair for each name in each step's `from` list
+  ([NUC 133](nuc-0133.md)).
 
 ```
 a = 1
@@ -5128,6 +5131,66 @@ price = 20
   [held values of reasoning selections](../nucleoid.spec.md#held-values-of-reasoning-selections)
   section.
 
+### Edge lists of reasoning selections
+
+```
+price = 10
+qty = 3
+shipping = 5
+subtotal = price * qty
+total = subtotal + shipping
+wiring = total |> why |> edges
+reach = price |> affects |> edges
+assert(wiring, [["subtotal", "total"], ["shipping", "total"], ["price", "subtotal"], ["qty", "subtotal"]])
+assert(reach, [["price", "subtotal"], ["qty", "subtotal"], ["subtotal", "total"], ["shipping", "total"]])
+shipping = price / 2
+[wiring, reach]
+```
+
+- This is the complete `Nucleoid lists the edges of selections with edges`
+  program in `tests/reference.md`, without its title and expected-return
+  metadata; it returns
+  `[[["subtotal","total"],["shipping","total"],["price","subtotal"],["qty","subtotal"],["price","shipping"]],[["price","subtotal"],["qty","subtotal"],["price","shipping"],["subtotal","total"],["shipping","total"]]]`.
+- [NUC 133](nuc-0133.md) adds the final stage `selection |> edges`. It lists
+  the dependency edges of the selection's steps: for each step, in their
+  order, one `[input, node]` pair for each name in the step's `from` list,
+  in its order, both strings as the step's record holds them. So
+  `total |> why |> edges` gives which inputs feed which results in the
+  total's explanation, and `price |> affects |> edges` the edges that a
+  change of the price travels, with the other inputs of the steps it
+  reaches, such as the shipping into the total. It is exactly
+  `(selection).flatMap(step => step.from.reduce((pairs, input) => pairs.concat([[input, pairs[0]]]), [step.node])[1:])`,
+  where `selection` is the selection that the pipeline before `edges`
+  denotes, read as the stages read their source.
+- The selection is written as for `nodes`: a reference, which denotes its
+  own one-step selection rather than its value, `model`, a prefix stage such
+  as `why total`, or a pipeline of any of the stages above but `nodes` and
+  `holds`. So `total |> edges` lists the edges into the total. An empty
+  selection gives `[]`, and so does one whose steps have no inputs, such as
+  `total |> why |> stated |> edges`; a selection that a `depth(null)` makes
+  undefined gives undefined.
+- Every input of a kept step is listed, whether the selection keeps that
+  input's own step or not. After `kept = S |> nodes`,
+  `(S |> edges).filter(edge => kept.includes(edge[0]))` keeps only the edges
+  between the steps of `S`.
+- The stage ends the pipeline, as `nodes` and `holds` do: a stage after it,
+  or an `intersect`, `except`, `union` or `path` argument that ends with it,
+  has a list of pairs rather than a selection and raises
+  `TypeError("Cannot explain <source>")`, as it does after the accepted
+  spelling.
+- Only `|>` followed by `edges` is the stage; `edges` stays an ordinary name
+  everywhere else, and there is no prefix form. A local or parameter,
+  variable, function or class named `edges` shadows the stage, as bindings
+  shadow the other stages: the pipeline then raises
+  `TypeError("edges is not an operation")` before selecting its source.
+- The list stays live through every observation its selection made, so a
+  rewiring, a new or deleted node and a replaced class-level rule add and
+  drop edges, and a declaration that holds it is a reasoning observer. It
+  renders as `selection|>edges`.
+- The authoritative contract is the
+  [edge lists of reasoning selections](../nucleoid.spec.md#edge-lists-of-reasoning-selections)
+  section.
+
 ### Live structure
 
 - A reasoning assignment follows both values and graph structure.
@@ -5172,11 +5235,13 @@ c = b * 2
   rather than a selection, the [NUC 120](nuc-0120.md) candidate adds a
   `union(other)` stage, which NUC 11 does not plan either, the
   [NUC 121](nuc-0121.md) candidate adds a final `holds` stage, which gives
-  the values of a selection's steps and, like `nodes`, returns a list, and
-  the [NUC 128](nuc-0128.md) candidate adds `origins` and `outcomes`
-  stages, which keep the steps at the two ends of a selection and which
-  NUC 11 does not plan either. Other NUC 11 operations remain proposals, not
-  dependencies.
+  the values of a selection's steps and, like `nodes`, returns a list, the
+  [NUC 128](nuc-0128.md) candidate adds `origins` and `outcomes` stages,
+  which keep the steps at the two ends of a selection and which NUC 11 does
+  not plan either, and the [NUC 133](nuc-0133.md) candidate adds a final
+  `edges` stage, which lists the dependency edges of a selection's steps
+  and, like `nodes` and `holds`, returns a list. Other NUC 11 operations
+  remain proposals, not dependencies.
 
 ### Quantifiers
 
@@ -5721,6 +5786,10 @@ reference |> why |> stated |> holds   the values of the facts an explanation res
 reference |> affects |> holds         the values of what a change of the reference reaches (NUC 121)
 model |> holds                        the values of the current model's nodes (NUC 121)
 selection |> holds                    the list (selection).map(step => step.holds); ends the pipeline (NUC 121)
+reference |> why |> edges             the [input, node] edges of an explanation's steps, in its order (NUC 133)
+reference |> affects |> edges         the edges that a change of the reference travels (NUC 133)
+model |> edges                        the edges of the current model's nodes (NUC 133)
+selection |> edges                    one [input, step.node] pair per name of each step's from; ends the pipeline (NUC 133)
 all name in collection: condition     true when the condition holds for every member (NUC 62)
 every name in collection: condition   the same quantifier as all (NUC 98)
 any name in collection: condition     true when the condition holds for some member (NUC 62)

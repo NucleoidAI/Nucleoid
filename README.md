@@ -2876,6 +2876,33 @@ assert([undo, top, edits.length], [["fix typo", "trim intro", "draft"], "fix typ
   made in. See the
   [root contract](nucleoid.spec.md#reversal-method-aliases).
 
+## Edge lists of reasoning selections
+
+**Edges draws the wiring behind a heat alarm**
+
+```nuc
+temp = 31
+humidity = 70
+heat = temp > 30
+damp = humidity > 60
+alarm = heat && damp
+wiring = (alarm |> why |> edges).map(edge -> edge.join(" -> "))
+assert(wiring, ["heat -> alarm", "damp -> alarm", "temp -> heat", "humidity -> damp"])
+wind = 4
+alarm = heat && damp && wind < 10
+assert(wiring, ["heat -> alarm", "damp -> alarm", "wind -> alarm", "temp -> heat", "humidity -> damp"])
+```
+
+- [NUC 133](docs/nuc-0133.md) adds the final reasoning stage `|> edges`,
+  which lists the dependency edges of a selection's steps: for each step,
+  in the selection's order, one `[input, node]` pair for every input the
+  step reads. `alarm |> why |> edges` gives the edges of the alarm's
+  explanation, and mapping each pair to an arrow draws it.
+- The pairs are the ones the steps' `from` lists record, and they stay live
+  the way the explanation does: once the alarm also reads the wind, the
+  wind's edge joins the wiring. See the
+  [root contract](nucleoid.spec.md#edge-lists-of-reasoning-selections).
+
 ## Reactive list flattening
 
 **Flat turns nested lists into one live list**
