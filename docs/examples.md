@@ -1866,12 +1866,16 @@ assert(second.scaled, 15)
   Noniterable sources retain their existing errors, without auto-invocation.
 - The [NUC 51 candidate](nuc-0051.md) also accepts String snapshots without
   changing List filtering; see [string iteration](#string-iteration).
-- Require the immediate colon followed by newline/indent and a real indent
-  after only normal newline/semicolon layout; `:;` never qualifies. No
+- The [NUC 127 draft](nuc-0127.md) also permits `for Reading` before the
+  same genuine indented suite. Contextual Rust identifiers such as `while`,
+  `enum` and `model` qualify too; no keyword or token is added.
+- Require the identifier and optional colon followed by newline/indent and a real indent
+  after only normal newline/semicolon layout; a header-line `;` or `:;` never qualifies. No
   inline/braced/missing-indent, parenthesized or expression-source shorthand
   is added.
 - Nested `it` shadowing/restoration, receivers, return propagation, body
   control flow, graph dependencies, rollback and resource limits are unchanged.
+- Explicit single-name and two-name entry loops retain their required colon.
 - Full grammar and exact diagnostics are in the authoritative
   [implicit iterator loop section](../nucleoid.spec.md#implicit-iterator-indented-loops).
 
@@ -4409,6 +4413,31 @@ safe = every truck in Truck: not truck.overloaded
   `all truck in Truck: not truck.overloaded`. Lightening `south` releases it
   and makes the fleet safe. See [NUC 98](nuc-0098.md) and the
   [root contract](../nucleoid.spec.md#every-quantifiers-class-references-and-predicate-sentences).
+
+## Colon-free implicit iterator suites
+
+**Colon-free implicit iterators keep population walks one shot**
+
+```nuc
+class Counter(amount):
+    this.amount = amount
+first = Counter(2)
+second = Counter(3)
+total = 0
+for Counter
+    total += it.amount
+first.amount = 9
+Counter(4)
+assert(total, 5)
+total
+# return: 5
+```
+
+- The genuine indented suite runs exactly as `for Counter:` would.
+  Later instance updates or population growth do not rerun the completed
+  body, and the loop retains the accepted scopes and transaction behavior.
+- See [NUC 127](nuc-0127.md) and the
+  [root contract](../nucleoid.spec.md#implicit-iterator-indented-loops).
 
 ## Copyright
 

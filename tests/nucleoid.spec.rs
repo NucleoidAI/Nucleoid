@@ -22131,6 +22131,73 @@ order.size
 # return: "big""#);
 }
 
+/// Nucleoid omits colons from implicit instance iterator suites
+#[rustfmt::skip]
+#[test]
+fn omits_colons_from_implicit_instance_iterator_suites() {
+    let mut run = runner();
+    run(r#"class Entry(amount):
+    this.amount = amount"#);
+    run("first = Entry(2)");
+    run("second = Entry(5)");
+    run("values = [first, 99, second, null, {amount: 9}]");
+    run("seen = []");
+    run("total = 0");
+    run(r#"for values
+    seen.push(it.amount)
+    total += it.amount"#);
+    assert_eq!(run("seen"), serde_json::json!([2, 5]));
+    assert_eq!(run("total"), 7);
+    run("empty = []");
+    run(r#"for empty
+    total += 100"#);
+    assert_eq!(run("total"), 7);
+}
+
+/// Nucleoid nests colon free implicit iterator scopes
+#[rustfmt::skip]
+#[test]
+fn nests_colon_free_implicit_iterator_scopes() {
+    let mut run = runner();
+    run(r#"it = "ab""#);
+    run(r#"inner = "xy""#);
+    run("seen = []");
+    run(r#"for it
+    for inner
+        seen.push(it)"#);
+    assert_eq!(run("seen"), serde_json::json!(["x", "y", "x", "y"]));
+    assert_eq!(run("it"), "ab");
+}
+
+/// Nucleoid propagates returns and rollback through colon free implicit iterators
+#[rustfmt::skip]
+#[test]
+fn propagates_returns_and_rollback_through_colon_free_implicit_iterators() {
+    let mut run = runner();
+    run(r#"def first(text):
+    for text
+        return it
+    return "empty"
+assert(first("ab"), "a")
+assert(first(""), "empty")
+text = "ab"
+value = 7
+failure = null
+try:
+    for text
+        value = 99
+        throw "stop"
+catch error:
+    failure = error
+assert(value, 7)
+assert(failure, "stop")
+for text
+    value += 1
+assert(value, 9)
+value
+# return: 9"#);
+}
+
 /// The committed tests must not drift from their generated JSONL export.
 #[rustfmt::skip]
 #[test]

@@ -292,9 +292,15 @@ directCondition
     : clauseExpression COLON? indentedBlock elseClause?
     ;
 
+// The implicit alternative requires exactly one Rust Identifier and a real
+// indented body, with or without its colon. Contextual spellings such as
+// WHILE, ENUM, MODEL, REPEAT and UNTIL normalize through name/enumName.
+// Only NEWLINE or INDENT may immediately follow that name or its colon;
+// a header-line ';', inline/braced body or wider source never qualifies.
+// Both explicit alternatives retain their colon-required suite.
 forStmt
     : FOR name COMMA name (OF | IN) clauseExpression suite  // Stmt::ForEntries
-    | FOR name COLON indentedBlock                          // Stmt::For, item "it"
+    | FOR name COLON? indentedBlock                         // Stmt::For, item "it"
     | FOR name (OF | IN) clauseExpression suite             // Stmt::For
     ;
 

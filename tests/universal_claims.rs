@@ -326,7 +326,8 @@ fn appended_document_cases_run_every_assertion() {
     assert_eq!(assertions, 32);
     let last: Vec<&str> = spec
         .iter()
-        .skip(spec.len() - SPEC_TITLES.len())
+        .skip(spec.len() - SPEC_TITLES.len() - 3)
+        .take(SPEC_TITLES.len())
         .map(|case| case.title.as_str())
         .collect();
     assert_eq!(last, SPEC_TITLES);
@@ -341,7 +342,10 @@ fn appended_document_cases_run_every_assertion() {
             "Every keeps a fleet's rules stated as claims about every truck",
         ),
     ] {
-        assert_eq!(cases.last().map(|case| case.title.as_str()), Some(title));
+        assert_eq!(
+            cases.get(cases.len() - 2).map(|case| case.title.as_str()),
+            Some(title)
+        );
     }
 }
 

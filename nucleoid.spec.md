@@ -2036,15 +2036,20 @@ statement positions; caught values and transaction recovery are unchanged.
 ## Implicit iterator indented loops
 
 - `for NAME:` with a genuine indented body is optionally exactly
-  `for it of NAME:` with that same body. `NAME` is one ordinary identifier
-  denoting the source expression, not the iteration variable.
-- After `for`, recognize the complete immediate `Identifier Colon` prefix
+  `for it of NAME:` with that same body. Its colon may also be omitted:
+  `for NAME` followed by that same genuine indented body is identical.
+  `NAME` is exactly one Rust `Identifier` token denoting the source expression,
+  not the iteration variable; contextual names such as `while`, `enum`, `model`,
+  `repeat` and `until` remain identifiers and qualify in both spellings.
+- After `for`, recognize the complete immediate identifier and optional colon
   without consuming tokens, allocating names, cloning an AST or skipping header
-  separators. Immediately after the colon require `Newline` or `Indent`, then
-  require a real `Indent` after only existing `Newline`/`Semicolon` layout.
-  A colon immediately followed by a semicolon (`:;`) never qualifies.
-- Leave the identifier for the ordinary expression parser and the colon,
-  layout and complete body for unchanged `suite()`. Lower directly to the
+  separators. Immediately after the identifier or its colon require `Newline`
+  or `Indent`, then require a real `Indent` after only existing
+  `Newline`/`Semicolon` layout. A header-line semicolon, including `:;`,
+  never qualifies.
+- Leave the identifier for the ordinary expression parser. A present colon
+  still uses unchanged `suite()`; omission uses its shared `suite_body()`,
+  preserving the complete layout and body parser. Lower directly to the
   existing `Stmt::For { variable: "it", iterable: Identifier(NAME), body }`,
   preserving the explicit form's full AST and canonical `for it of NAME`.
 - Blank/comment lines and normal body separators remain suite layout. No
@@ -2053,7 +2058,8 @@ statement positions; caught values and transaction recovery are unchanged.
   shorthand is added. `for it:` uses the outer source named `it`.
 - Retain both explicit `for variable of expression` and
   `for variable in expression`, their arbitrary source expressions,
-  inline/braced/indented suites and existing diagnostics. No new tokens,
+  colon-required inline/braced/indented suites and existing diagnostics.
+  Two-name entry loops also retain their required colon. No new tokens,
   keywords, public AST, runtime types or general iterable support are added.
 - A loop evaluates its source once and iterates a snapshot once, not a standing
   declaration. A class value supplies its current ordered registered instances;
@@ -2095,16 +2101,26 @@ statement positions; caught values and transaction recovery are unchanged.
   single-untyped, single-typed and multiple bare-function block guards; it does
   not relax parameter, arrow or suite grammar. Existing expression/statement
   nesting, operand and postfix limits remain in force.
+- Native continuation buffers exactly a lexical `For Identifier` header
+  without a colon. Blank-line commit and EOF still invoke the real parser;
+  explicit loops, wider sources and header-line semicolons gain no opener.
 - Executable traces are the five appended `Nucleoid ... implicit iterator ...`
   entries below. Historical explicit loops remain unchanged, including
   `Nucleoid creates a for of statement`,
   `Nucleoid creates a block of for statement without dependencies` and
   `Nucleoid loops through only defined objects in a for of statement`.
+- Colon omission is traced by the appended entries
+  `Nucleoid omits colons from implicit instance iterator suites`,
+  `Nucleoid nests colon free implicit iterator scopes` and
+  `Nucleoid propagates returns and rollback through colon free implicit iterators`.
+  Their colon-bearing counterparts retain the same assertions, returns and
+  executed coverage. Existing exit-controlled `repeat:`/`until` loops and
+  `origins`/`outcomes` reasoning stages are unchanged.
 
 ## String iteration
 
 - Existing `for variable of expression`, `for variable in expression` and
-  genuine-indented `for NAME:` forms also accept a String source, without new
+  genuine-indented `for NAME:` and `for NAME` forms also accept a String source, without new
   grammar. Explicit sources keep arbitrary expressions and all existing suite
   forms; the named-source shorthand still requires one ordinary identifier.
 - Evaluate the source exactly once, before introducing the iteration binding.
@@ -28021,4 +28037,59 @@ $Order is big
 assert(order.big, true)
 order.size
 # return: "big"
+---
+# Nucleoid omits colons from implicit instance iterator suites
+
+class Entry(amount):
+    this.amount = amount
+first = Entry(2)
+second = Entry(5)
+values = [first, 99, second, null, {amount: 9}]
+seen = []
+total = 0
+for values
+    seen.push(it.amount)
+    total += it.amount
+assert(seen, [2, 5])
+assert(total, 7)
+empty = []
+for empty
+    total += 100
+assert(total, 7)
+---
+# Nucleoid nests colon free implicit iterator scopes
+
+it = "ab"
+inner = "xy"
+seen = []
+for it
+    for inner
+        seen.push(it)
+assert(seen, ["x", "y", "x", "y"])
+assert(it, "ab")
+---
+# Nucleoid propagates returns and rollback through colon free implicit iterators
+
+def first(text):
+    for text
+        return it
+    return "empty"
+assert(first("ab"), "a")
+assert(first(""), "empty")
+text = "ab"
+value = 7
+failure = null
+try:
+    for text
+        value = 99
+        throw "stop"
+catch error:
+    failure = error
+assert(value, 7)
+assert(failure, "stop")
+for text
+    value += 1
+assert(value, 9)
+value
+# return: 9
 ```

@@ -2953,4 +2953,13 @@ plato.mortal = false
 assert(every h in Human: h.mortal, false)
 socrates.mortal
 # return: true
+---
+# Nucleoid iterates named strings without a suite colon
+
+text = "cab"
+letters = []
+for text
+    letters.push(it)
+assert(letters, ["c", "a", "b"])
+assert(letters.join(""), text)
 ```

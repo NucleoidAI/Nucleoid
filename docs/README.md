@@ -1837,9 +1837,13 @@ for question of Question:
 - Accepted [NUC 31](nuc-0031.md) specifies `for NAME:` with a genuine indented
   body as exactly `for it of NAME:` with that same body; `NAME` is one ordinary
   identifier source, not the iteration variable.
-- Require the immediate identifier and colon, an immediate newline or indent,
+- The [NUC 127 draft](nuc-0127.md) permits that colon to be omitted before
+  the same genuinely indented suite. The source is exactly one Rust
+  `Identifier`; contextual spellings such as `while`, `enum`, `model`,
+  `repeat` and `until` remain names and qualify with or without the colon.
+- Require the immediate identifier and optional colon, an immediate newline or indent,
   then a real indent after only existing newline/semicolon layout. Do not skip
-  header separators; `:;`, inline/braced/missing-indent shorthand and
+  header separators; a header-line `;` or `:;`, inline/braced/missing-indent shorthand and
   property/index/call/literal/class-reference/parenthesized shorthand sources
   are not added.
 - Source lookup precedes binding local `it`, so `for it:` reads the outer
@@ -1858,6 +1862,21 @@ for question of Question:
 for Task:
     it.done = true
 ```
+
+- Named String sources keep the same scalar snapshot and local `it`.
+  The colon-bearing form remains accepted with identical behavior.
+
+```
+text = "cab"
+letters = []
+for text
+    letters.push(it)
+assert(letters, ["c", "a", "b"])
+assert(letters.join(""), text)
+```
+
+- Explicit `for item of SOURCE:`, `for item in SOURCE:` and two-name entry
+  loops retain their required colons and all accepted suite forms.
 
 - [NUC 72](nuc-0072.md) adds two-name loops over an object's entries:
   `for key, value of source:` and `for key, value in source:`. A header is a

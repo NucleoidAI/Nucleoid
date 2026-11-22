@@ -55,8 +55,8 @@ impl Parser {
         self.suite_body()
     }
 
-    /// Shares the existing body parser with conditional and exception clauses
-    /// whose real indentation has already qualified for colon omission.
+    /// Shares the existing body parser with conditional, exception and implicit
+    /// iterator suites already qualified for colon omission by real indentation.
     pub(super) fn suite_body(&mut self) -> Result<Vec<Stmt>> {
         if self.eat(&Token::Newline) || self.check(&Token::Indent) {
             self.skip_newlines();

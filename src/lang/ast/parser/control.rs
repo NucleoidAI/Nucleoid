@@ -210,8 +210,9 @@ impl Parser {
             });
         }
 
-        let variable = if matches!(self.peek(), Token::Identifier(_)) && self.has_indented_suite(1)
-        {
+        let implicit = matches!(self.peek(), Token::Identifier(_))
+            && (self.has_indented_suite(1) || self.has_indented_body(1));
+        let variable = if implicit {
             // Leave the named source and its complete suite to the existing
             // parsers. Nonqualifying prefixes retain the explicit-loop path.
             "it".to_string()
@@ -233,7 +234,11 @@ impl Parser {
         };
 
         let iterable = self.clause_expression()?;
-        let body = self.suite()?;
+        let body = if implicit {
+            self.clause_suite()?
+        } else {
+            self.suite()?
+        };
 
         Ok(Stmt::For {
             variable,

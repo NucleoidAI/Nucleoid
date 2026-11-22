@@ -130,6 +130,9 @@ pub(super) fn indented_body_header(line: &str) -> bool {
     let first = tokens.next();
     let last = tokens.next_back();
     matches!(last, Some(Token::Colon))
+        || (matches!(first, Some(Token::Keyword(Keyword::For)))
+            && matches!(last, Some(Token::Identifier(_)))
+            && tokens.next().is_none())
         || (matches!(first, Some(Token::Keyword(Keyword::Class)))
             && matches!(last, Some(Token::Identifier(_)))
             && matches!(tokens.next_back(), Some(Token::Colon)))

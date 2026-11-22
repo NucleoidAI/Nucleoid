@@ -636,11 +636,15 @@ assert(task.done, true)
   standing rule. A named noniterable source raises the existing TypeError.
 - The [NUC 51 candidate](docs/nuc-0051.md) additionally accepts String sources
   as scalar snapshots, without changing that object-only List policy.
-- Require the immediate identifier/colon header, then a newline or indent and
-  a real indent after only normal newline/semicolon layout. No `:;`,
+- The [NUC 127 draft](docs/nuc-0127.md) also permits `for NAME` without its
+  colon before that same genuinely indented body. `NAME` is exactly one Rust
+  `Identifier`, including contextual names such as `while`, `enum` and `model`.
+- Require the immediate identifier and optional colon, then a newline or indent
+  and a real indent after only normal newline/semicolon layout. No header-line `;` or `:;`,
   inline/braced/missing-indent or expression-source shorthand is added.
 - Explicit `for variable of expression` and `for variable in expression`
-  remain valid with their existing arbitrary expressions and suite forms.
+  remain valid with their existing arbitrary expressions and colon-required suite forms.
+  Two-name entry loops also keep their colon.
   Nested scopes, receivers, returns, snapshots, graphs and rollback are unchanged.
 
 Reasoning stays live too: `why b` explains its dependencies, and `affects a`
@@ -2896,6 +2900,27 @@ assert(every h in Human: h.mortal, true)
   rule. Elsewhere `every` stays an ordinary name, so `xs.every(...)` and a
   variable named `every` work as before. See the
   [root contract](nucleoid.spec.md#every-quantifiers-class-references-and-predicate-sentences).
+
+## Colon-free implicit iterator suites
+
+**Named iterator suites use indentation without a colon**
+
+```nuc
+class Parcel(weight):
+    this.weight = weight
+light = Parcel(4)
+heavy = Parcel(7)
+total = 0
+for Parcel
+    total += it.weight
+assert(total, 11)
+```
+
+- `for Parcel` uses the same one-shot population snapshot, local `it` and
+  imperative suite as `for Parcel:`. The optional colon never replaces the
+  accepted spelling or broadens the source expression.
+- See [NUC 127](docs/nuc-0127.md) and the
+  [root contract](nucleoid.spec.md#implicit-iterator-indented-loops).
 
 ## Benchmark
 

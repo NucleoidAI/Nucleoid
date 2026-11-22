@@ -1022,3 +1022,57 @@ fn try_statements_buffer_their_except_clause_until_a_blank_line() {
         ]
     );
 }
+
+#[test]
+fn implicit_iterator_headers_buffer_only_one_identifier_until_commit() {
+    for header in [
+        "for text",
+        "for text # source",
+        "for text /* source */",
+        "for while",
+        "for enum",
+        "for model",
+        "for repeat",
+        "for until",
+    ] {
+        assert!(indented_body_header(header), "{header}");
+        assert_eq!(next_indentation(header, true), INDENT, "{header}");
+        assert_eq!(
+            next_indentation(&format!("    {header}"), true),
+            format!("    {INDENT}"),
+            "{header}"
+        );
+    }
+    for header in [
+        "for",
+        "for text;",
+        "for text of values",
+        "for text.items",
+        "for text[0]",
+        "for text()",
+        "for (text)",
+        "for \"ab\"",
+        "for $Entry",
+        "for text {}",
+        "for key, val in values",
+    ] {
+        assert!(!indented_body_header(header), "{header}");
+        assert_eq!(next_indentation(header, false), "", "{header}");
+    }
+    assert_eq!(
+        submitted(&[
+            "text = \"ab\"",
+            "seen = []",
+            "for text",
+            "    seen.push(it)",
+            ""
+        ]),
+        [
+            Some("text = \"ab\"\n".to_string()),
+            Some("seen = []\n".to_string()),
+            None,
+            None,
+            Some("for text\n    seen.push(it)\n".to_string())
+        ]
+    );
+}
