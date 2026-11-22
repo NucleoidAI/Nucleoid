@@ -129,15 +129,19 @@ formatting exactly:
 - `declarations[0]` holds every class declaration of the world model, because
   the solver runs it alone to build input states. Existing datasets declare
   one class, `Obj(x: int, y: int, width: int, height: int, orientation: int,
-  volume: int, ...)`; add another class only for a distinct kind of object
-  the transformation needs. Each class whose instances are annotated objects
-  takes the standard entries `x: int, y: int, width: int, height: int,
-  orientation: int, volume: int` first, in that order, and its body assigns
-  every parameter to `this` and sets an initial tag either way: a literal,
-  `this.tag = 'lNNNN'`, or a `tag: str` parameter, `this.tag = tag`, whose
-  value each implementation passes, as in `dataset.27a28665.json`. Add only
-  the descriptive properties the transformation needs, such as categorical
-  colors.
+  volume: int, tag: str = 'lNNNN', ...)`; add another class only for a
+  distinct kind of object the transformation needs. Each class whose
+  instances are annotated objects takes the standard entries `x: int, y: int,
+  width: int, height: int, orientation: int, volume: int` first, in that
+  order, then the optional `tag: str = 'lNNNN'`, whose default is the class's
+  initial tag, and its body assigns every parameter to `this`, the tag with
+  `this.tag is tag` right after `this.volume is volume`. An implementation
+  passes `tag` only when its object needs a tag other than the default, as
+  every implementation in `dataset.27a28665.json` names its block's shape
+  with `tag='l4262'` and the like; otherwise it leaves `tag` out. The default
+  keeps its quotes, because accepted Nucleoid takes only a literal as a
+  parameter default. Add only the descriptive properties the transformation
+  needs, such as categorical colors.
 - `width` and `height` are the column and row counts of the object's own
   shape, the nonzero bounding box of its input mask. They do not change when
   only the orientation changes: a turn or mirror is the orientation's job.

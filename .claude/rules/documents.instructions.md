@@ -8,6 +8,8 @@ applyTo: "**"
 
 `nucleoid.spec.md`, the training records in `dataset/`, the language reference in `docs/`, and the Rust crate (`Cargo.toml`, `src/`) must stay consistent. Propagate affected behavior changes to the relevant records and references in the same change.
 
+Grammars are written in W3C EBNF, the notation of the XML 1.0 specification, never ANTLR `.g4` or another notation. `docs/nucleoid.ebnf` is the syntax reference for the Rust lexer and parser: its comments record the token-source contract and the contextual parsing rules, `nucleoid.spec.md` stays normative over it, and every change to the accepted syntax updates it in the same change, under the [nuc-proposal skill](../skills/nuc-proposal/SKILL.md#update-the-grammar). `arc/arc.ebnf` is the minimal grammar of the code in the ARC datasets, its syntax rules named after those of `docs/nucleoid.ebnf`, and is kept under the [ARC instructions](arc.instructions.md).
+
 `dataset/` must contain only `.jsonl` files. Do not add Markdown, README files, source documents, or subdirectories there. Do not create duplicate Markdown datasets or relocate them elsewhere: `docs/dataset/` must not exist. Keep the normative `nucleoid.spec.md` at the repository root.
 
 `dataset/nucleoid.spec.jsonl` is generated from `nucleoid.spec.md`, never hand-edited. Regenerate that export with `UPDATE_DATASET=1 cargo test --test dataset`; regenerate its Rust tests with `UPDATE_SPEC_TESTS=1 cargo build` when necessary.

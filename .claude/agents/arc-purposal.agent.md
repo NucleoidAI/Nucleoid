@@ -70,7 +70,7 @@ Follow `.claude/CLAUDE.md`, the
     under the automatic acceptance rule, where the accepted break counts as
     no failure.
 - Whenever a dataset introduces new syntax, add that syntax to
-  `arc/nucleoid.ebnf` yourself after the outcome, under the skill's
+  `arc/arc.ebnf` yourself after the outcome, under the skill's
   [grammar step](../skills/arc-purposal/SKILL.md#keep-the-dataset-grammar),
   and keep that grammar minimal: it derives exactly the syntax the datasets
   in `arc/src/dataset/` use, each alternative, optional part and repetition

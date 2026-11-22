@@ -29,7 +29,7 @@ export async function generate({
       role: "system",
       content: `
         EBNF:
-        ${readFileSync(join(__dirname, "..", "..", "nucleoid.ebnf"), "utf8")}
+        ${readFileSync(join(__dirname, "..", "..", "arc.ebnf"), "utf8")}
       `,
     });
   }

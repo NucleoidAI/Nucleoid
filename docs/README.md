@@ -5458,9 +5458,9 @@ Full detail: [NUC 9](nuc-0009.md).
 
 ## 14. Syntax Summary
 
-The ANTLR4 syntax reference is in [nucleoid.g4](nucleoid.g4). Its comments
-record the runtime-specific token-source and contextual parsing requirements;
-the Rust parser remains the implementation of those requirements.
+The W3C EBNF syntax reference is in [nucleoid.ebnf](nucleoid.ebnf). Its
+comments record the runtime-specific token-source and contextual parsing
+requirements; the Rust parser remains the implementation of those requirements.
 
 ```
 name = expression                      variable assignment

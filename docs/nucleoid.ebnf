@@ -1,19 +1,28 @@
-// Copyright 2020 Nucleoid. Licensed under Apache-2.0; see ../LICENSE.
-
-grammar nucleoid;
+/* Copyright 2020 Nucleoid. Licensed under Apache-2.0; see ../LICENSE. */
 
 /*
- * Action-free ANTLR4 syntax reference for the Rust lexer and parser.
- * nucleoid.spec.md remains normative for behavior.
+ * W3C EBNF syntax reference for the Rust lexer and parser, in the notation of
+ * the XML 1.0 specification. nucleoid.spec.md remains normative for behavior.
  *
- * A generated parser is not a replacement for the Rust implementation:
- * its token source must supply INDENT, DEDENT, VERSION_INDEX and REGEX.
- * ANTLR prediction does not enforce the Rust parser's committed lookahead.
- * Contextual decisions, tentative parses, lowerings and limits described
- * below remain part of the implementation contract, not ANTLR actions.
+ * Notation: lowercase syntax rules match tokens, and uppercase lexical rules
+ * match characters. Each lexical rule defines a token, except WORD_TOKEN,
+ * which groups the reserved and contextual word tokens, and the token parts
+ * at the end. Quoted literals and character classes have no escapes: #xN is
+ * the character with hexadecimal code N, and A - B matches what A matches
+ * unless B matches it too.
+ *
+ * A parser built from this grammar is not a replacement for the Rust
+ * implementation: its token source must supply INDENT, DEDENT, VERSION_INDEX,
+ * REGEX and EOF. The grammar's alternatives do not express the Rust parser's
+ * committed lookahead. Contextual decisions, tentative parses, lowerings and
+ * limits described below remain part of the implementation contract, not
+ * grammar rules.
  *
  * Token-source contract:
  * - Tokens outside literals and comments are ASCII.
+ * - Ordinary tokenization reads the longest token at each position. Only the
+ *   rules of this contract supply INDENT, DEDENT, VERSION_INDEX, REGEX and
+ *   EOF.
  * - Scan C-style comments and operand-position regular expressions before
  *   ordinary tokenization. A regular expression must close on its
  *   line; otherwise '/' and '/=' keep their operator readings. Its flags
@@ -33,132 +42,119 @@ grammar nucleoid;
  *   between open levels closes to the shallower level without error.
  * - Finish with the pending NEWLINE, all remaining DEDENTs, then EOF.
  *
- * WHITESPACE and COMMENT stay on the hidden channel so a token-source
- * adapter can inspect layout. REGEX_LITERAL records the scanner's pattern;
- * it is a fragment, deliberately not an unconditional '/' lexer rule.
+ * WHITESPACE and COMMENT may stand between any two tokens and appear in no
+ * syntax rule, but the token source reads them for layout. REGEX_LITERAL
+ * records the scanner's pattern; it is part of REGEX, deliberately not a
+ * token of its own that every '/' would start.
  */
 
-tokens { INDENT, DEDENT, VERSION_INDEX, REGEX }
+/* Tokens that only the token-source contract supplies. */
+INDENT           ::= /* empty, before a logical line of increased width */
+DEDENT           ::= /* empty, for each layout level a logical line closes */
+VERSION_INDEX    ::= DIGITS
+REGEX            ::= REGEX_LITERAL
+EOF              ::= /* empty, at the end of the input */
 
 program
-    : separator* (statement separator*)* EOF
-    ;
+    ::= separator* (statement separator*)* EOF
 
-// parse_expression skips leading separators and ignores trailing tokens.
-// Its top level forms no membership test, as an interpolation's does not.
+/* parse_expression skips leading separators and ignores trailing tokens.
+   Its top level forms no membership test, as an interpolation's does not. */
 expressionInput
-    : separator* expression remainingTokens EOF
-    ;
+    ::= separator* expression remainingTokens EOF
 
 separator
-    : NEWLINE
-    | SEMI
-    | INDENT
-    | DEDENT
-    ;
+    ::= NEWLINE
+      | SEMI
+      | INDENT
+      | DEDENT
 
 lineSeparator
-    : NEWLINE
-    | SEMI
-    ;
+    ::= NEWLINE
+      | SEMI
 
 suite
-    : COLON suiteBody
-    ;
+    ::= COLON suiteBody
 
 suiteBody
-    : indentedBlock
-    | inlineSuite
-    ;
+    ::= indentedBlock
+      | inlineSuite
 
-// A trailing ';' in an inline suite is valid only before NEWLINE or EOF,
-// never immediately before 'else' or 'catch'.
+/* A trailing ';' in an inline suite is valid only before NEWLINE or EOF,
+   never immediately before 'else' or 'catch'. */
 inlineSuite
-    : statement (SEMI statement)* SEMI?
-    ;
+    ::= statement (SEMI statement)* SEMI?
 
 indentedStart
-    : INDENT
-    | NEWLINE lineSeparator* INDENT
-    ;
+    ::= INDENT
+      | NEWLINE lineSeparator* INDENT
 
 indentedBlock
-    : indentedStart lineSeparator* (statement lineSeparator*)* blockEnd
-    ;
+    ::= indentedStart lineSeparator* (statement lineSeparator*)* blockEnd
 
 blockEnd
-    : DEDENT
-    | EOF
-    ;
+    ::= DEDENT
+      | EOF
 
 body
-    : suite
-    | indentedBlock
-    ;
+    ::= suite
+      | indentedBlock
 
 block
-    : LBRACE separator* (statement separator*)* RBRACE
-    ;
+    ::= LBRACE separator* (statement separator*)* RBRACE
 
-// Statements need no separator where the preceding production ends.
-// At statement start, '{' is a block or pattern, never an object literal.
-// Destructuring, whileStmt and repeatStmt are tentative; other recognized
-// statement headers commit even if a later token fails to match, as
-// repeatUntilStmt commits at 'REPEAT COLON' outside a typeDeclaration.
+/* Statements need no separator where the preceding production ends.
+   At statement start, '{' is a block or pattern, never an object literal.
+   Destructuring, whileStmt and repeatStmt are tentative; other recognized
+   statement headers commit even if a later token fails to match, as
+   repeatUntilStmt commits at 'REPEAT COLON' outside a typeDeclaration. */
 statement
-    : destructuring
-    | whileStmt
-    | repeatUntilStmt
-    | repeatStmt
-    | enumStmt
-    | ifStmt
-    | forStmt
-    | classStmt
-    | functionDecl
-    | tryStmt
-    | PASS                              // Stmt::Pass
-    | returnStmt
-    | THROW expression                  // Stmt::Throw
-    | DELETE expression                 // Stmt::Delete
-    | block                             // Stmt::Block
-    | typeDeclaration
-    | assertStmt
-    | supposeStmt
-    | valueAssignment
-    | isAssignment
-    | predicateSentence
-    | expression                        // Stmt::Assign or Stmt::Expression
-    ;
+    ::= destructuring
+      | whileStmt
+      | repeatUntilStmt
+      | repeatStmt
+      | enumStmt
+      | ifStmt
+      | forStmt
+      | classStmt
+      | functionDecl
+      | tryStmt
+      | PASS                              /* Stmt::Pass */
+      | returnStmt
+      | THROW expression                  /* Stmt::Throw */
+      | DELETE expression                 /* Stmt::Delete */
+      | block                             /* Stmt::Block */
+      | typeDeclaration
+      | assertStmt
+      | supposeStmt
+      | valueAssignment
+      | isAssignment
+      | predicateSentence
+      | expression                        /* Stmt::Assign or Stmt::Expression */
 
 returnStmt
-    : RETURN expression?                // Stmt::Return
-    ;
+    ::= RETURN expression?                /* Stmt::Return */
 
-// The following token must be NEWLINE, ';', DEDENT or EOF.
+/* The following token must be NEWLINE, ';', DEDENT or EOF. */
 typeDeclaration
-    : name COLON name                   // Stmt::Declaration
-    ;
+    ::= name COLON name                   /* Stmt::Declaration */
 
-// A third comma is an error.
+/* A third comma is an error. */
 assertStmt
-    : ASSERT COLON expression COMMA expression
-    ;
+    ::= ASSERT COLON expression COMMA expression
 
-// A premise is tentative: it ends exactly at ':' and cannot be a colon
-// statement or end in the word 'lambda'; an atVariable named lambda is not
-// that word. Otherwise 'suppose' stays a name.
-// The 'path IS' head follows the isAssignment contract.
+/* A premise is tentative: it ends exactly at ':' and cannot be a colon
+   statement or end in the word 'lambda'; an atVariable named lambda is not
+   that word. Otherwise 'suppose' stays a name.
+   The 'path IS' head follows the isAssignment contract. */
 supposeStmt
-    : (conditional ASSIGN | path IS)? SUPPOSE premise? suite
-    ;
+    ::= (conditional ASSIGN | path IS)? SUPPOSE premise? suite
 
 premise
-    : clauseExpression
-    ;
+    ::= clauseExpression
 
 valueAssignment
-    : path VALUE_ASSIGN expression      // Stmt::ValueAssign
-    ;
+    ::= path VALUE_ASSIGN expression      /* Stmt::ValueAssign */
 
 /*
  * Is-assignment contract (NUC 93, NUC 94, NUC 95, NUC 96):
@@ -198,8 +194,7 @@ valueAssignment
  *   operand, positional argument or spread source stays an item position.
  */
 isAssignment
-    : path IS expression                // Stmt::Assign, as path = expression
-    ;
+    ::= path IS expression                /* Stmt::Assign, as path = expression */
 
 /*
  * Predicate-sentence contract (NUC 98, NUC 104):
@@ -215,243 +210,204 @@ isAssignment
  *   it; the name is the property, never a word.
  */
 predicateSentence
-    : classReference IS name            // Stmt::Assign, as $Class.name = true
-    ;
+    ::= classReference IS name            /* Stmt::Assign, as $Class.name = true */
 
 classReference
-    : CLASS_REF
-    | spelledClass
-    | LPAREN classReference RPAREN
-    ;
+    ::= CLASS_REF
+      | spelledClass
+      | LPAREN classReference RPAREN
 
-// Only at a statement boundary; require NEWLINE, ';', DEDENT, '}', EOF,
-// 'else' or 'catch' after the value. At most 128 targets are accepted.
+/* Only at a statement boundary; require NEWLINE, ';', DEDENT, '}', EOF,
+   'else' or 'catch' after the value. At most 128 targets are accepted. */
 destructuring
-    : (objectPattern | unpackingPattern) ASSIGN conditional
-    ;
+    ::= (objectPattern | unpackingPattern) ASSIGN conditional
 
 objectPattern
-    : LBRACE patternEntries RBRACE
-    ;
+    ::= LBRACE patternEntries RBRACE
 
 patternEntries
-    : namedPatternEntries
-    | name (COMMA patternEntries?)?
-    ;
+    ::= namedPatternEntries
+      | name (COMMA patternEntries?)?
 
 namedPatternEntries
-    : name COLON name (COMMA patternEntries? | namedPatternEntries)?
-    ;
+    ::= name COLON name (COMMA patternEntries? | namedPatternEntries)?
 
 unpackingPattern
-    : name COMMA (name (COMMA name)* COMMA?)?
-    ;
+    ::= name COMMA (name (COMMA name)* COMMA?)?
 
-// Enum declarations are disabled inside class bodies. Their line form
-// requires a line end; names are distinct and numeric members are finite.
+/* Enum declarations are disabled inside class bodies. Their line form
+   requires a line end; names are distinct and numeric members are finite. */
 enumStmt
-    : ENUM enumName COLON (enumBlock | enumLine)
-    ;
+    ::= ENUM enumName COLON (enumBlock | enumLine)
 
 enumLine
-    : enumMember (COMMA enumMember)+
-    ;
+    ::= enumMember (COMMA enumMember)+
 
 enumBlock
-    : NEWLINE* INDENT NEWLINE* (enumMember NEWLINE+)* enumMember? blockEnd
-    ;
+    ::= NEWLINE* INDENT NEWLINE* (enumMember NEWLINE+)* enumMember? blockEnd
 
 enumMember
-    : name (ASSIGN scalarLiteral)?      // Expr::Enum
-    ;
+    ::= name (ASSIGN scalarLiteral)?      /* Expr::Enum */
 
 scalarLiteral
-    : (MINUS | PLUS)? NUMBER
-    | STRING
-    | TRUE
-    | FALSE
-    | NULL
-    ;
+    ::= (MINUS | PLUS)? NUMBER
+      | STRING
+      | TRUE
+      | FALSE
+      | NULL
 
 ifStmt
-    : IF conditionClause                // Stmt::If
-    ;
+    ::= IF conditionClause                /* Stmt::If */
 
 conditionClause
-    : clauseExpression body elseClause?
-    ;
+    ::= clauseExpression body elseClause?
 
 elseClause
-    : lineSeparator* ELSE (ifStmt | directCondition | body)
-    ;
+    ::= lineSeparator* ELSE (ifStmt | directCondition | body)
 
-// A direct else/elif condition needs a real indented body. Its balanced
-// header rejects top-level ';', ':=', DEDENT and EOF; ':' belonging to a
-// conditional or quantifier stays in the header.
+/* A direct else/elif condition needs a real indented body. Its balanced
+   header rejects top-level ';', ':=', DEDENT and EOF; ':' belonging to a
+   conditional or quantifier stays in the header. */
 directCondition
-    : clauseExpression COLON? indentedBlock elseClause?
-    ;
+    ::= clauseExpression COLON? indentedBlock elseClause?
 
-// The implicit alternative requires exactly one Rust Identifier and a real
-// indented body, with or without its colon. Contextual spellings such as
-// WHILE, ENUM, MODEL, REPEAT and UNTIL normalize through name/enumName.
-// Only NEWLINE or INDENT may immediately follow that name or its colon;
-// a header-line ';', inline/braced body or wider source never qualifies.
-// Both explicit alternatives retain their colon-required suite.
+/* The implicit alternative requires exactly one Rust Identifier and a real
+   indented body, with or without its colon. Contextual spellings such as
+   WHILE, ENUM, MODEL, REPEAT and UNTIL normalize through name/enumName.
+   Only NEWLINE or INDENT may immediately follow that name or its colon;
+   a header-line ';', inline/braced body or wider source never qualifies.
+   Both explicit alternatives retain their colon-required suite. */
 forStmt
-    : FOR name COMMA name (OF | IN) clauseExpression suite  // Stmt::ForEntries
-    | FOR name COLON? indentedBlock                         // Stmt::For, item "it"
-    | FOR name (OF | IN) clauseExpression suite             // Stmt::For
-    ;
+    ::= FOR name COMMA name (OF | IN) clauseExpression suite  /* Stmt::ForEntries */
+      | FOR name COLON? indentedBlock                         /* Stmt::For, item "it" */
+      | FOR name (OF | IN) clauseExpression suite             /* Stmt::For */
 
-// The tentative condition must end exactly at ':', cannot be a colon
-// statement or suppose expression, and cannot end in the word 'lambda';
-// an atVariable named lambda is not that word.
+/* The tentative condition must end exactly at ':', cannot be a colon
+   statement or suppose expression, and cannot end in the word 'lambda';
+   an atVariable named lambda is not that word. */
 whileStmt
-    : WHILE clauseExpression suite      // Stmt::While
-    ;
+    ::= WHILE clauseExpression suite      /* Stmt::While */
 
-// The tentative count follows the whileStmt rules above, through one shared
-// header test. It is evaluated once, before the first iteration.
+/* The tentative count follows the whileStmt rules above, through one shared
+   header test. It is evaluated once, before the first iteration. */
 repeatStmt
-    : REPEAT clauseExpression suite     // Stmt::Repeat
-    ;
+    ::= REPEAT clauseExpression suite     /* Stmt::Repeat */
 
-// REPEAT COLON starts a repeatUntilStmt, except where a typeDeclaration
-// 'REPEAT COLON name' stands before NEWLINE, ';', DEDENT or EOF, which keeps
-// its reading. UNTIL starts the logical line after the body, at the
-// repeatUntilStmt's layout level: only NEWLINEs follow the body, and the
-// token before UNTIL is the NEWLINE that ends an inline suite or the DEDENT
-// that closes an indented block, so the UNTIL line after an inline suite
-// nested in another inline suite closes the innermost one. UNTIL on the
-// body's line, after ';', or inside '(' and '[', which suppress layout,
-// keeps its name reading, and the statement fails with
-// SyntaxError("Expected 'until' after 'repeat'") where UNTIL should stand.
-// The condition must be followed by NEWLINE, ';', DEDENT, EOF or the '}' that
-// closes an enclosing block, which the loop leaves to that block, as
-// returnStmt does.
+/* REPEAT COLON starts a repeatUntilStmt, except where a typeDeclaration
+   'REPEAT COLON name' stands before NEWLINE, ';', DEDENT or EOF, which keeps
+   its reading. UNTIL starts the logical line after the body, at the
+   repeatUntilStmt's layout level: only NEWLINEs follow the body, and the
+   token before UNTIL is the NEWLINE that ends an inline suite or the DEDENT
+   that closes an indented block, so the UNTIL line after an inline suite
+   nested in another inline suite closes the innermost one. UNTIL on the
+   body's line, after ';', or inside '(' and '[', which suppress layout,
+   keeps its name reading, and the statement fails with
+   SyntaxError("Expected 'until' after 'repeat'") where UNTIL should stand.
+   The condition must be followed by NEWLINE, ';', DEDENT, EOF or the '}' that
+   closes an enclosing block, which the loop leaves to that block, as
+   returnStmt does. */
 repeatUntilStmt
-    : REPEAT suite NEWLINE* UNTIL clauseExpression  // Stmt::RepeatUntil
-    ;
+    ::= REPEAT suite NEWLINE* UNTIL clauseExpression  /* Stmt::RepeatUntil */
 
-// Without finallyClause a tryStmt is Stmt::Try, with it Stmt::TryFinally.
+/* Without finallyClause a tryStmt is Stmt::Try, with it Stmt::TryFinally. */
 tryStmt
-    : TRY body lineSeparator* (catchClause | exceptClause) finallyClause?
-    ;
+    ::= TRY body lineSeparator* (catchClause | exceptClause) finallyClause?
 
 catchClause
-    : CATCH (LPAREN name RPAREN | name)? body
-    ;
+    ::= CATCH (LPAREN name RPAREN | name)? body
 
-// Python's catch-all headers build the tree of their catch spelling (NUC 122):
-// 'EXCEPT COLON' and 'EXCEPT EXCEPTION COLON' are 'CATCH COLON', binding the
-// name error, and 'EXCEPT EXCEPTION AS name COLON' is 'CATCH name COLON'. The
-// whole header, through its COLON, is matched before any of it is consumed,
-// and its suite is the explicit-colon suite of CATCH. Any other EXCEPT where
-// CATCH is expected, a header without its COLON included, keeps
-// SyntaxError("Expected 'catch' after 'try'") at the EXCEPT. On an inline
-// body's line, EXCEPT after ';' begins another statement of the body, and a
-// destructuring, enumLine or predicateSentence ends only before NEWLINE, ';',
-// DEDENT, '}', EOF, ELSE or CATCH, never before EXCEPT.
+/* Python's catch-all headers build the tree of their catch spelling (NUC 122):
+   'EXCEPT COLON' and 'EXCEPT EXCEPTION COLON' are 'CATCH COLON', binding the
+   name error, and 'EXCEPT EXCEPTION AS name COLON' is 'CATCH name COLON'. The
+   whole header, through its COLON, is matched before any of it is consumed,
+   and its suite is the explicit-colon suite of CATCH. Any other EXCEPT where
+   CATCH is expected, a header without its COLON included, keeps
+   SyntaxError("Expected 'catch' after 'try'") at the EXCEPT. On an inline
+   body's line, EXCEPT after ';' begins another statement of the body, and a
+   destructuring, enumLine or predicateSentence ends only before NEWLINE, ';',
+   DEDENT, '}', EOF, ELSE or CATCH, never before EXCEPT. */
 exceptClause
-    : EXCEPT (EXCEPTION (AS name)?)? suite
-    ;
+    ::= EXCEPT (EXCEPTION (AS name)?)? suite
 
-// FINALLY starts the logical line after the catch or except body, at the
-// tryStmt's layout level: only NEWLINEs follow that body, and the token before
-// FINALLY is a NEWLINE or the DEDENT that closes it. FINALLY on that
-// body's line, after ';', or inside '(' and '[', which suppress layout, keeps
-// its name reading, and so does 'FINALLY COLON name' before NEWLINE, ';',
-// DEDENT or EOF, which stays a typeDeclaration.
+/* FINALLY starts the logical line after the catch or except body, at the
+   tryStmt's layout level: only NEWLINEs follow that body, and the token before
+   FINALLY is a NEWLINE or the DEDENT that closes it. FINALLY on that
+   body's line, after ';', or inside '(' and '[', which suppress layout, keeps
+   its name reading, and so does 'FINALLY COLON name' before NEWLINE, ';',
+   DEDENT or EOF, which stays a typeDeclaration. */
 finallyClause
-    : NEWLINE* FINALLY suite
-    ;
+    ::= NEWLINE* FINALLY suite
 
 functionDecl
-    : FUNCTION name parameters block    // Stmt::Function
-    | DEF name defParameters defBody
-    ;
+    ::= FUNCTION name parameters block    /* Stmt::Function */
+      | DEF name defParameters defBody
 
-// Bare parameters require a same-line arrow or ':' followed by a real
-// indented block. A zero-parameter declaration requires parentheses.
+/* Bare parameters require a same-line arrow or ':' followed by a real
+   indented block. A zero-parameter declaration requires parentheses. */
 defParameters
-    : name name+
-    | bareParameter (COMMA bareParameter)+
-    | bareParameter
-    | parameters
-    ;
+    ::= name name+
+      | bareParameter (COMMA bareParameter)+
+      | bareParameter
+      | parameters
 
 bareParameter
-    : name (COLON name)?
-    ;
+    ::= name (COLON name)?
 
 defBody
-    : arrow indentedExpression
-    | arrow expression
-    | suite
-    ;
+    ::= arrow indentedExpression
+      | arrow expression
+      | suite
 
 indentedExpression
-    : indentedStart lineSeparator* expression lineSeparator* DEDENT
-    ;
+    ::= indentedStart lineSeparator* expression lineSeparator* DEDENT
 
 parameters
-    : LPAREN (parameter (COMMA parameter)* COMMA?)? RPAREN
-    ;
+    ::= LPAREN (parameter (COMMA parameter)* COMMA?)? RPAREN
 
-// Defaults are finite scalar literals. A rest parameter is last, has no
-// default, and cannot duplicate a fixed parameter's name.
+/* Defaults are finite scalar literals. A rest parameter is last, has no
+   default, and cannot duplicate a fixed parameter's name. */
 parameter
-    : rest? name (COLON name)? (ASSIGN scalarLiteral)?
-    ;
+    ::= rest? name (COLON name)? (ASSIGN scalarLiteral)?
 
 constructorParameters
-    : LPAREN (constructorParameter (COMMA constructorParameter)* COMMA?)? RPAREN
-    ;
+    ::= LPAREN (constructorParameter (COMMA constructorParameter)* COMMA?)? RPAREN
 
 constructorParameter
-    : rest? (THIS DOT)? name (COLON name)? (ASSIGN scalarLiteral)?
-    ;
+    ::= rest? (THIS DOT)? name (COLON name)? (ASSIGN scalarLiteral)?
 
-// These three DOT tokens must be adjacent in the source.
+/* These three DOT tokens must be adjacent in the source. */
 rest
-    : DOT DOT DOT
-    ;
+    ::= DOT DOT DOT
 
 classStmt
-    : CLASS name constructorParameters? classTail          // Stmt::Class
-    ;
+    ::= CLASS name constructorParameters? classTail          /* Stmt::Class */
 
-// A bodyless header requires a statement end with no following indented
-// block. A parent after ':' is recognized only before NEWLINE, INDENT or
-// EOF. Giving a parent both after 'extends' and after ':' is an error.
+/* A bodyless header requires a statement end with no following indented
+   block. A parent after ':' is recognized only before NEWLINE, INDENT or
+   EOF. Giving a parent both after 'extends' and after ':' is an error. */
 classTail
-    : (EXTENDS name (COLON classBody)? | COLON name? classBody)?
-    ;
+    ::= (EXTENDS name (COLON classBody)? | COLON name? classBody)?
 
-// Without indentation, the next statement is the entire class body even
-// across a line break. Use 'pass' or a bodyless header for an empty class.
+/* Without indentation, the next statement is the entire class body even
+   across a line break. Use 'pass' or a bodyless header for an empty class. */
 classBody
-    : lineSeparator*
-      (INDENT lineSeparator* (classMember lineSeparator*)* blockEnd
-      | EOF
-      | statement)
-    ;
+    ::= lineSeparator*
+        (INDENT lineSeparator* (classMember lineSeparator*)* blockEnd
+        | EOF
+        | statement)
 
 classMember
-    : PASS
-    | methodDecl                        // ClassDecl::methods
-    | typeDeclaration                   // ClassDecl::fields
-    | statement                         // ClassDecl::constructor
-    ;
+    ::= PASS
+      | methodDecl                        /* ClassDecl::methods */
+      | typeDeclaration                   /* ClassDecl::fields */
+      | statement                         /* ClassDecl::constructor */
 
 methodDecl
-    : DEF INIT constructorParameters defBody
-    | DEF (INIT | PYTHON_INIT) receiverConstructorParameters defBody
-    | DEF name receiverParameters defBody
-    | FUNCTION INIT constructorParameters block
-    | functionDecl
-    ;
+    ::= DEF INIT constructorParameters defBody
+      | DEF (INIT | PYTHON_INIT) receiverConstructorParameters defBody
+      | DEF name receiverParameters defBody
+      | FUNCTION INIT constructorParameters block
+      | functionDecl
 
 /*
  * Receiver-parameter contract (NUC 107):
@@ -470,16 +426,13 @@ methodDecl
  *   '__init__'; no syntax-tree node records the receiver.
  */
 receiverParameters
-    : LPAREN receiver (COMMA (parameter (COMMA parameter)* COMMA?)?)? RPAREN
-    ;
+    ::= LPAREN receiver (COMMA (parameter (COMMA parameter)* COMMA?)?)? RPAREN
 
 receiverConstructorParameters
-    : LPAREN receiver (COMMA (constructorParameter (COMMA constructorParameter)* COMMA?)?)? RPAREN
-    ;
+    ::= LPAREN receiver (COMMA (constructorParameter (COMMA constructorParameter)* COMMA?)?)? RPAREN
 
 receiver
-    : THIS
-    ;
+    ::= THIS
 
 /*
  * Expression-context contract:
@@ -507,80 +460,68 @@ receiver
  */
 
 clauseExpression
-    : expression
-    ;
+    ::= expression
 
 expression
-    : conditional (assignmentOperator expression)?         // Expr::Assign, right
-    ;
+    ::= conditional (assignmentOperator expression)?         /* Expr::Assign, right */
 
 assignmentOperator
-    : ASSIGN
-    | PLUS_ASSIGN
-    | MINUS_ASSIGN
-    | STAR_ASSIGN
-    | POWER_ASSIGN
-    | SLASH_ASSIGN
-    | PERCENT_ASSIGN
-    | AND_ASSIGN
-    | OR_ASSIGN
-    ;
+    ::= ASSIGN
+      | PLUS_ASSIGN
+      | MINUS_ASSIGN
+      | STAR_ASSIGN
+      | POWER_ASSIGN
+      | SLASH_ASSIGN
+      | PERCENT_ASSIGN
+      | AND_ASSIGN
+      | OR_ASSIGN
 
-// Compound assignments and ':=' require a path, not an arbitrary expression.
+/* Compound assignments and ':=' require a path, not an arbitrary expression. */
 path
-    : name (member | version)*
-    | (CLASS_REF | THIS) (member | version)+
-    ;
+    ::= name (member | version)*
+      | (CLASS_REF | THIS) (member | version)+
 
 conditional
-    : coalesce
-      (QUESTION clauseExpression COLON conditional
-      | IF coalesce ELSE conditional)?                     // Expr::Conditional, right
-    ;
+    ::= coalesce
+        (QUESTION clauseExpression COLON conditional
+        | IF coalesce ELSE conditional)?                     /* Expr::Conditional, right */
 
 coalesce
-    : pipeline (COALESCE coalesce)?                        // Expr::Logical, right
-    ;
+    ::= pipeline (COALESCE coalesce)?                        /* Expr::Logical, right */
 
 pipeline
-    : logicalOr (PIPE stage)*
-    ;
+    ::= logicalOr (PIPE stage)*
 
 stage
-    : WHY
-    | AFFECTS
-    | STATED
-    | DERIVED
-    | DIFF
-    | NODES
-    | HOLDS
-    | ORIGINS
-    | OUTCOMES                                            // Expr::Reason
-    | DEPTH LPAREN expression RPAREN                       // Expr::Depth
-    | PATH LPAREN expression RPAREN                        // Expr::Path
-    | (INTERSECT | EXCEPT) LPAREN expression RPAREN        // Expr::Combine
-    | UNION LPAREN expression RPAREN                       // Expr::Union
-    ;
+    ::= WHY
+      | AFFECTS
+      | STATED
+      | DERIVED
+      | DIFF
+      | NODES
+      | HOLDS
+      | ORIGINS
+      | OUTCOMES                                            /* Expr::Reason */
+      | DEPTH LPAREN expression RPAREN                       /* Expr::Depth */
+      | PATH LPAREN expression RPAREN                        /* Expr::Path */
+      | (INTERSECT | EXCEPT) LPAREN expression RPAREN        /* Expr::Combine */
+      | UNION LPAREN expression RPAREN                       /* Expr::Union */
 
 logicalOr
-    : logicalAnd ((OR_OR | OR) logicalAnd)*                 // Expr::Logical, left
-    ;
+    ::= logicalAnd ((OR_OR | OR) logicalAnd)*                 /* Expr::Logical, left */
 
 logicalAnd
-    : equality ((AND_AND | AND) equality)*                 // Expr::Logical, left
-    ;
+    ::= equality ((AND_AND | AND) equality)*                 /* Expr::Logical, left */
 
 equality
-    : relational (equalityOperator relational)*            // Expr::Binary, left
-    ;
+    ::= relational (equalityOperator relational)*            /* Expr::Binary, left */
 
 equalityOperator
-    : EQUAL
-    | NOT_EQUAL
-    | STRICT_EQUAL
-    | STRICT_NOT_EQUAL
-    | IS NOT?
-    ;
+    ::= EQUAL
+      | NOT_EQUAL
+      | STRICT_EQUAL
+      | STRICT_NOT_EQUAL
+      | IS NOT?
 
 /*
  * Membership contract (NUC 97):
@@ -596,68 +537,56 @@ equalityOperator
  *   accepted reading and the error "Unexpected keyword 'in'".
  */
 relational
-    : additive (relationalOperator additive)*              // Expr::Binary, left
-    ;
+    ::= additive (relationalOperator additive)*              /* Expr::Binary, left */
 
 relationalOperator
-    : LESS
-    | LESS_EQUAL
-    | GREATER
-    | GREATER_EQUAL
-    | IN                                                  // BinaryOp::In
-    | NOT IN                                              // BinaryOp::NotIn
-    ;
+    ::= LESS
+      | LESS_EQUAL
+      | GREATER
+      | GREATER_EQUAL
+      | IN                                                  /* BinaryOp::In */
+      | NOT IN                                              /* BinaryOp::NotIn */
 
 additive
-    : term ((PLUS | MINUS) term)*                          // Expr::Binary, left
-    ;
+    ::= term ((PLUS | MINUS) term)*                          /* Expr::Binary, left */
 
 term
-    : unary ((STAR | SLASH | PERCENT) unary)*               // Expr::Binary, left
-    ;
+    ::= unary ((STAR | SLASH | PERCENT) unary)*               /* Expr::Binary, left */
 
-// A reasoning prefix is recognized only before a name or CLASS_REF.
+/* A reasoning prefix is recognized only before a name or CLASS_REF. */
 unary
-    : reasoningPrefix unary                               // Expr::Reason
-    | noun OF unary                                       // Expr::Of
-    | (BANG | NOT | MINUS | PLUS | TYPEOF) unary            // Expr::Unary
-    | power
-    ;
+    ::= reasoningPrefix unary                               /* Expr::Reason */
+      | noun OF unary                                       /* Expr::Of */
+      | (BANG | NOT | MINUS | PLUS | TYPEOF) unary            /* Expr::Unary */
+      | power
 
 reasoningPrefix
-    : WHY
-    | AFFECTS
-    | STATED
-    | DERIVED
-    ;
+    ::= WHY
+      | AFFECTS
+      | STATED
+      | DERIVED
 
 noun
-    : SUM
-    | MAX
-    | MIN
-    | MODE
-    ;
+    ::= SUM
+      | MAX
+      | MIN
+      | MODE
 
 power
-    : postfix (POWER unary)?                              // Expr::Binary, right
-    ;
+    ::= postfix (POWER unary)?                              /* Expr::Binary, right */
 
 postfix
-    : primary (version | member | subscript | call)*
-    ;
+    ::= primary (version | member | subscript | call)*
 
 version
-    : AT (VERSION_INDEX | FIRST | LAST | PREVIOUS)          // Expr::Version
-    ;
+    ::= AT (VERSION_INDEX | FIRST | LAST | PREVIOUS)          /* Expr::Version */
 
 member
-    : DOT property                                        // Expr::Member
-    ;
+    ::= DOT property                                        /* Expr::Member */
 
 property
-    : name
-    | keyword
-    ;
+    ::= name
+      | keyword
 
 /*
  * Subscript contract (NUC 125):
@@ -670,28 +599,23 @@ property
  *   'xs[1:5:]' keeps its second COLON. A third COLON is an error.
  */
 subscript
-    : LBRACK
-      (COLON sliceTail | clauseExpression (COLON sliceTail)?)
-      RBRACK                                              // Expr::Index, Expr::Slice or Expr::SteppedSlice
-    ;
+    ::= LBRACK
+        (COLON sliceTail | clauseExpression (COLON sliceTail)?)
+        RBRACK                                              /* Expr::Index, Expr::Slice or Expr::SteppedSlice */
 
 sliceTail
-    : expression? (COLON expression?)?                    // a second COLON: Expr::SteppedSlice
-    ;
+    ::= expression? (COLON expression?)?                    /* a second COLON: Expr::SteppedSlice */
 
 call
-    : LPAREN (argument (COMMA argument)* COMMA?)? RPAREN    // Expr::Call
-    ;
+    ::= LPAREN (argument (COMMA argument)* COMMA?)? RPAREN    /* Expr::Call */
 
 argument
-    : selector
-    | section
-    | expression
-    ;
+    ::= selector
+      | section
+      | expression
 
 selector
-    : (DOT property)+
-    ;
+    ::= (DOT property)+
 
 /*
  * Section contract (NUC 109):
@@ -711,54 +635,51 @@ selector
  *   arrowBody, and renders as 'function()'.
  */
 section
-    : sectionOperator expression        // Expr::Function over the unnamed parameter
-    ;
+    ::= sectionOperator expression        /* Expr::Function over the unnamed parameter */
 
 sectionOperator
-    : EQUAL
-    | NOT_EQUAL
-    | STRICT_EQUAL
-    | STRICT_NOT_EQUAL
-    | LESS
-    | LESS_EQUAL
-    | GREATER
-    | GREATER_EQUAL
-    | STAR
-    | PERCENT
-    | POWER
-    | AND_AND
-    | OR_OR
-    | COALESCE
-    ;
+    ::= EQUAL
+      | NOT_EQUAL
+      | STRICT_EQUAL
+      | STRICT_NOT_EQUAL
+      | LESS
+      | LESS_EQUAL
+      | GREATER
+      | GREATER_EQUAL
+      | STAR
+      | PERCENT
+      | POWER
+      | AND_AND
+      | OR_OR
+      | COALESCE
 
-// A plain-name callee treats bare name=value arguments as constructor
-// labels; grouping or another assignment-shaped target stays positional.
+/* A plain-name callee treats bare name=value arguments as constructor
+   labels; grouping or another assignment-shaped target stays positional. */
 primary
-    : receiverRead
-    | atVariable
-    | quantified
-    | spelledClass
-    | name arrow arrowBody
-    | lambdaExpression
-    | parameters arrow arrowBody
-    | NUMBER
-    | STRING
-    | REGEX
-    | templateLiteral
-    | name
-    | CLASS_REF
-    | TRUE
-    | FALSE
-    | NULL
-    | THIS
-    | NEW primary
-    | DELETE unary                                        // Expr::Delete
-    | SUPER call?                                         // Expr::Super
-    | FUNCTION parameters block
-    | LPAREN expression RPAREN
-    | listDisplay
-    | objectDisplay
-    ;
+    ::= receiverRead
+      | atVariable
+      | quantified
+      | spelledClass
+      | name arrow arrowBody
+      | lambdaExpression
+      | parameters arrow arrowBody
+      | NUMBER
+      | STRING
+      | REGEX
+      | templateLiteral
+      | name
+      | CLASS_REF
+      | TRUE
+      | FALSE
+      | NULL
+      | THIS
+      | NEW primary
+      | DELETE unary                                        /* Expr::Delete */
+      | SUPER call?                                         /* Expr::Super */
+      | FUNCTION parameters block
+      | LPAREN expression RPAREN
+      | listDisplay
+      | objectDisplay
 
 /*
  * At-variable contract (NUC 96):
@@ -786,8 +707,7 @@ primary
  *   name, which the accepted reading 'path' then 'IS version' reports.
  */
 atVariable
-    : AT name                                             // Expr::Identifier
-    ;
+    ::= AT name                                             /* Expr::Identifier */
 
 /*
  * Receiver-read contract (NUC 102):
@@ -833,24 +753,20 @@ atVariable
  *   the written-out 'THIS DOT property'.
  */
 receiverRead
-    : DOT property                      // Expr::Member over the receiver path
-    ;
+    ::= DOT property                      /* Expr::Member over the receiver path */
 
 arrow
-    : ARROW
-    | THIN_ARROW
-    ;
+    ::= ARROW
+      | THIN_ARROW
 
-// Braces directly after an arrow are always a block, not an object literal.
+/* Braces directly after an arrow are always a block, not an object literal. */
 arrowBody
-    : block
-    | expression
-    ;
+    ::= block
+      | expression
 
-// EVERY builds the ALL node and renders as 'all' (NUC 98).
+/* EVERY builds the ALL node and renders as 'all' (NUC 98). */
 quantified
-    : (ALL | EVERY | ANY) name IN clauseExpression COLON expression
-    ;
+    ::= (ALL | EVERY | ANY) name IN clauseExpression COLON expression
 
 /*
  * Spelled-class contract (NUC 98, NUC 104):
@@ -876,312 +792,309 @@ quantified
  *   contract.
  */
 spelledClass
-    : (ANY | ALL) name                  // Expr::ClassRef
-    | EVERY name                        // Expr::ClassRef, outside an ifStmt only
-    ;
+    ::= (ANY | ALL) name                  /* Expr::ClassRef */
+      | EVERY name                        /* Expr::ClassRef, outside an ifStmt only */
 
 lambdaExpression
-    : LAMBDA (name (COMMA name)*)? COLON expression
-    ;
+    ::= LAMBDA (name (COMMA name)*)? COLON expression
 
 listDisplay
-    : LBRACK
-      (expression (comprehension | (COMMA expression)* COMMA?))?
-      RBRACK                                              // Expr::List
-    ;
+    ::= LBRACK
+        (expression (comprehension | (COMMA expression)* COMMA?))?
+        RBRACK                                              /* Expr::List */
 
-// The source's 'if' belongs to the filter, not a Python conditional.
-// Recognition is enabled only in the appropriate later parse pass.
+/* The source's 'if' belongs to the filter, not a Python conditional.
+   Recognition is enabled only in the appropriate later parse pass. */
 comprehension
-    : FOR name (IN | OF) expression (IF expression)?
-    ;
+    ::= FOR name (IN | OF) expression (IF expression)?
 
 objectDisplay
-    : LBRACE lineSeparator* objectEntries? RBRACE
-    ;
+    ::= LBRACE lineSeparator* objectEntries? RBRACE
 
 objectEntries
-    : explicitObjectEntry lineSeparator*
-      (COMMA lineSeparator* objectEntries? | adjacentObjectEntries)?
-    | name lineSeparator* (COMMA lineSeparator* objectEntries?)?
-    ;
+    ::= explicitObjectEntry lineSeparator*
+        (COMMA lineSeparator* objectEntries? | adjacentObjectEntries)?
+      | name lineSeparator* (COMMA lineSeparator* objectEntries?)?
 
 explicitObjectEntry
-    : rest expression                                     // spread
-    | objectKey COLON expression
-    ;
+    ::= rest expression                                     /* spread */
+      | objectKey COLON expression
 
-// Only an explicit key:value entry may follow an entry without a comma.
+/* Only an explicit key:value entry may follow an entry without a comma. */
 adjacentObjectEntries
-    : objectKey COLON expression lineSeparator*
-      (COMMA lineSeparator* objectEntries? | adjacentObjectEntries)?
-    ;
+    ::= objectKey COLON expression lineSeparator*
+        (COMMA lineSeparator* objectEntries? | adjacentObjectEntries)?
 
 objectKey
-    : name
-    | STRING
-    | NUMBER
-    ;
+    ::= name
+      | STRING
+      | NUMBER
 
-// Decode TEMPLATE as text/escapes/${interpolation}. An interpolation ends
-// at its balancing '}', ignoring braces inside strings and C-style
-// comments, and is parsed separately in interpolation context.
+/* Decode TEMPLATE as text/escapes/${interpolation}. An interpolation ends
+   at its balancing '}', ignoring braces inside strings and C-style
+   comments, and is parsed separately in interpolation context. */
 templateLiteral
-    : TEMPLATE                                            // Expr::Template
-    ;
+    ::= TEMPLATE                                            /* Expr::Template */
 
 interpolation
-    : expression remainingTokens EOF
-    ;
+    ::= expression remainingTokens EOF
 
 remainingTokens
-    : .*?
-    ;
+    ::= anyToken*
 
-// Contextual spellings have distinct token types here, but remain valid
-// ordinary names. 'assert', 'lambda' and 'suppose' cannot name an enum.
+/* Any one token but EOF. */
+anyToken
+    ::= NAME | WORD_TOKEN | CLASS_REF | NUMBER | STRING | TEMPLATE | REGEX
+      | VERSION_INDEX | NEWLINE | INDENT | DEDENT | STRICT_EQUAL
+      | STRICT_NOT_EQUAL | POWER_ASSIGN | AND_ASSIGN | OR_ASSIGN | ARROW
+      | THIN_ARROW | VALUE_ASSIGN | PLUS_ASSIGN | MINUS_ASSIGN | STAR_ASSIGN
+      | SLASH_ASSIGN | PERCENT_ASSIGN | EQUAL | NOT_EQUAL | LESS_EQUAL
+      | GREATER_EQUAL | POWER | AND_AND | OR_OR | COALESCE | PIPE | LPAREN
+      | RPAREN | LBRACK | RBRACK | LBRACE | RBRACE | COMMA | COLON | SEMI | DOT
+      | AT | QUESTION | ASSIGN | LESS | GREATER | PLUS | MINUS | STAR | SLASH
+      | PERCENT | BANG
+
+/* Contextual spellings have distinct token types here, but remain valid
+   ordinary names. 'assert', 'lambda' and 'suppose' cannot name an enum. */
 name
-    : enumName
-    | ASSERT
-    | LAMBDA
-    | SUPPOSE
-    ;
+    ::= enumName
+      | ASSERT
+      | LAMBDA
+      | SUPPOSE
 
 enumName
-    : NAME
-    | WHILE
-    | REPEAT
-    | UNTIL
-    | FINALLY
-    | ENUM
-    | EXTENDS
-    | IS
-    | ALL
-    | EVERY
-    | ANY
-    | SUM
-    | MAX
-    | MIN
-    | MODE
-    | WHY
-    | AFFECTS
-    | STATED
-    | DERIVED
-    | DIFF
-    | DEPTH
-    | PATH
-    | INTERSECT
-    | EXCEPT
-    | EXCEPTION
-    | AS
-    | UNION
-    | NODES
-    | HOLDS
-    | ORIGINS
-    | OUTCOMES
-    | MODEL
-    | FIRST
-    | LAST
-    | PREVIOUS
-    | INIT
-    | PYTHON_INIT
-    ;
+    ::= NAME
+      | WHILE
+      | REPEAT
+      | UNTIL
+      | FINALLY
+      | ENUM
+      | EXTENDS
+      | IS
+      | ALL
+      | EVERY
+      | ANY
+      | SUM
+      | MAX
+      | MIN
+      | MODE
+      | WHY
+      | AFFECTS
+      | STATED
+      | DERIVED
+      | DIFF
+      | DEPTH
+      | PATH
+      | INTERSECT
+      | EXCEPT
+      | EXCEPTION
+      | AS
+      | UNION
+      | NODES
+      | HOLDS
+      | ORIGINS
+      | OUTCOMES
+      | MODEL
+      | FIRST
+      | LAST
+      | PREVIOUS
+      | INIT
+      | PYTHON_INIT
 
-// Reserved words may follow '.' as properties, but are not declared names
-// or object-literal keys. Aliases identify the canonical token/property.
+/* Reserved words may follow '.' as properties, but are not declared names
+   or object-literal keys. Aliases identify the canonical token/property. */
 keyword
-    : AND
-    | CATCH
-    | CLASS
-    | DEF
-    | DELETE
-    | ELSE
-    | FALSE
-    | FOR
-    | FUNCTION
-    | IF
-    | IN
-    | NEW
-    | NOT
-    | NULL
-    | OF
-    | OR
-    | PASS
-    | RETURN
-    | SUPER
-    | THIS
-    | THROW
-    | TRUE
-    | TRY
-    | TYPEOF
-    ;
+    ::= AND
+      | CATCH
+      | CLASS
+      | DEF
+      | DELETE
+      | ELSE
+      | FALSE
+      | FOR
+      | FUNCTION
+      | IF
+      | IN
+      | NEW
+      | NOT
+      | NULL
+      | OF
+      | OR
+      | PASS
+      | RETURN
+      | SUPER
+      | THIS
+      | THROW
+      | TRUE
+      | TRY
+      | TYPEOF
 
-AND              : 'and';
-CATCH            : 'catch';
-CLASS            : 'class';
-DEF              : 'def';
-DELETE           : 'delete';
-ELSE             : 'else' | 'elif';
-FALSE            : 'false';
-FOR              : 'for';
-FUNCTION         : 'function';
-IF               : 'if';
-IN               : 'in';
-NEW              : 'new';
-NOT              : 'not';
-NULL             : 'null' | 'None' | 'undefined';
-OF               : 'of';
-OR               : 'or';
-PASS             : 'pass';
-RETURN           : 'return';
-SUPER            : 'super';
-THIS             : 'this' | 'self';
-THROW            : 'throw';
-TRUE             : 'true';
-TRY              : 'try';
-TYPEOF           : 'typeof';
+AND              ::= 'and'
+CATCH            ::= 'catch'
+CLASS            ::= 'class'
+DEF              ::= 'def'
+DELETE           ::= 'delete'
+ELSE             ::= 'else' | 'elif'
+FALSE            ::= 'false'
+FOR              ::= 'for'
+FUNCTION         ::= 'function'
+IF               ::= 'if'
+IN               ::= 'in'
+NEW              ::= 'new'
+NOT              ::= 'not'
+NULL             ::= 'null' | 'None' | 'undefined'
+OF               ::= 'of'
+OR               ::= 'or'
+PASS             ::= 'pass'
+RETURN           ::= 'return'
+SUPER            ::= 'super'
+THIS             ::= 'this' | 'self'
+THROW            ::= 'throw'
+TRUE             ::= 'true'
+TRY              ::= 'try'
+TYPEOF           ::= 'typeof'
 
-WHILE            : 'while';
-REPEAT           : 'repeat';
-UNTIL            : 'until';
-FINALLY          : 'finally';
-ENUM             : 'enum';
-EXTENDS          : 'extends';
-ASSERT           : 'assert';
-SUPPOSE          : 'suppose';
-LAMBDA           : 'lambda';
-IS               : 'is';
-ALL              : 'all';
-EVERY            : 'every';
-ANY              : 'any';
-SUM              : 'sum';
-MAX              : 'max';
-MIN              : 'min';
-MODE             : 'mode';
-WHY              : 'why';
-AFFECTS          : 'affects';
-STATED           : 'stated';
-DERIVED          : 'derived';
-DIFF             : 'diff';
-DEPTH            : 'depth';
-PATH             : 'path';
-INTERSECT        : 'intersect';
-EXCEPT           : 'except';
-EXCEPTION        : 'Exception';
-AS               : 'as';
-UNION            : 'union';
-NODES            : 'nodes';
-HOLDS            : 'holds';
-ORIGINS          : 'origins';
-OUTCOMES         : 'outcomes';
-MODEL            : 'model';
-FIRST            : 'first';
-LAST             : 'last';
-PREVIOUS         : 'previous';
-INIT             : 'init';
-PYTHON_INIT      : '__init__';
+WHILE            ::= 'while'
+REPEAT           ::= 'repeat'
+UNTIL            ::= 'until'
+FINALLY          ::= 'finally'
+ENUM             ::= 'enum'
+EXTENDS          ::= 'extends'
+ASSERT           ::= 'assert'
+SUPPOSE          ::= 'suppose'
+LAMBDA           ::= 'lambda'
+IS               ::= 'is'
+ALL              ::= 'all'
+EVERY            ::= 'every'
+ANY              ::= 'any'
+SUM              ::= 'sum'
+MAX              ::= 'max'
+MIN              ::= 'min'
+MODE             ::= 'mode'
+WHY              ::= 'why'
+AFFECTS          ::= 'affects'
+STATED           ::= 'stated'
+DERIVED          ::= 'derived'
+DIFF             ::= 'diff'
+DEPTH            ::= 'depth'
+PATH             ::= 'path'
+INTERSECT        ::= 'intersect'
+EXCEPT           ::= 'except'
+EXCEPTION        ::= 'Exception'
+AS               ::= 'as'
+UNION            ::= 'union'
+NODES            ::= 'nodes'
+HOLDS            ::= 'holds'
+ORIGINS          ::= 'origins'
+OUTCOMES         ::= 'outcomes'
+MODEL            ::= 'model'
+FIRST            ::= 'first'
+LAST             ::= 'last'
+PREVIOUS         ::= 'previous'
+INIT             ::= 'init'
+PYTHON_INIT      ::= '__init__'
 
-STRICT_EQUAL     : '===';
-STRICT_NOT_EQUAL : '!==';
-POWER_ASSIGN     : '**=';
-AND_ASSIGN       : '&&=';
-OR_ASSIGN        : '||=';
-ARROW            : '=>';
-THIN_ARROW       : '->';
-VALUE_ASSIGN     : ':=';
-PLUS_ASSIGN      : '+=';
-MINUS_ASSIGN     : '-=';
-STAR_ASSIGN      : '*=';
-SLASH_ASSIGN     : '/=';
-PERCENT_ASSIGN   : '%=';
-EQUAL            : '==';
-NOT_EQUAL        : '!=';
-LESS_EQUAL       : '<=';
-GREATER_EQUAL    : '>=';
-POWER            : '**';
-AND_AND          : '&&';
-OR_OR            : '||';
-COALESCE         : '??';
-PIPE             : '|>';
-LPAREN           : '(';
-RPAREN           : ')';
-LBRACK           : '[';
-RBRACK           : ']';
-LBRACE           : '{';
-RBRACE           : '}';
-COMMA            : ',';
-COLON            : ':';
-SEMI             : ';';
-DOT              : '.';
-AT               : '@';
-QUESTION         : '?';
-ASSIGN           : '=';
-LESS             : '<';
-GREATER          : '>';
-PLUS             : '+';
-MINUS            : '-';
-STAR             : '*';
-SLASH            : '/';
-PERCENT          : '%';
-BANG             : '!';
+STRICT_EQUAL     ::= '==='
+STRICT_NOT_EQUAL ::= '!=='
+POWER_ASSIGN     ::= '**='
+AND_ASSIGN       ::= '&&='
+OR_ASSIGN        ::= '||='
+ARROW            ::= '=>'
+THIN_ARROW       ::= '->'
+VALUE_ASSIGN     ::= ':='
+PLUS_ASSIGN      ::= '+='
+MINUS_ASSIGN     ::= '-='
+STAR_ASSIGN      ::= '*='
+SLASH_ASSIGN     ::= '/='
+PERCENT_ASSIGN   ::= '%='
+EQUAL            ::= '=='
+NOT_EQUAL        ::= '!='
+LESS_EQUAL       ::= '<='
+GREATER_EQUAL    ::= '>='
+POWER            ::= '**'
+AND_AND          ::= '&&'
+OR_OR            ::= '||'
+COALESCE         ::= '??'
+PIPE             ::= '|>'
+LPAREN           ::= '('
+RPAREN           ::= ')'
+LBRACK           ::= '['
+RBRACK           ::= ']'
+LBRACE           ::= '{'
+RBRACE           ::= '}'
+COMMA            ::= ','
+COLON            ::= ':'
+SEMI             ::= ';'
+DOT              ::= '.'
+AT               ::= '@'
+QUESTION         ::= '?'
+ASSIGN           ::= '='
+LESS             ::= '<'
+GREATER          ::= '>'
+PLUS             ::= '+'
+MINUS            ::= '-'
+STAR             ::= '*'
+SLASH            ::= '/'
+PERCENT          ::= '%'
+BANG             ::= '!'
 
 CLASS_REF
-    : '$' [A-Za-z_] [A-Za-z0-9_]*
-    ;
+    ::= '$' [A-Za-z_] [A-Za-z0-9_]*
 
 NUMBER
-    : DIGITS ('.' DIGITS)? EXPONENT?
-    | '.' DIGITS EXPONENT?
-    ;
+    ::= DIGITS ('.' DIGITS)? EXPONENT?
+      | '.' DIGITS EXPONENT?
 
-// Strings decode \n, \t, \r and \0; other escapes stand for the character.
+/* Strings decode \n, \t, \r and \0; other escapes stand for the character. */
 STRING
-    : '"' (ESCAPE | ~["\\])* '"'
-    | '\'' (ESCAPE | ~['\\])* '\''
-    ;
+    ::= '"' (ESCAPE | [^"#x5C])* '"'
+      | "'" (ESCAPE | [^'#x5C])* "'"
 
-// Templates decode \n and \t; other escapes stand for the character.
+/* Templates decode \n and \t; other escapes stand for the character. */
 TEMPLATE
-    : '`' (ESCAPE | ~[`\\])* '`'
-    ;
+    ::= '`' (ESCAPE | [^`#x5C])* '`'
 
 NAME
-    : [A-Za-z_] [A-Za-z0-9_]*
-    ;
+    ::= ([A-Za-z_] [A-Za-z0-9_]*) - WORD_TOKEN
+
+/* The reserved and contextual words, which are tokens of their own; NAME
+   matches every other word. */
+WORD_TOKEN
+    ::= AND | CATCH | CLASS | DEF | DELETE | ELSE | FALSE | FOR | FUNCTION | IF
+      | IN | NEW | NOT | NULL | OF | OR | PASS | RETURN | SUPER | THIS | THROW
+      | TRUE | TRY | TYPEOF | WHILE | REPEAT | UNTIL | FINALLY | ENUM | EXTENDS
+      | ASSERT | SUPPOSE | LAMBDA | IS | ALL | EVERY | ANY | SUM | MAX | MIN
+      | MODE | WHY | AFFECTS | STATED | DERIVED | DIFF | DEPTH | PATH
+      | INTERSECT | EXCEPT | EXCEPTION | AS | UNION | NODES | HOLDS | ORIGINS
+      | OUTCOMES | MODEL | FIRST | LAST | PREVIOUS | INIT | PYTHON_INIT
 
 NEWLINE
-    : '\n'
-    ;
+    ::= #xA
 
+/* Hidden from the syntax rules; see the token-source contract. */
 WHITESPACE
-    : [ \t\f\r]+ -> channel(HIDDEN)
-    ;
+    ::= [#x20#x9#xC#xD]+
 
 COMMENT
-    : '#' ~[\n]* -> channel(HIDDEN)
-    ;
+    ::= '#' [^#xA]*
 
-fragment DIGITS
-    : [0-9]+
-    ;
+/* Parts of tokens, not tokens themselves. */
+DIGITS
+    ::= [0-9]+
 
-fragment EXPONENT
-    : [eE] [+-]? DIGITS
-    ;
+EXPONENT
+    ::= [eE] ('+' | '-')? DIGITS
 
-fragment ESCAPE
-    : '\\' ~[\n]
-    ;
+ESCAPE
+    ::= #x5C [^#xA]
 
-fragment REGEX_LITERAL
-    : '/' REGEX_CHAR* '/' [A-Za-z]*
-    ;
+REGEX_LITERAL
+    ::= '/' REGEX_CHAR* '/' [A-Za-z]*
 
-fragment REGEX_CHAR
-    : ~('/' | '\\' | '[' | '\n')
-    | '\\' ~[\n]
-    | '[' (~(']' | '\\' | '\n') | '\\' ~[\n])* ']'
-    ;
+REGEX_CHAR
+    ::= [^/#x5C#x5B#xA]
+      | #x5C [^#xA]
+      | '[' ([^#x5D#x5C#xA] | #x5C [^#xA])* ']'
 
 /*
  * Parse-pass contract:

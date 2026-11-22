@@ -11,11 +11,11 @@ not a replacement for the policies it links to.
 | File | Policy |
 | --- | --- |
 | [project.instructions.md](rules/project.instructions.md) | Language goals, reference documents, and runtime architecture |
-| [arc.instructions.md](rules/arc.instructions.md) | ARC puzzle proposals and their `arc/docs` progress records, the minimal dataset grammar `arc/nucleoid.ebnf`, JSON-only LLM exchanges, grouped side-by-side terminal output, and no automated ARC tests |
+| [arc.instructions.md](rules/arc.instructions.md) | ARC puzzle proposals and their `arc/docs` progress records, the minimal dataset grammar `arc/arc.ebnf`, JSON-only LLM exchanges, grouped side-by-side terminal output, and no automated ARC tests |
 | [rust.instructions.md](rules/rust.instructions.md) | Concrete runtime types, dependencies, and Rust community conventions |
 | [power-of-ten.instructions.md](rules/power-of-ten.instructions.md) | NASA's Power of 10 rules adapted to the Rust crate: the lints, runtime limits, 500-line file limit and policy test that enforce them, and the known runtime-value recursion gap |
 | [rust-guidelines.instructions.md](rules/rust-guidelines.instructions.md) | The Rust API Guidelines, Google's Rust Style Guide, Microsoft's Pragmatic Rust Guidelines and Clippy, always followed under the Power of 10 adaptation: their precedence, a digest for the crate, comment-free Rust source, deliberate divergences and known gaps |
-| [documents.instructions.md](rules/documents.instructions.md) | Authoritative specification, executable documents, and dataset synchronization |
+| [documents.instructions.md](rules/documents.instructions.md) | Authoritative specification, executable documents, the W3C EBNF grammars `docs/nucleoid.ebnf` and `arc/arc.ebnf`, and dataset synchronization |
 | [versions.instructions.md](rules/versions.instructions.md) | Human-owned version numbers; no AI version changes |
 | [proposals.instructions.md](rules/proposals.instructions.md) | Independent NUC proposal preparation and evaluation, the token policy, automatic acceptance on the hard criteria (no compile errors, every test passing, backward compatibility) with the `Automatic-Accepted` status, ARC- and user-requested bases, the pushed `Draft NUC <number> <Title>` allocation of each new NUC before its details, after a pull that claims the next free number or skips a concept already proposed, continuous cycles that first pick up allocated Drafts idle for 24 hours under a pushed `Resume NUC <number> <Title>` claim, and `NUC <number> <Title>` outcome commit messages |
 | [rust-improvement.instructions.md](rules/rust-improvement.instructions.md) | Focused Rust improvements and the required post-change agent |

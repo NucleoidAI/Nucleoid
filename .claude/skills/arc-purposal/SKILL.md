@@ -15,7 +15,7 @@ its changes. A requested enhancement uses the existing
 used in `arc/src/dataset/`, it also triggers `/nuc-proposal` to
 [propose a version without it](#propose-quote-free-spellings). Whenever a
 dataset introduces new syntax, it also adds that syntax to the
-[dataset grammar](#keep-the-dataset-grammar), `arc/nucleoid.ebnf`, which it
+[dataset grammar](#keep-the-dataset-grammar), `arc/arc.ebnf`, which it
 keeps minimal. Follow
 `.claude/CLAUDE.md`, the
 [ARC instructions](../../rules/arc.instructions.md), and the
@@ -35,7 +35,7 @@ added, edited, or removed, except for the solver's default puzzle in
 approach between `/arc-dataset` and `/nuc-proposal` alone. In `arc/`, only
 five things change: the puzzle's dataset and its README paragraph, both
 written by arc-dataset, that default, the
-[dataset grammar](#keep-the-dataset-grammar) `arc/nucleoid.ebnf`, and the
+[dataset grammar](#keep-the-dataset-grammar) `arc/arc.ebnf`, and the
 puzzle's [progress record](#document-the-progress) in `arc/docs/`. A NUC
 candidate changes nothing there. When the solver would need a change, finish
 the process without it and [suggest the change](#suggest-solver-changes) at
@@ -148,8 +148,9 @@ wherever the run's runtime, run as `arc/src/lib/nucleoid.ts` runs it, reads
 that word as the same value, as NUC 86, NUC 93 and NUC 94 read `right` in
 `if $Obj.repeat_direction is right:`, `$Obj.repeat_direction is right` and
 `$Obj.repeat_direction is right if $Obj.wide else down`. The arc-dataset
-profile's older examples that quote such words, such as
-`this.tag = 'lNNNN'`, do not override this. Have the
+profile's quoted default, `tag: str = 'lNNNN'`, is a quote that accepted
+Nucleoid cannot do without, because it rejects a bare parameter default
+with `SyntaxError`. Have the
 handoff list every quote it keeps, with the actual result of its bare
 spelling. Check that list before the run, and send back a handoff that keeps
 a quote a bare word would replace. The quotes that remain go to the
@@ -475,7 +476,7 @@ apply a suggestion or rerun the puzzle within the invocation.
 
 ## Keep the dataset grammar
 
-`arc/nucleoid.ebnf` is the minimal grammar of the Nucleoid syntax that the
+`arc/arc.ebnf` is the minimal grammar of the Nucleoid syntax that the
 code fields in `arc/src/dataset/` use: `declaration` derives each entry of
 `declarations`, and `implementation` each instance's `implementation`. After
 the outcome is decided and recorded, and before the progress record, bring
@@ -493,12 +494,12 @@ stays as it is.
   datasets use it: a part that no program repeats is at most optional, and
   one that no program omits is required. Lexical rules define only the token
   kinds the datasets use, such as single-quoted strings, and `RESERVED` holds
-  only the reserved words of `docs/nucleoid.g4` that the grammar uses as
+  only the reserved words of `docs/nucleoid.ebnf` that the grammar uses as
   terminals. Add only the form a dataset uses, never the rest of its feature
-  from `docs/nucleoid.g4`, and remove or narrow a form once no dataset uses
+  from `docs/nucleoid.ebnf`, and remove or narrow a form once no dataset uses
   it, as after a dataset is replaced or respelled.
 - **Keep its style:** W3C EBNF with `::=`, syntax rules named after those of
-  `docs/nucleoid.g4`, uppercase lexical rules, and no comments.
+  `docs/nucleoid.ebnf`, uppercase lexical rules, and no comments.
 - **Verify offline:** every program in `arc/src/dataset/` derives from
   `declaration` or `implementation`, and removing or narrowing any
   alternative, optional part or repetition rejects at least one of them.
@@ -576,7 +577,7 @@ nothing.
    primary checkout: `arc/src/dataset/dataset.<puzzle-id>.json`, its
    paragraph in `arc/README.md`, its entry in `.github/workflows/arc.yml`,
    the default puzzle in `arc/src/app.ts` while it names this puzzle,
-   `arc/nucleoid.ebnf` when the [grammar step](#keep-the-dataset-grammar)
+   `arc/arc.ebnf` when the [grammar step](#keep-the-dataset-grammar)
    changed it, and `arc/docs/ARC-NUC-<puzzle-id>.md`. A withdrawn dataset,
    and the paragraph and entry withdrawn with it, stay out. When a path also
    holds changes this invocation did not make, such as the pre-existing

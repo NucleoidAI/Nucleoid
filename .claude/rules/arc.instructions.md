@@ -17,7 +17,7 @@ version without it, under the
 that NUC is never run against the puzzle and follows the automatic acceptance
 rule directly. Its bare words are always on, and the user accepts in advance
 its one compatibility break: an undefined bare word that raised
-`ReferenceError` reads as its own text. `arc/nucleoid.ebnf` is the minimal
+`ReferenceError` reads as its own text. `arc/arc.ebnf` is the minimal
 grammar of the syntax that
 the code fields in `arc/src/dataset/` use, and it stays minimal: whenever a
 dataset introduces new syntax, `/arc-purposal` adds that syntax to it under the

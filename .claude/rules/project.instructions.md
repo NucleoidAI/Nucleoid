@@ -29,6 +29,7 @@ Build a Rust implementation of Nucleoid. The crate is at the repository root (`C
 ## References
 
 - `nucleoid.spec.md` — the main reference for runtime behaviours
+- `docs/nucleoid.ebnf` — the W3C EBNF syntax reference for the lexer and parser; `nucleoid.spec.md` stays normative
 - `dataset/nucleoid.synth.*.jsonl` — canonical synthesized fine-tuning records derived from `nucleoid.spec.md`;
   they are dataset material, not executable tests
 - `arc/src/instruct_dataset/` — ARC instruction examples, maintained within the ARC project
