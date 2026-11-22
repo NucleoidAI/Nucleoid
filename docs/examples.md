@@ -4494,6 +4494,34 @@ total
 - See [NUC 127](nuc-0127.md) and the
   [root contract](../nucleoid.spec.md#implicit-iterator-indented-loops).
 
+## Rust string boundary method aliases
+
+**Rust boundary methods keep a document desk's selection live**
+
+```nuc
+class Document(name):
+    this.name = name
+$Document.draft = $Document.name.starts_with("draft_")
+$Document.table = $Document.name.ends_with(".csv")
+first = Document("draft_sales.csv")
+second = Document("notes.txt")
+selected = Document.filter(doc -> doc.draft and doc.table).map(doc -> doc.name)
+assert(selected, ["draft_sales.csv"])
+second.name = "draft_costs.csv"
+assert(selected, ["draft_sales.csv", "draft_costs.csv"])
+first.name = "sent_sales.csv"
+assert(selected, ["draft_costs.csv"])
+selected
+# return: ["draft_costs.csv"]
+```
+
+- Each document's literal prefix and suffix rules use the same operations
+  as `startsWith` and `endsWith`. The live selection follows changed names
+  without an imperative walk.
+- These are Rust's names with Nucleoid's conversions and call semantics,
+  not Rust pattern overloads. See [NUC 132](nuc-0132.md) and the
+  [root contract](../nucleoid.spec.md#rust-string-boundary-method-aliases).
+
 ## Copyright
 
 Copyright 2020 Nucleoid

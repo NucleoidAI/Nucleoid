@@ -334,7 +334,7 @@ fn only_the_appended_cases_flatten_lists_and_they_run_every_assertion() {
         assert_eq!(matching, 1, "{title}");
     }
     assert_eq!(assertions, 30);
-    assert_eq!(cases, 1264);
+    assert_eq!(cases, 1269);
 }
 
 #[test]
@@ -343,13 +343,13 @@ fn the_appended_cases_stand_before_the_cases_of_nuc_98() {
     let titles: Vec<&str> = spec.iter().map(|case| case.title.as_str()).collect();
     assert_eq!(titles[832..838], SPEC_TITLES);
     assert_eq!(titles[843], "Nucleoid states class predicates with is");
-    assert_eq!(titles.len(), 851);
+    assert_eq!(titles.len(), 853);
     for (cases, title) in [
         (&reference, REFERENCE_TITLE),
         (&readme, README_TITLE),
         (&examples, EXAMPLES_TITLE),
     ] {
-        assert_eq!(cases[cases.len() - 4].title, title);
+        assert_eq!(cases[cases.len() - 5].title, title);
     }
 }
 

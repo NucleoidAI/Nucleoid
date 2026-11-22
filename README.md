@@ -2971,6 +2971,32 @@ assert(total, 11)
 - See [NUC 127](docs/nuc-0127.md) and the
   [root contract](nucleoid.spec.md#implicit-iterator-indented-loops).
 
+## Rust string boundary method aliases
+
+**Rust boundary methods keep file flags live**
+
+```nuc
+class File(name):
+    this.name = name
+$File.draft = $File.name.starts_with("draft_")
+$File.table = $File.name.ends_with(".csv")
+file = File("draft_report.csv")
+assert([file.draft, file.table], [true, true])
+file.name = "notes.txt"
+assert([file.draft, file.table], [false, false])
+[file.draft, file.table]
+# return: [false,false]
+```
+
+- [NUC 132](docs/nuc-0132.md) adds Rust's familiar `starts_with` and
+  `ends_with` names for the accepted string boundary queries. Each file's
+  flags follow its name through the same class-rule dependencies.
+- The first argument converts to Nucleoid text; missing arguments test
+  `"undefined"` and further arguments are evaluated and ignored. Rust's
+  pattern traits and static typing are not introduced. All accepted
+  JavaScript and Python spellings remain available.
+- See the [root contract](nucleoid.spec.md#rust-string-boundary-method-aliases).
+
 ## Benchmark
 
 This is the comparation our sample order app in Nucleoid IDE against MySQL and Postgres with using Express.js and Sequelize libraries.

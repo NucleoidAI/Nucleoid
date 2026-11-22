@@ -2809,7 +2809,7 @@ Full detail: [NUC 9](nuc-0009.md), [NUC 46](nuc-0046.md), [NUC 119](nuc-0119.md)
 | `Boolean` | `Boolean(value)` |
 | `Number` | `Number.MAX_INTEGER` |
 | `Math` | `pow`, `sqrt`, `floor`, `round`, `max`, `min`, `clamp` ([NUC 21](nuc-0021.md)), `lerp` ([NUC 22](nuc-0022.md)), `saturate` ([NUC 23](nuc-0023.md)), `smoothstep(lower, upper, value)` (accepted [NUC 33](nuc-0033.md)), `smootherstep(lower, upper, value)` (accepted [NUC 35](nuc-0035.md)), `remap(start, end, targetStart, targetEnd, value)` (accepted [NUC 39](nuc-0039.md)) |
-| `String` | `String.fromCharCode`; instance `charAt`, `length`, `lower`, `replace`, `replaceAll` (accepted [NUC 42](nuc-0042.md)), `repeat`, `split`, `padStart` and `padEnd` ([NUC 111](nuc-0111.md)), Python's `startswith`, `endswith` and `join(items)`, with the separator as the receiver ([NUC 110](nuc-0110.md)), the size and emptiness methods `length()`, `size()`, `len()`, `isEmpty()`, `is_empty()` and `isNotEmpty()` ([NUC 116](nuc-0116.md)), the case conversion aliases `uppercase()`, `to_uppercase()` and `uppercased()` of `toUpperCase()`, and `lowercase()`, `to_lowercase()` and `lowercased()` of `toLowerCase()` ([NUC 118](nuc-0118.md)), and the reversals `reverse()` and `reversed()`, exactly `text[::-1]` ([NUC 131](nuc-0131.md)) |
+| `String` | `String.fromCharCode`; instance `charAt`, `length`, `lower`, `replace`, `replaceAll` (accepted [NUC 42](nuc-0042.md)), `repeat`, `split`, `padStart` and `padEnd` ([NUC 111](nuc-0111.md)), Python's `startswith`, `endswith` and `join(items)`, with the separator as the receiver ([NUC 110](nuc-0110.md)), Rust's `starts_with(prefix)` and `ends_with(suffix)` ([NUC 132](nuc-0132.md)), the size and emptiness methods `length()`, `size()`, `len()`, `isEmpty()`, `is_empty()` and `isNotEmpty()` ([NUC 116](nuc-0116.md)), the case conversion aliases `uppercase()`, `to_uppercase()` and `uppercased()` of `toUpperCase()`, and `lowercase()`, `to_lowercase()` and `lowercased()` of `toLowerCase()` ([NUC 118](nuc-0118.md)), and the reversals `reverse()` and `reversed()`, exactly `text[::-1]` ([NUC 131](nuc-0131.md)) |
 | `Date` | `Date()`, `Date(string)`, `Date(number)`, `Date.now()`, `Date.parse()`; instance `getTime`, `getYear`, `toDateString` |
 | `List` | `push`, `pop`, `filter`, `map`, `flatMap` (accepted [NUC 41](nuc-0041.md)), `flat` ([NUC 103](nuc-0103.md)), `reduce`, `find`, `some`, `every`, `slice`, `reverse` (a new list in reverse order), `sort` (in place, [NUC 58](nuc-0058.md)), `join`, `length`, and the queries `at`, `includes`, `indexOf`, `lastIndexOf`, `findIndex`, `findLast`, `findLastIndex` and `concat` ([NUC 61](nuc-0061.md)), `sum` ([NUC 68](nuc-0068.md)), `max` and `min` ([NUC 69](nuc-0069.md)), `distinct` ([NUC 71](nuc-0071.md)), `count(predicate)` ([NUC 73](nuc-0073.md)), `mode` ([NUC 75](nuc-0075.md)), `maxBy` and `minBy` ([NUC 77](nuc-0077.md)), `average` ([NUC 80](nuc-0080.md)), `median` ([NUC 84](nuc-0084.md)), `sortBy` ([NUC 105](nuc-0105.md)), `partition` ([NUC 108](nuc-0108.md)), `product` ([NUC 114](nuc-0114.md)), `variance` and `stdev` ([NUC 123](nuc-0123.md)), `quantile` ([NUC 124](nuc-0124.md)), `zip(other)` and `zip(other, combine)` ([NUC 129](nuc-0129.md)), the size and emptiness aliases `size()`, `len()`, `isEmpty()`, `is_empty()` and `isNotEmpty()` ([NUC 116](nuc-0116.md)), the first and last element aliases `first()`, `last()`, `first(predicate)` and `last(predicate)` ([NUC 117](nuc-0117.md)), and the reversal aliases `reversed()` and `toReversed()` of `reverse()` ([NUC 131](nuc-0131.md)); `sum`, `max`, `min` and `mode` also read as `sum of list` ([NUC 75](nuc-0075.md) revision 2) |
 | `Class` | the global list of declared types; `Class.length` |
@@ -3119,6 +3119,44 @@ assert([latest[0], recent.length, readings], [23, 3, [18, 21, 19, 23]])
   in `tests/reference.md`. The
   [root section](../nucleoid.spec.md#reversal-method-aliases) and its four
   appended entries define the results, liveness and rollback.
+
+### Rust string boundary method aliases
+
+```
+name = "draft_report.csv"
+prefix = "draft_"
+suffix = ".csv"
+draft = name.starts_with(prefix)
+table = name.ends_with(suffix)
+assert([draft, table], [true, true])
+name = "notes.txt"
+assert([draft, table], [false, false])
+prefix = "notes"
+suffix = ".txt"
+assert([draft, table], [true, true])
+[draft, table]
+```
+
+- [NUC 132](nuc-0132.md) adds exactly Rust's `starts_with(prefix)` and
+  `ends_with(suffix)` names on strings. They use the accepted
+  `startsWith`/`startswith` and `endsWith`/`endswith` operations.
+- Matching is literal, case-sensitive and not Unicode-normalized. The
+  first argument converts to Nucleoid text: `null` tests `"null"`, a
+  missing argument tests `"undefined"`, and a list tests its comma-joined
+  text, not several patterns. Empty affixes match empty strings.
+- The receiver evaluates first, then every argument left to right.
+  Further arguments are evaluated and ignored, not positions; argument
+  errors propagate. A null or undefined receiver skips all arguments.
+- Standing declarations and class rules keep the same dependencies and
+  rollback. Explanations and graph rendering retain the written names.
+  Other receivers, property reads, user methods and static `String` calls
+  retain their routing and errors.
+- These are familiar Rust names, not Rust's pattern traits or static type
+  and arity rules. All older spellings remain supported.
+- This is the executable entry `Nucleoid classifies live strings with Rust
+  boundary names` in `tests/reference.md`. The
+  [root contract](../nucleoid.spec.md#rust-string-boundary-method-aliases)
+  and its two appended entries define the behavior.
 
 ### Reactive string padding
 
@@ -5626,6 +5664,7 @@ items.variance()  Name.stdev(selector) live population variance from the mean, a
 items.quantile(q)  Name.quantile(q, f) live q quantile, linear between the two closest ranks of the sorted values (NUC 124)
 items.zip(other)  Name.zip(Other, f)  live [a, b] pairs by position, or f(a, b), up to the shorter sequence (NUC 129)
 text.startswith(p)  text.endswith(s)  Python spellings: exactly text.startsWith(p), text.endsWith(s) (NUC 110)
+text.starts_with(p)  text.ends_with(s) Rust names: the same string boundary queries (NUC 132)
 ", ".join(items)  ", ".join(Name)      Python spelling: exactly items.join(", "), Name.join(", ") (NUC 110)
 text.padStart(n, fill)  text.padEnd(n)  live text padded before or after to n characters; fill defaults to " " (NUC 111)
 items.size()  items.len()  text.length() exactly items.length and text.length; Name.size() counts instances (NUC 116)

@@ -723,6 +723,54 @@ operator-chain diagnostics and source positions are preserved.
   specify the executable behavior. `tests/reversal_aliases.rs` executes the
   rest.
 
+## Rust string boundary method aliases
+
+- [NUC 132](docs/nuc-0132.md) adds exactly `starts_with(prefix)` and
+  `ends_with(suffix)` on string receivers. They are additional names of the
+  accepted `startsWith`/`startswith` and `endsWith`/`endswith` query arms,
+  not new operations. Every accepted name remains available.
+- **Matching.** The first argument converts to its Nucleoid text form.
+  Matching is literal and case-sensitive, without Unicode normalization:
+  `"café.csv".starts_with("café")` is `true`, but decomposed `"é"` does
+  not match composed `"é"`. An empty affix matches even an empty string.
+  A number tests its text, `null` tests `"null"`, and a missing argument
+  tests `"undefined"`. A list tests its comma-joined text, not alternatives.
+- **Evaluation.** The receiver evaluates first, then all arguments once,
+  left to right. Further arguments are evaluated and ignored; they do not
+  specify positions. Argument errors propagate before matching. A `null`
+  or undefined receiver stays undefined without evaluating any argument.
+- **Live.** Declarations and class-level rules retain the accepted call's
+  dependencies, including ignored arguments, in written evaluation order.
+  A rule such as `$File.table = $File.name.ends_with(suffix)` follows each
+  file's name and the suffix. Failed updates and enclosing transactions
+  roll back through the existing runtime.
+- **Per receiver.** The aliases equal their accepted operations whenever
+  the receiver evaluates to a string. A later non-string receiver reads the
+  written method name using its existing routing: a number raises
+  `TypeError("number.starts_with is not a function")`, while an object's
+  callable `starts_with` property still runs that property.
+- **Unchanged.** Lists, class populations, numbers, booleans, objects,
+  instances, functions, dates and regular expressions retain their
+  routing and errors. Reads such as `text.starts_with` stay undefined;
+  assignments keep `TypeError("Cannot assign 'starts_with' on string")`.
+  Static `String.starts_with(...)` keeps
+  `TypeError("String.starts_with is not a function")`; `ends_with` follows
+  the same existing error formats. No lexer, parser, keyword, syntax-tree
+  contract or terminal-completion entry changes.
+- **Rendering.** Statements, explanations, graph keys and graph output
+  retain the method name as written. There is no parse-time normalization
+  to a JavaScript or Python spelling.
+- **Rust differences.** These names inherit Nucleoid semantics, not Rust's
+  `Pattern` traits or static types. Values convert to text rather than
+  becoming character sets or predicate patterns; missing and extra
+  arguments retain Nucleoid's treatment. No positional variant, extra
+  alias or utility is introduced.
+- The two appended entries `Nucleoid tests string boundaries with Rust
+  spellings` and `Nucleoid keeps Rust boundary rules live and rolls back
+  failed receiver updates` define the executable behavior.
+  `tests/rust_string_boundary_aliases.rs` covers the public built-in,
+  evaluation order, receiver isolation and written rendering.
+
 ## Reactive string padding
 
 - [NUC 111](docs/nuc-0111.md) adds JavaScript's standard padding methods to
@@ -28453,4 +28501,46 @@ for text
 assert(value, 9)
 value
 # return: 9
+---
+# Nucleoid tests string boundaries with Rust spellings
+
+text = "café.csv"
+assert([text.starts_with("café"), text.ends_with(".csv")], [true, true])
+assert([text.starts_with("Café"), text.ends_with("CSV")], [false, false])
+assert(["".starts_with(""), "".ends_with("")], [true, true])
+assert(["é".starts_with("é"), "é".ends_with("é")], [false, false])
+assert(["12 notes".starts_with(12), "flagtrue".ends_with(true), "null notes".starts_with(null)], [true, true, true])
+assert(["undefined notes".starts_with(), "notesundefined".ends_with()], [true, true])
+assert(["notes.csv".ends_with([".csv", ".txt"]), "notes.csv,.txt".ends_with([".csv", ".txt"])], [false, true])
+assert(["abc".starts_with("b", 1), "abc".ends_with("b", 0, 2)], [false, false])
+[text.starts_with("café"), text.ends_with(".csv")]
+# return: [true,true]
+---
+# Nucleoid keeps Rust boundary rules live and rolls back failed receiver updates
+
+class File(name):
+    this.name = name
+prefix = "draft_"
+suffix = ".csv"
+$File.draft = $File.name.starts_with(prefix)
+$File.table = $File.name.ends_with(suffix)
+report = File("draft_report.csv")
+notes = File("notes.txt")
+selected = File.filter(file -> file.draft and file.table).map(file -> file.name)
+assert([report.draft, report.table, notes.draft, notes.table], [true, true, false, false])
+notes.name = "draft_notes.csv"
+assert(selected, ["draft_report.csv", "draft_notes.csv"])
+prefix = "draft_notes"
+assert([report.draft, notes.draft, selected], [false, true, ["draft_notes.csv"]])
+failure = ""
+try:
+    notes.name = 5
+catch error:
+    failure = error
+assert(failure, TypeError("number.starts_with is not a function"))
+assert([notes.name, notes.draft, notes.table, selected], ["draft_notes.csv", true, true, ["draft_notes.csv"]])
+suffix = ".txt"
+assert([report.table, notes.table, selected], [false, false, []])
+[notes.name, notes.draft, notes.table]
+# return: ["draft_notes.csv",true,false]
 ```

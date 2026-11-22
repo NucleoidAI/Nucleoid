@@ -2997,4 +2997,20 @@ for text
     letters.push(it)
 assert(letters, ["c", "a", "b"])
 assert(letters.join(""), text)
+---
+# Nucleoid classifies live strings with Rust boundary names
+
+name = "draft_report.csv"
+prefix = "draft_"
+suffix = ".csv"
+draft = name.starts_with(prefix)
+table = name.ends_with(suffix)
+assert([draft, table], [true, true])
+name = "notes.txt"
+assert([draft, table], [false, false])
+prefix = "notes"
+suffix = ".txt"
+assert([draft, table], [true, true])
+[draft, table]
+# return: [true,true]
 ```

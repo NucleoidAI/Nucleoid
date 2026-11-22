@@ -22417,6 +22417,57 @@ value
 # return: 9"#);
 }
 
+/// Nucleoid tests string boundaries with Rust spellings
+#[rustfmt::skip]
+#[test]
+fn tests_string_boundaries_with_rust_spellings() {
+    let mut run = runner();
+    run(r#"text = "café.csv""#);
+    assert_eq!(run(r#"[text.starts_with("café"), text.ends_with(".csv")]"#), serde_json::json!([true, true]));
+    assert_eq!(run(r#"[text.starts_with("Café"), text.ends_with("CSV")]"#), serde_json::json!([false, false]));
+    assert_eq!(run(r#"["".starts_with(""), "".ends_with("")]"#), serde_json::json!([true, true]));
+    assert_eq!(run(r#"["é".starts_with("é"), "é".ends_with("é")]"#), serde_json::json!([false, false]));
+    assert_eq!(run(r#"["12 notes".starts_with(12), "flagtrue".ends_with(true), "null notes".starts_with(null)]"#), serde_json::json!([true, true, true]));
+    assert_eq!(run(r#"["undefined notes".starts_with(), "notesundefined".ends_with()]"#), serde_json::json!([true, true]));
+    assert_eq!(run(r#"["notes.csv".ends_with([".csv", ".txt"]), "notes.csv,.txt".ends_with([".csv", ".txt"])]"#), serde_json::json!([false, true]));
+    assert_eq!(run(r#"["abc".starts_with("b", 1), "abc".ends_with("b", 0, 2)]"#), serde_json::json!([false, false]));
+    run(r#"[text.starts_with("café"), text.ends_with(".csv")]
+
+# return: [true,true]"#);
+}
+
+/// Nucleoid keeps Rust boundary rules live and rolls back failed receiver updates
+#[rustfmt::skip]
+#[test]
+fn keeps_rust_boundary_rules_live_and_rolls_back_failed_receiver_updates() {
+    let mut run = runner();
+    run(r#"class File(name):
+    this.name = name
+prefix = "draft_"
+suffix = ".csv"
+$File.draft = $File.name.starts_with(prefix)
+$File.table = $File.name.ends_with(suffix)
+report = File("draft_report.csv")
+notes = File("notes.txt")
+selected = File.filter(file -> file.draft and file.table).map(file -> file.name)
+assert([report.draft, report.table, notes.draft, notes.table], [true, true, false, false])
+notes.name = "draft_notes.csv"
+assert(selected, ["draft_report.csv", "draft_notes.csv"])
+prefix = "draft_notes"
+assert([report.draft, notes.draft, selected], [false, true, ["draft_notes.csv"]])
+failure = ""
+try:
+    notes.name = 5
+catch error:
+    failure = error
+assert(failure, TypeError("number.starts_with is not a function"))
+assert([notes.name, notes.draft, notes.table, selected], ["draft_notes.csv", true, true, ["draft_notes.csv"]])
+suffix = ".txt"
+assert([report.table, notes.table, selected], [false, false, []])
+[notes.name, notes.draft, notes.table]
+# return: ["draft_notes.csv",true,false]"#);
+}
+
 /// The committed tests must not drift from their generated JSONL export.
 #[rustfmt::skip]
 #[test]

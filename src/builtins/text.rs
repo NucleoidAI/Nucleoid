@@ -68,8 +68,12 @@ fn string_query(receiver: &str, name: &str, first: &Value) -> Option<Value> {
             }
         }
         "includes" | "contains" => Value::Bool(string_contains(receiver, first)),
-        "startsWith" | "startswith" => Value::Bool(receiver.starts_with(&first.to_string())),
-        "endsWith" | "endswith" => Value::Bool(receiver.ends_with(&first.to_string())),
+        "startsWith" | "startswith" | "starts_with" => {
+            Value::Bool(receiver.starts_with(&first.to_string()))
+        }
+        "endsWith" | "endswith" | "ends_with" => {
+            Value::Bool(receiver.ends_with(&first.to_string()))
+        }
         _ => return size_query(name, || receiver.chars().count()),
     })
 }
