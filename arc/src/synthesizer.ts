@@ -21,6 +21,8 @@ async function synthesize({ train }) {
         instances: [],
       };
 
+      const potential_instances = [];
+
       for (const instance of dataset.instances) {
         const input_instance_matrix = Matrix.rotate_instance(
           Matrix.move_instance(instance.input_instance_matrix, x, y),
@@ -65,10 +67,6 @@ async function synthesize({ train }) {
         const canvas_width: number = input_instance_matrix[0].length;
         const canvas_height: number = input_instance_matrix.length;
         const class_declaration = train.class_declaration;
-        const declarations = train.declarations;
-        const implementations = synthesized_dataset.instances.map(
-          ({ implementation }) => implementation
-        );
 
         synthesized_instance.input_value = await nucleoid.run(
           [
@@ -80,27 +78,44 @@ async function synthesize({ train }) {
           ].join("\n\n")
         );
 
-        synthesized_instance.output_value = await nucleoid.run(
-          [
-            `canvas_width = ${canvas_width}`,
-            `canvas_height = ${canvas_height}`,
-            class_declaration,
-            ...declarations,
-            ...implementations,
-            synthesized_instance.implementation,
-            `${synthesized_instance_name}`,
-          ].join("\n\n")
-        );
+        potential_instances.push(synthesized_instance);
+      }
 
+      const implementations = potential_instances.map(
+        ({ implementation }) => implementation
+      );
+
+      const canvas_width: number = dataset.input_matrix[0].length;
+      const canvas_height: number = dataset.input_matrix.length;
+
+      const potential_objects = await nucleoid.run(
+        [
+          `canvas_width = ${canvas_width}`,
+          `canvas_height = ${canvas_height}`,
+          train.class_declaration,
+          ...train.declarations,
+          ...implementations,
+          "Obj[:]",
+        ].join("\n\n")
+      );
+
+      potential_objects.forEach((object) => {
+        const found_instance = potential_instances.find(
+          ({ instance_name }) => object.id === instance_name
+        );
+        found_instance.output_value = object;
+      });
+
+      for (const potential_instance of potential_instances) {
         const { output_instance_matrix } =
           await visualizer.output_instance_matrix({
             phase: "analysis",
-            test_input_matrix: input_instance_matrix,
+            test_input_matrix: potential_instance.input_instance_matrix,
             train,
-            instance: synthesized_instance,
+            instance: potential_instance,
           });
 
-        synthesized_instance.output_instance_matrix = output_instance_matrix;
+        potential_instance.output_instance_matrix = output_instance_matrix;
 
         const {
           x: output_x,
@@ -111,20 +126,20 @@ async function synthesize({ train }) {
         } = Matrix.measure(output_instance_matrix);
 
         if (
-          synthesized_instance.output_value.x === output_x &&
-          synthesized_instance.output_value.y === output_y &&
-          synthesized_instance.output_value.width === output_width &&
-          synthesized_instance.output_value.height === output_height &&
-          synthesized_instance.output_value.volume === output_volume
+          potential_instance.output_value.x === output_x &&
+          potential_instance.output_value.y === output_y &&
+          potential_instance.output_value.width === output_width &&
+          potential_instance.output_value.height === output_height &&
+          potential_instance.output_value.volume === output_volume
         ) {
-          synthesized_dataset.instances.push(synthesized_instance);
+          synthesized_dataset.instances.push(potential_instance);
           milestone.synthesized_instance_validated({
             pair_number: validated_dataset.length + 1,
-            ...synthesized_instance,
+            ...potential_instance,
           });
         } else {
           milestone.synthesized_instance_rejected({
-            ...synthesized_instance,
+            ...potential_instance,
             output_measurement: {
               x: output_x,
               y: output_y,

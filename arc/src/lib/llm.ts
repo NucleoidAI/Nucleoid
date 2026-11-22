@@ -28,7 +28,7 @@ export async function generate({
     messages.unshift({
       role: "system",
       content: `
-        EBNF:
+        Grammar:
         ${readFileSync(join(__dirname, "..", "..", "arc.ebnf"), "utf8")}
       `,
     });
