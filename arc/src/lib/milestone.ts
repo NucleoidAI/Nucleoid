@@ -222,19 +222,19 @@ export function instance_constructed({
 
 export function state({
   phase,
-  obj_list,
+  objects,
 }: {
   phase: "analysis" | "visualization";
-  obj_list: Record<string, unknown>[];
+  objects: Record<string, unknown>[];
 }) {
   const properties = [
-    ...new Set(obj_list.flatMap((instance) => Object.keys(instance))),
+    ...new Set(objects.flatMap((instance) => Object.keys(instance))),
   ].filter((property: string) => property !== "id");
 
   terminal.table(
     phase === "analysis" ? "Analysis · State" : "Visualization · State",
     ["id", ...properties],
-    obj_list,
+    objects,
     { key: "state" }
   );
 }

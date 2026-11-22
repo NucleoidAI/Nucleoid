@@ -164,5 +164,5 @@ export async function state(train) {
     });
   }
 
-  milestone.state({ phase: "analysis", obj_list: objects });
+  milestone.state({ phase: "analysis", objects: objects });
 }

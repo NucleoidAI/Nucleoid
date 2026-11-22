@@ -142,7 +142,7 @@ async function state({
 
   const canvas_width: number = input_matrix[0].length;
   const canvas_height: number = input_matrix.length;
-  const obj_list = await nucleoid.run(
+  const objects = await nucleoid.run(
     [
       `canvas_width = ${canvas_width}`,
       `canvas_height = ${canvas_height}`,
@@ -153,13 +153,13 @@ async function state({
     ].join("\n\n")
   );
 
-  milestone.state({ phase: "visualization", obj_list });
+  milestone.state({ phase: "visualization", objects });
 
-  [...obj_list].forEach((instance) => {
+  [...objects].forEach((object) => {
     const found_instance = input_instances.find(
-      ({ instance_name }) => instance.id === instance_name
+      ({ instance_name }) => object.id === instance_name
     );
-    found_instance.output_value = instance;
+    found_instance.output_value = object;
   });
 }
 
