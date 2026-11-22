@@ -4495,7 +4495,8 @@ statement positions; caught values and transaction recovery are unchanged.
   `RECEIVER.a()` and `RECEIVER.a@first`.
 - A dot begins an operand only after a token in operand position, which the
   lexer also uses to tell a regular expression from a division: not after a
-  name, a class reference, a literal, `)`, `]`, `}` or `this`. After such a
+  name, a class reference, a number, version index, string, template or
+  regular expression literal, `)`, `]`, `}` or `this`. After such a
   token the dot keeps its accepted reading: `x .a` and `1 .a` are member
   access, as are `x` and `.a` on the next line inside brackets, while
   `(x is .a)` and `while .a: ...` keep their errors. A digit after `.` is a

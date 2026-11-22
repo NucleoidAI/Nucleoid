@@ -23,29 +23,38 @@
  * - Ordinary tokenization reads the longest token at each position. Only the
  *   rules of this contract supply INDENT, DEDENT, VERSION_INDEX, REGEX and
  *   EOF.
- * - Scan C-style comments and operand-position regular expressions before
- *   ordinary tokenization. A regular expression must close on its
- *   line; otherwise '/' and '/=' keep their operator readings. Its flags
- *   are accepted and ignored. Operand position excludes a preceding name,
- *   class reference, literal, ')', ']', '}' or 'this' token.
+ * - Where ordinary tokenization would read '/' or '/=', first read a
+ *   C_COMMENT, then, in operand position, a REGEX. Strings, templates and
+ *   '#' comments are read whole before that, so neither starts inside
+ *   them. A regular expression must close on its line, though an escaped
+ *   line break continues it; otherwise '/' and '/=' keep their operator
+ *   readings. Its flags are accepted and ignored. Operand position
+ *   excludes a preceding name token, CLASS_REF, NUMBER, VERSION_INDEX,
+ *   STRING, TEMPLATE, REGEX, ')', ']', '}' or THIS token. After any other
+ *   token, TRUE, FALSE and NULL included, or at the start of the input, a
+ *   '/' is in operand position: 'x = true / 2 / 1' reads the regular
+ *   expression '/ 2 /'.
  * - C-style comments win over regular expressions and division. Line
  *   comments start with '//'; block comments end at the first star-slash, do
  *   not nest, and fail when unterminated. So '//' is a comment, never an
  *   empty regular expression.
- * - Directly after '@', plain adjacent digits become VERSION_INDEX. Reject
- *   a following letter, digit or underscore and reject other number forms.
+ * - Directly after '@', plain adjacent digits become VERSION_INDEX, whose
+ *   value must fit the host's usize. Reject a following letter, digit or
+ *   underscore and reject other number forms.
  * - Replace physical NEWLINEs with logical layout tokens. Parentheses and
  *   brackets suppress layout; braces do not. Ignore blank/comment-only
- *   lines. Before each subsequent logical line emit NEWLINE, then INDENT
- *   for an increased width or DEDENT for each closed level. A tab has width
- *   4; other whitespace has width 1 and comments have width 0. A width
- *   between open levels closes to the shallower level without error.
+ *   lines. A line break inside a block comment is a physical NEWLINE too,
+ *   so a block comment that spans lines ends its logical line. Before each
+ *   subsequent logical line emit NEWLINE, then INDENT for an increased
+ *   width or DEDENT for each closed level. A tab has width 4; other
+ *   whitespace has width 1 and comments have width 0. A width between open
+ *   levels closes to the shallower level without error.
  * - Finish with the pending NEWLINE, all remaining DEDENTs, then EOF.
  *
- * WHITESPACE and COMMENT may stand between any two tokens and appear in no
- * syntax rule, but the token source reads them for layout. REGEX_LITERAL
- * records the scanner's pattern; it is part of REGEX, deliberately not a
- * token of its own that every '/' would start.
+ * WHITESPACE, COMMENT and C_COMMENT may stand between any two tokens and
+ * appear in no syntax rule, but the token source reads them for layout.
+ * REGEX_LITERAL records the scanner's pattern; it is part of REGEX,
+ * deliberately not a token of its own that every '/' would start.
  */
 
 /* Tokens that only the token-source contract supplies. */
@@ -132,23 +141,40 @@ statement
       | predicateSentence
       | expression                        /* Stmt::Assign or Stmt::Expression */
 
+/* Without a value only before NEWLINE, ';', DEDENT, '}' or EOF; any other
+   token begins the value, so 'return pass' and 'if c: return else: d' are
+   errors. */
 returnStmt
     ::= RETURN expression?                /* Stmt::Return */
 
-/* The following token must be NEWLINE, ';', DEDENT or EOF. */
+/* The following token must be NEWLINE, ';', DEDENT or EOF. At the start of
+   a statement, a name, COLON and a name before such a token always form a
+   typeDeclaration, whatever the first name: 'suppose: int', 'lambda: T'
+   and 'assert: int' included. A colon statement is a typeDeclaration or
+   an assertStmt. */
 typeDeclaration
     ::= name COLON name                   /* Stmt::Declaration */
 
-/* A third comma is an error. */
+/* A comma after the second expression is an error. */
 assertStmt
     ::= ASSERT COLON expression COMMA expression
 
-/* A premise is tentative: it ends exactly at ':' and cannot be a colon
-   statement or end in the word 'lambda'; an atVariable named lambda is not
-   that word. Otherwise 'suppose' stays a name.
+/* The head is decided on the expression that the statement begins with,
+   parsed as usual: it must be exactly the name 'suppose', grouping aside,
+   or an ASSIGN or isAssignment whose value is. So 'x = (suppose): s' is a
+   suppose block, while 'suppose(1): 2' is a call and 'suppose -x: s' a
+   subtraction, each followed by an unexpected ':'. A premise is
+   tentative: it ends exactly at ':', cannot begin a colon statement or end
+   in the word 'lambda' (an atVariable named lambda is not that word), and
+   the header probe of the parse-pass contract may drop it. When neither
+   ':' nor a premise follows the head, 'suppose' stays a name.
    The 'path IS' head follows the isAssignment contract. */
 supposeStmt
-    ::= (conditional ASSIGN | path IS)? SUPPOSE premise? suite
+    ::= (conditional ASSIGN | path IS)? supposeName premise? suite  /* Stmt::Suppose */
+
+supposeName
+    ::= SUPPOSE
+      | LPAREN supposeName RPAREN
 
 premise
     ::= clauseExpression
@@ -158,14 +184,15 @@ valueAssignment
 
 /*
  * Is-assignment contract (NUC 93, NUC 94, NUC 95, NUC 96):
- * - An isAssignment path may be parenthesized and has at most 128 links. No NEWLINE separates it from
- *   'is', and the token after 'is' must begin an expression: a name token,
- *   CLASS_REF, NUMBER, STRING, TEMPLATE, REGEX, LPAREN, LBRACK, LBRACE,
- *   BANG, MINUS, PLUS, TRUE, FALSE, NULL, THIS, SUPER, NEW, DELETE,
- *   FUNCTION, NOT or TYPEOF, or the AT of an atVariable whose name is not
- *   FIRST, LAST or PREVIOUS. Otherwise 'is' stays a name that begins the
- *   next statement, and 'why', 'affects', 'stated' or 'derived' before
- *   'is' keep their reasoning-selection reading.
+ * - No NEWLINE separates the path from 'is', and the token after 'is' must
+ *   begin an expression: a name token, CLASS_REF, NUMBER, STRING,
+ *   TEMPLATE, REGEX, LPAREN, LBRACK, LBRACE, BANG, MINUS, PLUS, TRUE,
+ *   FALSE, NULL, THIS, SUPER, NEW, DELETE, FUNCTION, NOT or TYPEOF, or the
+ *   AT of an atVariable whose name is not FIRST, LAST or PREVIOUS.
+ *   Otherwise 'is' stays a name that begins the next statement. 'why',
+ *   'affects', 'stated' and 'derived' before 'is' are always a reasoning
+ *   prefix with the operand 'is', so 'why is 1' is the selection 'why is'
+ *   followed by the statement '1'; those names are assigned with ASSIGN.
  * - The value is ASSIGN's statement-level value and builds the tree of
  *   'path = expression' apart from its word markers. A following ':=' or a
  *   'suppose' value is handled as after ASSIGN.
@@ -177,14 +204,13 @@ valueAssignment
  * - Item positions: each expression of a listDisplay without a
  *   comprehension, the expression of each 'objectKey COLON expression'
  *   entry, and the expression after ASSIGN of each 'name ASSIGN expression'
- *   argument of a call whose callee is a plain name, of a 'NEW primary' call
- *   and of 'SUPER call'. They lie anywhere in the value, through every
- *   construct, including conditions, branches, grouping parentheses,
- *   subscripts, slice bounds and steps, stage arguments, quantifiers and
- *   comprehension sources, except inside function, lambda and arrow
- *   bodies, comprehension elements and filters, template interpolations,
- *   the value of an inner assignment operator and the target of an
- *   assignment operator.
+ *   argument of a label call, which primary defines. They lie anywhere in
+ *   the value, through every construct, including conditions, branches,
+ *   grouping parentheses, subscripts, slice bounds and steps, stage
+ *   arguments, quantifiers and comprehension sources, except inside
+ *   function, lambda and arrow bodies, comprehension elements and filters,
+ *   template interpolations, the value of an inner assignment operator and
+ *   the target of an assignment operator.
  * - Conditions, grouping parentheses, operands of other operators,
  *   positional call arguments, the 'name ASSIGN expression' arguments of
  *   other calls, objectKey, shorthand 'name' entries, spread sources,
@@ -217,8 +243,10 @@ classReference
       | spelledClass
       | LPAREN classReference RPAREN
 
-/* Only at a statement boundary; require NEWLINE, ';', DEDENT, '}', EOF,
-   'else' or 'catch' after the value. At most 128 targets are accepted. */
+/* Only where the pattern begins the input or follows NEWLINE, ';', INDENT,
+   DEDENT, LBRACE or COLON, so never after another statement on its line;
+   require NEWLINE, ';', DEDENT, '}', EOF, 'else' or 'catch' after the
+   value. At most 128 targets are accepted. */
 destructuring
     ::= (objectPattern | unpackingPattern) ASSIGN conditional
 
@@ -262,6 +290,9 @@ ifStmt
 conditionClause
     ::= clauseExpression body elseClause?
 
+/* An ELSE belongs to the innermost ifStmt whose body it follows with only
+   NEWLINE or ';' between: after 'if a: if b: x', an 'else: y' line is the
+   else of 'if b'. A DEDENT before ELSE passes it outward. */
 elseClause
     ::= lineSeparator* ELSE (ifStmt | directCondition | body)
 
@@ -282,9 +313,11 @@ forStmt
       | FOR name COLON? indentedBlock                         /* Stmt::For, item "it" */
       | FOR name (OF | IN) clauseExpression suite             /* Stmt::For */
 
-/* The tentative condition must end exactly at ':', cannot be a colon
-   statement or suppose expression, and cannot end in the word 'lambda';
-   an atVariable named lambda is not that word. */
+/* The tentative condition must end exactly at ':', cannot begin a colon
+   statement, cannot be a supposeStmt head, as in 'while x = (suppose): x',
+   which is the name 'while' followed by an assigned suppose block, and
+   cannot end in the word 'lambda'; an atVariable named lambda is not that
+   word. The header probe of the parse-pass contract may drop it. */
 whileStmt
     ::= WHILE clauseExpression suite      /* Stmt::While */
 
@@ -334,7 +367,8 @@ exceptClause
    FINALLY is a NEWLINE or the DEDENT that closes it. FINALLY on that
    body's line, after ';', or inside '(' and '[', which suppress layout, keeps
    its name reading, and so does 'FINALLY COLON name' before NEWLINE, ';',
-   DEDENT or EOF, which stays a typeDeclaration. */
+   DEDENT or EOF, which stays a typeDeclaration. Of try statements nested in
+   inline suites, the innermost takes it, as for UNTIL. */
 finallyClause
     ::= NEWLINE* FINALLY suite
 
@@ -382,9 +416,10 @@ rest
 classStmt
     ::= CLASS name constructorParameters? classTail          /* Stmt::Class */
 
-/* A bodyless header requires a statement end with no following indented
-   block. A parent after ':' is recognized only before NEWLINE, INDENT or
-   EOF. Giving a parent both after 'extends' and after ':' is an error. */
+/* A bodyless header ends only before NEWLINE, ';', DEDENT, '}' or EOF, never
+   before ELSE or CATCH, and no indented block may follow it. A parent after
+   ':' is recognized only before NEWLINE, INDENT or EOF. Giving a parent both
+   after 'extends' and after ':' is an error. */
 classTail
     ::= (EXTENDS name (COLON classBody)? | COLON name? classBody)?
 
@@ -441,9 +476,23 @@ receiver
  *   Their top-level ':' belongs to the enclosing construct; 'lambda'
  *   therefore stays an ordinary name there.
  * - Enclosed positions additionally include grouping, lists, comprehension
- *   parts, object values, call/stage arguments, slice ends and slice steps.
- *   Nested expressions inherit context. Statement-level assignment values
- *   are not enclosed.
+ *   parts, object values, spread sources, call/stage arguments, slice ends,
+ *   slice steps and the first expression of an assertStmt. Nested
+ *   expressions stay enclosed until a statement begins. Statement-level
+ *   assignment values and the second expression of an assertStmt are not
+ *   enclosed.
+ * - Each expression has a context: ordinary, object value, clause,
+ *   interpolation, comprehension source or expressionInput. Operands, the
+ *   alternate of a conditional, assignment values, arrow and lambda bodies
+ *   and quantifier conditions inherit it. Other nested expressions select
+ *   their own: object values and spread sources the object-value context,
+ *   clauses the clause context, comprehension sources and interpolations
+ *   theirs, and the rest, such as grouping, list items, call and stage
+ *   arguments, slice ends and steps and comprehension elements and
+ *   filters, the ordinary context. The top level of an interpolation, a
+ *   comprehension source or an expressionInput is the part that keeps its
+ *   context, so '${(a if b else c)}' and '${(all v in xs: v)}' read forms
+ *   that the top level disables.
  * - 'is'/'is not' compare only in enclosed positions and in an enabled
  *   parse pass. A single-name right operand is a word comparison;
  *   otherwise they mean '=='/'!='. The right operand is an atVariable
@@ -451,10 +500,11 @@ receiver
  * - In an object value, a following name ':' starts the next property.
  *   'is:', 'stated name:' and 'derived name:' keep that interpretation.
  * - A Python conditional is tentative and needs 'else' directly after its
- *   condition. It is disabled in interpolation and comprehension sources.
- * - Interpolation also disables quantifiers, spelled class references, noun
- *   queries, lambdas and membership tests. The top level of an
- *   expressionInput disables membership tests only.
+ *   condition. It is disabled at the top level of an interpolation or a
+ *   comprehension source.
+ * - The top level of an interpolation also disables quantifiers, spelled
+ *   class references, noun queries, lambdas and membership tests. The top
+ *   level of an expressionInput disables membership tests only.
  *   Object values retain 'lambda name:' as a property/declaration boundary
  *   when that boundary has the accepted reading.
  */
@@ -476,10 +526,24 @@ assignmentOperator
       | AND_ASSIGN
       | OR_ASSIGN
 
-/* Compound assignments and ':=' require a path, not an arbitrary expression. */
+/* Compound assignments, ':=' and isAssignment require a path, not an
+   arbitrary expression. The parser checks the tree, where grouping leaves
+   no trace, so parentheses may enclose the path or any part of it that
+   starts at its root. A class root needs at least one link, and a path has
+   at most 128 links. */
 path
-    ::= name (member | version)*
-      | (CLASS_REF | THIS) (member | version)+
+    ::= pathHead (member | version)*
+
+pathHead
+    ::= name
+      | classRoot (member | version)
+      | LPAREN path RPAREN
+
+classRoot
+    ::= CLASS_REF
+      | THIS
+      | spelledClass
+      | LPAREN classRoot RPAREN
 
 conditional
     ::= coalesce
@@ -516,6 +580,8 @@ logicalAnd
 equality
     ::= relational (equalityOperator relational)*            /* Expr::Binary, left */
 
+/* A NOT directly after IS belongs to the operator, never to a prefix of the
+   right operand: 'a is not not b' is 'a != (not b)'. */
 equalityOperator
     ::= EQUAL
       | NOT_EQUAL
@@ -534,7 +600,9 @@ equalityOperator
  *   whose trailing tokens are ignored: IN stays their first ignored token.
  * - Not when COLON directly follows the right operand outside a clause:
  *   such a colon can only close a malformed quantifier, so IN keeps its
- *   accepted reading and the error "Unexpected keyword 'in'".
+ *   accepted reading and error, "Unexpected keyword 'in'" where it would
+ *   begin a statement and the enclosing construct's error elsewhere, such
+ *   as "Expected '}' but found keyword 'in'" in an object value.
  */
 relational
     ::= additive (relationalOperator additive)*              /* Expr::Binary, left */
@@ -553,7 +621,9 @@ additive
 term
     ::= unary ((STAR | SLASH | PERCENT) unary)*               /* Expr::Binary, left */
 
-/* A reasoning prefix is recognized only before a name or CLASS_REF. */
+/* A reasoning prefix is recognized only, and always, before a name token or
+   CLASS_REF, 'is' included, except that 'stated name:' and 'derived name:'
+   in an object value start the next property. */
 unary
     ::= reasoningPrefix unary                               /* Expr::Reason */
       | noun OF unary                                       /* Expr::Of */
@@ -653,8 +723,12 @@ sectionOperator
       | OR_OR
       | COALESCE
 
-/* A plain-name callee treats bare name=value arguments as constructor
-   labels; grouping or another assignment-shaped target stays positional. */
+/* A label call is a call whose callee's tree is a name: a name token,
+   possibly grouped or after NEW, or an atVariable; 'SUPER call' is one too.
+   Its bare 'name ASSIGN expression' arguments are constructor labels. A
+   grouped or compound name assignment there stays positional, as
+   UnaryOp::Positional around its Expr::Assign; other assignment-shaped
+   arguments keep their trees. */
 primary
     ::= receiverRead
       | atVariable
@@ -748,9 +822,9 @@ atVariable
  *   of a comprehension have no THIS receiver, so their reads keep the
  *   accepted error; a comprehension's source and a quantified condition
  *   keep THIS. A classBody inside such a body has THIS again.
- * - The NUC 93 probes of whileStmt, repeatStmt and supposeStmt headers read
- *   THIS receivers but no assignment receivers, as the accepted probes read
- *   the written-out 'THIS DOT property'.
+ * - The header probes of the parse-pass contract read THIS receivers but no
+ *   assignment receivers, as the accepted probes read the written-out
+ *   'THIS DOT property'.
  */
 receiverRead
     ::= DOT property                      /* Expr::Member over the receiver path */
@@ -795,6 +869,14 @@ spelledClass
     ::= (ANY | ALL) name                  /* Expr::ClassRef */
       | EVERY name                        /* Expr::ClassRef, outside an ifStmt only */
 
+/* LAMBDA forms a lambda only where an operand begins outside clauses and
+   the top level of interpolations, and only when nothing or comma-separated
+   name tokens and then COLON follow it. With exactly one name, an object
+   value keeps 'lambda name:' as its next property, and a colon statement
+   at that name keeps its reading: 'f = lambda x: int' is an assignment
+   followed by 'x: int'. '(lambda x: int)' and 'f(lambda x: int)' are
+   lambdas, since ')' follows 'int', but a single 'assert' parameter never
+   forms one. */
 lambdaExpression
     ::= LAMBDA (name (COMMA name)*)? COLON expression
 
@@ -831,8 +913,10 @@ objectKey
       | NUMBER
 
 /* Decode TEMPLATE as text/escapes/${interpolation}. An interpolation ends
-   at its balancing '}', ignoring braces inside strings and C-style
-   comments, and is parsed separately in interpolation context. */
+   at its balancing '}', which the token source finds, so braces inside its
+   strings, templates, regular expressions and comments, '#' comments
+   included, do not count. It is parsed separately in interpolation
+   context, inside each parse pass. */
 templateLiteral
     ::= TEMPLATE                                            /* Expr::Template */
 
@@ -1078,6 +1162,10 @@ WHITESPACE
 COMMENT
     ::= '#' [^#xA]*
 
+C_COMMENT
+    ::= '/' '/' [^#xA]*
+      | '/' '*' [^#x2A]* '*'+ ([^#x2A#x2F] [^#x2A]* '*'+)* '/'
+
 /* Parts of tokens, not tokens themselves. */
 DIGITS
     ::= [0-9]+
@@ -1093,16 +1181,33 @@ REGEX_LITERAL
 
 REGEX_CHAR
     ::= [^/#x5C#x5B#xA]
-      | #x5C [^#xA]
-      | '[' ([^#x5D#x5C#xA] | #x5C [^#xA])* ']'
+      | REGEX_ESCAPE
+      | '[' ([^#x5D#x5C#xA] | REGEX_ESCAPE)* ']'
+
+/* Unlike ESCAPE, it may escape a line break. */
+REGEX_ESCAPE
+    ::= #x5C ([^#xA] | #xA)
 
 /*
  * Parse-pass contract:
- * Try the complete program without 'is' comparisons or comprehensions,
- * then with 'is', then with comprehensions, then with both. 'is' passes
- * require an 'is' name or template in the source; comprehension passes
- * require 'for' or a template. Keep the first successful complete parse.
- * A later pass never changes a source accepted by an earlier pass.
+ * Try the complete input, a program or the expressionInput of
+ * parse_expression, without 'is' comparisons or comprehensions, then with
+ * 'is', then with comprehensions, then with both. 'is' passes require an
+ * 'is' name or template in the source; comprehension passes require 'for'
+ * or a template. Keep the first successful complete parse. A later pass
+ * never changes a source accepted by an earlier pass. Interpolations are
+ * parsed inside each pass, with its readings. When these passes all fail,
+ * the accepted error is that of the pass without 'is', unless the 'is'
+ * pass's error lies further into the source; when the comprehension passes
+ * ran, their error, chosen the same way, replaces it.
+ * Header probe (NUC 86, extended to repeatStmt by NUC 115): in a pass
+ * that reads 'is' comparisons, a whileStmt condition, a repeatStmt count or
+ * a supposeStmt premise is dropped, and its word stays a name, when the
+ * same tokens read without 'is' comparisons give no such header and, from
+ * the WHILE or REPEAT word or the premise's first token through the
+ * header's COLON, parse without them as consecutive statements, the last
+ * of which reaches past that COLON. So 'while f() is x: T' stays the
+ * statements 'while', 'f()', 'is' and 'x: T'.
  * Every pass reads isAssignment, and its word positions never change
  * whether or where a pass succeeds or fails. Every pass reads atVariable in
  * isAssignment values, and the passes that read 'is' comparisons also read
@@ -1138,12 +1243,19 @@ REGEX_CHAR
  * Limits:
  * MAX_NESTING = 64, shared by statement/expression nesting:
  *   Statements are nested too deeply / Expressions are nested too deeply.
+ *   Each statement takes a level, and so does each nested expression:
+ *   every grouping, item, argument, body, clause and value, and every
+ *   operand of a prefix operator, reasoning prefix, noun query, NEW or
+ *   DELETE, every '**' exponent and every conditional alternate. Operator
+ *   chains do not; MAX_CHAIN bounds them.
  * MAX_CHAIN = 128, operator chains:
  *   Expression has too many operands.
  * MAX_CHAIN = 128, postfix/selector/assignment paths:
  *   Expression has too many parts.
  * MAX_DESTRUCTURING_TARGETS = 128:
  *   Destructuring has too many targets.
+ * VERSION_INDEX at most the host's usize maximum:
+ *   Expected a non-negative integer, 'first', 'last', or 'previous' after '@'.
  *
  * Lowerings and contextual values:
  * a op= b                  -> a = a op b, including &&= and ||=.
@@ -1153,6 +1265,9 @@ REGEX_CHAR
  * assert: a, b             -> assert(a, b).
  * def f(x) => e            -> a function body returning e.
  * class C(this.x)          -> C(x) with this.x = x at constructor start.
+ * def init(this.x): s      -> def init(x): this.x = x; s, also for function
+ *                             init and a receiver's __init__; an arrow body
+ *                             returns its expression after the assignments.
  * def m(self, a): s        -> def m(a): s, in a class body's receiver parse.
  * def __init__(self, a): s -> def init(a): s, also with 'this'.
  * lambda a, b: e           -> (a, b) => e.
@@ -1179,9 +1294,18 @@ REGEX_CHAR
  * catch without a name     -> the binding "error".
  * except:                  -> catch:, also except Exception:.
  * except Exception as e:   -> catch e:.
- * model directly before |> -> Expr::Model.
- * |> intersect(model)      -> its other selection is Expr::Model; also except
- *                             and union.
+ * else c: s                -> else if c: s, also elif c: s; a final else
+ *                             body is a Stmt::Block.
+ * t = suppose p: s         -> Stmt::Suppose with target t and the body p; s,
+ *                             the premise first; also t is suppose p: s, and
+ *                             suppose p: s without a target.
+ * model |> s               -> Expr::Model as the source of the stage s when
+ *                             the whole operand before |> is the name model,
+ *                             grouping aside: '(model) |> why' reads the
+ *                             model and 'a + model |> why' the name.
+ * |> intersect(model)      -> its other selection is Expr::Model when the
+ *                             whole argument is the name model, grouping
+ *                             aside; also except and union.
  * s |> union(o)            -> Expr::Union: the steps of s, then the steps of o
  *                             whose node s does not select, in o's order. A
  *                             binding named union shadows it at run time, and
@@ -1191,7 +1315,11 @@ REGEX_CHAR
  *                             s's selection. It ends the pipeline: a stage
  *                             after it, or an intersect, except, union or path
  *                             argument that ends with it, parses and then
- *                             raises TypeError("Cannot explain <source>").
+ *                             raises TypeError("Cannot explain <source>"),
+ *                             unless a binding shadows a stage after it or
+ *                             the stage taking it as argument, whose
+ *                             TypeError("<name> is not an operation") comes
+ *                             first.
  * s |> holds               -> Expr::Reason with Stage::Holds, the values that
  *                             s's steps hold. It ends the pipeline as nodes
  *                             does, and a binding named holds shadows it at
@@ -1204,7 +1332,8 @@ REGEX_CHAR
  *                             selection, and a binding of either name
  *                             shadows its stage at run time.
  * An object containing spread uses Expr::SpreadObject, with later entries
- * winning; otherwise it uses Expr::ObjectLiteral. Numeric keys become text.
+ * winning; otherwise it uses Expr::ObjectLiteral. Numeric keys become text,
+ * and a shorthand entry 'name' is the entry 'name: name'.
  *
  * Source map:
  * Tokens/keywords: src\lang\ast\lexer\raw.rs and lexer\token.rs.
@@ -1213,6 +1342,9 @@ REGEX_CHAR
  * Passes/limits: src\lang\ast\parser.rs.
  * Programs/suites/statements: src\lang\ast\parser\statement.rs.
  * Conditions/loops/exceptions: src\lang\ast\parser\control.rs.
+ * Header probes and colon statements: loop headers in parser\control.rs,
+ * premises, the accepted probe and colon statements in parser\statement.rs.
+ * Paths: PathTarget in parser\expression.rs.
  * Patterns/enums: parser\destructuring.rs and parser\enumeration.rs.
  * Functions/classes: parser\function.rs and parser\class.rs.
  * Operators/postfix/primary: parser\expression.rs, parser\precedence.rs,
