@@ -28887,4 +28887,41 @@ names.push("c")
 assert([mapped, kept], [["A", "B", "C"], ["a", "b", "c"]])
 [mapped, kept]
 # return: [["A","B","C"],["a","b","c"]]
+
+---
+
+# Nucleoid computes floating point absolute values with fabs
+
+values = [-3.5, 0, -0]
+magnitudes = values.map(value -> Math.fabs(value))
+assert(magnitudes, [3.5, 0, 0])
+assert(magnitudes, values.map(value -> Math.abs(value)))
+assert(1 / Math.fabs(-0), Number.POSITIVE_INFINITY)
+assert(Math.fabs(Number.NEGATIVE_INFINITY), Number.POSITIVE_INFINITY)
+assert(Number.isNaN(Math.fabs(Number.NaN)), true)
+assert(Number.isNaN(Math.fabs()), true)
+assert([Math.fabs(" -4 "), Math.fabs([-2]), Math.fabs(null), Math.fabs(true)], [4, 2, 0, 1])
+assert(Math.fabs(-3, "ignored", Number.NaN), 3)
+magnitudes
+# return: [3.5,0,0]
 ```
+
+## Floating-point absolute value alias
+
+- The NUC 137 candidate adds only the familiar `Math.fabs(value)` name for
+  the existing `Math.abs(value)` operation, not foreign argument semantics.
+- Wherever accepted call resolution reaches native Math, both names share
+  `first.abs()`, including finite/subnormal values, positive-zero results
+  for either zero sign, positive infinity for either infinity sign, and the
+  accepted NaN payload behavior.
+- Every supplied expression evaluates once left to right. The existing
+  any-supplied-`Undefined` gate runs before intrinsic `Value::to_number`
+  conversion of the first input; omission supplies numeric NaN. Extras
+  retain effects, dependencies and strict errors without numeric conversion.
+- Literal null retains zero coercion; live-null and parameter deferral,
+  named/class-rule liveness, deletion/recovery and rollback are unchanged.
+- Do not consult shadowable Number or Math.abs. Ordinary identifiers,
+  properties, `.Math` members and namespace shadowing remain ordinary.
+  Native method value reads remain Undefined, not callable references.
+- No global aliases, additional receivers, other math names, flags,
+  parser/lexer changes, public API changes or dependencies are introduced.

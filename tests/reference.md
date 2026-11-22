@@ -3052,4 +3052,19 @@ bo.open = true
 assert(board, ["ada", "bo"])
 board
 # return: ["ada","bo"]
+
+---
+
+# Nucleoid keeps fabs absolute values live
+
+reading = -3.5
+def magnitude(value) => Math.fabs(value)
+absolute = magnitude(reading)
+assert(absolute, 3.5)
+reading = -0
+assert(1 / absolute, Number.POSITIVE_INFINITY)
+reading = 4
+assert(absolute, Math.abs(reading))
+absolute
+# return: 4
 ```

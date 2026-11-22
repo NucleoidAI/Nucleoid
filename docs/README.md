@@ -2686,6 +2686,10 @@ Full detail: [NUC 9](nuc-0009.md), [NUC 46](nuc-0046.md), [NUC 119](nuc-0119.md)
   writable list receiver in place; see
   [In-place list sorting](#in-place-list-sorting).
 - `Math.max` and `Math.min` propagate `NaN`, including when an argument cannot be coerced to a number.
+- The [NUC 137 candidate](nuc-0137.md) adds `Math.fabs(value)` as exactly
+  the existing `Math.abs(value)` operation, preserving intrinsic coercion,
+  the supplied-Undefined gate and all accepted call behavior. See the
+  [absolute-value alias](#floating-point-absolute-value-alias).
 - The [NUC 100 candidate](nuc-0100.md) adds only unshadowed static
   `Math.cot(value)`, exactly `1 / Math.tan(value)` with radians as input.
   After the existing any-supplied-Undefined gate and intrinsic first-input
@@ -3503,6 +3507,44 @@ ratio
 - Sibling helpers, unknown/random static errors and accepted syntax remain
   unchanged. No aliases, parser/lexer changes, public Rust APIs/types,
   dependencies, versions or resource limits are introduced.
+
+---
+
+## Floating-point absolute value alias
+
+### Nucleoid keeps fabs absolute values live
+
+```
+reading = -3.5
+def magnitude(value) => Math.fabs(value)
+absolute = magnitude(reading)
+assert(absolute, 3.5)
+reading = -0
+assert(1 / absolute, Number.POSITIVE_INFINITY)
+reading = 4
+assert(absolute, Math.abs(reading))
+absolute
+```
+
+- This is the complete new `tests/reference.md` program without its title
+  and expected-return metadata; it returns `4`. The [NUC 137 candidate](nuc-0137.md)
+  and [root contract](../nucleoid.spec.md#floating-point-absolute-value-alias)
+  add a familiar floating-point absolute-value name, not new math semantics
+  or complete C, C++ or Python argument compatibility.
+- Both names share `first.abs()` after Math's existing any-supplied-Undefined
+  gate and intrinsic first-input conversion. Omission gives numeric NaN.
+  Finite values, subnormals, both zero/infinity signs and NaN payloads retain
+  the accepted absolute-value operation.
+- All expressions evaluate once left to right; ignored extras retain reads,
+  effects, strict errors and the Undefined gate without numeric conversion.
+  Literal-null coercion, live-null/parameter deferral, named functions,
+  class rules, deletion/recovery and transactional rollback are unchanged.
+- Conversion never calls or tracks shadowable Number or Math.abs. Ordinary
+  names/properties, `.Math` members and namespace shadowing keep lookup.
+  `Math.fabs` value reads remain Undefined, like `Math.abs`, not callable
+  native references. Lists, populations, numbers and strings gain no methods.
+- Other math names, exact errors, accepted syntax, AST/source spelling,
+  public Rust APIs, dependencies and versions remain unchanged.
 
 ---
 

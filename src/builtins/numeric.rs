@@ -29,7 +29,7 @@ fn numeric_argument(arguments: &[Value], index: usize) -> f64 {
 
 fn math_unary(name: &str, first: f64) -> Option<f64> {
     Some(match name {
-        "abs" => first.abs(),
+        "abs" | "fabs" => first.abs(),
         "ceil" => first.ceil(),
         "floor" => first.floor(),
         "fract" => {

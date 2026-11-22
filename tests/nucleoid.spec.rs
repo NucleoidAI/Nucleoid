@@ -22710,6 +22710,38 @@ assert([mapped, kept], [["A", "B", "C"], ["a", "b", "c"]])
 # return: [["A","B","C"],["a","b","c"]]"#);
 }
 
+/// Nucleoid computes floating point absolute values with fabs
+#[rustfmt::skip]
+#[test]
+fn computes_floating_point_absolute_values_with_fabs() {
+    let mut run = runner();
+    run("values = [-3.5, 0, -0]");
+    run("magnitudes = values.map(value -> Math.fabs(value))");
+    assert_eq!(run("magnitudes"), serde_json::json!([3.5, 0, 0]));
+    {
+        let actual = run("magnitudes");
+        let expected = run("(values.map(value -> Math.abs(value)))");
+        assert_eq!(actual, expected);
+    }
+    {
+        let actual = run("1 / Math.fabs(-0)");
+        let expected = run("(Number.POSITIVE_INFINITY)");
+        assert_eq!(actual, expected);
+    }
+    {
+        let actual = run("Math.fabs(Number.NEGATIVE_INFINITY)");
+        let expected = run("(Number.POSITIVE_INFINITY)");
+        assert_eq!(actual, expected);
+    }
+    assert_eq!(run("Number.isNaN(Math.fabs(Number.NaN))"), true);
+    assert_eq!(run("Number.isNaN(Math.fabs())"), true);
+    assert_eq!(run(r#"[Math.fabs(" -4 "), Math.fabs([-2]), Math.fabs(null), Math.fabs(true)]"#), serde_json::json!([4, 2, 0, 1]));
+    assert_eq!(run(r#"Math.fabs(-3, "ignored", Number.NaN)"#), 3);
+    run(r#"magnitudes
+
+# return: [3.5,0,0]"#);
+}
+
 /// The committed tests must not drift from their generated JSONL export.
 #[rustfmt::skip]
 #[test]
