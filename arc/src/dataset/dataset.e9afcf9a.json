@@ -1,5 +1,5 @@
 {
-  "class_declaration": "# Each object is one full-width row of a single color. The output weaves the two rows into a checkerboard: each color keeps the cells whose row plus column has the parity of its input row\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.tag is l3058",
+  "class_declaration": "# Each object is one full-width row of a single color. The output weaves the two rows into a checkerboard: each color keeps the cells whose row plus column has the parity of its input row\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, tag: str = 'l3058'):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.tag is tag",
   "declarations": [
     "# Each row becomes l5973, one color of a checkerboard\n$Obj.tag is l5973",
     "# A checkerboard points nowhere: 0\n$Obj.orientation is 0",

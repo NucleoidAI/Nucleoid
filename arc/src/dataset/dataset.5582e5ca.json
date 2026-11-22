@@ -1,5 +1,5 @@
 {
-  "class_declaration": "# Each object is the whole mosaic of the grid, empty cells included in its box. The output fills every cell of the grid with the most common color of the mosaic\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, parts: list):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.tag is l9100\n    this.parts is parts",
+  "class_declaration": "# Each object is the whole mosaic of the grid, empty cells included in its box. The output fills every cell of the grid with the most common color of the mosaic\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, tag: str = 'l9100', parts: list):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.tag is tag\n    this.parts is parts",
   "declarations": [
     "# Each mosaic becomes l5236, a solid rectangle\n$Obj.tag is l5236",
     "# The rectangle takes the most common color among its parts\n$Obj.fill_color is mode of $Obj.parts",

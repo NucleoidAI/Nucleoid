@@ -1,5 +1,5 @@
 {
-  "class_declaration": "# Each object is one color-8 corner: 3 cells of a 2x2 box that meet at its vertex cell. Every corner fills the open cell of its box with color 1, completing the square\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, color: int):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.tag is l6747\n    this.color is color",
+  "class_declaration": "# Each object is one color-8 corner: 3 cells of a 2x2 box that meet at its vertex cell. Every corner fills the open cell of its box with color 1, completing the square\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, tag: str = 'l6747', color: int):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.tag is tag\n    this.color is color",
   "declarations": [
     "# Each corner becomes l3337, a corner with its inside marker\n$Obj.tag is l3337",
     "# The open cell of its box, diagonally opposite its vertex, turns color 1\n$Obj.marker_color is 1",

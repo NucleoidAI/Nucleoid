@@ -381,10 +381,11 @@ color-9 point with its color-2 rim below and a color-4 point with its color-8
 rim above, and a vertical line that extends up from its bottom endpoint with
 a horizontal line that extends left from its right endpoint.
 Each genesis class takes the standard entries `x`, `y`, `width`, `height`,
-`orientation`, and `volume` first, then its descriptive properties in their
-existing order, and every implementation passes the input shape's bounding-box
-`width` and `height` and its input mask's `volume`, its number of nonzero
-cells. A rule that grows a shape computes its new size
+`orientation`, and `volume` first, then the optional `tag`, then its
+descriptive properties in their existing order, and every implementation
+passes the input shape's bounding-box `width` and `height` and its input
+mask's `volume`, its number of nonzero cells, and leaves out `tag`. A rule
+that grows a shape computes its new size
 from its first values in the branch that sets its output tag: a core corner
 grows from 2 by 2 to 3 by 3 with its outside marker, and its origin moves one
 column left when it points west, at orientation 225 or 315, and one row up
@@ -419,6 +420,17 @@ every program it runs, as
 rules read it from those variables. Native snapshots are captured the same
 way, with the pair's `input_matrix` size declared first.
 
+Every class takes `tag` right after `volume` as an optional parameter whose
+default is the dataset's initial tag, such as `tag: str = 'l9100'`, and its
+constructor stores it with `this.tag is tag`. An implementation passes `tag`
+only when its object needs a tag other than that default: every
+implementation of `dataset.27a28665.json` passes the tag of its block's
+shape, as in `tag='l4262'`, and every other implementation leaves it out, so
+its input state carries the default. The parameter comes before the
+descriptive parameters, in the order of the constructor's assignments:
+Nucleoid lets a default occupy any parameter slot, and every implementation
+names its arguments.
+
 Every dataset writes its assignments with `is`, the opt-in assignment of
 [NUC 93](../docs/nuc-0093.md), and its equality tests with `is` and `is not`,
 the comparisons of [NUC 86](../docs/nuc-0086.md). Constructors set
@@ -429,11 +441,15 @@ each `target is value` builds exactly the syntax tree of `target = value`. When
 a whole value, or the whole right operand of an `is` comparison, is one bare
 word, it reads the name of that spelling if one exists and otherwise its own
 text, so tags and directions drop their quotes there, as in
-`this.tag is l9100` and `$Obj.extension_direction is right`. No dataset
+`$Obj.tag is l3337` and `$Obj.extension_direction is right`, while
+`this.tag is tag` reads the constructor's `tag` parameter. No dataset
 program defines a name with those spellings, and the solver adds only
 `canvas_width` and `canvas_height`. Other strings keep their quotes, such as
-the object keys of the `fill_color` rule in `dataset.27a28665.json` and
-keyword arguments such as `tag='l1707'`, which are not assignments.
+the object keys of the `fill_color` rule in `dataset.27a28665.json`, keyword
+arguments such as `tag='l1707'`, which are not assignments, and the default
+of the `tag` parameter, such as `tag: str = 'l9100'`: accepted Nucleoid takes
+only a literal as a parameter default and rejects the bare `tag: str = l9100`
+with `SyntaxError: Expected a scalar literal parameter default`.
 `src\lib\nucleoid.ts` passes no syntax flag: the runtime reads `is`
 assignments without one since `d945213`, which removed the opt-in syntax
 options, so the solver needs that runtime or later. An older runtime reads
@@ -468,19 +484,19 @@ it:
 Every statement in a comment holds for the dataset's grids and snapshots.
 Comments use no quote, backslash, or second `#`, so they add no quote to
 `src\dataset`. Nucleoid skips comments: removing them leaves the code byte
-for byte, and every snapshot unchanged. [`nucleoid.ebnf`](nucleoid.ebnf)
+for byte, and every snapshot unchanged. [`arc.ebnf`](arc.ebnf)
 derives them as `COMMENT`:
 
 ```nuc
 # Each object is all the cells of one color, touching or not. Every color except the one with the most cells turns 5
-class Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, color: int):
+class Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, tag: str = 'l9100', color: int):
     this.x is x
     this.y is y
     this.width is width
     this.height is height
     this.orientation is orientation
     this.volume is volume
-    this.tag is l9100
+    this.tag is tag
     this.color is color
 
 # A color group that some other group outnumbers turns color 5; only the group with the most cells keeps its color
@@ -777,9 +793,11 @@ up by that tag. The class takes the standard entries `x`, `y`, `width`,
 column and row counts of the block's bounding box and `volume` the number of
 its nonzero cells, 3, 3, and 5 in every pair, and `tag` as its only descriptive
 property, such as `tag='l4262'` for the first training input, with no color,
-parts list, canvas size, or matrix of cells. Its constructor stores the tag it
-is given instead of a fixed initial tag, so the input state names the shape
-and no input property names the code. One class serves every shape because the
+parts list, canvas size, or matrix of cells. Like every class, it takes `tag`
+right after `volume` as an optional parameter, here with the default `l9100`,
+a single shape, but every implementation passes its block's tag, so no
+instance takes the default, the input state names the shape, and no input
+property names the code. One class serves every shape because the
 solver reads output states with `Obj[:]`, which lists no instance of a
 subclass. Tags identify the geometry: `l4262` is the hollow diamond with a
 filled corner and `l3743` the square with a diagonal tail, while `l2404` is a
@@ -2568,7 +2586,7 @@ It also infers the `output_canvas` from the training pairs.
 
 ```json
 {
-  "class_declaration": "class Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, vertex_color: int, vertical_segment_color: int, horizontal_segment_color: int):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.tag is l6747\n    this.vertex_color is vertex_color\n    this.vertical_segment_color is vertical_segment_color\n    this.horizontal_segment_color is horizontal_segment_color",
+  "class_declaration": "class Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, tag: str = 'l6747', vertex_color: int, vertical_segment_color: int, horizontal_segment_color: int):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.tag is tag\n    this.vertex_color is vertex_color\n    this.vertical_segment_color is vertical_segment_color\n    this.horizontal_segment_color is horizontal_segment_color",
   "declarations": [
     "if $Obj.vertex_color is 9 and $Obj.vertical_segment_color is 9 and $Obj.horizontal_segment_color is 9:\n    $Obj.tag is l6624\n    $Obj.marker_color is 4\n    $Obj.x is $Obj.x@first - 1 if $Obj.orientation > 180 else $Obj.x@first\n    $Obj.y is $Obj.y@first - 1 if $Obj.orientation < 90 or $Obj.orientation > 270 else $Obj.y@first\n    $Obj.width is $Obj.width@first + 1\n    $Obj.height is $Obj.height@first + 1\n    $Obj.volume is $Obj.volume@first + 1"
   ],

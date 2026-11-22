@@ -1,5 +1,5 @@
 {
-  "class_declaration": "# Each object is the one shape in the grid, inside a 3x3 box. The output shows the shape twice side by side, cropped to the two copies\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, color: int):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.tag is l9100\n    this.color is color",
+  "class_declaration": "# Each object is the one shape in the grid, inside a 3x3 box. The output shows the shape twice side by side, cropped to the two copies\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, tag: str = 'l9100', color: int):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.tag is tag\n    this.color is color",
   "declarations": [
     "# Each shape becomes l4305, a shape repeated side by side\n$Obj.tag is l4305",
     "# The output holds 2 copies\n$Obj.repeat_count is 2",

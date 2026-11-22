@@ -1,5 +1,5 @@
 {
-  "class_declaration": "# Each object is the whole figure in one 3x3 half of the grid: color 9 in the top half, color 1 in the bottom half. The output is a 3x3 grid that marks in color 2 the cells empty in both halves\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, holes: list):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.tag is l9100\n    this.holes is holes",
+  "class_declaration": "# Each object is the whole figure in one 3x3 half of the grid: color 9 in the top half, color 1 in the bottom half. The output is a 3x3 grid that marks in color 2 the cells empty in both halves\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, tag: str = 'l9100', holes: list):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.tag is tag\n    this.holes is holes",
   "declarations": [
     "# Each figure becomes l8372, the empty cells all figures share\n$Obj.tag is l8372",
     "# Its holes that every figure also has: the cells empty in both halves\n$Obj.points is $Obj.holes.filter(hole => all figure in Obj: figure.holes.includes(hole))",

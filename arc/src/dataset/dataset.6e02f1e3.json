@@ -1,5 +1,5 @@
 {
-  "class_declaration": "# Each object is the whole mosaic that fills the grid. The output replaces it with a line of 5 whose direction depends on how many colors the mosaic has\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, parts: list):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.tag is l9100\n    this.parts is parts",
+  "class_declaration": "# Each object is the whole mosaic that fills the grid. The output replaces it with a line of 5 whose direction depends on how many colors the mosaic has\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, tag: str = 'l9100', parts: list):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.tag is tag\n    this.parts is parts",
   "declarations": [
     "# Each mosaic becomes l6074, a straight line across the grid\n$Obj.tag is l6074",
     "# The number of distinct colors picks the line: 1 color the top row at 90, 2 colors the diagonal falling to the right at 135, 3 colors the diagonal rising to the right at 45\n$Obj.orientation is {1: 90, 2: 135, 3: 45}[$Obj.parts.distinct().length]",

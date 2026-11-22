@@ -1,5 +1,5 @@
 {
-  "class_declaration": "# Each object is one color-5 cell, one in every row. The output paints its whole row in a color picked by its column: 2 for the left column, 4 for the middle, 3 for the right\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.tag is l7544",
+  "class_declaration": "# Each object is one color-5 cell, one in every row. The output paints its whole row in a color picked by its column: 2 for the left column, 4 for the middle, 3 for the right\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, tag: str = 'l7544'):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.tag is tag",
   "declarations": [
     "# Each cell becomes l3058, a horizontal bar\n$Obj.tag is l3058",
     "# A horizontal bar lies at 90\n$Obj.orientation is 90",

@@ -94,7 +94,7 @@ export async function generate({ reasoning = false, messages = [] }) {
   let jsonContent;
 
   try {
-    // console.debug(JSON.stringify(JSON.parse(content), null, 2));
+    console.debug(JSON.stringify(JSON.parse(content)));
     jsonContent = JSON.parse(content);
   } catch (error) {
     throw new Error(

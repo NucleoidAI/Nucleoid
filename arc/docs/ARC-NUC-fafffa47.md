@@ -124,7 +124,7 @@ was dispatched. No hint was given and no NUC was requested for the dataset,
 so it selected no proposal strategy.
 
 Every form the dataset uses was already in the
-[dataset grammar](../nucleoid.ebnf), which still derives every program in
+[dataset grammar](../arc.ebnf), which still derives every program in
 `src/dataset` and needs each of its forms, so the grammar did not change.
 
 ### Volume
@@ -148,9 +148,34 @@ Offline, with the accepted runtime at `16ae8c2` (last runtime change
 `1612d6c`), all 12 input and 12 output snapshots of the 6 pairs replay, each
 equal to its previous snapshot with `volume` added. The grids, masks,
 positions, and instance names are unchanged, and every form the dataset uses
-was already in the [dataset grammar](../nucleoid.ebnf). No NUC was requested,
+was already in the [dataset grammar](../arc.ebnf). No NUC was requested,
 so no proposal strategy was selected and strategy learning did not apply. No
 solver run has measured this version, so its difference is unknown, not zero.
+
+### Optional tag
+
+On 22-Nov-2026, at the user's request, the class takes its tag as an optional
+constructor parameter right after `volume`. Its default is the initial tag
+that `this.tag is l9100` used to set, and the constructor stores it with
+`this.tag is tag`:
+
+```nuc
+class Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, tag: str = 'l9100', holes: list):
+```
+
+No implementation passes `tag`, so every instance takes the default and its
+input state still has the tag `l9100`. Offline, with the accepted runtime at
+`82fd893` (last runtime change `28eb973`), all 12 input and 12 output
+snapshots of the 6 pairs replay unchanged, and the declarations,
+implementations, grids, masks, and instance names are unchanged. The
+[dataset grammar](../arc.ebnf) now derives the default. The default keeps its
+quotes: accepted Nucleoid takes only a literal as a parameter default and
+rejects the bare `tag: str = l9100` with `SyntaxError`, so a quote-free
+spelling would need a NUC.
+
+No NUC was requested, so no proposal strategy was selected and strategy
+learning did not apply. No solver run has measured this version, so its
+difference is unknown, not zero.
 
 ## Quote-free NUC
 
