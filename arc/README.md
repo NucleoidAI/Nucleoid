@@ -172,9 +172,11 @@ Panels expand up to 120 terminal columns, shrinking to fit narrower windows.
 
 Immediately after the header, a puzzle preview shows the training input/output
 pairs side by side, with the test input below. Narrow windows wrap complete
-pairs onto additional rows; oversized pairs use the existing column-split matrix
-panels instead of dropping cells. The opening preview never receives or displays
-the expected test output. The final Expected/Result comparison remains unchanged.
+pairs onto additional rows; an oversized pair shows its `Input` and `Output`
+panels in one box titled `Train <n>`, splitting wide grids into column
+sections instead of dropping cells. The opening preview never receives or
+displays the expected test output, which appears only in the final
+Expected/Result comparison.
 
 Numbered analysis/visualization stages, boxed declarations and object states,
 and color-coded ARC grids with row/column coordinates keep the run readable.
@@ -185,46 +187,55 @@ such as `1.3.1` and `1.3.2` for training-object segmentation. Continued grid
 panels keep the same full number. The declarations header includes the
 output canvas instead of adding a separate milestone.
 
-Related panels sit side by side in one box, one column per panel, each under
-its own numbered title; a box for one instance names the instance once, in a
-title row above the columns. Each training pair's segmented objects share one
-box with a row per object, its `Input` beside its `Output`, such as
-`1.4.1 Input` and `1.5.1 Output`; segmented-object panels use `Input` and
-`Output` without object-number labels. Each constructed instance shows its
-`Input crop`, `Output crop`, `Implementation` and `Input state` side by side,
-`1.8.1` through `1.11.1` for the first one. After the `Analysis · State`
-table, a `Synthesizing training pairs` step precedes the synthesis call. Each
-synthesized instance's output is then composed as a test object's is, from its
-`Composing the output object · <instance>` step to its `Placed output`. When
-validation rejects the instance, because its `Output state` and the measured
-`Placed output` disagree on `x`, `y`, `width`, `height` or `volume`, a red `✗`
-step follows at once, such as
-`1.18.1 Rejected <instance> · Output state ≠ Placed output · volume 5 ≠ 4`,
-naming each disagreeing property with the state's value first. A
-`<count> training pairs synthesized` step (`pair` for one) follows, with one
-box per synthesized instance that passed validation, titled
-`Synthesized <n> · <instance>`, where `<n>` numbers its synthesized pair: its
-full-size `Input` and `Output` matrices side by side, then its `Output state`.
-Model token usage remains attached to its active milestone. Instance-specific
-steps, and the headers of instance panels shown on their own, include the
-instance name. In the visualization, the segmented test objects' `Input`
-panels sit side by side (`2.4.1`, `2.4.2`, …). Each test object's
-`Executing the object transformation` step, such as `2.7.1`, is followed by
-one box with its `Input crop`, `Implementation` and `Input state` side by
-side, `2.5.1`, `2.6.1` and `2.8.1`; if that execution fails, the crop and
-implementation still print before the error. Its composition shows the same
-`Input crop` again before its `Output crop`, under its own number, such as
-`2.11.1`, rather than continuing the synthesis count, and an `Output state`
-panel right after the `Output crop`: the object's row of the
-`Visualization · State` table, before its `Placed output`.
-The visualization's output-crop header also shows the object's output
-orientation as an arrow emoji and its degrees, such as
-`2.12.1 Output crop · <instance> · ➡️ 90°`, and every input- and
-output-state header, in both stages, shows the orientation of the state it
-displays the same way, such as `2.8.1 Input state · ⬆️ 0°` under its
-instance's title row. An orientation that is not a multiple of 45 degrees
-shows `🧭` instead of an arrow, and an object without a numeric
-`orientation` adds nothing to the header.
+The terminal always displays by group and side by side. Related panels share
+one box, one column per panel, each under its own numbered title, rather than
+following one another as separate boxes, and a result appears once, in its
+group, rather than on its own before a later box repeats it. A box for one
+instance names the instance once, in a title row above the columns. Each
+training pair's segmented objects share one box with a row per object, its
+`Input` beside its `Output`, such as `1.4.1 Input` and `1.5.1 Output`;
+segmented-object panels use `Input` and `Output` without object-number labels.
+Each constructed instance shows its `Input crop`, `Output crop`,
+`Implementation` and `Input state` side by side, `1.8.1` through `1.11.1` for
+the first one. After the `Analysis · State` table, a
+`Synthesizing training pairs` step precedes the synthesis call. Each
+synthesized instance's output is then composed as a test object's is, under
+its `Composing the output object · <instance>` step, which shows no panels of
+its own. When validation rejects the instance, because its `Output state` and
+the measured placed output disagree on `x`, `y`, `width`, `height` or
+`volume`, a red `✗` step follows at once, such as
+`1.15.1 Rejected <instance> · Output state ≠ Placed output · volume 5 ≠ 4`,
+naming each disagreeing property with the state's value first. One box titled
+with the instance follows it, with the instance's full-size `Input` and
+`Output` matrices and its `Output state` side by side, because no later box
+shows a rejected instance. A `<count> training pairs synthesized` step
+(`pair` for one) follows, with one box per synthesized instance that passed
+validation, titled `Synthesized <n> · <instance>`, where `<n>` numbers its
+synthesized pair: its full-size `Input` and `Output` matrices side by side,
+then its `Output state`. Model token usage remains attached to its active
+milestone. Instance-specific steps, and the headers of instance panels shown
+on their own, include the instance name.
+
+In the visualization, one box shows the `Test input` beside the groups that
+`Matrix.separate` splits it into, `2.2 Test input` followed by `2.3.1 Group`,
+`2.3.2 Group`, …, before the model segments each group. A
+`<count> objects identified` step (`object` for one) then shows the segmented
+test objects' `Input` panels side by side in one box (`2.5.1`, `2.5.2`, …).
+Each test object's `Executing the object transformation` step, such as
+`2.8.1`, is followed by one box with its `Input crop`, `Implementation` and
+`Input state` side by side, `2.6.1`, `2.7.1` and `2.9.1`; if that execution
+fails, the crop and implementation still print before the error. After the
+`Visualization · State` table, whose rows are the objects' output states,
+each object's `Composing the output object · <instance>` step shows no panels
+of its own. Once every object is composed, a `<count> output objects composed`
+step (`object` for one) shows every object's full-size `Output` side by side
+in one box, in the table's order, such as `2.13.1 Output · ➡️ 90°`.
+Each `Output` header there shows the object's output orientation as an arrow
+emoji and its degrees, and every input- and output-state header, in both
+stages, shows the orientation of the state it displays the same way, such as
+`2.9.1 Input state · ⬆️ 0°` under its instance's title row. An orientation
+that is not a multiple of 45 degrees shows `🧭` instead of an arrow, and an
+object without a numeric `orientation` adds nothing to the header.
 Side-by-side boxes use only the width their panels need. When a row does not
 fit the window, code and state columns wrap first, down to 40 characters,
 and then whole panels move onto further rows of the same box.
@@ -233,7 +244,8 @@ row and column coordinates show its size.
 Wide grids split into column panels rather than dropping cells; inside a
 side-by-side box, a grid wider than the window splits into column sections
 within its own column. The final
-comparison keeps **Expected** before **Result**, followed by an
+comparison shows **Expected** and **Result** side by side in one box, Expected
+first, followed by an
 exact-match badge in green or a mismatch badge in red, the unchanged difference
 score rendered with keycap digit emojis and padded to at least two digits
 (`0️⃣0️⃣` for zero, `0️⃣7️⃣` for seven). Larger scores retain every digit.

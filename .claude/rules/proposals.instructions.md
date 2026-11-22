@@ -494,9 +494,12 @@ In continuous mode, after finalizing and committing an `Accepted`,
 `Automatic-Accepted` or `Rejected` outcome for a new NUC, the caller
 immediately starts a distinct new proposal under
 the [continuous-cycle rule](../skills/nuc-proposal/SKILL.md#continue-with-the-next-nuc-caller-only).
-Each cycle, the first one included, first
-[picks up a stale Draft](#pick-up-stale-drafts-first-caller-only) when one
-exists. Run cycles sequentially with fresh agents, baselines, candidate
+Before every cycle, the first one included, the caller clears the finished
+cycle's build directories and checks free disk space under the
+[disk-space policy](disk-space.instructions.md), clearing the machine's
+finished build caches when space is low. Each cycle, the first one included,
+first [picks up a stale Draft](#pick-up-stale-drafts-first-caller-only) when
+one exists. Run cycles sequentially with fresh agents, baselines, candidate
 worktrees and reports, preserving the selection, compatibility and acceptance
 requirements.
 Only the caller continues; workers stop at their handoffs. This does not

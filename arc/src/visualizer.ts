@@ -5,16 +5,15 @@ import object from "./object.ts";
 import * as nucleoid from "./lib/nucleoid";
 
 export async function instances({ train, test_input_matrix }) {
-  milestone.segmenting_test_input({ test_input_matrix });
+  milestone.segmenting_test_input();
 
   const partial_matrices = Matrix.separate(test_input_matrix, 8, false, 0);
+
+  milestone.test_input_separated({ test_input_matrix, partial_matrices });
+
   const partial_instances = [];
 
   for (const partial_matrix of partial_matrices) {
-    milestone.test_input_segmented({
-      instances: [{ input_instance_matrix: partial_matrix }],
-    });
-
     let {
       result: { instances },
     } = await llm.generate({
@@ -214,8 +213,6 @@ export async function output_instance_matrix({
 
   instance.output_instance_matrix = output_instance_matrix;
 
-  milestone.output_composed(instance);
-
   const output_instance_padded_matrix = Matrix.pad(
     Matrix.crop(output_instance_matrix),
     test_input_matrix.length,
@@ -223,8 +220,6 @@ export async function output_instance_matrix({
     x,
     y
   );
-
-  milestone.output_placed({ ...instance, output_instance_padded_matrix });
 
   return { output_instance_matrix: output_instance_padded_matrix };
 }

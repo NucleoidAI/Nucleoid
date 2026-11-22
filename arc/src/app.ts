@@ -121,6 +121,8 @@ export async function start(puzzle_id: string = "3aa6fb7a") {
     result_matrix = Matrix.merge(result_matrix, output_instance_matrix);
   }
 
+  milestone.test_output_composed({ instances: input_instances });
+
   result_matrix = Matrix.canvas(result_matrix, output_canvas);
 
   milestone.comparison({ test_output_matrix, result_matrix });

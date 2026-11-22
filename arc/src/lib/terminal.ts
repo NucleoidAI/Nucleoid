@@ -252,10 +252,6 @@ export function code(title: string, source, milestone?: Milestone) {
   block(numbered(title, milestone), codeLines(source));
 }
 
-export function value(title: string, data, milestone?: Milestone) {
-  block(numbered(title, milestone), valueLines(data));
-}
-
 function span(widths): number {
   return widths.reduce((sum: number, cell: number) => sum + cell + 1, -1);
 }
@@ -737,8 +733,9 @@ export function puzzle({ train, testInput }) {
     );
     if (pairWidth > available) {
       renderRow();
-      grid(`Train ${index + 1} · Input`, input);
-      grid(`Train ${index + 1} · Output`, output);
+      panels(`Train ${index + 1}`, [
+        [gridPanel("Input", input), gridPanel("Output", output)],
+      ]);
       continue;
     }
     if (pairs.length > 0 && used + 2 + pairWidth > available) {

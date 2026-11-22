@@ -145,3 +145,20 @@ Do not read or expose credentials, make paid LLM calls without authorization,
 or alter provider/model settings merely to manufacture a passing result. An
 `/arc-purposal` invocation authorizes its one `bun start <puzzle-id>` run and
 nothing more.
+
+## Grouped, side-by-side terminal output
+
+The solver's terminal always displays by group and side by side:
+
+- Results that belong together share one box, one column per panel, each
+  under its own numbered title: one object's input, output and state, every
+  object that one step separates, segments or composes, or the expected and
+  predicted grids. Milestones in `arc/src/lib/milestone.ts` build these boxes
+  with `terminal.panels`, which moves panels onto further rows of the same
+  box only when the window is too narrow.
+- Never print related results as a run of separate boxes, one after another,
+  and never print a result on its own before a later group shows it: it
+  appears once, in its group. A result that no later group shows, such as a
+  rejected synthesized instance, gets its own group where it happens.
+- One-line progress steps, model reasoning and usage lines, alerts and the
+  failure box stay outside the groups.

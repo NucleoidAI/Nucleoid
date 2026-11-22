@@ -60,8 +60,31 @@ export function synthesizing_training_dataset() {
   terminal.step("Synthesizing training pairs");
 }
 
+function synthesized_panels(
+  key: string,
+  { input_instance_matrix, output_instance_matrix, output_value }
+): terminal.Panel[] {
+  return [
+    terminal.gridPanel("Input", input_instance_matrix, {
+      key: `${key}_input`,
+      loop: true,
+    }),
+    terminal.gridPanel("Output", output_instance_matrix, {
+      key: `${key}_output`,
+      loop: true,
+    }),
+    terminal.valuePanel(
+      oriented("Output state", output_value?.orientation),
+      output_value,
+      { key: `${key}_output_state`, loop: true }
+    ),
+  ];
+}
+
 export function synthesized_instance_rejected({
   instance_name,
+  input_instance_matrix,
+  output_instance_matrix,
   output_value,
   output_measurement,
 }) {
@@ -81,34 +104,22 @@ export function synthesized_instance_rejected({
     ].join(" · "),
     { key: "synthesized_instance_rejected", loop: true }
   );
+  terminal.panels(instance_name, [
+    synthesized_panels("rejected", {
+      input_instance_matrix,
+      output_instance_matrix,
+      output_value,
+    }),
+  ]);
 }
 
 export function training_dataset_synthesized({ dataset }) {
   const pairs: string = dataset.length === 1 ? "pair" : "pairs";
   terminal.step(`${dataset.length} training ${pairs} synthesized`);
   dataset.forEach(({ instances }, index: number) => {
-    for (const {
-      instance_name,
-      input_instance_matrix,
-      output_instance_matrix,
-      output_value,
-    } of instances) {
-      terminal.panels(`Synthesized ${index + 1} · ${instance_name}`, [
-        [
-          terminal.gridPanel("Input", input_instance_matrix, {
-            key: "synthesized_input",
-            loop: true,
-          }),
-          terminal.gridPanel("Output", output_instance_matrix, {
-            key: "synthesized_output",
-            loop: true,
-          }),
-          terminal.valuePanel(
-            oriented("Output state", output_value?.orientation),
-            output_value,
-            { key: "synthesized_output_state", loop: true }
-          ),
-        ],
+    for (const instance of instances) {
+      terminal.panels(`Synthesized ${index + 1} · ${instance.instance_name}`, [
+        synthesized_panels("synthesized", instance),
       ]);
     }
   });
@@ -192,13 +203,27 @@ export function visualization() {
   );
 }
 
-export function segmenting_test_input({ test_input_matrix }) {
+export function segmenting_test_input() {
   terminal.step("Segmenting the test input");
-  terminal.grid("Test input", test_input_matrix);
+}
+
+export function test_input_separated({ test_input_matrix, partial_matrices }) {
+  terminal.panels("", [
+    [
+      terminal.gridPanel("Test input", test_input_matrix),
+      ...partial_matrices.map((partial_matrix) =>
+        terminal.gridPanel("Group", partial_matrix, {
+          key: "test_input_group",
+          loop: true,
+        })
+      ),
+    ],
+  ]);
 }
 
 export function test_input_segmented({ instances }) {
-  terminal.step(`${instances.length} objects identified`);
+  const objects: string = instances.length === 1 ? "object" : "objects";
+  terminal.step(`${instances.length} ${objects} identified`);
   terminal.panels("", [
     instances.map(({ input_instance_matrix }) =>
       terminal.gridPanel("Input", input_instance_matrix, {
@@ -275,44 +300,28 @@ export function composing_output({ instance_name }) {
   });
 }
 
-export function output_composed({
-  instance_name,
-  input_instance_matrix,
-  output_instance_matrix,
-  output_value,
-}) {
-  terminal.grid(
-    `Input crop · ${instance_name}`,
-    Matrix.crop(input_instance_matrix),
-    { key: "composition_input_crop", loop: true }
-  );
-  terminal.grid(
-    oriented(`Output crop · ${instance_name}`, output_value.orientation),
-    output_instance_matrix,
-    { key: "output_crop", loop: true }
-  );
-  terminal.value(
-    oriented(`Output state · ${instance_name}`, output_value.orientation),
-    output_value,
-    { key: "output_state", loop: true }
-  );
-}
-
-export function output_placed({
-  instance_name,
-  output_instance_padded_matrix,
-}) {
-  terminal.grid(
-    `Placed output · ${instance_name}`,
-    output_instance_padded_matrix,
-    { key: "placed_output", loop: true }
-  );
+export function test_output_composed({ instances }) {
+  const objects: string = instances.length === 1 ? "object" : "objects";
+  terminal.step(`${instances.length} output ${objects} composed`);
+  terminal.panels("", [
+    instances.map(({ output_instance_matrix, output_value }) =>
+      terminal.gridPanel(
+        oriented("Output", output_value?.orientation),
+        output_instance_matrix,
+        { key: "test_output_object", loop: true }
+      )
+    ),
+  ]);
 }
 
 export function comparison({ test_output_matrix, result_matrix }) {
   terminal.section(3, "Compare", "Expected and predicted canvases");
-  terminal.grid("Expected", test_output_matrix);
-  terminal.grid("Result", result_matrix);
+  terminal.panels("", [
+    [
+      terminal.gridPanel("Expected", test_output_matrix),
+      terminal.gridPanel("Result", result_matrix),
+    ],
+  ]);
 }
 
 export function summary({ difference, duration }) {
