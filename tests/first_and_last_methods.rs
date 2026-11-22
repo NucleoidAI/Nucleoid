@@ -345,7 +345,7 @@ fn only_the_appended_cases_call_the_aliases_and_they_run_every_assertion() {
     }
     assert!(declared > 0, "an accepted case calls a member it declares");
     assert_eq!(assertions, 28);
-    assert_eq!(cases, 1276);
+    assert_eq!(cases, 1280);
 }
 
 #[test]
@@ -416,7 +416,11 @@ fn the_appended_cases_stand_after_nuc_116_and_before_nuc_103() {
         ),
     ] {
         let index = cases.iter().position(|case| case.title == title).unwrap();
-        assert_eq!(index, cases.len() - 19, "{title}");
+        assert_eq!(
+            index,
+            cases.len() - 19 - usize::from(title == REFERENCE_TITLE),
+            "{title}"
+        );
         assert_eq!(cases[index - 1].title, previous);
         assert_eq!(cases[index + 14].title, following);
     }

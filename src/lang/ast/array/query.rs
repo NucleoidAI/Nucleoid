@@ -54,10 +54,10 @@ impl Runtime {
             // A class's instance list as a list value. A list already is one,
             // so plain lists keep raising `<list>.list is not a function`.
             "list" | "all" if source == ListSource::Population => Ok(Value::List(items)),
-            "filter" => self.filter_items(items, &expect_function(predicate, "filter")?),
+            "filter" | "select" => self.filter_items(items, &expect_function(predicate, "filter")?),
             "count" => self.count_items(&items, &expect_function(predicate, "count")?),
             "partition" => self.partition_items(items, &expect_function(predicate, "partition")?),
-            "map" => self.map_items(items, &expect_function(predicate, "map")?, false),
+            "map" | "collect" => self.map_items(items, &expect_function(predicate, "map")?, false),
             "flatMap" => self.map_items(items, &expect_function(predicate, "flatMap")?, true),
             "flat" => Ok(Value::List(self.flatten_items(items, arguments.first()))),
             "includes" | "contains" | "indexOf" | "lastIndexOf" => {

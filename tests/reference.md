@@ -3028,4 +3028,28 @@ suffix = ".txt"
 assert([draft, table], [true, true])
 [draft, table]
 # return: [true,true]
+
+---
+
+# Nucleoid collects and selects live collections with Ruby spellings
+
+numbers = [1, 2, 3]
+limit = 1
+doubled = numbers.collect(number -> number * 2)
+picked = numbers.select(number -> number > limit)
+assert([doubled, picked], [[2, 4, 6], [2, 3]])
+numbers.push(4)
+limit = 2
+assert([doubled, picked], [[2, 4, 6, 8], [3, 4]])
+class Ticket(name, open):
+    this.name = name
+    this.open = open
+board = Ticket.select(ticket -> ticket.open).collect(ticket -> ticket.name)
+ada = Ticket("ada", true)
+bo = Ticket("bo", false)
+assert(board, ["ada"])
+bo.open = true
+assert(board, ["ada", "bo"])
+board
+# return: ["ada","bo"]
 ```

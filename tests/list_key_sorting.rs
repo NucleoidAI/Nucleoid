@@ -377,7 +377,7 @@ fn only_the_appended_cases_sort_by_key_and_they_run_every_assertion() {
         assert_eq!(matching, 1, "{title}");
     }
     assert_eq!(assertions, 36);
-    assert_eq!(cases, 1276);
+    assert_eq!(cases, 1280);
 }
 
 #[test]
@@ -407,8 +407,9 @@ fn the_appended_cases_stand_after_nuc_104_and_before_nuc_103() {
             "Flattening keeps the dirty tiles of every room counted",
         ),
     ] {
-        assert_eq!(cases[cases.len() - 30].title, title);
-        assert_eq!(cases[cases.len() - 5].title, following);
+        let reference_offset = usize::from(title == REFERENCE_TITLE);
+        assert_eq!(cases[cases.len() - 30 - reference_offset].title, title);
+        assert_eq!(cases[cases.len() - 5 - reference_offset].title, following);
     }
 }
 

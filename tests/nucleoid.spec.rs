@@ -22572,6 +22572,144 @@ assert([report.table, notes.table, selected], [false, false, []])
 # return: ["draft_notes.csv",true,false]"#);
 }
 
+/// Nucleoid collects and selects lists with Ruby method names
+#[rustfmt::skip]
+#[test]
+fn collects_and_selects_lists_with_ruby_method_names() {
+    let mut run = runner();
+    run("values = [1, 2, 3]");
+    run("factor = 2");
+    run("threshold = 1");
+    run("def project(value) => [value, value * factor]");
+    run("collected = values.collect(project)");
+    run("selected = values.select(value -> value > threshold)");
+    run("snapshot = collected.value");
+    {
+        let actual = run("collected");
+        let expected = run("(values.map(project))");
+        assert_eq!(actual, expected);
+    }
+    {
+        let actual = run("selected");
+        let expected = run("(values.filter(value -> value > threshold))");
+        assert_eq!(actual, expected);
+    }
+    assert_eq!(run("collected"), serde_json::json!([[1, 2], [2, 4], [3, 6]]));
+    assert_eq!(run("selected"), serde_json::json!([2, 3]));
+    run("values.push(4)");
+    run("factor = 3");
+    run("threshold = 2");
+    assert_eq!(run("collected"), serde_json::json!([[1, 3], [2, 6], [3, 9], [4, 12]]));
+    assert_eq!(run("selected"), serde_json::json!([3, 4]));
+    assert_eq!(run("snapshot"), serde_json::json!([[1, 2], [2, 4], [3, 6]]));
+    run("def project(value) => value + factor");
+    assert_eq!(run("collected"), serde_json::json!([4, 5, 6, 7]));
+    assert_eq!(run("values"), serde_json::json!([1, 2, 3, 4]));
+    assert_eq!(run("[].collect(value -> missing)"), serde_json::json!([]));
+    assert_eq!(run("[].select(value -> missing)"), serde_json::json!([]));
+    run(r#"mixed = ["", 0, false, "yes", 7, []]"#);
+    assert_eq!(run("mixed.select(value -> value)"), serde_json::json!(["yes", 7, []]));
+    run(r#"[collected, selected]
+
+# return: [[4,5,6,7],[3,4]]"#);
+}
+
+/// Nucleoid collects and selects live class populations
+#[rustfmt::skip]
+#[test]
+fn collects_and_selects_live_class_populations() {
+    let mut run = runner();
+    run(r#"class Item(name, score):
+    this.name = name
+    this.score = score"#);
+    run("limit = 5");
+    run("names = Item.collect(item -> item.name)");
+    run("chosen = Item.select(item -> item.score >= limit)");
+    assert_eq!(run("[names, chosen]"), serde_json::json!([[], []]));
+    run(r#"first = Item("one", 4)"#);
+    run(r#"second = Item("two", 8)"#);
+    assert_eq!(run("names"), serde_json::json!(["one", "two"]));
+    {
+        let actual = run("chosen");
+        let expected = run("([second])");
+        assert_eq!(actual, expected);
+    }
+    run("first.score = 9");
+    run("limit = 8");
+    {
+        let actual = run("chosen");
+        let expected = run("([first, second])");
+        assert_eq!(actual, expected);
+    }
+    run(r#"third = Item("three", 2)"#);
+    assert_eq!(run("names"), serde_json::json!(["one", "two", "three"]));
+    {
+        let actual = run("Item.collect(item -> item.score)");
+        let expected = run("(Item.map(item -> item.score))");
+        assert_eq!(actual, expected);
+    }
+    {
+        let actual = run("Item.select(item -> item.score)");
+        let expected = run("(Item.filter(item -> item.score))");
+        assert_eq!(actual, expected);
+    }
+    run("delete third.name");
+    run("delete third.score");
+    run("delete third");
+    assert_eq!(run("names"), serde_json::json!(["one", "two"]));
+    {
+        let actual = run("chosen");
+        let expected = run("([first, second])");
+        assert_eq!(actual, expected);
+    }
+    run(r#"class Group(items):
+    this.items = items"#);
+    run("$Group.names = $Group.items.select(item -> item.score >= limit).collect(item -> item.name)");
+    run("group = Group([first, second])");
+    assert_eq!(run("group.names"), serde_json::json!(["one", "two"]));
+    run("second.score = 1");
+    {
+        let actual = run("[chosen, group.names]");
+        let expected = run(r#"([[first], ["one"]])"#);
+        assert_eq!(actual, expected);
+    }
+    run(r#"names
+
+# return: ["one","two"]"#);
+}
+
+/// Nucleoid preserves collection alias errors and rollback
+#[rustfmt::skip]
+#[test]
+fn preserves_collection_alias_errors_and_rollback() {
+    let mut run = runner();
+    run(r#"failure = ""
+try:
+    [].collect()
+catch error:
+    failure = error
+assert(failure, TypeError("map expects a function"))
+class Empty
+try:
+    Empty.select(1)
+catch error:
+    failure = error
+assert(failure, TypeError("filter expects a function"))
+names = ["a", "b"]
+mapped = names.collect(name -> name.toUpperCase())
+kept = names.select(name -> name.toUpperCase() != "")
+try:
+    names.push(7)
+catch error:
+    failure = error
+assert(failure, TypeError("number.toUpperCase is not a function"))
+assert([names, mapped, kept], [["a", "b"], ["A", "B"], ["a", "b"]])
+names.push("c")
+assert([mapped, kept], [["A", "B", "C"], ["a", "b", "c"]])
+[mapped, kept]
+# return: [["A","B","C"],["a","b","c"]]"#);
+}
+
 /// The committed tests must not drift from their generated JSONL export.
 #[rustfmt::skip]
 #[test]

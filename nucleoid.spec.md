@@ -2076,6 +2076,39 @@ statement positions; caught values and transaction recovery are unchanged.
   Inherited noncapture, parameter-dependent-local, Windows debug stack and
   old whole-suite Gitless discovery limitations are not repaired.
 
+## Ruby collection method aliases
+
+- `collect(callback)` is exactly `map(callback)` on lists and class instance
+  populations; `select(callback)` is exactly `filter(callback)` on those
+  receivers. These are optional Ruby method names, not full Ruby semantics.
+- Snapshot the receiver before evaluating arguments. Evaluate every supplied
+  argument expression once, left to right, including unused extras, before
+  validating the first value as a function, even for an empty collection.
+- A missing or non-function callback raises
+  `TypeError("map expects a function")` for `collect`, or
+  `TypeError("filter expects a function")` for `select`.
+- Invoke the callback once per snapshotted item, in order, with only that
+  item. Preserve existing invocation, null/undefined tracking, callable
+  snapshots and noncapturing behavior; additional parameters remain `null`.
+- `collect` keeps each callback result as one item without flattening.
+  `select` keeps the original items whose callback results are truthy.
+  Preserve result order, duplicates and identities without writing the
+  receiver; callbacks and arguments retain their ordinary effects.
+- Reads, list and population changes, member updates, class rules,
+  named-function redefinitions, obsolete dependencies, errors, rollback and
+  recovery use the unchanged `map`/`filter` implementation.
+- Preserve the written call name in the AST, graph and rendered statements.
+  `collect` and `select` remain ordinary identifiers; property reads, callable
+  object properties, user-defined instance methods and all other receiver
+  dispatch remain unchanged. Native methods do not become bound properties.
+- Null and undefined receivers still skip argument evaluation and use their
+  existing deferred call routing. Only formerly failing collection alias
+  calls change, including catches of their former unknown-method errors.
+- Keep every `map`/`filter` form. Add no implicit blocks, enumerators, bang
+  variants, receiver kinds, keywords, parser normalization or dependencies.
+- The three appended executable entries cover live list equivalence, live
+  populations/class rules, canonical callback errors and failed-update rollback.
+
 ## Reactive flat mapping
 
 - `list.flatMap(callback)` is a read-only ordered zero/one/many projection.
@@ -28756,4 +28789,102 @@ suffix = ".txt"
 assert([report.table, notes.table, selected], [false, false, []])
 [notes.name, notes.draft, notes.table]
 # return: ["draft_notes.csv",true,false]
+
+---
+
+# Nucleoid collects and selects lists with Ruby method names
+
+values = [1, 2, 3]
+factor = 2
+threshold = 1
+def project(value) => [value, value * factor]
+collected = values.collect(project)
+selected = values.select(value -> value > threshold)
+snapshot = collected.value
+assert(collected, values.map(project))
+assert(selected, values.filter(value -> value > threshold))
+assert(collected, [[1, 2], [2, 4], [3, 6]])
+assert(selected, [2, 3])
+values.push(4)
+factor = 3
+threshold = 2
+assert(collected, [[1, 3], [2, 6], [3, 9], [4, 12]])
+assert(selected, [3, 4])
+assert(snapshot, [[1, 2], [2, 4], [3, 6]])
+def project(value) => value + factor
+assert(collected, [4, 5, 6, 7])
+assert(values, [1, 2, 3, 4])
+assert([].collect(value -> missing), [])
+assert([].select(value -> missing), [])
+mixed = ["", 0, false, "yes", 7, []]
+assert(mixed.select(value -> value), ["yes", 7, []])
+[collected, selected]
+# return: [[4,5,6,7],[3,4]]
+
+---
+
+# Nucleoid collects and selects live class populations
+
+class Item(name, score):
+    this.name = name
+    this.score = score
+limit = 5
+names = Item.collect(item -> item.name)
+chosen = Item.select(item -> item.score >= limit)
+assert([names, chosen], [[], []])
+first = Item("one", 4)
+second = Item("two", 8)
+assert(names, ["one", "two"])
+assert(chosen, [second])
+first.score = 9
+limit = 8
+assert(chosen, [first, second])
+third = Item("three", 2)
+assert(names, ["one", "two", "three"])
+assert(Item.collect(item -> item.score), Item.map(item -> item.score))
+assert(Item.select(item -> item.score), Item.filter(item -> item.score))
+delete third.name
+delete third.score
+delete third
+assert(names, ["one", "two"])
+assert(chosen, [first, second])
+class Group(items):
+    this.items = items
+$Group.names = $Group.items.select(item -> item.score >= limit).collect(item -> item.name)
+group = Group([first, second])
+assert(group.names, ["one", "two"])
+second.score = 1
+assert([chosen, group.names], [[first], ["one"]])
+names
+# return: ["one","two"]
+
+---
+
+# Nucleoid preserves collection alias errors and rollback
+
+failure = ""
+try:
+    [].collect()
+catch error:
+    failure = error
+assert(failure, TypeError("map expects a function"))
+class Empty
+try:
+    Empty.select(1)
+catch error:
+    failure = error
+assert(failure, TypeError("filter expects a function"))
+names = ["a", "b"]
+mapped = names.collect(name -> name.toUpperCase())
+kept = names.select(name -> name.toUpperCase() != "")
+try:
+    names.push(7)
+catch error:
+    failure = error
+assert(failure, TypeError("number.toUpperCase is not a function"))
+assert([names, mapped, kept], [["a", "b"], ["A", "B"], ["a", "b"]])
+names.push("c")
+assert([mapped, kept], [["A", "B", "C"], ["a", "b", "c"]])
+[mapped, kept]
+# return: [["A","B","C"],["a","b","c"]]
 ```

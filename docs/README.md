@@ -2811,7 +2811,7 @@ Full detail: [NUC 9](nuc-0009.md), [NUC 46](nuc-0046.md), [NUC 119](nuc-0119.md)
 | `Math` | `pow`, `sqrt`, `floor`, `round`, `max`, `min`, `clamp` ([NUC 21](nuc-0021.md)), `lerp` ([NUC 22](nuc-0022.md)), `saturate` ([NUC 23](nuc-0023.md)), `smoothstep(lower, upper, value)` (accepted [NUC 33](nuc-0033.md)), `smootherstep(lower, upper, value)` (accepted [NUC 35](nuc-0035.md)), `remap(start, end, targetStart, targetEnd, value)` (accepted [NUC 39](nuc-0039.md)) |
 | `String` | `String.fromCharCode`; instance `charAt`, `length`, `lower`, `replace`, `replaceAll` (accepted [NUC 42](nuc-0042.md)), `repeat`, `split`, `padStart` and `padEnd` ([NUC 111](nuc-0111.md)), Python's `startswith`, `endswith` and `join(items)`, with the separator as the receiver ([NUC 110](nuc-0110.md)), Rust's `starts_with(prefix)` and `ends_with(suffix)` ([NUC 132](nuc-0132.md)), the size and emptiness methods `length()`, `size()`, `len()`, `isEmpty()`, `is_empty()` and `isNotEmpty()` ([NUC 116](nuc-0116.md)), the case conversion aliases `uppercase()`, `to_uppercase()` and `uppercased()` of `toUpperCase()`, and `lowercase()`, `to_lowercase()` and `lowercased()` of `toLowerCase()` ([NUC 118](nuc-0118.md)), and the reversals `reverse()` and `reversed()`, exactly `text[::-1]` ([NUC 131](nuc-0131.md)) |
 | `Date` | `Date()`, `Date(string)`, `Date(number)`, `Date.now()`, `Date.parse()`; instance `getTime`, `getYear`, `toDateString` |
-| `List` | `push`, `pop`, `filter`, `map`, `flatMap` (accepted [NUC 41](nuc-0041.md)), `flat` ([NUC 103](nuc-0103.md)), `reduce`, `find`, `some`, `every`, `slice`, `reverse` (a new list in reverse order), `sort` (in place, [NUC 58](nuc-0058.md)), `join`, `length`, and the queries `at`, `includes`, `indexOf`, `lastIndexOf`, `findIndex`, `findLast`, `findLastIndex` and `concat` ([NUC 61](nuc-0061.md)), `sum` ([NUC 68](nuc-0068.md)), `max` and `min` ([NUC 69](nuc-0069.md)), `distinct` ([NUC 71](nuc-0071.md)), `count(predicate)` ([NUC 73](nuc-0073.md)), `mode` ([NUC 75](nuc-0075.md)), `maxBy` and `minBy` ([NUC 77](nuc-0077.md)), `average` ([NUC 80](nuc-0080.md)), `median` ([NUC 84](nuc-0084.md)), `sortBy` ([NUC 105](nuc-0105.md)), `partition` ([NUC 108](nuc-0108.md)), `product` ([NUC 114](nuc-0114.md)), `variance` and `stdev` ([NUC 123](nuc-0123.md)), `quantile` ([NUC 124](nuc-0124.md)), `zip(other)` and `zip(other, combine)` ([NUC 129](nuc-0129.md)), the size and emptiness aliases `size()`, `len()`, `isEmpty()`, `is_empty()` and `isNotEmpty()` ([NUC 116](nuc-0116.md)), the first and last element aliases `first()`, `last()`, `first(predicate)` and `last(predicate)` ([NUC 117](nuc-0117.md)), and the reversal aliases `reversed()` and `toReversed()` of `reverse()` ([NUC 131](nuc-0131.md)); `sum`, `max`, `min` and `mode` also read as `sum of list` ([NUC 75](nuc-0075.md) revision 2) |
+| `List` | `push`, `pop`, `filter`, `map`, their Ruby aliases `select` and `collect` ([NUC 134](nuc-0134.md)), `flatMap` (accepted [NUC 41](nuc-0041.md)), `flat` ([NUC 103](nuc-0103.md)), `reduce`, `find`, `some`, `every`, `slice`, `reverse` (a new list in reverse order), `sort` (in place, [NUC 58](nuc-0058.md)), `join`, `length`, and the queries `at`, `includes`, `indexOf`, `lastIndexOf`, `findIndex`, `findLast`, `findLastIndex` and `concat` ([NUC 61](nuc-0061.md)), `sum` ([NUC 68](nuc-0068.md)), `max` and `min` ([NUC 69](nuc-0069.md)), `distinct` ([NUC 71](nuc-0071.md)), `count(predicate)` ([NUC 73](nuc-0073.md)), `mode` ([NUC 75](nuc-0075.md)), `maxBy` and `minBy` ([NUC 77](nuc-0077.md)), `average` ([NUC 80](nuc-0080.md)), `median` ([NUC 84](nuc-0084.md)), `sortBy` ([NUC 105](nuc-0105.md)), `partition` ([NUC 108](nuc-0108.md)), `product` ([NUC 114](nuc-0114.md)), `variance` and `stdev` ([NUC 123](nuc-0123.md)), `quantile` ([NUC 124](nuc-0124.md)), `zip(other)` and `zip(other, combine)` ([NUC 129](nuc-0129.md)), the size and emptiness aliases `size()`, `len()`, `isEmpty()`, `is_empty()` and `isNotEmpty()` ([NUC 116](nuc-0116.md)), the first and last element aliases `first()`, `last()`, `first(predicate)` and `last(predicate)` ([NUC 117](nuc-0117.md)), and the reversal aliases `reversed()` and `toReversed()` of `reverse()` ([NUC 131](nuc-0131.md)); `sum`, `max`, `min` and `mode` also read as `sum of list` ([NUC 75](nuc-0075.md) revision 2) |
 | `Class` | the global list of declared types; `Class.length` |
 
 ```
@@ -3642,6 +3642,55 @@ assert(mapped, 80)
   actual coverage, not intentional new-RHS/immediate-graph differences.
 
 ---
+
+### Ruby collection method aliases
+
+```
+numbers = [1, 2, 3]
+limit = 1
+doubled = numbers.collect(number -> number * 2)
+picked = numbers.select(number -> number > limit)
+assert([doubled, picked], [[2, 4, 6], [2, 3]])
+numbers.push(4)
+limit = 2
+assert([doubled, picked], [[2, 4, 6, 8], [3, 4]])
+class Ticket(name, open):
+    this.name = name
+    this.open = open
+board = Ticket.select(ticket -> ticket.open).collect(ticket -> ticket.name)
+ada = Ticket("ada", true)
+bo = Ticket("bo", false)
+assert(board, ["ada"])
+bo.open = true
+assert(board, ["ada", "bo"])
+board
+```
+
+- This is the executable reference entry `Nucleoid collects and selects live
+  collections with Ruby spellings`, without its title and return metadata;
+  it returns `["ada","bo"]`.
+- [NUC 134](nuc-0134.md) adds `collect(callback)` as exactly `map(callback)`
+  and `select(callback)` as exactly `filter(callback)` on lists and class
+  instance populations. All legacy forms remain available.
+- Snapshot the receiver before evaluating every supplied argument once, left
+  to right, including extras. Validate the first value as a function even on
+  empty collections, then invoke it once per original item with only that
+  item; extra callback parameters remain `null`.
+- `collect` preserves each result as one item without flattening; `select`
+  keeps original items by callback truthiness. Preserve order, duplicates,
+  identities, dependency behavior, snapshots, errors, rollback and recovery.
+- Missing or non-function callbacks retain the canonical
+  `TypeError("map expects a function")` and
+  `TypeError("filter expects a function")` labels, respectively.
+- Ordinary names, property reads, callable object properties, instance
+  methods and other receiver dispatch are unchanged. Null/undefined receivers
+  still skip arguments. The AST, graph and rendered source retain the written
+  `collect` or `select` name.
+- Only formerly failing collection alias calls and catches of those errors
+  change. These two familiar names add no Ruby blocks, enumerators, bang
+  variants, receiver kinds, parser normalization or new callback semantics.
+- The authoritative [alias section](../nucleoid.spec.md#ruby-collection-method-aliases)
+  covers live lists, populations/class rules, canonical errors and rollback.
 
 ### Reactive flat mapping
 
