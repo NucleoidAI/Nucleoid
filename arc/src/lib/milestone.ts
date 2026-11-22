@@ -217,16 +217,14 @@ export function segmenting_test_input() {
 }
 
 export function test_input_separated({ test_input_matrix, partial_matrices }) {
+  terminal.grid("Test input", test_input_matrix);
   terminal.panels("", [
-    [
-      terminal.gridPanel("Test input", test_input_matrix),
-      ...partial_matrices.map((partial_matrix) =>
-        terminal.gridPanel("Group", partial_matrix, {
-          key: "test_input_group",
-          loop: true,
-        })
-      ),
-    ],
+    partial_matrices.map((partial_matrix) =>
+      terminal.gridPanel("Group", partial_matrix, {
+        key: "test_input_group",
+        loop: true,
+      })
+    ),
   ]);
 }
 

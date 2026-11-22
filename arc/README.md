@@ -217,9 +217,10 @@ closes the synthesis. Model token usage remains attached to its active
 milestone. Instance-specific steps, and the headers of instance panels shown
 on their own, include the instance name.
 
-In the visualization, one box shows the `Test input` beside the groups that
-`Matrix.separate` splits it into, `2.2 Test input` followed by `2.3.1 Group`,
-`2.3.2 Group`, …, before the model segments each group. A
+In the visualization, the `Test input` shows first, in its own box
+(`2.2 Test input`), and then one box shows the groups that `Matrix.separate`
+splits it into side by side, `2.3.1 Group`, `2.3.2 Group`, …, before the model
+segments each group. A
 `<count> objects identified` step (`object` for one) then shows the segmented
 test objects' `Input` panels side by side in one box (`2.5.1`, `2.5.2`, …).
 Each test object's `Executing the object transformation` step, such as
