@@ -29,10 +29,17 @@ export async function instances({ train, test_input_matrix }) {
             class_declaration: train.class_declaration,
             dataset: train.dataset.map(({ input_matrix, instances }) => ({
               input_matrix,
+              input_silhouette_matrix: Matrix.silhouette(input_matrix),
               instances: instances.map((instance) => ({
                 instance_matrix: instance.input_instance_matrix,
                 instance_crop_matrix: Matrix.crop(
                   instance.input_instance_matrix
+                ),
+                instance_silhouette_matrix: Matrix.silhouette(
+                  instance.input_instance_matrix
+                ),
+                instance_silhouette_crop_matrix: Matrix.silhouette(
+                  Matrix.crop(instance.input_instance_matrix)
                 ),
                 implementation: instance.implementation,
                 x: instance.input_value.x,
@@ -56,6 +63,7 @@ export async function instances({ train, test_input_matrix }) {
             dataset: [
               {
                 input_matrix: partial_matrix,
+                input_silhouette_matrix: Matrix.silhouette(partial_matrix),
                 instances: [
                   {
                     instance_crop_matrix: "<INPUT_INSTANCE_CROP_MATRIX>",
