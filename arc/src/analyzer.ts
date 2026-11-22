@@ -45,6 +45,7 @@ export async function declarations({ train }) {
 
 export async function instances({ train, pair_number }) {
   const [{ input_matrix, output_matrix }] = train.dataset;
+
   milestone.segmenting_training_objects({
     pair_number,
     input_matrix,
@@ -52,6 +53,7 @@ export async function instances({ train, pair_number }) {
   });
 
   const { result: instances } = await llm.generate({
+    grammar: true,
     messages: [
       {
         role: "user",

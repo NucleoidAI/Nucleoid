@@ -7,7 +7,6 @@ import * as openrouter from "./openrouter";
 export async function generate({
   puzzle_id = "3aa6fb7a",
   only_puzzle_dataset = false,
-  reasoning = false,
   few_shot = (file) => file,
   messages = [],
   grammar = false,
@@ -42,7 +41,6 @@ export async function generate({
   });
 
   return openrouter.generate({
-    reasoning,
     messages,
   });
 }
