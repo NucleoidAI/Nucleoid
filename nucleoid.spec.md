@@ -612,6 +612,117 @@ operator-chain diagnostics and source positions are preserved.
   specify the executable behavior. `tests/case_conversion_aliases.rs`
   executes the rest.
 
+## Reversal method aliases
+
+- [NUC 131](docs/nuc-0131.md) adds the reversal methods that Kotlin, Swift,
+  JavaScript and Ruby write, as aliases of the accepted `reverse()` on lists
+  and class populations and of the character reversal `TEXT[::-1]` of
+  [Stepped slices](#stepped-slices) on strings. They join the accepted
+  aliases `append`, `contains`, `size`, `len`, `isEmpty`, `is_empty`,
+  `isNotEmpty`, `first` and `last` of lists and populations, and `lower`,
+  `upper`, `strip`, `startswith`, `endswith` and the case conversion aliases
+  of strings. No token, keyword, syntax tree node, error type or message
+  format is added.
+- The accepted `RECEIVER.reverse()`, on a list or a class population,
+  returns a new list of the same items in reverse order and leaves the
+  receiver as it is, unlike JavaScript's in-place `reverse()`: after
+  `xs = [1, 2, 3]`, `[xs.reverse(), xs]` is `[[3, 2, 1], [1, 2, 3]]`. On a
+  class it gives the instances in reverse population order, the latest
+  created first. An empty list or a class without instances gives `[]`. The
+  items are the receiver's own, so the instances and objects of a reversed
+  list are those of the receiver, and a nested list keeps its own order.
+  Supplied arguments are evaluated and ignored, and a declaration that calls
+  `reverse()` follows its receiver.
+- `RECEIVER.reversed()` and `RECEIVER.toReversed()` are `RECEIVER.reverse()`
+  on a list or a class population. `TEXT.reversed()` and `TEXT.reverse()` are
+  `TEXT[::-1]` on a string: a new string of its characters, Unicode scalar
+  values, in reverse order, so `"café".reversed()` is `"éfac"`,
+  `"a😀b".reverse()` is `"b😀a"` and `"".reversed()` is `""`. A combining mark
+  is a character of its own, so it changes sides: `e`, a combining acute
+  accent and `x` reverse to `x`, the accent and `e`, which shows the accent on
+  the `x`. Supplied arguments are evaluated and ignored.
+- **Receivers.** A list however it is reached, including a literal, a name, a
+  property, an index or a slice, a call or query result, a `.value` snapshot
+  and a list read from a state version; a declared class's instances, named
+  by the class, by a variable or parameter that holds it, or by `$Name`
+  outside a class-level rule or conditional, and the ranges and `Name.list()`
+  lists of them; and a string however it is reached, including a template
+  and the empty string.
+- **Evaluation.** The receiver is read first, a population's instances
+  included, then every argument once, left to right, as for every call. An
+  argument's error, such as `ReferenceError("missing is not defined")`,
+  propagates before the alias runs.
+- **Live.** A declaration or class-level rule that calls an alias depends on
+  what its accepted spelling depends on: `undo = history.reversed()` follows
+  pushes, pops, shifts, sorts and replacements of `history`,
+  `home = Stop.reversed()` follows new and deleted instances,
+  `mirror = word.reversed()` follows writes of `word`, and
+  `$Train.fromRear = $Train.cars.reversed()` follows each train's cars.
+  Errors roll back through the existing transaction.
+- **Per evaluation.** The receiver decides the reading each time a call is
+  evaluated. When a later write replaces a held receiver with another kind of
+  value, the re-evaluated call reads its name on that value, as it reads any
+  other method name. After `ys = xs.reversed()` over a list, writing
+  `xs = "abc"` makes `ys` the string `"cba"`, where `xs.toReversed()` raises
+  `TypeError("abc.toReversed is not a function")` and rolls back; writing
+  `xs = 5` raises `TypeError("number.reversed is not a function")` and rolls
+  back, where `reverse()` names `reverse`; and an object whose `reversed` is a
+  function runs it. After `t = s.reversed()` over a string, writing a list
+  makes `t` the reversed list, as `s[::-1]` does, while a number, boolean,
+  date or function raises that receiver's `TypeError` and rolls back, where
+  `s[::-1]` gives undefined.
+- **Rendering.** Statements, `why`, `affects`, `--graph` and graph keys show
+  the call as written. Its dependencies are those of the accepted spelling,
+  so `why undo` after `undo = history.reversed()` shows `undo` read from
+  `history`, as after `undo = history.reverse()`.
+- **Unchanged.** Only calls of `reversed` and `toReversed` on a list or
+  population receiver, and of `reversed` and `reverse` on a string receiver,
+  change; each raised `TypeError("<receiver>.<name> is not a function")`, or
+  an argument's error first, which stays. A standing `reverse()` call whose
+  list receiver a later write replaces with a string raised
+  `TypeError("<text>.reverse is not a function")` at that write, which rolled
+  back, and now reverses the string.
+  - A string's `toReversed()` keeps raising
+    `TypeError("<text>.toReversed is not a function")`.
+  - Numbers, booleans, functions, dates and regular expressions keep their
+    `TypeError`: `(5).reversed()` raises
+    `TypeError("number.reversed is not a function")`.
+  - Objects and instances keep their routing: instance methods and callable
+    properties named `reverse`, `reversed` or `toReversed` keep running, a
+    property of that name that is not a function keeps its `TypeError`, and a
+    missing member stays undefined. Inside a class-level rule or conditional
+    `$Name` is the instance, so `$Name.reversed()` there keeps calling the
+    instance's method or giving undefined.
+  - On a class name the population alias wins over an instance method of the
+    same name, as `Name.reverse()` already does, and instances keep calling
+    the method.
+  - A class declared as `Math`, `Number`, `String` or `Date` reaches that
+    namespace's static methods, so `Math.reversed()` keeps raising
+    `TypeError("Math.reversed is not a function")`. `Boolean`, `Class`,
+    `Object`, `List`, `Function`, `JSON` and `RegExp`, without a declared
+    class of that name, keep `ReferenceError("<name> is not defined")`.
+  - A `null` or undefined receiver stays undefined without evaluating the
+    arguments. Reads without a call, such as `xs.reversed` and
+    `text.reverse`, stay undefined, and `xs.reversed = 1` keeps raising
+    `TypeError("Cannot assign 'reversed' on list")`. Functions and variables
+    named `reversed` keep their readings, such as `reversed(xs)`, and
+    `reverse of xs` keeps raising `SyntaxError("Unexpected keyword 'of'")`.
+- **Source-language differences.** JavaScript's `reverse()` reverses its
+  array in place, where Nucleoid's copies as `toReversed()` does. Swift's
+  `reversed()` returns a lazy view and reverses a string's grapheme clusters,
+  and Kotlin and JavaScript handle strings in UTF-16 code units, while the
+  aliases reverse Unicode scalar values as `[::-1]` does. Kotlin's
+  `CharSequence.reversed()` returns a `CharSequence`, where its
+  `String.reversed()`, like the aliases, returns a string. Ruby's in-place
+  `reverse!`, Kotlin's `asReversed()` view and in-place
+  `MutableList.reverse()`, Python's `reversed(xs)` function, `sorted()`,
+  `toSorted()` and a string's `toReversed()` are not added.
+- The four entries beginning
+  `Nucleoid reverses lists with reversed and toReversed`
+  through `Nucleoid rolls back failed updates through reversal aliases`
+  specify the executable behavior. `tests/reversal_aliases.rs` executes the
+  rest.
+
 ## Reactive string padding
 
 - [NUC 111](docs/nuc-0111.md) adds JavaScript's standard padding methods to
@@ -27868,6 +27979,97 @@ Bay(6)
 Bay(5)
 room
 # return: [3,1,0]
+---
+# Nucleoid reverses lists with reversed and toReversed
+
+history = ["open", "type", "save"]
+undo = history.reversed()
+latest = history.toReversed()[0]
+assert([undo, latest, history], [["save", "type", "open"], "save", ["open", "type", "save"]])
+history.push("close")
+assert([undo, latest], [["close", "save", "type", "open"], "close"])
+history.pop()
+history.shift()
+assert([undo, latest], [["save", "type"], "save"])
+assert([[].reversed(), [[1, 2], 3].toReversed()], [[], [3, [1, 2]]])
+undo
+# return: ["save","type"]
+---
+# Nucleoid reverses class populations in reverse creation order
+
+class Stop(name):
+    this.name = name
+Stop("Depot")
+Stop("Mill")
+Stop("Harbor")
+home = Stop.reversed()
+names = Stop.toReversed().map(stop -> stop.name)
+assert(names, ["Harbor", "Mill", "Depot"])
+Stop("Lighthouse")
+assert([home.length, home[0].name, names], [4, "Lighthouse", ["Lighthouse", "Harbor", "Mill", "Depot"]])
+class Train(cars):
+    this.cars = cars
+$Train.fromRear = $Train.cars.reversed()
+local = Train(["engine", "coach"])
+local.cars.push("caboose")
+local.fromRear
+# return: ["caboose","coach","engine"]
+---
+# Nucleoid reverses strings by character with reversed and reverse
+
+word = "crème"
+mirror = word.reversed()
+assert(mirror, "emèrc")
+word = "café"
+assert([mirror, word.reverse()], ["éfac", "éfac"])
+assert(["a😀b".reversed(), "".reverse(), "stressed".reversed()], ["b😀a", "", "desserts"])
+class Word(text):
+    this.text = text
+$Word.palindrome = $Word.text.toLowerCase().reversed() == $Word.text.toLowerCase()
+anna = Word("Anna")
+kayaks = Word("kayaks")
+assert([anna.palindrome, kayaks.palindrome], [true, false])
+kayaks.text = "Kayak"
+kayaks.palindrome
+# return: true
+---
+# Nucleoid rolls back failed updates through reversal aliases
+
+def latest(log):
+    if log.length > 3:
+        throw "FULL"
+    return log
+entries = ["boot", "sync"]
+recent = latest(entries.reversed())
+failure = ""
+try:
+    entries.push("scan", "send")
+catch error:
+    failure = error
+assert([failure, entries, recent], ["FULL", ["boot", "sync"], ["sync", "boot"]])
+try:
+    entries.push("scan")
+    assert(recent, ["scan", "sync", "boot"])
+    throw "UNDO"
+catch error:
+    assert(error, "UNDO")
+assert([entries, recent], [["boot", "sync"], ["sync", "boot"]])
+def short(text):
+    if text.length > 4:
+        throw "LONG"
+    return text
+class Tag(label):
+    this.label = label
+$Tag.code = short($Tag.label.reversed())
+tag = Tag("AB12")
+try:
+    tag.label = "ABC123"
+catch error:
+    failure = error
+assert([failure, tag.label, tag.code], ["LONG", "AB12", "21BA"])
+tag.label = "XY9"
+tag.code
+# return: "9YX"
 ---
 # Nucleoid flattens nested lists by one level
 

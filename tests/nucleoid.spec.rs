@@ -21815,6 +21815,116 @@ room
 # return: [3,1,0]"#);
 }
 
+/// Nucleoid reverses lists with reversed and toReversed
+#[rustfmt::skip]
+#[test]
+fn reverses_lists_with_reversed_and_toreversed() {
+    let mut run = runner();
+    run(r#"history = ["open", "type", "save"]"#);
+    run("undo = history.reversed()");
+    run("latest = history.toReversed()[0]");
+    assert_eq!(run("[undo, latest, history]"), serde_json::json!([["save", "type", "open"], "save", ["open", "type", "save"]]));
+    run(r#"history.push("close")"#);
+    assert_eq!(run("[undo, latest]"), serde_json::json!([["close", "save", "type", "open"], "close"]));
+    run("history.pop()");
+    run("history.shift()");
+    assert_eq!(run("[undo, latest]"), serde_json::json!([["save", "type"], "save"]));
+    assert_eq!(run("[[].reversed(), [[1, 2], 3].toReversed()]"), serde_json::json!([[], [3, [1, 2]]]));
+    run(r#"undo
+
+# return: ["save","type"]"#);
+}
+
+/// Nucleoid reverses class populations in reverse creation order
+#[rustfmt::skip]
+#[test]
+fn reverses_class_populations_in_reverse_creation_order() {
+    let mut run = runner();
+    run(r#"class Stop(name):
+    this.name = name"#);
+    run(r#"Stop("Depot")"#);
+    run(r#"Stop("Mill")"#);
+    run(r#"Stop("Harbor")"#);
+    run("home = Stop.reversed()");
+    run("names = Stop.toReversed().map(stop -> stop.name)");
+    assert_eq!(run("names"), serde_json::json!(["Harbor", "Mill", "Depot"]));
+    run(r#"Stop("Lighthouse")"#);
+    assert_eq!(run("[home.length, home[0].name, names]"), serde_json::json!([4, "Lighthouse", ["Lighthouse", "Harbor", "Mill", "Depot"]]));
+    run(r#"class Train(cars):
+    this.cars = cars"#);
+    run("$Train.fromRear = $Train.cars.reversed()");
+    run(r#"local = Train(["engine", "coach"])"#);
+    run(r#"local.cars.push("caboose")"#);
+    run(r#"local.fromRear
+
+# return: ["caboose","coach","engine"]"#);
+}
+
+/// Nucleoid reverses strings by character with reversed and reverse
+#[rustfmt::skip]
+#[test]
+fn reverses_strings_by_character_with_reversed_and_reverse() {
+    let mut run = runner();
+    run(r#"word = "crème""#);
+    run("mirror = word.reversed()");
+    assert_eq!(run("mirror"), "emèrc");
+    run(r#"word = "café""#);
+    assert_eq!(run("[mirror, word.reverse()]"), serde_json::json!(["éfac", "éfac"]));
+    assert_eq!(run(r#"["a😀b".reversed(), "".reverse(), "stressed".reversed()]"#), serde_json::json!(["b😀a", "", "desserts"]));
+    run(r#"class Word(text):
+    this.text = text"#);
+    run("$Word.palindrome = $Word.text.toLowerCase().reversed() == $Word.text.toLowerCase()");
+    run(r#"anna = Word("Anna")"#);
+    run(r#"kayaks = Word("kayaks")"#);
+    assert_eq!(run("[anna.palindrome, kayaks.palindrome]"), serde_json::json!([true, false]));
+    run(r#"kayaks.text = "Kayak""#);
+    run(r#"kayaks.palindrome
+
+# return: true"#);
+}
+
+/// Nucleoid rolls back failed updates through reversal aliases
+#[rustfmt::skip]
+#[test]
+fn rolls_back_failed_updates_through_reversal_aliases() {
+    let mut run = runner();
+    run(r#"def latest(log):
+    if log.length > 3:
+        throw "FULL"
+    return log
+entries = ["boot", "sync"]
+recent = latest(entries.reversed())
+failure = ""
+try:
+    entries.push("scan", "send")
+catch error:
+    failure = error
+assert([failure, entries, recent], ["FULL", ["boot", "sync"], ["sync", "boot"]])
+try:
+    entries.push("scan")
+    assert(recent, ["scan", "sync", "boot"])
+    throw "UNDO"
+catch error:
+    assert(error, "UNDO")
+assert([entries, recent], [["boot", "sync"], ["sync", "boot"]])
+def short(text):
+    if text.length > 4:
+        throw "LONG"
+    return text
+class Tag(label):
+    this.label = label
+$Tag.code = short($Tag.label.reversed())
+tag = Tag("AB12")
+try:
+    tag.label = "ABC123"
+catch error:
+    failure = error
+assert([failure, tag.label, tag.code], ["LONG", "AB12", "21BA"])
+tag.label = "XY9"
+tag.code
+# return: "9YX""#);
+}
+
 /// Nucleoid flattens nested lists by one level
 #[rustfmt::skip]
 #[test]

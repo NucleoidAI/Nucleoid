@@ -4356,6 +4356,33 @@ dale.heights.push(200)
   the same height climb `0` between them. See [NUC 129](nuc-0129.md) and the
   [root contract](../nucleoid.spec.md#list-and-population-zipping).
 
+## Reversal method aliases
+
+**Reversal methods trace every delivery route back to its depot**
+
+```nuc
+class Route(stops):
+    this.stops = stops
+$Route.back = $Route.stops.reversed()
+$Route.sign = $Route.stops.toReversed().join(" < ")
+north = Route(["depot", "mill", "harbor"])
+south = Route(["depot", "farm"])
+assert([north.back, south.sign], [["harbor", "mill", "depot"], "farm < depot"])
+north.stops.push("lighthouse")
+south.stops.push("orchard")
+[north.back[0], south.sign]
+# return: ["lighthouse","orchard < farm < depot"]
+```
+
+- Each route keeps its way back in class-level rules: `reversed()` lists its
+  stops from the last one to the depot, and the sign a driver follows home
+  joins the stops that `toReversed()` gives. Both are exactly the accepted
+  `reverse()`, which copies the stops and never reorders the route itself.
+- Both rules follow every stop: the lighthouse at the end of the north route
+  becomes the first stop on its way back, and the orchard heads the south
+  route's sign. See [NUC 131](nuc-0131.md) and the
+  [root contract](../nucleoid.spec.md#reversal-method-aliases).
+
 ## Reactive list flattening
 
 **Flattening keeps the dirty tiles of every room counted**

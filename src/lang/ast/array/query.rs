@@ -90,7 +90,7 @@ impl Runtime {
                 arguments.first(),
                 arguments.get(1),
             ))),
-            "reverse" => {
+            "reverse" | "reversed" | "toReversed" => {
                 let mut reversed = items;
                 reversed.reverse();
                 Ok(Value::List(reversed))

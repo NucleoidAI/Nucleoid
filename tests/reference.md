@@ -2930,6 +2930,22 @@ targets.push(60)
 gaps
 # return: [2,-2,1]
 ---
+# Nucleoid reverses lists, populations and strings as Kotlin, Swift and JavaScript do
+
+readings = [18, 21, 19]
+latest = readings.reversed()
+class Visit(room):
+    this.room = room
+Visit("lab")
+Visit("hall")
+recent = Visit.toReversed()
+assert([latest, recent.map(visit -> visit.room)], [[19, 21, 18], ["hall", "lab"]])
+readings.push(23)
+Visit("roof")
+assert([latest[0], recent.length, readings], [23, 3, [18, 21, 19, 23]])
+["stressed".reversed(), "café".reverse(), "a😀b".reversed()]
+# return: ["desserts","éfac","b😀a"]
+---
 # Nucleoid flattens nested lists with flat
 
 pallets = [[["bolt", "nut"], ["gear"]], [["cog"]]]

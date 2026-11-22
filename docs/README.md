@@ -2809,9 +2809,9 @@ Full detail: [NUC 9](nuc-0009.md), [NUC 46](nuc-0046.md), [NUC 119](nuc-0119.md)
 | `Boolean` | `Boolean(value)` |
 | `Number` | `Number.MAX_INTEGER` |
 | `Math` | `pow`, `sqrt`, `floor`, `round`, `max`, `min`, `clamp` ([NUC 21](nuc-0021.md)), `lerp` ([NUC 22](nuc-0022.md)), `saturate` ([NUC 23](nuc-0023.md)), `smoothstep(lower, upper, value)` (accepted [NUC 33](nuc-0033.md)), `smootherstep(lower, upper, value)` (accepted [NUC 35](nuc-0035.md)), `remap(start, end, targetStart, targetEnd, value)` (accepted [NUC 39](nuc-0039.md)) |
-| `String` | `String.fromCharCode`; instance `charAt`, `length`, `lower`, `replace`, `replaceAll` (accepted [NUC 42](nuc-0042.md)), `repeat`, `split`, `padStart` and `padEnd` ([NUC 111](nuc-0111.md)), Python's `startswith`, `endswith` and `join(items)`, with the separator as the receiver ([NUC 110](nuc-0110.md)), the size and emptiness methods `length()`, `size()`, `len()`, `isEmpty()`, `is_empty()` and `isNotEmpty()` ([NUC 116](nuc-0116.md)), and the case conversion aliases `uppercase()`, `to_uppercase()` and `uppercased()` of `toUpperCase()`, and `lowercase()`, `to_lowercase()` and `lowercased()` of `toLowerCase()` ([NUC 118](nuc-0118.md)) |
+| `String` | `String.fromCharCode`; instance `charAt`, `length`, `lower`, `replace`, `replaceAll` (accepted [NUC 42](nuc-0042.md)), `repeat`, `split`, `padStart` and `padEnd` ([NUC 111](nuc-0111.md)), Python's `startswith`, `endswith` and `join(items)`, with the separator as the receiver ([NUC 110](nuc-0110.md)), the size and emptiness methods `length()`, `size()`, `len()`, `isEmpty()`, `is_empty()` and `isNotEmpty()` ([NUC 116](nuc-0116.md)), the case conversion aliases `uppercase()`, `to_uppercase()` and `uppercased()` of `toUpperCase()`, and `lowercase()`, `to_lowercase()` and `lowercased()` of `toLowerCase()` ([NUC 118](nuc-0118.md)), and the reversals `reverse()` and `reversed()`, exactly `text[::-1]` ([NUC 131](nuc-0131.md)) |
 | `Date` | `Date()`, `Date(string)`, `Date(number)`, `Date.now()`, `Date.parse()`; instance `getTime`, `getYear`, `toDateString` |
-| `List` | `push`, `pop`, `filter`, `map`, `flatMap` (accepted [NUC 41](nuc-0041.md)), `flat` ([NUC 103](nuc-0103.md)), `reduce`, `find`, `some`, `every`, `slice`, `sort` (in place, [NUC 58](nuc-0058.md)), `join`, `length`, and the queries `at`, `includes`, `indexOf`, `lastIndexOf`, `findIndex`, `findLast`, `findLastIndex` and `concat` ([NUC 61](nuc-0061.md)), `sum` ([NUC 68](nuc-0068.md)), `max` and `min` ([NUC 69](nuc-0069.md)), `distinct` ([NUC 71](nuc-0071.md)), `count(predicate)` ([NUC 73](nuc-0073.md)), `mode` ([NUC 75](nuc-0075.md)), `maxBy` and `minBy` ([NUC 77](nuc-0077.md)), `average` ([NUC 80](nuc-0080.md)), `median` ([NUC 84](nuc-0084.md)), `sortBy` ([NUC 105](nuc-0105.md)), `partition` ([NUC 108](nuc-0108.md)), `product` ([NUC 114](nuc-0114.md)), `variance` and `stdev` ([NUC 123](nuc-0123.md)), `quantile` ([NUC 124](nuc-0124.md)), `zip(other)` and `zip(other, combine)` ([NUC 129](nuc-0129.md)), the size and emptiness aliases `size()`, `len()`, `isEmpty()`, `is_empty()` and `isNotEmpty()` ([NUC 116](nuc-0116.md)), and the first and last element aliases `first()`, `last()`, `first(predicate)` and `last(predicate)` ([NUC 117](nuc-0117.md)); `sum`, `max`, `min` and `mode` also read as `sum of list` ([NUC 75](nuc-0075.md) revision 2) |
+| `List` | `push`, `pop`, `filter`, `map`, `flatMap` (accepted [NUC 41](nuc-0041.md)), `flat` ([NUC 103](nuc-0103.md)), `reduce`, `find`, `some`, `every`, `slice`, `reverse` (a new list in reverse order), `sort` (in place, [NUC 58](nuc-0058.md)), `join`, `length`, and the queries `at`, `includes`, `indexOf`, `lastIndexOf`, `findIndex`, `findLast`, `findLastIndex` and `concat` ([NUC 61](nuc-0061.md)), `sum` ([NUC 68](nuc-0068.md)), `max` and `min` ([NUC 69](nuc-0069.md)), `distinct` ([NUC 71](nuc-0071.md)), `count(predicate)` ([NUC 73](nuc-0073.md)), `mode` ([NUC 75](nuc-0075.md)), `maxBy` and `minBy` ([NUC 77](nuc-0077.md)), `average` ([NUC 80](nuc-0080.md)), `median` ([NUC 84](nuc-0084.md)), `sortBy` ([NUC 105](nuc-0105.md)), `partition` ([NUC 108](nuc-0108.md)), `product` ([NUC 114](nuc-0114.md)), `variance` and `stdev` ([NUC 123](nuc-0123.md)), `quantile` ([NUC 124](nuc-0124.md)), `zip(other)` and `zip(other, combine)` ([NUC 129](nuc-0129.md)), the size and emptiness aliases `size()`, `len()`, `isEmpty()`, `is_empty()` and `isNotEmpty()` ([NUC 116](nuc-0116.md)), the first and last element aliases `first()`, `last()`, `first(predicate)` and `last(predicate)` ([NUC 117](nuc-0117.md)), and the reversal aliases `reversed()` and `toReversed()` of `reverse()` ([NUC 131](nuc-0131.md)); `sum`, `max`, `min` and `mode` also read as `sum of list` ([NUC 75](nuc-0075.md) revision 2) |
 | `Class` | the global list of declared types; `Class.length` |
 
 ```
@@ -3066,6 +3066,59 @@ assert([ada.handle, inbox, shown], ["ada king", "countess@example.org", "ADA KIN
   `tests/reference.md`. The
   [root section](../nucleoid.spec.md#case-conversion-method-aliases) and its
   three appended entries define the results, liveness and rollback.
+
+### Reversal method aliases
+
+```
+readings = [18, 21, 19]
+latest = readings.reversed()
+class Visit(room):
+    this.room = room
+Visit("lab")
+Visit("hall")
+recent = Visit.toReversed()
+assert([latest, recent.map(visit -> visit.room)], [[19, 21, 18], ["hall", "lab"]])
+readings.push(23)
+Visit("roof")
+assert([latest[0], recent.length, readings], [23, 3, [18, 21, 19, 23]])
+["stressed".reversed(), "café".reverse(), "a😀b".reversed()]
+```
+
+- [NUC 131](nuc-0131.md) adds the reversal methods of Kotlin, Swift,
+  JavaScript and Ruby as aliases. On lists and class populations,
+  `reversed()` and `toReversed()` are the accepted `reverse()`, which returns
+  a new list in reverse order and leaves its receiver as it is, so `latest`
+  reads the newest reading first, `recent` the latest visit first, and
+  `readings` keeps its order. On strings, `reversed()` and `reverse()` are
+  `text[::-1]`, which reverses the characters, Unicode scalar values, so the
+  last line holds `"desserts"`, `"éfac"` and `"b😀a"`.
+- Each alias evaluates its receiver and then its arguments, which it
+  ignores, and stays live like its spelling: `latest` and `recent` follow the
+  push and the new visit. `why` names the same dependencies.
+- An alias equals its spelling while its receiver is a list, a population or
+  a string. When a later write replaces the receiver of a standing call with
+  another kind of value, the call reads its name on that value: a number
+  raises `TypeError("number.reversed is not a function")` where `reverse()`
+  raises `TypeError("number.reverse is not a function")`, and a string
+  written over a list turns `reversed()` and `reverse()` into its reversal,
+  while `toReversed()` raises.
+- Only these calls change. A string's `toReversed()`, numbers and other
+  receivers keep their errors, so `(5).reversed()` still raises
+  `TypeError("number.reversed is not a function")`. Reads such as
+  `xs.reversed` without a call, functions, properties and methods of the same
+  names, `Math.reversed()` and `reverse of xs` keep their behavior. On a class
+  name the population alias wins over an instance method of the same name.
+- JavaScript's `reverse()` works in place, where Nucleoid's copies, as
+  `toReversed()` does. Swift's `reversed()` is a lazy view that reverses
+  grapheme clusters, and Kotlin and JavaScript count UTF-16 code units, where
+  the aliases reverse Unicode scalar values. Ruby's `reverse!`, Kotlin's
+  `asReversed()`, Python's `reversed(xs)`, `sorted()` and `toSorted()` are
+  not added.
+- This is the executable entry
+  `Nucleoid reverses lists, populations and strings as Kotlin, Swift and JavaScript do`
+  in `tests/reference.md`. The
+  [root section](../nucleoid.spec.md#reversal-method-aliases) and its four
+  appended entries define the results, liveness and rollback.
 
 ### Reactive string padding
 
@@ -5583,6 +5636,8 @@ items.first(test)  items.last(test)    exactly items.find(test) and items.findLa
 text.uppercase()  text.lowercase()     Kotlin spellings: exactly text.toUpperCase(), text.toLowerCase() (NUC 118)
 text.to_uppercase()  text.to_lowercase() Rust spellings: exactly text.toUpperCase(), text.toLowerCase() (NUC 118)
 text.uppercased()  text.lowercased()   Swift spellings: exactly text.toUpperCase(), text.toLowerCase() (NUC 118)
+items.reversed()  items.toReversed()   exactly items.reverse(), a new list; Name.reversed() lists the latest instance first (NUC 131)
+text.reversed()  text.reverse()        exactly text[::-1], the characters in reverse order (NUC 131)
 mode of items  sum of Name.map(f)      noun query: exactly items.mode(), Name.map(f).sum() (NUC 75)
 sum of items ** 2                      a noun query applies to the whole power: sum of (items ** 2) (NUC 75)
 

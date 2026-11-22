@@ -2852,6 +2852,30 @@ assert(gpa, 3.0833333333333335)
   sequence, so a grade waiting for its credits counts once they arrive. See
   the [root contract](nucleoid.spec.md#list-and-population-zipping).
 
+## Reversal method aliases
+
+**Reversal methods keep an undo history newest first**
+
+```nuc
+edits = ["draft", "trim intro"]
+undo = edits.reversed()
+top = edits.toReversed()[0]
+assert([undo, top], [["trim intro", "draft"], "trim intro"])
+edits.push("fix typo")
+assert([undo, top, edits.length], [["fix typo", "trim intro", "draft"], "fix typo", 3])
+```
+
+- [NUC 131](docs/nuc-0131.md) adds `reversed()`, as Kotlin and Swift write
+  it, and `toReversed()`, as JavaScript writes it, to lists and class
+  instance lists, and `reversed()` and `reverse()`, as Kotlin and Ruby write
+  them, to strings. On a list they are exactly the accepted `reverse()`,
+  which returns a new list and leaves its receiver unchanged, and on a string
+  exactly `text[::-1]`, which reverses its characters.
+- `undo` and `top` are live declarations over the history, so the newest edit
+  comes first after every push, while `edits` keeps the order the edits were
+  made in. See the
+  [root contract](nucleoid.spec.md#reversal-method-aliases).
+
 ## Reactive list flattening
 
 **Flat turns nested lists into one live list**

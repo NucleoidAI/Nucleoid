@@ -448,7 +448,7 @@ fn only_the_appended_cases_take_quantiles_and_they_run_every_assertion() {
     }
     assert_eq!(calls, 12);
     assert_eq!(assertions, 20);
-    assert_eq!(cases, 1257);
+    assert_eq!(cases, 1264);
 }
 
 #[test]
@@ -457,7 +457,7 @@ fn the_appended_cases_stand_after_nuc_123_and_before_nuc_103() {
     let titles: Vec<&str> = spec.iter().map(|case| case.title.as_str()).collect();
     assert_eq!(titles[807], "Nucleoid rolls back failed variance updates");
     assert_eq!(titles[808..812], SPEC_TITLES);
-    assert_eq!(titles[828], "Nucleoid flattens nested lists by one level");
+    assert_eq!(titles[832], "Nucleoid flattens nested lists by one level");
     for (cases, title, previous, following) in [
         (
             &reference,
@@ -479,9 +479,9 @@ fn the_appended_cases_stand_after_nuc_123_and_before_nuc_103() {
         ),
     ] {
         let index = cases.iter().position(|case| case.title == title).unwrap();
-        assert_eq!(index, cases.len() - 9, "{title}");
+        assert_eq!(index, cases.len() - 10, "{title}");
         assert_eq!(cases[index - 1].title, previous);
-        assert_eq!(cases[index + 5].title, following);
+        assert_eq!(cases[index + 6].title, following);
     }
 }
 

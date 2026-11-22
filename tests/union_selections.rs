@@ -294,7 +294,7 @@ fn no_earlier_document_case_writes_a_union_stage() {
         with_stage += usize::from(uses);
     }
     assert_eq!(with_stage, 7);
-    assert_eq!(cases, 1257);
+    assert_eq!(cases, 1264);
 }
 
 #[test]
@@ -306,7 +306,7 @@ fn the_appended_cases_stand_after_nuc_119_and_before_nuc_103() {
         "Nucleoid runs a finally clause before an error or a return leaves"
     );
     assert_eq!(titles[793..797], SPEC_TITLES);
-    assert_eq!(titles[828], "Nucleoid flattens nested lists by one level");
+    assert_eq!(titles[832], "Nucleoid flattens nested lists by one level");
     for (cases, title, previous, following) in [
         (
             &reference,
@@ -328,9 +328,9 @@ fn the_appended_cases_stand_after_nuc_119_and_before_nuc_103() {
         ),
     ] {
         let index = cases.iter().position(|case| case.title == title).unwrap();
-        assert_eq!(index, cases.len() - 13, "{title}");
+        assert_eq!(index, cases.len() - 14, "{title}");
         assert_eq!(cases[index - 1].title, previous);
-        assert_eq!(cases[index + 9].title, following);
+        assert_eq!(cases[index + 10].title, following);
     }
 }
 

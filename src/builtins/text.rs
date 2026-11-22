@@ -88,6 +88,7 @@ fn string_transform(
             Value::String(receiver.to_uppercase())
         }
         "trim" | "strip" => Value::String(receiver.trim().to_string()),
+        "reverse" | "reversed" => Value::String(receiver.chars().rev().collect()),
         "split" => {
             let separator = first.to_string();
             let parts: Vec<Value> = if separator.is_empty() {
