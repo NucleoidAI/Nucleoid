@@ -101,9 +101,10 @@ indentedStart
 indentedBlock
     ::= indentedStart lineSeparator* (statement lineSeparator*)* blockEnd
 
+/* The token source closes every open level with a DEDENT before EOF, so a
+   block ends with DEDENT even at the end of the input. */
 blockEnd
     ::= DEDENT
-      | EOF
 
 body
     ::= suite
@@ -112,7 +113,9 @@ body
 block
     ::= LBRACE separator* (statement separator*)* RBRACE
 
-/* Statements need no separator where the preceding production ends.
+/* Statements need no separator where the preceding production ends, and an
+   expression statement reads its expression as far as it continues, so
+   'xs [1]' is a subscript, never 'xs' followed by the statement '[1]'.
    At statement start, '{' is a block or pattern, never an object literal.
    Destructuring, whileStmt and repeatStmt are tentative; other recognized
    statement headers commit even if a later token fails to match, as
@@ -424,12 +427,12 @@ classTail
     ::= (EXTENDS name (COLON classBody)? | COLON name? classBody)?
 
 /* Without indentation, the next statement is the entire class body even
-   across a line break. Use 'pass' or a bodyless header for an empty class. */
+   across a line break. Use 'pass' or a bodyless header for an empty class;
+   the body is empty only where EOF follows its line separators. */
 classBody
     ::= lineSeparator*
         (INDENT lineSeparator* (classMember lineSeparator*)* blockEnd
-        | EOF
-        | statement)
+        | statement)?
 
 classMember
     ::= PASS
@@ -1265,9 +1268,10 @@ REGEX_ESCAPE
  * assert: a, b             -> assert(a, b).
  * def f(x) => e            -> a function body returning e.
  * class C(this.x)          -> C(x) with this.x = x at constructor start.
- * def init(this.x): s      -> def init(x): this.x = x; s, also for function
- *                             init and a receiver's __init__; an arrow body
- *                             returns its expression after the assignments.
+ * def init(this.x): s      -> def init(x): this.x = x; s, in a class body,
+ *                             also for function init and a receiver's
+ *                             __init__; an arrow body returns its expression
+ *                             after the assignments.
  * def m(self, a): s        -> def m(a): s, in a class body's receiver parse.
  * def __init__(self, a): s -> def init(a): s, also with 'this'.
  * lambda a, b: e           -> (a, b) => e.
@@ -1294,11 +1298,12 @@ REGEX_ESCAPE
  * catch without a name     -> the binding "error".
  * except:                  -> catch:, also except Exception:.
  * except Exception as e:   -> catch e:.
- * else c: s                -> else if c: s, also elif c: s; a final else
+ * else c:                  -> else if c:, also as elif c: and without the
+ *                             colon, before an indented block; a final else
  *                             body is a Stmt::Block.
- * t = suppose p: s         -> Stmt::Suppose with target t and the body p; s,
- *                             the premise first; also t is suppose p: s, and
- *                             suppose p: s without a target.
+ * t = suppose a = 1: s     -> Stmt::Suppose with target t and the body
+ *                             a = 1; s, the premise first; also with
+ *                             t is suppose, or without a target.
  * model |> s               -> Expr::Model as the source of the stage s when
  *                             the whole operand before |> is the name model,
  *                             grouping aside: '(model) |> why' reads the
