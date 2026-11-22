@@ -265,6 +265,20 @@ fn completion_offers_quantile_on_lists_and_instance_lists() {
 }
 
 #[test]
+fn completion_offers_zip_on_lists_and_instance_lists() {
+    let mut runtime = Runtime::new();
+    runtime
+        .run("stops = [3, 1]\nclass Truck\nTruck()\nzipper = 1")
+        .unwrap();
+    for (prefix, expected) in [("stops.zi", ["stops.zip"]), ("Truck.zi", ["Truck.zip"])] {
+        let completion = Completion::find(&runtime, &editor::new(prefix), false).unwrap();
+        assert_eq!(completion.candidates, expected, "{prefix}");
+    }
+    let completion = Completion::find(&runtime, &editor::new("zi"), false).unwrap();
+    assert_eq!(completion.candidates, ["zipper"]);
+}
+
+#[test]
 fn completion_offers_suppose_beside_a_variable_of_the_same_prefix() {
     let mut runtime = Runtime::new();
     runtime.run("supply = 3").unwrap();

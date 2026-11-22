@@ -2827,6 +2827,31 @@ assert([enters.map(step -> step.node), alarms.map(step -> step.node)], [["strain
   once a panel shows both alarms, it ends at the panel. See the
   [root contract](nucleoid.spec.md#origins-and-outcomes-of-reasoning-selections).
 
+## List and population zipping
+
+**Zip weighs every grade by its credits for a live grade point average**
+
+```nuc
+grades = [4, 4, 3]
+credits = [3, 2, 3]
+gpa = grades.zip(credits, (grade, credit) -> grade * credit).sum() / credits.sum()
+assert(gpa, 3.625)
+grades.push(2)
+credits.push(4)
+assert(gpa, 3.0833333333333335)
+```
+
+- [NUC 129](docs/nuc-0129.md) adds `zip(other)` and `zip(other, combine)` to
+  lists and class instance lists. `grades.zip(credits, ...)` pairs each grade
+  with the credits at the same position and weighs it with the combiner, as
+  Python's `zip`, Kotlin's `zip` with a transform and lodash's `zipWith` pair
+  parallel sequences.
+- `gpa` is a live declaration, so a new course and its credits update it. The
+  two top grades carry different credits, which a spelling that finds
+  positions with `indexOf` would confuse, and `zip` stops at the shorter
+  sequence, so a grade waiting for its credits counts once they arrive. See
+  the [root contract](nucleoid.spec.md#list-and-population-zipping).
+
 ## Reactive list flattening
 
 **Flat turns nested lists into one live list**

@@ -2911,6 +2911,25 @@ fee = qty * 2
 [starts.map(step => step.node), ends.map(step => step.node)]
 # return: [["subtotal","fee"],["unit","fee"]]
 ---
+# Nucleoid zips lists and populations with zip
+
+runners = ["ana", "bo", "cy"]
+bibs = [7, 9]
+entries = runners.zip(bibs)
+class Lap(seconds):
+    this.seconds = seconds
+Lap(62)
+Lap(58)
+targets = [60, 60]
+gaps = Lap.zip(targets, (lap, target) -> lap.seconds - target)
+assert([entries, gaps], [[["ana", 7], ["bo", 9]], [2, -2]])
+bibs.push(8)
+Lap(61)
+assert([entries.length, gaps], [3, [2, -2]])
+targets.push(60)
+gaps
+# return: [2,-2,1]
+---
 # Nucleoid flattens nested lists with flat
 
 pallets = [[["bolt", "nut"], ["gear"]], [["cog"]]]

@@ -79,6 +79,7 @@ impl Runtime {
             "sum" | "product" | "average" | "median" | "variance" | "stdev" | "max" | "min"
             | "distinct" | "mode" => self.aggregate_items(items, property, predicate),
             "quantile" => self.quantile_items(items, arguments),
+            "zip" => self.zip_items(items, arguments),
             "maxBy" | "minBy" => self.extreme_item(items, property, predicate),
             "sortBy" => self.sort_by_key(items, predicate),
             // Lists sort in place through `call_list_method`; a class population

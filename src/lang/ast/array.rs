@@ -6,6 +6,7 @@ mod index;
 mod query;
 mod sort_by_key;
 mod stepped;
+mod zip;
 
 use crate::error::{Error, Result};
 use crate::graph::NodeKey;
@@ -103,11 +104,16 @@ impl Runtime {
     /// The instances of class `name`, in population order, read as a
     /// dependency on the population. `None` when no such class is declared.
     pub(crate) fn population(&mut self, name: &str) -> Option<Vec<Value>> {
+        self.first_instances(name, usize::MAX)
+    }
+
+    fn first_instances(&mut self, name: &str, limit: usize) -> Option<Vec<Value>> {
         let instances = self
             .state
             .class(name)?
             .instances
             .iter()
+            .take(limit)
             .cloned()
             .map(Value::Object)
             .collect();

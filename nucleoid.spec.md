@@ -7076,6 +7076,79 @@ t.promote(bob)
   `Nucleoid rolls back failed quantile updates` specify the executable
   behavior. `tests/list_quantiles.rs` executes the rest.
 
+## List and population zipping
+
+- [NUC 129](docs/nuc-0129.md) adds the read-only list query `zip` to lists and
+  class instance lists. No syntax, keyword, token or error type is added; the
+  message `zip expects a list` is new.
+- `SEQUENCE.zip(OTHER)` returns a new list that pairs the items of `SEQUENCE`
+  and `OTHER` position by position: its item at each position is the two-item
+  list `[a, b]` of the items at that position, the receiver's first. It is as
+  long as the shorter of the two sequences, so `[1, 2, 3].zip(["a", "b"])` is
+  `[[1, "a"], [2, "b"]]`, and an empty sequence on either side gives `[]`.
+- `SEQUENCE.zip(OTHER, COMBINE)` returns, at each position, `COMBINE(a, b)` in
+  place of the pair, as Kotlin's `zip` with a transform and lodash's `zipWith`
+  do: `[3, 5, 2].zip([2, 1, 4], (p, q) -> p * q)` is `[6, 5, 8]`.
+- **Sequences.** The receiver is a list, however it is reached, or a class's
+  instance list in population order, named by the class, by a variable that
+  holds the class or by `$Name`. `OTHER` is a list, however it is reached, or
+  a declared class, read as its instances in population order, as `in` and
+  the quantifiers read one. Any other `OTHER`, a missing one included,
+  raises `TypeError("zip expects a list")`, even on an empty receiver: a
+  string, a number, a boolean, `null`, undefined, an object, an instance, a
+  function, a date, a regular expression or a built-in namespace such as
+  `Math`. On a class name, `zip` is the population query even when the class
+  declares an instance method `zip`; its instances keep calling that method.
+- **Items.** The pairs hold the items themselves, so an instance stays the
+  same instance and a nested list stays a list. `zip` reads items, not
+  bindings, so a `null` item stays in its pair without settling a declaration
+  to `null`, as `concat` keeps one.
+- **Combiners.** A supplied second argument must be a function; anything
+  else, `null` included, raises `TypeError("zip expects a function")`, even
+  on an empty receiver, after `OTHER` is checked. The function is called once
+  per position, from the first to the last, with the receiver's item and then
+  `OTHER`'s; further parameters are `null`, as in `map`. Reads inside it
+  follow the existing rules, and its errors and thrown values propagate
+  unchanged. Arguments after the second are evaluated and ignored.
+- **Accepted spelling.** `xs.zip(ys)` evaluates to what
+  `xs[:ys.length].reduce((pairs, x) -> pairs.concat([[x, ys[pairs.length]]]), [])`
+  evaluates to, and `xs.zip(ys, f)` to what the same `reduce` gives with
+  `f(x, ys[pairs.length])` in place of the pair, apart from `null` items of
+  `xs`: the spelling reads them through its callback's parameter, so a
+  declaration that holds it stores `null` once `xs` holds one. The spelling
+  `xs[:ys.length].map(x -> [x, ys[xs.indexOf(x)]])` gives the same pairs only
+  while `indexOf` finds every item at its own position: `[1, 1, 2]` and
+  `[4, 5, 6]` pair as `[[1, 4], [1, 4], [2, 6]]` there, and as
+  `[[1, 4], [1, 5], [2, 6]]` with `zip`.
+- **Live.** `zip` follows the shared rules of the list queries: it reads its
+  receiver before its arguments, evaluates every supplied argument once, left
+  to right, including unused extras, and never writes either sequence. A
+  declaration that uses it depends on the receiver, on its argument
+  expressions, on the population of a class that either side reads and on
+  whatever the combiner reads, so list mutations, new and deleted instances
+  and changes to what the combiner reads re-evaluate it, in class-level rules
+  too. Combiner errors roll back through the existing transaction. A null or
+  undefined receiver yields undefined without evaluating the arguments.
+- **Cost.** A call reads each sequence once and makes one pass over the
+  shorter one, calling the combiner once per position, without recursion, so
+  its cost grows linearly with the sequences.
+- **Rendering.** The call keeps its ordinary rendering, so
+  `pairs = xs.zip(ys)` explains as `pairs = xs.zip(ys)`, a function argument
+  renders as `function()`, and `why` lists both sequences among the
+  declaration's dependencies.
+- **Unchanged.** Only calls of `zip` on lists and class populations change;
+  they raised `TypeError("<receiver>.zip is not a function")`, and a `try`
+  that caught that error now receives the result. `zip of xs` stays
+  `SyntaxError("Unexpected keyword 'of'")`: `zip` is not one of the noun
+  queries. Property reads such as `xs.zip`, bindings, functions and object
+  properties named `zip`, `zip(...)` without a definition, `Math.zip` and the
+  other built-in namespaces, strings, numbers and booleans, `xs.zipWith(...)`
+  and `xs.unzip()`, and instance methods and properties named `zip` read on an
+  instance keep their accepted results. The four entries beginning
+  `Nucleoid pairs the items of two lists by position with zip` through
+  `Nucleoid rolls back failed zip updates` specify the executable behavior.
+  `tests/list_zipping.rs` executes the rest.
+
 ## Stepped slices
 
 - [NUC 125](docs/nuc-0125.md) adds an optional step to slices:
@@ -27709,6 +27782,92 @@ assert([starts.map(s -> s.node), ends.map(s -> s.node)], [["subtotal"], ["unit"]
 qty = 4
 [starts.map(s -> s.holds), ends.map(s -> s.holds)]
 # return: [[40],[11.25]]
+---
+# Nucleoid pairs the items of two lists by position with zip
+
+stops = ["Harbor", "Mill", "Oak"]
+minutes = [0, 4, 9]
+timetable = stops.zip(minutes)
+assert(timetable, [["Harbor", 0], ["Mill", 4], ["Oak", 9]])
+stops.push("Park")
+assert(timetable.length, 3)
+minutes.push(15)
+minutes.push(22)
+assert(timetable, [["Harbor", 0], ["Mill", 4], ["Oak", 9], ["Park", 15]])
+stops.shift()
+timetable[0]
+# return: ["Mill",0]
+---
+# Nucleoid pairs the instances of two classes in population order with zip
+
+class Driver(name):
+    this.name = name
+class Truck(plate):
+    this.plate = plate
+ada = Driver("Ada")
+Driver("Bo")
+Truck("T-1")
+crews = Driver.zip(Truck)
+assert([crews.length, crews[0][0], crews[0][1].plate], [1, ada, "T-1"])
+Truck("T-2")
+Truck("T-3")
+assert(crews.map(crew -> crew[0].name + ":" + crew[1].plate), ["Ada:T-1", "Bo:T-2"])
+Driver("Cy")
+crews.map(crew -> crew[1].plate)
+# return: ["T-1","T-2","T-3"]
+---
+# Nucleoid combines the items of two lists with a function in zip
+
+prices = [4, 4, 2]
+quantities = [3, 1, 3]
+discount = 0
+total = prices.zip(quantities, (price, quantity) -> (price - discount) * quantity).sum()
+assert(total, 22)
+prices.push(5)
+assert(total, 22)
+quantities.push(2)
+quantities.push(9)
+assert(total, 32)
+discount = 1
+total
+# return: 23
+---
+# Nucleoid rolls back failed zip updates
+
+def gap(load, limit):
+    if load > limit:
+        throw "OVERLOAD"
+    return limit - load
+limits = [4, 8, 6]
+loads = [3, 5]
+spare = loads.zip(limits, gap)
+failure = ""
+try:
+    loads.push(9)
+catch error:
+    failure = error
+assert([failure, loads, spare], ["OVERLOAD", [3, 5], [1, 3]])
+try:
+    loads.push(2)
+    assert(spare, [1, 3, 4])
+    throw "UNDO"
+catch error:
+    assert(error, "UNDO")
+assert([loads, spare], [[3, 5], [1, 3]])
+class Bay(load): this.load = load
+Bay(1)
+Bay(7)
+room = Bay.zip(limits, (bay, limit) -> gap(bay.load, limit))
+failure = ""
+try:
+    Bay(8)
+catch error:
+    failure = error
+assert([failure, Bay.length, room], ["OVERLOAD", 2, [3, 1]])
+Bay(6)
+Bay(5)
+room
+# return: [3,1,0]
 ---
 # Nucleoid flattens nested lists by one level
 

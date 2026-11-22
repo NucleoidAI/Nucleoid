@@ -21706,6 +21706,115 @@ qty = 4
 # return: [[40],[11.25]]"#);
 }
 
+/// Nucleoid pairs the items of two lists by position with zip
+#[rustfmt::skip]
+#[test]
+fn pairs_the_items_of_two_lists_by_position_with_zip() {
+    let mut run = runner();
+    run(r#"stops = ["Harbor", "Mill", "Oak"]"#);
+    run("minutes = [0, 4, 9]");
+    run("timetable = stops.zip(minutes)");
+    assert_eq!(run("timetable"), serde_json::json!([["Harbor", 0], ["Mill", 4], ["Oak", 9]]));
+    run(r#"stops.push("Park")"#);
+    assert_eq!(run("timetable.length"), 3);
+    run("minutes.push(15)");
+    run("minutes.push(22)");
+    assert_eq!(run("timetable"), serde_json::json!([["Harbor", 0], ["Mill", 4], ["Oak", 9], ["Park", 15]]));
+    run("stops.shift()");
+    run(r#"timetable[0]
+
+# return: ["Mill",0]"#);
+}
+
+/// Nucleoid pairs the instances of two classes in population order with zip
+#[rustfmt::skip]
+#[test]
+fn pairs_the_instances_of_two_classes_in_population_order_with_zip() {
+    let mut run = runner();
+    run(r#"class Driver(name):
+    this.name = name"#);
+    run(r#"class Truck(plate):
+    this.plate = plate"#);
+    run(r#"ada = Driver("Ada")"#);
+    run(r#"Driver("Bo")"#);
+    run(r#"Truck("T-1")"#);
+    run("crews = Driver.zip(Truck)");
+    {
+        let actual = run("[crews.length, crews[0][0], crews[0][1].plate]");
+        let expected = run(r#"([1, ada, "T-1"])"#);
+        assert_eq!(actual, expected);
+    }
+    run(r#"Truck("T-2")"#);
+    run(r#"Truck("T-3")"#);
+    assert_eq!(run(r#"crews.map(crew -> crew[0].name + ":" + crew[1].plate)"#), serde_json::json!(["Ada:T-1", "Bo:T-2"]));
+    run(r#"Driver("Cy")"#);
+    run(r#"crews.map(crew -> crew[1].plate)
+
+# return: ["T-1","T-2","T-3"]"#);
+}
+
+/// Nucleoid combines the items of two lists with a function in zip
+#[rustfmt::skip]
+#[test]
+fn combines_the_items_of_two_lists_with_a_function_in_zip() {
+    let mut run = runner();
+    run("prices = [4, 4, 2]");
+    run("quantities = [3, 1, 3]");
+    run("discount = 0");
+    run("total = prices.zip(quantities, (price, quantity) -> (price - discount) * quantity).sum()");
+    assert_eq!(run("total"), 22);
+    run("prices.push(5)");
+    assert_eq!(run("total"), 22);
+    run("quantities.push(2)");
+    run("quantities.push(9)");
+    assert_eq!(run("total"), 32);
+    run("discount = 1");
+    run(r#"total
+
+# return: 23"#);
+}
+
+/// Nucleoid rolls back failed zip updates
+#[rustfmt::skip]
+#[test]
+fn rolls_back_failed_zip_updates() {
+    let mut run = runner();
+    run(r#"def gap(load, limit):
+    if load > limit:
+        throw "OVERLOAD"
+    return limit - load
+limits = [4, 8, 6]
+loads = [3, 5]
+spare = loads.zip(limits, gap)
+failure = ""
+try:
+    loads.push(9)
+catch error:
+    failure = error
+assert([failure, loads, spare], ["OVERLOAD", [3, 5], [1, 3]])
+try:
+    loads.push(2)
+    assert(spare, [1, 3, 4])
+    throw "UNDO"
+catch error:
+    assert(error, "UNDO")
+assert([loads, spare], [[3, 5], [1, 3]])
+class Bay(load): this.load = load
+Bay(1)
+Bay(7)
+room = Bay.zip(limits, (bay, limit) -> gap(bay.load, limit))
+failure = ""
+try:
+    Bay(8)
+catch error:
+    failure = error
+assert([failure, Bay.length, room], ["OVERLOAD", 2, [3, 1]])
+Bay(6)
+Bay(5)
+room
+# return: [3,1,0]"#);
+}
+
 /// Nucleoid flattens nested lists by one level
 #[rustfmt::skip]
 #[test]

@@ -446,7 +446,7 @@ fn only_the_appended_cases_write_origins_or_outcomes_and_they_run_every_assertio
         assert_eq!(matching, 1, "{title}");
     }
     assert_eq!(assertions, 28);
-    assert_eq!(cases, 1250);
+    assert_eq!(cases, 1257);
 }
 
 #[test]
@@ -490,8 +490,8 @@ fn the_appended_cases_stand_after_nuc_125_and_before_nuc_103() {
         "Nucleoid rolls back failed updates through stepped slices"
     );
     assert_eq!(titles[820..824], SPEC_TITLES);
-    assert_eq!(titles[824], "Nucleoid flattens nested lists by one level");
-    assert_eq!(titles.len(), 843);
+    assert_eq!(titles[828], "Nucleoid flattens nested lists by one level");
+    assert_eq!(titles.len(), 847);
     for (cases, title, previous, following) in [
         (
             &reference,
@@ -513,9 +513,9 @@ fn the_appended_cases_stand_after_nuc_125_and_before_nuc_103() {
         ),
     ] {
         let index = cases.iter().position(|case| case.title == title).unwrap();
-        assert_eq!(index, cases.len() - 5, "{title}");
+        assert_eq!(index, cases.len() - 6, "{title}");
         assert_eq!(cases[index - 2].title, previous);
-        assert_eq!(cases[index + 1].title, following);
+        assert_eq!(cases[index + 2].title, following);
     }
 }
 

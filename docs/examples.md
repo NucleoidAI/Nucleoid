@@ -4328,6 +4328,34 @@ nights = 6
   [NUC 128](nuc-0128.md) and the
   [root contract](../nucleoid.spec.md#origins-and-outcomes-of-reasoning-selections).
 
+## List and population zipping
+
+**Zip measures every climb between the checkpoints of a trail**
+
+```nuc
+class Trail(heights):
+    this.heights = heights
+$Trail.climbs = $Trail.heights.zip($Trail.heights[1:], (low, high) -> high - low)
+$Trail.steep = $Trail.climbs.max() > 100
+ridge = Trail([120, 180, 150, 240])
+dale = Trail([40, 60, 60, 80])
+assert([ridge.climbs, ridge.steep, dale.climbs], [[60, -30, 90], false, [20, 0, 20]])
+ridge.heights.push(390)
+dale.heights.push(200)
+[ridge.climbs, ridge.steep, dale.steep]
+# return: [[60,-30,90,150],true,true]
+```
+
+- Each trail keeps the climbs between its neighbouring checkpoints in a
+  class-level rule: zipping the heights with `heights[1:]`, the same list
+  without its first height, pairs every checkpoint with the next one, and the
+  combiner subtracts their heights. A second rule flags the trails with a
+  climb of more than 100.
+- Both rules follow every checkpoint: a summit at 390 adds a climb of `150`
+  to the ridge, and one at 200 adds `120` to the dale, whose two checkpoints at
+  the same height climb `0` between them. See [NUC 129](nuc-0129.md) and the
+  [root contract](../nucleoid.spec.md#list-and-population-zipping).
+
 ## Reactive list flattening
 
 **Flattening keeps the dirty tiles of every room counted**

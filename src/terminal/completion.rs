@@ -94,6 +94,7 @@ const LIST_MEMBERS: &[&str] = &[
     "at",
     "slice",
     "concat",
+    "zip",
     "join",
     "flatMap",
     "flat",

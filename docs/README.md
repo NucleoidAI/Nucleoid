@@ -2811,7 +2811,7 @@ Full detail: [NUC 9](nuc-0009.md), [NUC 46](nuc-0046.md), [NUC 119](nuc-0119.md)
 | `Math` | `pow`, `sqrt`, `floor`, `round`, `max`, `min`, `clamp` ([NUC 21](nuc-0021.md)), `lerp` ([NUC 22](nuc-0022.md)), `saturate` ([NUC 23](nuc-0023.md)), `smoothstep(lower, upper, value)` (accepted [NUC 33](nuc-0033.md)), `smootherstep(lower, upper, value)` (accepted [NUC 35](nuc-0035.md)), `remap(start, end, targetStart, targetEnd, value)` (accepted [NUC 39](nuc-0039.md)) |
 | `String` | `String.fromCharCode`; instance `charAt`, `length`, `lower`, `replace`, `replaceAll` (accepted [NUC 42](nuc-0042.md)), `repeat`, `split`, `padStart` and `padEnd` ([NUC 111](nuc-0111.md)), Python's `startswith`, `endswith` and `join(items)`, with the separator as the receiver ([NUC 110](nuc-0110.md)), the size and emptiness methods `length()`, `size()`, `len()`, `isEmpty()`, `is_empty()` and `isNotEmpty()` ([NUC 116](nuc-0116.md)), and the case conversion aliases `uppercase()`, `to_uppercase()` and `uppercased()` of `toUpperCase()`, and `lowercase()`, `to_lowercase()` and `lowercased()` of `toLowerCase()` ([NUC 118](nuc-0118.md)) |
 | `Date` | `Date()`, `Date(string)`, `Date(number)`, `Date.now()`, `Date.parse()`; instance `getTime`, `getYear`, `toDateString` |
-| `List` | `push`, `pop`, `filter`, `map`, `flatMap` (accepted [NUC 41](nuc-0041.md)), `flat` ([NUC 103](nuc-0103.md)), `reduce`, `find`, `some`, `every`, `slice`, `sort` (in place, [NUC 58](nuc-0058.md)), `join`, `length`, and the queries `at`, `includes`, `indexOf`, `lastIndexOf`, `findIndex`, `findLast`, `findLastIndex` and `concat` ([NUC 61](nuc-0061.md)), `sum` ([NUC 68](nuc-0068.md)), `max` and `min` ([NUC 69](nuc-0069.md)), `distinct` ([NUC 71](nuc-0071.md)), `count(predicate)` ([NUC 73](nuc-0073.md)), `mode` ([NUC 75](nuc-0075.md)), `maxBy` and `minBy` ([NUC 77](nuc-0077.md)), `average` ([NUC 80](nuc-0080.md)), `median` ([NUC 84](nuc-0084.md)), `sortBy` ([NUC 105](nuc-0105.md)), `partition` ([NUC 108](nuc-0108.md)), `product` ([NUC 114](nuc-0114.md)), `variance` and `stdev` ([NUC 123](nuc-0123.md)), `quantile` ([NUC 124](nuc-0124.md)), the size and emptiness aliases `size()`, `len()`, `isEmpty()`, `is_empty()` and `isNotEmpty()` ([NUC 116](nuc-0116.md)), and the first and last element aliases `first()`, `last()`, `first(predicate)` and `last(predicate)` ([NUC 117](nuc-0117.md)); `sum`, `max`, `min` and `mode` also read as `sum of list` ([NUC 75](nuc-0075.md) revision 2) |
+| `List` | `push`, `pop`, `filter`, `map`, `flatMap` (accepted [NUC 41](nuc-0041.md)), `flat` ([NUC 103](nuc-0103.md)), `reduce`, `find`, `some`, `every`, `slice`, `sort` (in place, [NUC 58](nuc-0058.md)), `join`, `length`, and the queries `at`, `includes`, `indexOf`, `lastIndexOf`, `findIndex`, `findLast`, `findLastIndex` and `concat` ([NUC 61](nuc-0061.md)), `sum` ([NUC 68](nuc-0068.md)), `max` and `min` ([NUC 69](nuc-0069.md)), `distinct` ([NUC 71](nuc-0071.md)), `count(predicate)` ([NUC 73](nuc-0073.md)), `mode` ([NUC 75](nuc-0075.md)), `maxBy` and `minBy` ([NUC 77](nuc-0077.md)), `average` ([NUC 80](nuc-0080.md)), `median` ([NUC 84](nuc-0084.md)), `sortBy` ([NUC 105](nuc-0105.md)), `partition` ([NUC 108](nuc-0108.md)), `product` ([NUC 114](nuc-0114.md)), `variance` and `stdev` ([NUC 123](nuc-0123.md)), `quantile` ([NUC 124](nuc-0124.md)), `zip(other)` and `zip(other, combine)` ([NUC 129](nuc-0129.md)), the size and emptiness aliases `size()`, `len()`, `isEmpty()`, `is_empty()` and `isNotEmpty()` ([NUC 116](nuc-0116.md)), and the first and last element aliases `first()`, `last()`, `first(predicate)` and `last(predicate)` ([NUC 117](nuc-0117.md)); `sum`, `max`, `min` and `mode` also read as `sum of list` ([NUC 75](nuc-0075.md) revision 2) |
 | `Class` | the global list of declared types; `Class.length` |
 
 ```
@@ -4472,6 +4472,61 @@ quick
   [list and population quantiles](../nucleoid.spec.md#list-and-population-quantiles)
   section.
 
+### List and population zipping
+
+```
+runners = ["ana", "bo", "cy"]
+bibs = [7, 9]
+entries = runners.zip(bibs)
+class Lap(seconds):
+    this.seconds = seconds
+Lap(62)
+Lap(58)
+targets = [60, 60]
+gaps = Lap.zip(targets, (lap, target) -> lap.seconds - target)
+assert([entries, gaps], [[["ana", 7], ["bo", 9]], [2, -2]])
+bibs.push(8)
+Lap(61)
+assert([entries.length, gaps], [3, [2, -2]])
+targets.push(60)
+gaps
+```
+
+- This is the complete
+  `Nucleoid zips lists and populations with zip`
+  program in `tests/reference.md`, without its title and expected-return
+  metadata; it returns `[2, -2, 1]`.
+- [NUC 129](nuc-0129.md) adds `zip(other)` and `zip(other, combine)` to lists
+  and class instance lists. `zip(other)` pairs the items at the same
+  positions of the receiver and `other` as two-item lists `[a, b]`, the
+  receiver's first, as Python's and Kotlin's `zip` do, and
+  `zip(other, combine)` gives `combine(a, b)` in place of each pair, as
+  Kotlin's `zip` with a transform and lodash's `zipWith` do. The result is as
+  long as the shorter sequence, and an empty one gives `[]`.
+- `other` is a list or a declared class, read as its instances in population
+  order. Anything else, a missing argument included, raises
+  `TypeError("zip expects a list")`, even on an empty receiver. A supplied
+  combiner that is not a function, including `null`, raises
+  `TypeError("zip expects a function")`, after `other` is checked. The
+  combiner is called once per position, first to last, with the receiver's
+  item and then `other`'s, and further arguments are ignored.
+- The pairs hold the items themselves, so instances stay instances and a
+  `null` item stays in its pair without settling a declaration to `null`.
+  `xs.zip(ys)` gives what
+  `xs[:ys.length].reduce((pairs, x) -> pairs.concat([[x, ys[pairs.length]]]), [])`
+  gives, apart from `null` items of `xs`, which settle a declaration that
+  holds the spelling to `null`; a spelling that finds positions with
+  `indexOf` pairs a repeated item with its first position instead.
+- Zips are read-only and live: a declaration follows both sequences, the
+  instances of either class, the arguments and what the combiner reads, in
+  class-level rules too. On a class name, `Name.zip(...)` is the population
+  query even when the class declares an instance method `zip`; instances keep
+  calling the method. `zip` is not a noun query, so `zip of xs` stays a syntax
+  error.
+- The authoritative contract is the
+  [list and population zipping](../nucleoid.spec.md#list-and-population-zipping)
+  section.
+
 ### Stepped slices
 
 ```
@@ -5234,6 +5289,8 @@ Messages are exact and are part of the observable behaviour of the language.
 | A supplied `variance` or `stdev` selector that is not a function, including `null`, even on an empty receiver | `variance expects a function` or `stdev expects a function` |
 | A `quantile` rank that is not a number from `0` to `1`, including a missing rank, NaN, `null`, a numeric string or a boolean, even on an empty receiver | `quantile expects a number from 0 to 1` |
 | A supplied `quantile` selector that is not a function, including `null`, even on an empty receiver | `quantile expects a function` |
+| A `zip` argument that is neither a list nor a declared class's instances, including a missing argument, a string or `null`, even on an empty receiver | `zip expects a list` |
+| A supplied `zip` combiner that is not a function, including `null`, even on an empty receiver | `zip expects a function` |
 | A supplied `max` or `min` selector that is not a function, including `null`, even on an empty receiver | `max expects a function` or `min expects a function` |
 | A supplied `distinct` selector that is not a function, including `null`, even on an empty receiver | `distinct expects a function` |
 | Missing or non-function `count` predicate, including `null`, even on an empty receiver | `count expects a function` |
@@ -5514,6 +5571,7 @@ items.partition(test)  Name.partition(test) live [kept, rest]: what filter(test)
 items.product()  Name.product(selector) live product from 1: exactly items.reduce((t, x) => t * x, 1) (NUC 114)
 items.variance()  Name.stdev(selector) live population variance from the mean, and its square root (NUC 123)
 items.quantile(q)  Name.quantile(q, f) live q quantile, linear between the two closest ranks of the sorted values (NUC 124)
+items.zip(other)  Name.zip(Other, f)  live [a, b] pairs by position, or f(a, b), up to the shorter sequence (NUC 129)
 text.startswith(p)  text.endswith(s)  Python spellings: exactly text.startsWith(p), text.endsWith(s) (NUC 110)
 ", ".join(items)  ", ".join(Name)      Python spelling: exactly items.join(", "), Name.join(", ") (NUC 110)
 text.padStart(n, fill)  text.padEnd(n)  live text padded before or after to n characters; fill defaults to " " (NUC 111)
