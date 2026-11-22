@@ -187,16 +187,23 @@ such as `1.3.1` and `1.3.2` for training-object segmentation. Continued grid
 panels keep the same full number. The declarations header includes the
 output canvas instead of adding a separate milestone.
 
-The terminal always displays by group and side by side. Related panels share
-one box, one column per panel, each under its own numbered title, rather than
-following one another as separate boxes, and a result appears once, in its
-group, rather than on its own before a later box repeats it. A box for one
+The terminal always displays by group and side by side, as the data is
+generated. Related panels share one box, one column per panel, each under its
+own numbered title, rather than following one another as separate boxes, and
+a result appears once, in its group, rather than on its own before a later box
+repeats it. A step that works on data its own results do not show opens with
+that data, before its model call, and every other box prints as soon as its
+last result exists, never held back for a later step or summary. A box for one
 instance names the instance once, in a title row above the columns. Each
-training pair's segmented objects share one box with a row per object, its
-`Input` beside its `Output`, such as `1.4.1 Input` and `1.5.1 Output`;
+`Segmenting training objects` step opens with the training pair it segments,
+before the model call: one box titled `Train <n>`, as in the puzzle preview,
+holds the pair's full `Input` and `Output` matrices side by side, such as
+`1.4.1 Input` and `1.5.1 Output` under `1.3.1 Segmenting training objects`.
+The pair's segmented objects then share one box with a row per object, its
+`Input` beside its `Output`, such as `1.6.1 Input` and `1.7.1 Output`;
 segmented-object panels use `Input` and `Output` without object-number labels.
 Each constructed instance shows its `Input crop`, `Output crop`,
-`Implementation` and `Input state` side by side, `1.8.1` through `1.11.1` for
+`Implementation` and `Input state` side by side, `1.10.1` through `1.13.1` for
 the first one. After the `Analysis · State` table, a
 `Synthesizing training pairs` step precedes the synthesis call. Each
 synthesized instance's output is then composed as a test object's is, under
@@ -204,16 +211,22 @@ its `Composing the output object · <instance>` step, and the instance shows
 as soon as it is generated, before the next one is composed. An instance that
 passes validation shows one box titled `Synthesized <n> · <instance>`, where
 `<n>` numbers its synthesized pair: its full-size `Input` and `Output`
-matrices side by side, then its `Output state`, such as `1.15.1 Input`,
-`1.16.1 Output` and `1.17.1 Output state` for the first one. When validation
+matrices side by side, then its `Output state`, such as `1.17.1 Input`,
+`1.18.1 Output` and `1.19.1 Output state` for the first one. When validation
 rejects the instance, because its `Output state` and the measured placed
 output disagree on `x`, `y`, `width`, `height` or `volume`, a red `✗` step
 shows instead, such as
-`1.18.1 Rejected <instance> · Output state ≠ Placed output · volume 5 ≠ 4`,
-naming each disagreeing property with the state's value first, followed by
-one box titled with the instance that holds the same three panels. After the
-last instance, a `<count> training pairs synthesized` step (`pair` for one)
-closes the synthesis. Model token usage remains attached to its active
+`1.20.1 Rejected <instance> · Output state ≠ Placed output · volume 5 ≠ 4`
+when the first pair's second instance is rejected, naming each disagreeing
+property with the state's value first, followed by one box titled with the
+instance that holds the same three panels. As soon as a synthesized pair's
+last instance has been validated or rejected, a pair with
+at least one validated instance shows one box titled `Synthesized <n>`: the
+pair's full `Input` and `Output` side by side, merged from its validated
+instances, such as `1.20.1 Input` and `1.21.1 Output` for the first pair when
+none of its instances is rejected. After the last pair, a
+`<count> training pairs synthesized` step (`pair` for one) closes the
+synthesis. Model token usage remains attached to its active
 milestone. Instance-specific steps, and the headers of instance panels shown
 on their own, include the instance name.
 
@@ -228,10 +241,16 @@ Each test object's `Executing the object transformation` step, such as
 `Input state` side by side, `2.6.1`, `2.7.1` and `2.9.1`; if that execution
 fails, the crop and implementation still print before the error. After the
 `Visualization · State` table, whose rows are the objects' output states,
-each object's `Composing the output object · <instance>` step shows no panels
-of its own. Once every object is composed, a `<count> output objects composed`
-step (`object` for one) shows every object's full-size `Output` side by side
-in one box, in the table's order, such as `2.13.1 Output · ➡️ 90°`.
+each object's `Composing the output object · <instance>` step opens with the
+object it composes, before the model call: one box titled with the instance
+holds its full-size `Input` beside its `Output state`, such as `2.12.1 Input`
+and `2.13.1 Output state · ↗️ 45°` under `2.11.1`. The synthesized instances'
+composing steps in the analysis show no such box, because each one's own box,
+`Synthesized <n>` or its rejection box, shows its input and output state as
+soon as it is composed. Once every object is composed, a
+`<count> output objects composed` step (`object` for one), `2.14`, shows every
+object's full-size `Output` side by side in one box, in the table's order,
+such as `2.15.1 Output · ➡️ 90°`.
 Each `Output` header there shows the object's output orientation as an arrow
 emoji and its degrees, and every input- and output-state header, in both
 stages, shows the orientation of the state it displays the same way, such as

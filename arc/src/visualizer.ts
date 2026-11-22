@@ -152,13 +152,19 @@ export async function value({
 }
 
 export async function output_instance_matrix({
+  phase,
   test_input_matrix,
   train,
   instance,
 }) {
   const { x, y } = instance.output_value;
 
-  milestone.composing_output({ instance_name: instance.instance_name });
+  milestone.composing_output({
+    phase,
+    instance_name: instance.instance_name,
+    input_instance_matrix: instance.input_instance_matrix,
+    output_value: instance.output_value,
+  });
 
   const { output_instance_matrix } = await llm.generate({
     few_shot: null,

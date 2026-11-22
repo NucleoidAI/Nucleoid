@@ -94,6 +94,7 @@ async function synthesize({ train }) {
 
         const { output_instance_matrix } =
           await visualizer.output_instance_matrix({
+            phase: "analysis",
             test_input_matrix: input_instance_matrix,
             train,
             instance: synthesized_instance,
@@ -149,6 +150,11 @@ async function synthesize({ train }) {
           );
 
         validated_dataset.push(synthesized_dataset);
+        milestone.synthesized_dataset_validated({
+          pair_number: validated_dataset.length,
+          input_matrix: synthesized_dataset.input_matrix,
+          output_matrix: synthesized_dataset.output_matrix,
+        });
       }
     }
   }

@@ -43,8 +43,13 @@ export async function declarations({ train }) {
   return { class_declaration, declarations, output_canvas };
 }
 
-export async function instances({ train }) {
-  milestone.segmenting_training_objects();
+export async function instances({ train, pair_number }) {
+  const [{ input_matrix, output_matrix }] = train.dataset;
+  milestone.segmenting_training_objects({
+    pair_number,
+    input_matrix,
+    output_matrix,
+  });
 
   const { result: instances } = await llm.generate({
     messages: [

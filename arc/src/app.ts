@@ -48,8 +48,9 @@ export async function start(puzzle_id: string = "3aa6fb7a") {
   train.declarations = declarations;
   train.output_canvas = output_canvas;
 
-  for (const dataset of train.dataset) {
+  for (const [index, dataset] of train.dataset.entries()) {
     const { instances } = await analyzer.instances({
+      pair_number: index + 1,
       train: { ...train, dataset: [dataset] },
     });
 
@@ -111,6 +112,7 @@ export async function start(puzzle_id: string = "3aa6fb7a") {
 
   for (const input_instance of input_instances) {
     const { output_instance_matrix } = await visualizer.output_instance_matrix({
+      phase: "visualization",
       test_input_matrix,
       train,
       instance: input_instance,

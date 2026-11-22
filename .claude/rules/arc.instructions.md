@@ -148,7 +148,8 @@ nothing more.
 
 ## Grouped, side-by-side terminal output
 
-The solver's terminal always displays by group and side by side:
+The solver's terminal always displays by group and side by side, as the data
+is generated:
 
 - Results that belong together share one box, one column per panel, each
   under its own numbered title: one object's input, output and state, every
@@ -158,10 +159,19 @@ The solver's terminal always displays by group and side by side:
   box only when the window is too narrow.
 - Never print related results as a run of separate boxes, one after another,
   and never print a result on its own before a later group shows it: it
-  appears once, in its group. A result that no later group shows, such as a
-  rejected synthesized instance, gets its own group where it happens.
-- Display each group as it is generated: it prints as soon as its last result
-  exists, never held back for a later step or summary. Each synthesized
-  instance's box, for example, follows its composition at once.
+  appears once, in its group, and again only as the data a later step opens
+  with. A result that no later group shows, such as a rejected synthesized
+  instance, gets its own group where it happens.
+- Display data as it is generated, never held back for a later step or
+  summary. A step that works on data its own results do not show opens with
+  that data, in one group before its model call, even when an earlier group
+  showed it: each `Segmenting training objects` step opens with its training
+  pair's `Input` and `Output`, and each test object's
+  `Composing the output object` step with the object's `Input` and
+  `Output state`. A synthesized instance's composition opens with none,
+  because its box follows at once with the same data. Every other group prints
+  as soon as its last result exists: each synthesized instance's box follows
+  its composition, and each validated synthesized pair's box, its merged
+  `Input` and `Output`, follows its last instance.
 - One-line progress steps, model reasoning and usage lines, alerts and the
   failure box stay outside the groups.

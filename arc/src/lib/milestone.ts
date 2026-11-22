@@ -33,11 +33,27 @@ export function declarations_inferred({ declarations, output_canvas }) {
   terminal.code(`Declarations · Output canvas ${output_canvas}`, declarations);
 }
 
-export function segmenting_training_objects() {
+export function segmenting_training_objects({
+  pair_number,
+  input_matrix,
+  output_matrix,
+}) {
   terminal.step("Segmenting training objects", {
     key: "segmenting_training_objects",
     loop: true,
   });
+  terminal.panels(`Train ${pair_number}`, [
+    [
+      terminal.gridPanel("Input", input_matrix, {
+        key: "training_pair_input",
+        loop: true,
+      }),
+      terminal.gridPanel("Output", output_matrix, {
+        key: "training_pair_output",
+        loop: true,
+      }),
+    ],
+  ]);
 }
 
 export function training_objects_segmented({ instances }) {
@@ -126,6 +142,25 @@ export function synthesized_instance_validated({
       output_instance_matrix,
       output_value,
     }),
+  ]);
+}
+
+export function synthesized_dataset_validated({
+  pair_number,
+  input_matrix,
+  output_matrix,
+}) {
+  terminal.panels(`Synthesized ${pair_number}`, [
+    [
+      terminal.gridPanel("Input", input_matrix, {
+        key: "synthesized_pair_input",
+        loop: true,
+      }),
+      terminal.gridPanel("Output", output_matrix, {
+        key: "synthesized_pair_output",
+        loop: true,
+      }),
+    ],
   ]);
 }
 
@@ -300,11 +335,36 @@ export function transformation_executed({ instance_name, input_value }) {
   ]);
 }
 
-export function composing_output({ instance_name }) {
+export function composing_output({
+  phase,
+  instance_name,
+  input_instance_matrix,
+  output_value,
+}: {
+  phase: "analysis" | "visualization";
+  instance_name: string;
+  input_instance_matrix: number[][];
+  output_value?: Record<string, unknown>;
+}) {
   terminal.step(`Composing the output object · ${instance_name}`, {
     key: "composing_output",
     loop: true,
   });
+  if (phase === "visualization") {
+    terminal.panels(instance_name, [
+      [
+        terminal.gridPanel("Input", input_instance_matrix, {
+          key: "composing_input",
+          loop: true,
+        }),
+        terminal.valuePanel(
+          oriented("Output state", output_value?.orientation),
+          output_value,
+          { key: "composing_output_state", loop: true }
+        ),
+      ],
+    ]);
+  }
 }
 
 export function test_output_composed({ instances }) {
