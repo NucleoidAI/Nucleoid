@@ -373,11 +373,12 @@ fn binding_follows_the_written_out_spelling() {
             "{call}"
         );
     }
+    assert_eq!(
+        same_runs(header, written, "p = P(z=1)"),
+        Ok(r#"{"id":"p","rest":[],"x":null,"y":7.0,"z":1.0}"#.to_string()),
+        "P(z=1)"
+    );
     for (call, error) in [
-        (
-            "P(z=1)",
-            "TypeError: Unknown constructor argument 'z' for P",
-        ),
         (
             "P(rest=[1])",
             "TypeError: Rest parameter 'rest' cannot be a named constructor argument for P",
@@ -471,11 +472,10 @@ fn the_nearest_nonempty_constructor_counts_prefixed_statements() {
         "class Base(this.a)\nclass Plain(b) extends Base\nclass Own(this.b) extends Base\nplain = Plain(7)\nown = Own(7)\nassert([plain.a, plain.b], [7, null])\nassert([own.a, own.b], [null, 7])\nassert(Plain(a=3).a, 3)\nPlain.length",
         "2",
     );
-    let error = Runtime::new()
-        .run("class Base(this.a)\nclass Own(this.b) extends Base\nOwn(a=3)")
-        .unwrap_err();
-    assert_eq!(error.kind(), ErrorKind::Type);
-    assert_eq!(error.message(), "Unknown constructor argument 'a' for Own");
+    fresh(
+        "class Base(this.a)\nclass Own(this.b) extends Base\nOwn(a=3)",
+        r#"{"id":"[UUID]","b":null,"a":3}"#,
+    );
     fresh(
         "class Adopted(a):\n    def init(this.b):\n        pass\nadopted = Adopted(1)\nassert([adopted.a, adopted.b], [null, 1])\nclass Kept(this.a):\n    def init(this.b):\n        pass\nkept = Kept(1)\nassert([kept.a, kept.b], [1, null])\nkept.init(2)\nassert([kept.a, kept.b], [1, 2])\nkept.b",
         "2",
@@ -988,7 +988,7 @@ fn only_the_appended_cases_use_initializing_parameters_and_run_every_assertion()
         assert_eq!(matching, 1, "{title}");
     }
     assert_eq!(assertions, 36);
-    assert_eq!(cases, 1282);
+    assert_eq!(cases, 1293);
     assert!(uses_prefix("class P(a, ...this.b)"));
     assert!(uses_prefix("class P:\n    def init(self.a):\n        pass"));
     assert!(!uses_prefix("class P(a):\n    this.a = f(this.b)"));

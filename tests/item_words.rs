@@ -572,8 +572,8 @@ fn only_items_that_are_evaluated_are_read() {
     let mut runtime = Runtime::new();
     run_ok(&mut runtime, "class Light(color):\n    this.color is color");
     assert_eq!(
-        failure(&mut runtime, "first is Light(colour=GREY)"),
-        "TypeError: Unknown constructor argument 'colour' for Light (line 1, column 1)"
+        json(&mut runtime, "first is Light(colour=GREY)"),
+        r#"{"color":null,"colour":"GREY","id":"first"}"#
     );
     assert_eq!(kind(&runtime, "GREY"), None);
 }

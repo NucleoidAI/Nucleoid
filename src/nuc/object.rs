@@ -7,6 +7,7 @@ use indexmap::IndexSet;
 
 use crate::error::{Error, Result};
 use crate::graph::{NodeKey, NodeKind};
+use crate::lang::ast::parser::initializer;
 use crate::lang::ast::{Expr, Parameter, Stmt};
 use crate::lang::evaluation::TrackingMode;
 use crate::runtime::Runtime;
@@ -36,7 +37,13 @@ pub(crate) enum ConstructorCall {
     Bound {
         constructor: ClassShape,
         values: Vec<Option<Value>>,
+        labels: Vec<PropertyLabel>,
     },
+}
+
+pub(crate) struct PropertyLabel {
+    name: String,
+    value: Value,
 }
 
 impl ClassShape {
@@ -49,49 +56,33 @@ impl ClassShape {
     }
 }
 
-/// A validated source expression and the fixed slot it fills. Surplus
-/// positional arguments have no fixed slot; a rest formal collects them.
+/// A validated source expression and the slot it fills. Surplus positional
+/// arguments have no fixed slot; a rest formal collects them.
 struct ArgumentBinding<'a> {
-    slot: Option<usize>,
+    slot: Slot<'a>,
     expression: &'a Expr,
+}
+
+enum Slot<'a> {
+    Parameter(usize),
+    Surplus,
+    Property(&'a str),
 }
 
 fn bind_arguments<'a>(
     class: &ClassData,
     arguments: &'a [Expr],
 ) -> Result<Vec<ArgumentBinding<'a>>> {
-    let mut seen = IndexSet::new();
+    let mut parameters = IndexSet::new();
+    let mut properties = IndexSet::new();
     let mut bindings = Vec::with_capacity(arguments.len());
     let mut positional = 0;
     let mut named = false;
     for argument in arguments {
         if let Some((name, value)) = argument.named_argument() {
             named = true;
-            let Some((index, parameter)) = class
-                .parameters
-                .iter()
-                .enumerate()
-                .find(|(_, parameter)| parameter.name == name)
-            else {
-                return Err(Error::type_error(format!(
-                    "Unknown constructor argument '{name}' for {}",
-                    class.name
-                )));
-            };
-            if parameter.rest {
-                return Err(Error::type_error(format!(
-                    "Rest parameter '{name}' cannot be a named constructor argument for {}",
-                    class.name
-                )));
-            }
-            if !seen.insert(index) {
-                return Err(Error::type_error(format!(
-                    "Duplicate constructor argument '{name}' for {}",
-                    class.name
-                )));
-            }
             bindings.push(ArgumentBinding {
-                slot: Some(index),
+                slot: label_slot(class, name, &mut parameters, &mut properties)?,
                 expression: value,
             });
         } else {
@@ -105,9 +96,9 @@ fn bind_arguments<'a>(
                 .parameters
                 .get(positional)
                 .filter(|parameter| !parameter.rest)
-                .map(|_| positional);
-            if let Some(slot) = slot {
-                seen.insert(slot);
+                .map_or(Slot::Surplus, |_| Slot::Parameter(positional));
+            if let Slot::Parameter(index) = slot {
+                parameters.insert(index);
             }
             bindings.push(ArgumentBinding {
                 slot,
@@ -117,6 +108,35 @@ fn bind_arguments<'a>(
         }
     }
     Ok(bindings)
+}
+
+fn label_slot<'a>(
+    class: &ClassData,
+    name: &'a str,
+    parameters: &mut IndexSet<usize>,
+    properties: &mut IndexSet<&'a str>,
+) -> Result<Slot<'a>> {
+    let declared = class
+        .parameters
+        .iter()
+        .enumerate()
+        .find(|(_, parameter)| parameter.name == name);
+    let slot = match declared {
+        Some((_, parameter)) if parameter.rest => {
+            return Err(Error::type_error(format!(
+                "Rest parameter '{name}' cannot be a named constructor argument for {}",
+                class.name
+            )));
+        }
+        Some((index, _)) => parameters.insert(index).then_some(Slot::Parameter(index)),
+        None => properties.insert(name).then_some(Slot::Property(name)),
+    };
+    slot.ok_or_else(|| {
+        Error::type_error(format!(
+            "Duplicate constructor argument '{name}' for {}",
+            class.name
+        ))
+    })
 }
 
 impl Object {
@@ -291,20 +311,28 @@ impl Runtime {
         // shared binder constructs the rest list exactly once.
         let fixed_count = constructor.parameters.len() - usize::from(has_rest);
         let mut values = vec![None; fixed_count];
+        let mut labels = Vec::new();
         for binding in bindings {
             let value = self.evaluate(binding.expression, scope)?;
-            if let Some(slot) = binding.slot {
-                let entry = values
-                    .get_mut(slot)
-                    .ok_or_else(|| Error::type_error("Constructor argument has no parameter"))?;
-                *entry = Some(value);
-            } else if has_rest {
-                values.push(Some(value));
+            match binding.slot {
+                Slot::Parameter(slot) => {
+                    let entry = values.get_mut(slot).ok_or_else(|| {
+                        Error::type_error("Constructor argument has no parameter")
+                    })?;
+                    *entry = Some(value);
+                }
+                Slot::Surplus if has_rest => values.push(Some(value)),
+                Slot::Surplus => {}
+                Slot::Property(label) => labels.push(PropertyLabel {
+                    name: label.to_string(),
+                    value,
+                }),
             }
         }
         Ok(ConstructorCall::Bound {
             constructor,
             values,
+            labels,
         })
     }
 
@@ -314,18 +342,20 @@ impl Runtime {
         call: ConstructorCall,
         this: &ObjectId,
     ) -> Result<()> {
-        let (class, arguments) = match call {
+        let (class, arguments, labels) = match call {
             ConstructorCall::Positional(values) => (
                 ClassShape::of(self.effective_constructor(name)?),
                 values.into_iter().map(Some).collect(),
+                Vec::new(),
             ),
             ConstructorCall::Bound {
                 constructor,
                 values,
-            } => (constructor, values),
+                labels,
+            } => (constructor, values, labels),
         };
 
-        if class.constructor.is_empty() && class.parameters.is_empty() {
+        if class.constructor.is_empty() && class.parameters.is_empty() && labels.is_empty() {
             return Ok(());
         }
 
@@ -339,8 +369,16 @@ impl Runtime {
             scope.declare(parameter.name, value);
         }
 
+        let mut assignments = Vec::with_capacity(labels.len());
+        for label in labels {
+            debug_assert!(!scope.has(&label.name));
+            assignments.push(initializer(&label.name));
+            scope.declare(label.name, label.value);
+        }
+
         self.with_tracking(TrackingMode::Isolated, |runtime| {
-            runtime.execute_all(&class.constructor, &mut scope)
+            runtime.execute_all(&class.constructor, &mut scope)?;
+            runtime.execute_all(&assignments, &mut scope)
         })?;
 
         Ok(())

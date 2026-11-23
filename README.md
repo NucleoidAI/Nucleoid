@@ -3024,6 +3024,31 @@ assert([file.draft, file.table], [false, false])
   JavaScript and Python spellings remain available.
 - See the [root contract](nucleoid.spec.md#rust-string-boundary-method-aliases).
 
+## Unknown constructor arguments as properties
+
+**Unknown constructor arguments become live properties**
+
+```nuc
+class Product(name):
+    this.name = name
+$Product.total = $Product.price * $Product.quantity
+item = Product(name="pen", price=2, quantity=3)
+assert(item, {"id": "item", "name": "pen", "price": 2, "quantity": 3, "total": 6})
+item.quantity = 5
+assert(item.total, 10)
+item.total
+# return: 10
+```
+
+- [NUC 136](docs/nuc-0136.md) turns a constructor label that names no
+  parameter into a property: the call acts as if the constructor declared
+  the name and assigned `this.<name> = <name>` after its own statements.
+  The class declares only what its constructor uses, and the class-level
+  rule reads `price` and `quantity` like any other property.
+- Positional calls, declared labels and the binding errors for repeated
+  labels are unchanged. See the
+  [root contract](nucleoid.spec.md#unknown-constructor-arguments-as-properties).
+
 ## Benchmark
 
 This is the comparation our sample order app in Nucleoid IDE against MySQL and Postgres with using Express.js and Sequelize libraries.

@@ -349,11 +349,12 @@ fn constructors_bind_and_adopt_as_their_spellings() {
             "{call}"
         );
     }
+    assert_eq!(
+        same_runs(header, &written, "p = P(z=1)"),
+        Ok(r#"{"id":"p","rest":[],"x":null,"y":7.0,"z":1.0}"#.to_string()),
+        "P(z=1)"
+    );
     for (call, error) in [
-        (
-            "P(z=1)",
-            "TypeError: Unknown constructor argument 'z' for P",
-        ),
         (
             "P(1, x=2)",
             "TypeError: Duplicate constructor argument 'x' for P",
@@ -995,7 +996,7 @@ fn only_the_appended_cases_use_self_parameters_and_they_run_every_assertion() {
         assert_eq!(matching, 1, "{title}");
     }
     assert_eq!(assertions, 22);
-    assert_eq!(cases, 1282);
+    assert_eq!(cases, 1293);
 }
 
 #[test]

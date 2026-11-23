@@ -2893,15 +2893,19 @@ statement positions; caught values and transaction recovery are unchanged.
   ordinary-call function/local shadowing differences remain unchanged.
 - For calls containing labels, validate the entire binding plan before any
   argument effects or `.value` reads. Positional arguments fill successive
-  declared slots and must precede all labels. Reject the first unknown name,
-  repeated binding (including positional plus named), or positional argument
-  following a named argument, in source order.
+  declared slots and must precede all labels. Reject the first repeated
+  binding (including positional plus named) or positional argument following
+  a named argument, in source order. A label that names no parameter is not
+  rejected; it binds as
+  [Unknown constructor arguments as properties](#unknown-constructor-arguments-as-properties)
+  specifies.
 - Evaluate supplied values exactly once in source order in the caller's
   scope, then bind them in declaration order. Omitted parameters without
-  literal defaults retain `null`; named binding itself adds no defaults or
-  automatic property assignments. Literal defaults are specified separately.
-  Surplus positional values are still evaluated and ignored. Existing
-  duplicate formal names and purely positional binding are not redesigned.
+  literal defaults retain `null`; binding a declared parameter by name adds
+  no defaults or automatic property assignments. Literal defaults are
+  specified separately. Surplus positional values are still evaluated and
+  ignored. Existing duplicate formal names and purely positional binding are
+  not redesigned.
 - Use the nearest nonempty constructor body's signature, including adopted
   `def init` signatures and inherited constructors. An empty child header
   cannot replace that effective signature. Constructor scopes, receivers,
@@ -2936,9 +2940,9 @@ statement positions; caught values and transaction recovery are unchanged.
 - A constructor header star raises the ordinary parameter diagnostic
   `SyntaxError("Expected a parameter but found '*'")`; no star form is
   retained. Other parameter/suite diagnostics and source positions remain.
-- An unknown label raises
-  `TypeError("Unknown constructor argument '<name>' for <class>")`.
-  A repeated binding raises
+- An unknown label raises no error; it becomes a property as
+  [Unknown constructor arguments as properties](#unknown-constructor-arguments-as-properties)
+  specifies. A repeated binding raises
   `TypeError("Duplicate constructor argument '<name>' for <class>")`.
   A positional argument after a label raises
   `TypeError("Positional constructor argument after named arguments for <class>")`.
@@ -2948,7 +2952,96 @@ statement positions; caught values and transaction recovery are unchanged.
   count limit, dependency, project version or ARC change is introduced.
 - The eight historical constructor entries and four new pre-executed Student
   and ordinary-function counterparts below protect all canonical assertions,
-  expected returns, case identities and executed assertion coverage.
+  expected returns, case identities and executed assertion coverage. Under
+  the break that [NUC 136](docs/nuc-0136.md) records, the misspelled-label
+  assertion of `Nucleoid validates constructor names without caller assignments`
+  now asserts the instance that the call builds.
+
+## Unknown constructor arguments as properties
+
+- An unknown label is a constructor-call label that names no parameter of
+  the effective constructor, the one
+  [Default named constructors](#default-named-constructors) selects: the
+  nearest nonempty constructor of the class or an ancestor, with adopted
+  `def init(...)` and `def __init__(self, ...)` signatures. A label that
+  names only a parameter of a bodyless subclass header is unknown too.
+- An unknown label raises no error. The call acts as if the effective
+  constructor declared the label's name as one more parameter, after its
+  declared parameters in label source order, and its statements were
+  followed by `this.<name> = <name>` for each unknown label in source order.
+  After `class Shape(type):` with the body `this.type = type`,
+  `shape1 = Shape(type="SQUARE", color="RED")` builds the instance that
+  `class Shape(type, color):` with the body `this.type = type` and
+  `this.color = color` builds: `{"id": "shape1", "type": "SQUARE", "color": "RED"}`.
+- The whole call is still validated before any value runs. A repeated label,
+  an unknown one included, raises
+  `TypeError("Duplicate constructor argument '<name>' for <class>")`, and a
+  positional argument after a label and a label naming a rest formal keep
+  their `TypeError`s. Only the unknown-name rejection is gone.
+- Values still run once, in source order, in the caller's scope. Declared
+  parameters bind as before. Each unknown label's value is bound to its name
+  in the constructor scope after the declared parameters and any rest
+  formal, so a positional value never reaches it; surplus positional values
+  are still evaluated and then ignored or collected by a rest formal.
+- The assignments run in the constructor after its own statements, including
+  a leading `super(...)` and the assignments of initializing `this.` and
+  `self.` parameters. The statements can read the name as they read a
+  parameter, and an assignment replaces a property they set, which keeps its
+  place; a new property follows the ones set before it.
+- The assignments run once the statements finish, whether they end normally
+  or with a `return`, so an early `return` and an adopted
+  `def init(...) => value`, whose body is the statement `return value`,
+  keep their unknown labels. This is the one deliberate difference from the
+  written-out spelling, where a statement after a `return` never runs; the
+  user decided it so that every constructor keeps its labels. A failing
+  statement still skips them and rolls back the whole instance.
+- Each assignment is the statement `this.<name> = <name>`, as written: the
+  property holds a snapshot of the value, `.value` reads included, with no
+  dependency on a caller variable, and `why` reports its rule as
+  `$<Class>.<name> = <name>` for the instance's class. Graph keys,
+  transactions, rollback and class-level rules treat it as that statement, so
+  class-level rules still apply after the constructor, and a rule for the
+  same property sets it after construction.
+- A declared parameter still creates no property by itself:
+  `class Shell(code: int)` called as `Shell(code=7, note="spare")` builds an
+  instance with `note` and without `code`.
+- Every construction route takes unknown labels: class headers with or
+  without a body or a parameter list, a parent after a colon or `extends`,
+  inherited and bodyless subclass constructors, adopted initializers,
+  initializing parameters, literal defaults, final rest parameters, `new`,
+  assignment-named, expression, nested-property and collection instances,
+  shared class rules, `is` assignments, whose item words read as words, and
+  standing declarations, which build a new instance when they re-evaluate.
+- `super(...)` binds its labels against the effective parent constructor on
+  the same receiver. Its unknown labels are assigned after the parent
+  constructor's statements, before the calling constructor goes on, and the
+  calling constructor's own unknown labels after the calling constructor's
+  statements.
+- A named or mixed call pins its validated plan, so a value that redeclares
+  the class with a parameter of an unknown label's name leaves that label
+  unknown for the call.
+- A label named `id` reassigns the instance's `id` property, as `this.id = id`
+  does, and the instance keeps its name. A label named `value` raises
+  `TypeError("Cannot use 'value' as a property")`, as `this.value = value`
+  does, after the values ran, and the construction rolls back.
+- A failing value fails before the instance is registered, and a failing
+  statement or assignment restores the instance, the population, the
+  properties and the graph, as before.
+- Static class-level rule checks no longer reject unknown labels. They still
+  raise the other binding errors and still require every right-hand
+  reference, so `$Holder.tag = Tag(color=missing)` raises
+  `ReferenceError("missing is not defined")` when declared.
+- Purely positional calls, declared labels, the canonical rendering
+  `Shape(type="SQUARE",color="RED")` and the assignment arguments of
+  functions, methods, built-ins and direct `object.init(...)` calls are
+  unchanged. No token, keyword, syntax or error message is added, and
+  `TypeError("Unknown constructor argument '<name>' for <class>")` is no
+  longer raised.
+- The eight entries beginning
+  `Nucleoid assigns unknown constructor arguments as properties` through
+  `Nucleoid validates repeated unknown constructor arguments before any value`
+  specify the executable behavior. `tests/unknown_constructor_arguments.rs`
+  executes the rest.
 
 ## State-filtered reasoning selections
 
@@ -4055,8 +4148,8 @@ statement positions; caught values and transaction recovery are unchanged.
   nontransactional locals and transactional State boundaries are unchanged.
 - Ordinary, aliased, callback, method and function-value calls share existing
   invocation binding. Constructor positional/named/mixed calls, inherited
-  constructors and `super` use the selected signature's defaults. Strict
-  label validation, source order/single evaluation, receiver capture, and
+  constructors and `super` use the selected signature's defaults. Label
+  validation, source order/single evaluation, receiver capture, and
   delayed positional versus pinned named constructor selection stay unchanged.
 - Function argument assignments remain ordinary positional expressions, not
   named function arguments. Bare/comma-free signatures gain no default syntax.
@@ -5466,8 +5559,9 @@ t.promote(bob)
 - Only items that are evaluated are read. A list literal evaluates every
   item in order and a dictionary literal every value in order. A constructor
   call validates its named arguments first and then evaluates every supplied
-  value once, in source order, so a call with an unknown label reads none of
-  them. A conditional reads only its selected branch, and `&&`, `||` and
+  value once, in source order, so a call with a repeated label reads none of
+  them, while an unknown label's value is read like any other. A conditional
+  reads only its selected branch, and `&&`, `||` and
   `??` skip their right operand when the left one decides, so an item word
   there is not read and adds no dependency.
 - A standing declaration, property, constructor property or class-level rule
@@ -18686,10 +18780,8 @@ name = "Before"
 student = Student(name="Can", age=20)
 assert(name, "Before")
 assert(student.name, "Can")
-try:
-    Student(nmae="Can", age=20)
-catch error:
-    assert(error, TypeError("Unknown constructor argument 'nmae' for Student"))
+misspelled = Student(nmae="Can", age=20)
+assert(misspelled, {"id": "misspelled", "name": null, "age": 20, "nmae": "Can"})
 try:
     Student("Can", name="Other", age=20)
 catch error:
@@ -28904,6 +28996,123 @@ assert([Math.fabs(" -4 "), Math.fabs([-2]), Math.fabs(null), Math.fabs(true)], [
 assert(Math.fabs(-3, "ignored", Number.NaN), 3)
 magnitudes
 # return: [3.5,0,0]
+---
+# Nucleoid assigns unknown constructor arguments as properties
+
+class Shape(type):
+    this.type = type
+shape1 = Shape(type="SQUARE", color="RED")
+assert(shape1, {"id": "shape1", "type": "SQUARE", "color": "RED"})
+assert([shape1.type, shape1.color, Shape.length], ["SQUARE", "RED", 1])
+---
+# Nucleoid assigns unknown constructor arguments after the constructor statements
+
+class Shape(type):
+    this.type = type
+    this.size = 1
+plain = Shape(type="CIRCLE")
+sized = Shape(type="SQUARE", size=2, color="RED")
+assert(plain, {"id": "plain", "type": "CIRCLE", "size": 1})
+assert(sized, {"id": "sized", "type": "SQUARE", "size": 2, "color": "RED"})
+class Badge(name):
+    this.name = name
+    this.title = rank + " " + name
+badge = Badge(name="Ada", rank="Captain")
+assert(badge, {"id": "badge", "name": "Ada", "title": "Captain Ada", "rank": "Captain"})
+class Lamp(room):
+    this.room = room
+    if room == "attic":
+        return
+    this.lit = true
+attic = Lamp(room="attic", watts=60)
+assert(attic, {"id": "attic", "room": "attic", "watts": 60})
+---
+# Nucleoid assigns unknown constructor arguments without parameters or a body
+
+class Point
+origin = Point(x=0, y=0)
+assert(origin, {"id": "origin", "x": 0, "y": 0})
+class Shell(code: int)
+shell = Shell(code=7, note="spare")
+assert(shell, {"id": "shell", "note": "spare"})
+assert([Point.length, Shell.length], [1, 1])
+---
+# Nucleoid assigns unknown constructor arguments through inherited constructors and super
+
+class Shape(type):
+    this.type = type
+class Square: Shape
+    pass
+class Tile(size): Shape
+    super(type="SQUARE", color="RED")
+    this.size = size
+square = Square(type="SQUARE", color="BLUE")
+tile = Tile(size=2, glaze="MATTE")
+assert(square, {"id": "square", "type": "SQUARE", "color": "BLUE"})
+assert(tile, {"id": "tile", "type": "SQUARE", "color": "RED", "size": 2, "glaze": "MATTE"})
+assert([Shape.length, Square.length, Tile.length], [0, 1, 1])
+---
+# Nucleoid assigns unknown constructor arguments through adopted initializers
+
+class Point:
+    def init(x):
+        this.x = x
+point = Point(x=1, y=2)
+moved = Point(3, y=4)
+assert(point, {"id": "point", "x": 1, "y": 2})
+assert(moved, {"id": "moved", "x": 3, "y": 4})
+class Badge:
+    def init(name) => this.name = name
+badge = Badge(name="Ada", rank="Captain")
+assert(badge, {"id": "badge", "name": "Ada", "rank": "Captain"})
+---
+# Nucleoid builds instances with unknown constructor arguments on every route
+
+class Tag(name):
+    this.name = name
+holder = {}
+first = new Tag(name="a", color="RED")
+holder.tag = Tag(name="b", color="GREEN")
+items = [Tag(name="c", color="BLUE")]
+record = {tag: Tag(name="d", color="GREY")}
+assert([first.color, holder.tag.color, items[0].color, record.tag.color], ["RED", "GREEN", "BLUE", "GREY"])
+assert(Tag(name="e", color="TEAL").color, "TEAL")
+assert(Tag.length, 5)
+---
+# Nucleoid keeps unknown constructor arguments as snapshots under class level rules
+
+class Rect
+$Rect.area = $Rect.width * $Rect.height
+width = 10
+rect = Rect(width=2, height=3)
+assert(rect.area, 6)
+assert(width, 10)
+height = 5
+rect.width = 4
+assert(rect.area, 12)
+assert(rect.height, 3)
+rect.area
+# return: 12
+---
+# Nucleoid validates repeated unknown constructor arguments before any value
+
+class Shape(type):
+    this.type = type
+events = {count: 0}
+try:
+    Shape(color=(events.count=1), color="BLUE")
+catch error:
+    assert(error, TypeError("Duplicate constructor argument 'color' for Shape"))
+try:
+    Shape(color=(events.count=2), "SQUARE")
+catch error:
+    assert(error, TypeError("Positional constructor argument after named arguments for Shape"))
+try:
+    Shape(type="SQUARE", color=missing)
+catch error:
+    assert(error, ReferenceError("missing is not defined"))
+assert(events.count, 0)
+assert(Shape.length, 0)
 ```
 
 ## Floating-point absolute value alias

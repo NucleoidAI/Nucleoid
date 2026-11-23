@@ -276,7 +276,7 @@ fn no_earlier_document_case_writes_a_set_stage() {
         with_stage += usize::from(uses);
     }
     assert_eq!(with_stage, 9);
-    assert_eq!(cases, 1282);
+    assert_eq!(cases, 1293);
 }
 
 #[test]

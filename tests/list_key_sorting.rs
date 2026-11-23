@@ -377,7 +377,7 @@ fn only_the_appended_cases_sort_by_key_and_they_run_every_assertion() {
         assert_eq!(matching, 1, "{title}");
     }
     assert_eq!(assertions, 36);
-    assert_eq!(cases, 1282);
+    assert_eq!(cases, 1293);
 }
 
 #[test]
@@ -408,8 +408,8 @@ fn the_appended_cases_stand_after_nuc_104_and_before_nuc_103() {
         ),
     ] {
         let reference_offset = 2 * usize::from(title == REFERENCE_TITLE);
-        assert_eq!(cases[cases.len() - 30 - reference_offset].title, title);
-        assert_eq!(cases[cases.len() - 5 - reference_offset].title, following);
+        assert_eq!(cases[cases.len() - 31 - reference_offset].title, title);
+        assert_eq!(cases[cases.len() - 6 - reference_offset].title, following);
     }
 }
 

@@ -3067,4 +3067,13 @@ reading = 4
 assert(absolute, Math.abs(reading))
 absolute
 # return: 4
+---
+# Nucleoid builds an instance from unknown constructor arguments
+
+class Shape(type):
+    this.type = type
+shape1 = Shape(type="SQUARE", color="RED")
+assert(shape1, {"id": "shape1", "type": "SQUARE", "color": "RED"})
+shape1.color
+# return: "RED"
 ```

@@ -33,8 +33,8 @@ struct Record {
 
 const SPEC_DOCUMENT: &str = include_str!("../nucleoid.spec.md");
 
-const SPEC_RECORDS: usize = 861;
-const SYNTH_RECORDS: usize = 1_725;
+const SPEC_RECORDS: usize = 869;
+const SYNTH_RECORDS: usize = 1_733;
 const SYNTH_19_RECORDS: usize = 51;
 const SYNTH_21_RECORDS: usize = 120;
 const SYNTH_22_RECORDS: usize = 5;
@@ -111,6 +111,7 @@ const SYNTH_93_RECORDS: usize = 16;
 const SYNTH_94_RECORDS: usize = 3;
 const SYNTH_95_RECORDS: usize = 12;
 const SYNTH_134_RECORDS: usize = 2;
+const SYNTH_136_RECORDS: usize = 8;
 const SYNTH_137_RECORDS: usize = 2;
 
 #[test]
@@ -227,6 +228,7 @@ fn synthesized_records_keep_their_identifiers_and_fields() {
         ("94", SYNTH_94_RECORDS),
         ("95", SYNTH_95_RECORDS),
         ("134", SYNTH_134_RECORDS),
+        ("136", SYNTH_136_RECORDS),
         ("137", SYNTH_137_RECORDS),
     ] {
         let (_, records) = sets

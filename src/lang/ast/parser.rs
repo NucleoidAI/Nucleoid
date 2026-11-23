@@ -28,6 +28,8 @@ use receiver::{Dots, Receiver};
 use section::Sections;
 use self_parameter::Selves;
 
+pub(crate) use class::initializer;
+
 /// A parsed program: its statements, and where each top-level statement began.
 /// The positions are what places a runtime error in the source.
 #[derive(Debug)]

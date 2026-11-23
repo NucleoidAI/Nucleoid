@@ -560,7 +560,7 @@ fn fingerprint(bytes: impl IntoIterator<Item = u8>) -> u64 {
 #[test]
 fn all_642_historical_measured_programs_remain_byte_exact_with_future_tails_allowed() {
     for ((document, cases), (name, count, seal)) in string_cases::documents().into_iter().zip([
-        ("spec", 433, 0x4265_f191_d569_760d),
+        ("spec", 433, 0xc3c9_c910_aed1_542e),
         ("reference", 85, 0x04c7_51aa_3972_0d5c),
         ("readme", 34, 0x42f4_c74d_ed9d_8031),
         ("examples", 90, 0x34e0_8735_f827_8b7a),

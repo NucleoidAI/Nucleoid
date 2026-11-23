@@ -9788,10 +9788,8 @@ name = "Before"
 student = Student(name="Can", age=20)
 assert(name, "Before")
 assert(student.name, "Can")
-try:
-    Student(nmae="Can", age=20)
-catch error:
-    assert(error, TypeError("Unknown constructor argument 'nmae' for Student"))
+misspelled = Student(nmae="Can", age=20)
+assert(misspelled, {"id": "misspelled", "name": null, "age": 20, "nmae": "Can"})
 try:
     Student("Can", name="Other", age=20)
 catch error:
@@ -22740,6 +22738,155 @@ fn computes_floating_point_absolute_values_with_fabs() {
     run(r#"magnitudes
 
 # return: [3.5,0,0]"#);
+}
+
+/// Nucleoid assigns unknown constructor arguments as properties
+#[rustfmt::skip]
+#[test]
+fn assigns_unknown_constructor_arguments_as_properties() {
+    let mut run = runner();
+    run(r#"class Shape(type):
+    this.type = type
+shape1 = Shape(type="SQUARE", color="RED")
+assert(shape1, {"id": "shape1", "type": "SQUARE", "color": "RED"})
+assert([shape1.type, shape1.color, Shape.length], ["SQUARE", "RED", 1])"#);
+}
+
+/// Nucleoid assigns unknown constructor arguments after the constructor statements
+#[rustfmt::skip]
+#[test]
+fn assigns_unknown_constructor_arguments_after_the_constructor_statements() {
+    let mut run = runner();
+    run(r#"class Shape(type):
+    this.type = type
+    this.size = 1
+plain = Shape(type="CIRCLE")
+sized = Shape(type="SQUARE", size=2, color="RED")
+assert(plain, {"id": "plain", "type": "CIRCLE", "size": 1})
+assert(sized, {"id": "sized", "type": "SQUARE", "size": 2, "color": "RED"})
+class Badge(name):
+    this.name = name
+    this.title = rank + " " + name
+badge = Badge(name="Ada", rank="Captain")
+assert(badge, {"id": "badge", "name": "Ada", "title": "Captain Ada", "rank": "Captain"})
+class Lamp(room):
+    this.room = room
+    if room == "attic":
+        return
+    this.lit = true
+attic = Lamp(room="attic", watts=60)
+assert(attic, {"id": "attic", "room": "attic", "watts": 60})"#);
+}
+
+/// Nucleoid assigns unknown constructor arguments without parameters or a body
+#[rustfmt::skip]
+#[test]
+fn assigns_unknown_constructor_arguments_without_parameters_or_a_body() {
+    let mut run = runner();
+    run(r#"class Point
+origin = Point(x=0, y=0)
+assert(origin, {"id": "origin", "x": 0, "y": 0})
+class Shell(code: int)
+shell = Shell(code=7, note="spare")
+assert(shell, {"id": "shell", "note": "spare"})
+assert([Point.length, Shell.length], [1, 1])"#);
+}
+
+/// Nucleoid assigns unknown constructor arguments through inherited constructors and super
+#[rustfmt::skip]
+#[test]
+fn assigns_unknown_constructor_arguments_through_inherited_constructors_and_super() {
+    let mut run = runner();
+    run(r#"class Shape(type):
+    this.type = type
+class Square: Shape
+    pass
+class Tile(size): Shape
+    super(type="SQUARE", color="RED")
+    this.size = size
+square = Square(type="SQUARE", color="BLUE")
+tile = Tile(size=2, glaze="MATTE")
+assert(square, {"id": "square", "type": "SQUARE", "color": "BLUE"})
+assert(tile, {"id": "tile", "type": "SQUARE", "color": "RED", "size": 2, "glaze": "MATTE"})
+assert([Shape.length, Square.length, Tile.length], [0, 1, 1])"#);
+}
+
+/// Nucleoid assigns unknown constructor arguments through adopted initializers
+#[rustfmt::skip]
+#[test]
+fn assigns_unknown_constructor_arguments_through_adopted_initializers() {
+    let mut run = runner();
+    run(r#"class Point:
+    def init(x):
+        this.x = x
+point = Point(x=1, y=2)
+moved = Point(3, y=4)
+assert(point, {"id": "point", "x": 1, "y": 2})
+assert(moved, {"id": "moved", "x": 3, "y": 4})
+class Badge:
+    def init(name) => this.name = name
+badge = Badge(name="Ada", rank="Captain")
+assert(badge, {"id": "badge", "name": "Ada", "rank": "Captain"})"#);
+}
+
+/// Nucleoid builds instances with unknown constructor arguments on every route
+#[rustfmt::skip]
+#[test]
+fn builds_instances_with_unknown_constructor_arguments_on_every_route() {
+    let mut run = runner();
+    run(r#"class Tag(name):
+    this.name = name
+holder = {}
+first = new Tag(name="a", color="RED")
+holder.tag = Tag(name="b", color="GREEN")
+items = [Tag(name="c", color="BLUE")]
+record = {tag: Tag(name="d", color="GREY")}
+assert([first.color, holder.tag.color, items[0].color, record.tag.color], ["RED", "GREEN", "BLUE", "GREY"])
+assert(Tag(name="e", color="TEAL").color, "TEAL")
+assert(Tag.length, 5)"#);
+}
+
+/// Nucleoid keeps unknown constructor arguments as snapshots under class level rules
+#[rustfmt::skip]
+#[test]
+fn keeps_unknown_constructor_arguments_as_snapshots_under_class_level_rules() {
+    let mut run = runner();
+    run(r#"class Rect
+$Rect.area = $Rect.width * $Rect.height
+width = 10
+rect = Rect(width=2, height=3)
+assert(rect.area, 6)
+assert(width, 10)
+height = 5
+rect.width = 4
+assert(rect.area, 12)
+assert(rect.height, 3)
+rect.area
+# return: 12"#);
+}
+
+/// Nucleoid validates repeated unknown constructor arguments before any value
+#[rustfmt::skip]
+#[test]
+fn validates_repeated_unknown_constructor_arguments_before_any_value() {
+    let mut run = runner();
+    run(r#"class Shape(type):
+    this.type = type
+events = {count: 0}
+try:
+    Shape(color=(events.count=1), color="BLUE")
+catch error:
+    assert(error, TypeError("Duplicate constructor argument 'color' for Shape"))
+try:
+    Shape(color=(events.count=2), "SQUARE")
+catch error:
+    assert(error, TypeError("Positional constructor argument after named arguments for Shape"))
+try:
+    Shape(type="SQUARE", color=missing)
+catch error:
+    assert(error, ReferenceError("missing is not defined"))
+assert(events.count, 0)
+assert(Shape.length, 0)"#);
 }
 
 /// The committed tests must not drift from their generated JSONL export.

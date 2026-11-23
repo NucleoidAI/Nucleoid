@@ -391,10 +391,6 @@ caller = Caller()
             "Rest parameter 'tail' cannot be a named constructor argument for Packet",
         ),
         (
-            "Packet(unknown=fail())",
-            "Unknown constructor argument 'unknown' for Packet",
-        ),
-        (
             "Packet(1, head=fail())",
             "Duplicate constructor argument 'head' for Packet",
         ),
@@ -408,6 +404,11 @@ caller = Caller()
         assert_eq!(error.message(), message, "{call}");
         assert!(runtime.state.class("Packet").unwrap().instances.is_empty());
     }
+    let call = "Packet(unknown=fail())";
+    let error = runtime.run(call).unwrap_err();
+    assert_eq!(error.kind(), ErrorKind::Reference, "{call}");
+    assert_eq!(error.message(), "missing is not defined", "{call}");
+    assert!(runtime.state.class("Packet").unwrap().instances.is_empty());
 }
 
 #[test]

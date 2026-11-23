@@ -25,7 +25,7 @@ fn class_declaration(
     }
 }
 
-pub(super) fn initializer(name: &str) -> Stmt {
+pub(crate) fn initializer(name: &str) -> Stmt {
     Stmt::Assign {
         target: Expr::Member {
             object: Box::new(Expr::This),

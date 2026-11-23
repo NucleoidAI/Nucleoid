@@ -472,14 +472,6 @@ def fail() => missing
     );
     for (source, message) in [
         (
-            "Automatic(first=fail())",
-            "Unknown constructor argument 'first' for Automatic",
-        ),
-        (
-            "Pair(unknown=fail())",
-            "Unknown constructor argument 'unknown' for Pair",
-        ),
-        (
             "Pair(first=1, first=fail())",
             "Duplicate constructor argument 'first' for Pair",
         ),
@@ -495,6 +487,11 @@ def fail() => missing
         let error = runtime.run(source).unwrap_err();
         assert_eq!(error.kind(), ErrorKind::Type, "{source}");
         assert_eq!(error.message(), message, "{source}");
+    }
+    for source in ["Automatic(first=fail())", "Pair(unknown=fail())"] {
+        let error = runtime.run(source).unwrap_err();
+        assert_eq!(error.kind(), ErrorKind::Reference, "{source}");
+        assert_eq!(error.message(), "missing is not defined", "{source}");
     }
     assert_eq!(runtime.run("Pair.length").unwrap(), Value::Number(0.0));
 }

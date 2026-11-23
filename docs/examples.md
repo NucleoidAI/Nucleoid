@@ -4550,6 +4550,33 @@ selected
   not Rust pattern overloads. See [NUC 132](nuc-0132.md) and the
   [root contract](../nucleoid.spec.md#rust-string-boundary-method-aliases).
 
+## Unknown constructor arguments as properties
+
+**Unknown constructor arguments describe a fleet's vehicles**
+
+```nuc
+class Vehicle(plate):
+    this.plate = plate
+$Vehicle.heavy = $Vehicle.weight > 3500
+van = Vehicle(plate="V1", weight=2800, color="WHITE")
+truck = Vehicle(plate="T1", weight=7200)
+heavy = Vehicle.filter(vehicle -> vehicle.heavy).map(vehicle -> vehicle.plate)
+assert(heavy, ["T1"])
+assert([van.color, truck.color], ["WHITE", null])
+van.weight = 4000
+assert(heavy, ["V1", "T1"])
+heavy
+# return: ["V1","T1"]
+```
+
+- Each vehicle carries the attributes its caller names, though the class
+  declares only `plate`; the class-level rule and the live selection read
+  `weight` like any property and follow its changes.
+- A label that names no parameter becomes a property after the
+  constructor's statements, as [NUC 136](nuc-0136.md) and the
+  [root contract](../nucleoid.spec.md#unknown-constructor-arguments-as-properties)
+  define. A vehicle built without a `color` label has none.
+
 ## Copyright
 
 Copyright 2020 Nucleoid

@@ -309,10 +309,6 @@ class Pair(a, b):
             "Duplicate constructor argument 'a' for Pair",
         ),
         (
-            "Pair(unknown=(events.count=9), a=missing)",
-            "Unknown constructor argument 'unknown' for Pair",
-        ),
-        (
             "Pair(a=(events.count=9), missing.value)",
             "Positional constructor argument after named arguments for Pair",
         ),
@@ -323,14 +319,6 @@ class Pair(a, b):
         (
             "Pair(a=(events.count=9), events.count=9)",
             "Positional constructor argument after named arguments for Pair",
-        ),
-        (
-            "Pair(a=(events.count=9), b=1, unknown=missing)",
-            "Unknown constructor argument 'unknown' for Pair",
-        ),
-        (
-            "Pair(missing.value, unknown=(events.count=9))",
-            "Unknown constructor argument 'unknown' for Pair",
         ),
         (
             "Pair(missing.value, a=(events.count=9))",
@@ -344,6 +332,22 @@ class Pair(a, b):
         let error = runtime.run(&format!("failed = {call}")).unwrap_err();
         assert_eq!(error.kind(), ErrorKind::Type, "{call}");
         assert_eq!(error.message(), message, "{call}");
+        assert_eq!(error.position(), Some(Position::new(1, 1)), "{call}");
+        assert_eq!(runtime.run("events.count").unwrap(), Value::Number(0.0));
+        assert_eq!(runtime.run("Pair.length").unwrap(), Value::Number(0.0));
+        assert!(!runtime.state.has_object(&ObjectId::named("failed")));
+        assert!(!runtime.state.has_variable("failed"));
+        assert!(!runtime.graph.contains(&NodeKey::variable("a")));
+        assert!(!runtime.graph.contains(&NodeKey::variable("unknown")));
+    }
+    for call in [
+        "Pair(unknown=(events.count=9), a=missing)",
+        "Pair(a=(events.count=9), b=1, unknown=missing)",
+        "Pair(missing.value, unknown=(events.count=9))",
+    ] {
+        let error = runtime.run(&format!("failed = {call}")).unwrap_err();
+        assert_eq!(error.kind(), ErrorKind::Reference, "{call}");
+        assert_eq!(error.message(), "missing is not defined", "{call}");
         assert_eq!(error.position(), Some(Position::new(1, 1)), "{call}");
         assert_eq!(runtime.run("events.count").unwrap(), Value::Number(0.0));
         assert_eq!(runtime.run("Pair.length").unwrap(), Value::Number(0.0));
@@ -600,10 +604,8 @@ class Adopted(ignored):
         this.actual = actual
 adopted = Adopted(actual=9)
 assert(adopted.actual, 9)
-try:
-    invalid = Adopted(ignored=1)
-catch error:
-    assert(error, TypeError("Unknown constructor argument 'ignored' for Adopted"))
+invalid = Adopted(ignored=1)
+assert(invalid, {id: "invalid", actual: null, ignored: 1})
 "#,
     );
 }
@@ -731,7 +733,7 @@ catch error:
 try:
     invalid = Child(unknown=missing)
 catch error:
-    assert(error, TypeError("Unknown constructor argument 'unknown' for Parent"))
+    assert(error, ReferenceError("missing is not defined"))
 assert(events.count, 0)
 assert(child.a, 3)
 assert(child.clear(), null)
@@ -1142,11 +1144,8 @@ fn actual_cli_reports_invalid_bindings_and_repl_handles_the_new_class_header() {
         .arg(fixture)
         .output()
         .unwrap();
-    assert_eq!(output.status.code(), Some(1), "{output:?}");
-    assert_eq!(
-        String::from_utf8(output.stderr).unwrap().trim(),
-        "TypeError: Unknown constructor argument 'unknown' for Pair (line 2, column 1)"
-    );
+    assert_eq!(output.status.code(), Some(0), "{output:?}");
+    assert_eq!(String::from_utf8(output.stderr).unwrap().trim(), "");
 
     let output = run_repl(
         b"class Pair:\n    def init(a, b):\n        this.a = a\n        this.b = b\n\npair = Pair(b=2, a=1)\nassert(pair.a, 1)\nassert(pair.b, 2)\n.json on\npair.a + pair.b\n.exit\n",

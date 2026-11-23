@@ -1189,8 +1189,11 @@ class Shape:
 - The values remain constructor snapshots, not new reactive relationships.
   Binding validation precedes all RHS evaluation, including `.value` reads.
 - `class Point` can adopt an ordinary `def init(x, y):` body and parameter
-  list. Named binding adds no automatic fields or defaults; scalar defaults
-  have their own [bounded contract](#literal-parameter-defaults).
+  list. Binding a declared parameter by name adds no automatic fields or
+  defaults; a label that names no parameter becomes a property, as
+  [Unknown constructor arguments as properties](#unknown-constructor-arguments-as-properties)
+  describes, and scalar defaults have their own
+  [bounded contract](#literal-parameter-defaults).
 - Named shared class-rule construction also sees the declaration caller's
   parameters; legacy positional shared construction keeps its existing scope.
 - Inheritance uses the nearest nonempty constructor body's signature; a child
@@ -1201,9 +1204,9 @@ class Shape:
   Compound and member assignments remain positional. Functions, methods,
   built-ins and direct `init` calls keep assignment-expression behavior.
   Class aliases gain no construction route.
-- Duplicate bindings (including positional plus named), unknown labels, and
-  positional arguments after labels raise explicit `TypeError`s before
-  value effects or instance creation. Star headers raise the ordinary
+- Duplicate bindings (including positional plus named) and positional
+  arguments after labels raise explicit `TypeError`s before value effects or
+  instance creation. Star headers raise the ordinary
   parameter `SyntaxError`; existing transactions still restore partial
   construction and graph/class state on failure.
 - This is the exact paired `Nucleoid constructs an object with named parameters`
@@ -1220,6 +1223,47 @@ assert(point, {"id": "point", "x": 3, "y": 4})
 - Exact binding/error rules are in the authoritative
   [default named constructors](../nucleoid.spec.md#default-named-constructors)
   section; [NUC 47](nuc-0047.md) records this isolated candidate revision.
+
+### Unknown constructor arguments as properties
+
+```
+class Shape(type):
+    this.type = type
+shape1 = Shape(type="SQUARE", color="RED")
+assert(shape1, {"id": "shape1", "type": "SQUARE", "color": "RED"})
+shape1.color
+```
+
+- A constructor label that names no parameter of the effective constructor
+  becomes a property ([NUC 136](nuc-0136.md)). The call acts as if that
+  constructor declared the name as one more parameter and its statements
+  were followed by `this.<name> = <name>`, so `shape1` is the instance that
+  `class Shape(type, color):` with `this.type = type` and
+  `this.color = color` would build.
+- Every constructor takes such labels: bodyless and parameterless headers,
+  inherited constructors, `super(...)`, adopted `def init` and
+  `def __init__(self, ...)`, initializing parameters, defaults, rest
+  parameters, `new`, nested and collection instances, shared class rules
+  and `is` assignments.
+- The assignments run after the constructor's own statements, so the
+  statements can read the name and a label replaces a property they set.
+  They run however the statements end, after an early `return` too, so an
+  expression-bodied `def init(...) => value` keeps its labels; that is the
+  one deliberate difference from the written-out spelling. A failing
+  statement still rolls back the whole instance.
+- Values are snapshots evaluated once in source order, labels never assign
+  caller variables, and class-level rules still apply after construction.
+- Positional values never fill these labels. A repeated label, a positional
+  argument after a label and a label naming a rest parameter still raise
+  their `TypeError`s before any value runs. A misspelled label is no longer
+  an error: it becomes a property of its own.
+- Functions, methods, built-ins and direct `init` calls keep their
+  assignment-expression arguments, and no syntax is added.
+- This is the exact
+  `Nucleoid builds an instance from unknown constructor arguments` example
+  in `tests/reference.md`. The authoritative
+  [root section](../nucleoid.spec.md#unknown-constructor-arguments-as-properties)
+  and its eight appended entries define the behavior.
 
 ### Initializing constructor parameters
 
@@ -2111,7 +2155,7 @@ Normative detail: [exit-controlled repeat-until loops](../nucleoid.spec.md#exit-
 - The effective literal initializes the fresh Scope slot at version zero.
   Functions, aliases, callbacks, methods and function Values share binding;
   positional/named/mixed/inherited constructors and `super` use the selected
-  signature without changing strict labels, evaluation order, single
+  signature without changing label validation, evaluation order, single
   evaluation, receiver capture or parent/class-resolution timing.
 - Live redefinition and rollback retain their existing State/graph boundary.
   Frozen/historical function Values retain their own definition/defaults.
@@ -5561,7 +5605,6 @@ Messages are exact and are part of the observable behaviour of the language.
 | A `while` loop whose condition still holds after 100,000 iterations of one run | `Loop did not terminate` |
 | A repeat-until loop whose condition is still falsy after 100,000 iterations of one run | `Loop did not terminate` |
 | A `repeat` loop whose count converts to more than 100,000, `Infinity` included, raised before the first iteration | `Repeat count is too large` |
-| An undeclared constructor label | `Unknown constructor argument '<name>' for <class>` |
 | A repeated constructor binding, including positional plus named | `Duplicate constructor argument '<name>' for <class>` |
 | A positional constructor argument following a label | `Positional constructor argument after named arguments for <class>` |
 | A label targeting a rest formal | `Rest parameter '<name>' cannot be a named constructor argument for <class>` |
@@ -5669,6 +5712,7 @@ class Name(this.w, this.h):
 instance = Name(param=expression)      label binding without caller assignment
 instance = Name((param=expression))    explicit positional assignment argument
 instance = Name(first, second=value)   positional arguments followed by labels
+instance = Name(param=a, extra=b)      a label naming no parameter becomes the property extra (NUC 136)
 
 class Name:                            type with a typed attribute
     attribute: type
