@@ -161,8 +161,19 @@ impl Parser {
         match (self.peek(), self.peek_at(1)) {
             (Token::Keyword(Keyword::In), _) => Some(BinaryOp::In),
             (Token::Keyword(Keyword::Not), Token::Keyword(Keyword::In)) => Some(BinaryOp::NotIn),
+            (Token::Bang, Token::Keyword(Keyword::In)) if self.touches_next() => {
+                Some(BinaryOp::NotIn)
+            }
             _ => None,
         }
+    }
+
+    fn touches_next(&self) -> bool {
+        let Some([current, next]) = self.tokens.get(self.position..self.position + 2) else {
+            return false;
+        };
+        next.position.line == current.position.line
+            && next.position.column == current.position.column + 1
     }
 
     fn leaves_quantifier_colon(&self, operator: BinaryOp) -> bool {

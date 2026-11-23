@@ -6183,7 +6183,9 @@ t.promote(bob)
   `(x in xs) == true`, `a < b in c` is `(a < b) in c`, `a is b in c` is
   `a is (b in c)`, `x in why c` tests the selection `why c`, and
   `not x in xs` is `(not x) in xs`, as `not x < y` is `(not x) < y`; write
-  `x not in xs` or `not (x in xs)` to negate the test.
+  `x not in xs`, its Kotlin spelling `x !in xs` of
+  [Negated membership with !in](#negated-membership-with-in), or
+  `not (x in xs)` to negate the test.
 - They apply wherever the accepted grammar reads a comparison, apart from
   the two places whose trailing tokens are ignored: the top level of a
   template interpolation and the top level of the public Rust
@@ -6234,6 +6236,62 @@ t.promote(bob)
   specify the executable behavior. `tests/membership_tests.rs`,
   `tests/membership_tests_cli.rs` and the REPL continuation unit suite
   execute the rest.
+
+## Negated membership with !in
+
+- [NUC 135](docs/nuc-0135.md) adds Kotlin's negated membership operator:
+  `ITEM !in COLLECTION` is exactly `ITEM not in COLLECTION` of
+  [Membership tests](#membership-tests). The parser reads `!` directly
+  followed by the keyword `in` as the operator `not in` and builds the same
+  syntax tree. No token, keyword, syntax tree node, error type or message is
+  added.
+- Directly means on one line, with the `in` in the column right after the
+  `!`, as Kotlin writes its single `!in` token. `x ! in xs`, a line break
+  between `!` and `in`, and a comment between them keep their accepted
+  syntax errors. `!` before anything but the keyword `in` keeps its prefix
+  reading, so `!inx` negates the name `inx`.
+- It applies wherever `not in` applies, apart from the same two places whose
+  trailing tokens are ignored: at the top level of a template interpolation
+  and of the public Rust `parse_expression` input, `!` stays the first
+  ignored token, as `not` does. So `` `a ${4 !in xs} b` `` still renders
+  `"a 4 b"`, while `` `${(4 !in xs)}` `` tests membership. Declarations,
+  conditions, class-level rules, functions, lambdas, call arguments,
+  `assert`, comprehension filters and quantifier conditions take it.
+- It stands where `not in` stands, on the left-associative level of `<`,
+  `<=`, `>` and `>=` with their chain limit of 128 operators:
+  `x + 1 !in xs` is `(x + 1) !in xs`, `x !in xs == true` is
+  `(x !in xs) == true`, `a !in b or c !in d` tests both, and
+  `not x !in xs` is `(not x) !in xs`. Outside a clause it does not end
+  directly before a `:`, as `not in` does not.
+- Results, reads, liveness, null and undefined collections, errors and
+  rollback are those of `not in`. After `xs = [1, 2, 3]`,
+  `[2 !in xs, 4 !in xs]` is `[false, true]`; `"z" !in "hello"` is `true`;
+  `missing = 4 !in xs` follows `xs`; and
+  `$Order.pending = $Order.status !in approved` holds for each instance.
+  `"a" !in {a: 1}` raises `TypeError("{\"a\":1} is not a collection")`, and
+  a failed standing re-evaluation rolls back the change that triggered it.
+- The tree is that of `not in`, so the test renders as `not in` in graph
+  keys, in the `rule` that `why` and `affects` report, in `--graph` and in
+  the errors that quote an expression: after `xs = [1, 2, 3]` and
+  `r = 4 !in xs`, `(why r)[0].rule` is `"r = (4 not in xs)"`. A program
+  written with `!in` shows `not in` in its rules, as one written with `and`,
+  `or`, `not` and the Python-style conditional shows `&&`, `||`, `!` and
+  `?:`.
+- `!=`, `!==`, the prefix `!` and `not`, `!(x in xs)` and every other
+  reading of `in` keep their meaning.
+- Only programs that were syntax errors at the accepted revision change: a
+  `!` directly followed by `in` where a membership operator can stand.
+  Malformed forms raise the existing diagnostics where the parser stops,
+  such as `SyntaxError("Unexpected end of input")` for `ok = x !in`. The
+  REPL keeps buffering a colon-free `if x !in xs` header for its indented
+  body, which now parses. `parse_expression` returns a new result only
+  where its leading expression now continues through such a test: a
+  Python-style conditional whose condition holds one, as for `not in`.
+- The three entries beginning
+  `Nucleoid tests negated membership with Kotlin's !in` through
+  `Nucleoid rolls back failed updates through !in`, which stand at the end
+  of the document, specify the executable behavior.
+  `tests/negated_membership.rs` executes the rest.
 
 ## Exponentiation
 
@@ -29113,6 +29171,73 @@ catch error:
     assert(error, ReferenceError("missing is not defined"))
 assert(events.count, 0)
 assert(Shape.length, 0)
+---
+# Nucleoid tests negated membership with Kotlin's !in
+
+xs = [1, 2, 3]
+assert([2 !in xs, 4 !in xs], [false, true])
+assert([2 !in xs, 4 !in xs], [2 not in xs, 4 not in xs])
+word = "hello"
+assert(["z" !in word, "ell" !in word], [true, false])
+class Seat
+front = Seat()
+assert([front !in Seat, 3 !in Seat], [false, true])
+assert([1 + 3 !in xs, 4 !in xs == true, 2 !in xs or 4 !in xs], [true, true, true])
+assert([!(4 in xs), 4 not in xs, 4 !in xs], [true, true, true])
+missing = 4 !in xs
+xs.push(4)
+assert(missing, false)
+missing
+# return: false
+---
+# Nucleoid keeps !in rules live over class populations
+
+class Order(status):
+    this.status = status
+approved = ["paid", "shipped"]
+$Order.pending = $Order.status !in approved
+first = Order("new")
+second = Order("paid")
+assert([first.pending, second.pending], [true, false])
+approved.push("new")
+assert([first.pending, second.pending], [false, false])
+first.status = "lost"
+assert(first.pending, true)
+open = Order.filter(order -> order.pending).map(order -> order.status)
+assert(open, ["lost"])
+second.status = "held"
+assert(open, ["lost", "held"])
+failure = ""
+try:
+    approved = 5
+catch error:
+    failure = error
+assert(failure, TypeError("approved is not a collection"))
+assert([approved, open], [["paid", "shipped", "new"], ["lost", "held"]])
+open
+# return: ["lost","held"]
+---
+# Nucleoid rolls back failed updates through !in
+
+items = ["a"]
+absent = "b" !in items
+assert(absent, true)
+failure = ""
+try:
+    items = {a: 1}
+catch error:
+    failure = error
+assert(failure, TypeError("items is not a collection"))
+assert([items, absent], [["a"], true])
+items.push("b")
+assert(absent, false)
+tags = null
+untagged = "red" !in tags
+assert(untagged, null)
+tags = ["blue"]
+assert(untagged, true)
+absent
+# return: false
 ```
 
 ## Floating-point absolute value alias

@@ -22889,6 +22889,90 @@ assert(events.count, 0)
 assert(Shape.length, 0)"#);
 }
 
+/// Nucleoid tests negated membership with Kotlin's !in
+#[rustfmt::skip]
+#[test]
+fn tests_negated_membership_with_kotlin_s_in() {
+    let mut run = runner();
+    run("xs = [1, 2, 3]");
+    assert_eq!(run("[2 !in xs, 4 !in xs]"), serde_json::json!([false, true]));
+    {
+        let actual = run("[2 !in xs, 4 !in xs]");
+        let expected = run("([2 not in xs, 4 not in xs])");
+        assert_eq!(actual, expected);
+    }
+    run(r#"word = "hello""#);
+    assert_eq!(run(r#"["z" !in word, "ell" !in word]"#), serde_json::json!([true, false]));
+    run("class Seat");
+    run("front = Seat()");
+    assert_eq!(run("[front !in Seat, 3 !in Seat]"), serde_json::json!([false, true]));
+    assert_eq!(run("[1 + 3 !in xs, 4 !in xs == true, 2 !in xs or 4 !in xs]"), serde_json::json!([true, true, true]));
+    assert_eq!(run("[!(4 in xs), 4 not in xs, 4 !in xs]"), serde_json::json!([true, true, true]));
+    run("missing = 4 !in xs");
+    run("xs.push(4)");
+    assert_eq!(run("missing"), false);
+    run(r#"missing
+
+# return: false"#);
+}
+
+/// Nucleoid keeps !in rules live over class populations
+#[rustfmt::skip]
+#[test]
+fn keeps_in_rules_live_over_class_populations() {
+    let mut run = runner();
+    run(r#"class Order(status):
+    this.status = status
+approved = ["paid", "shipped"]
+$Order.pending = $Order.status !in approved
+first = Order("new")
+second = Order("paid")
+assert([first.pending, second.pending], [true, false])
+approved.push("new")
+assert([first.pending, second.pending], [false, false])
+first.status = "lost"
+assert(first.pending, true)
+open = Order.filter(order -> order.pending).map(order -> order.status)
+assert(open, ["lost"])
+second.status = "held"
+assert(open, ["lost", "held"])
+failure = ""
+try:
+    approved = 5
+catch error:
+    failure = error
+assert(failure, TypeError("approved is not a collection"))
+assert([approved, open], [["paid", "shipped", "new"], ["lost", "held"]])
+open
+# return: ["lost","held"]"#);
+}
+
+/// Nucleoid rolls back failed updates through !in
+#[rustfmt::skip]
+#[test]
+fn rolls_back_failed_updates_through_in() {
+    let mut run = runner();
+    run(r#"items = ["a"]
+absent = "b" !in items
+assert(absent, true)
+failure = ""
+try:
+    items = {a: 1}
+catch error:
+    failure = error
+assert(failure, TypeError("items is not a collection"))
+assert([items, absent], [["a"], true])
+items.push("b")
+assert(absent, false)
+tags = null
+untagged = "red" !in tags
+assert(untagged, null)
+tags = ["blue"]
+assert(untagged, true)
+absent
+# return: false"#);
+}
+
 /// The committed tests must not drift from their generated JSONL export.
 #[rustfmt::skip]
 #[test]

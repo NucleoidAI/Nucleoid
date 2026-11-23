@@ -3049,6 +3049,31 @@ item.total
   labels are unchanged. See the
   [root contract](nucleoid.spec.md#unknown-constructor-arguments-as-properties).
 
+## Negated membership with !in
+
+**Kotlin's !in keeps an access rule live**
+
+```nuc
+blocked = ["mallory"]
+class User(name):
+    this.name = name
+$User.allowed = $User.name !in blocked
+alice = User("alice")
+mallory = User("mallory")
+assert([alice.allowed, mallory.allowed], [true, false])
+blocked.push("alice")
+assert(alice.allowed, false)
+alice.allowed
+# return: false
+```
+
+- [NUC 135](docs/nuc-0135.md) adds Kotlin's `item !in collection`, the same
+  test as `item not in collection`: each user's `allowed` follows the
+  `blocked` list, as it does with `not in`.
+- `!` and `in` are written together, as Kotlin writes them; `! in` keeps its
+  syntax error. Rules render the test as `not in`. See the
+  [root contract](nucleoid.spec.md#negated-membership-with-in).
+
 ## Benchmark
 
 This is the comparation our sample order app in Nucleoid IDE against MySQL and Postgres with using Express.js and Sequelize libraries.

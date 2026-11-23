@@ -4577,6 +4577,34 @@ heavy
   [root contract](../nucleoid.spec.md#unknown-constructor-arguments-as-properties)
   define. A vehicle built without a `color` label has none.
 
+## Negated membership with !in
+
+**Negated membership keeps a support queue's open tickets live**
+
+```nuc
+class Ticket(status):
+    this.status = status
+closed = ["done", "spam"]
+$Ticket.open = $Ticket.status !in closed
+first = Ticket("new")
+second = Ticket("done")
+queue = Ticket.filter(ticket -> ticket.open).map(ticket -> ticket.status)
+assert(queue, ["new"])
+second.status = "reopened"
+assert(queue, ["new", "reopened"])
+closed.push("new")
+assert(queue, ["reopened"])
+queue
+# return: ["reopened"]
+```
+
+- `$Ticket.status !in closed` is Kotlin's spelling of
+  `$Ticket.status not in closed`. Each ticket's `open` follows its status and
+  the `closed` list, and the queue follows every ticket, so reopening a ticket
+  and closing a status both reach it without an imperative walk.
+- See [NUC 135](nuc-0135.md) and the
+  [root contract](../nucleoid.spec.md#negated-membership-with-in).
+
 ## Copyright
 
 Copyright 2020 Nucleoid

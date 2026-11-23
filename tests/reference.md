@@ -3076,4 +3076,20 @@ shape1 = Shape(type="SQUARE", color="RED")
 assert(shape1, {"id": "shape1", "type": "SQUARE", "color": "RED"})
 shape1.color
 # return: "RED"
+---
+# Nucleoid negates membership tests with !in
+
+palette = ["red", "green"]
+color = "blue"
+unlisted = color !in palette
+assert(unlisted, true)
+palette.push("blue")
+assert(unlisted, false)
+assert(["z" !in "green", "ee" !in "green"], [true, false])
+class Tag
+urgent = Tag()
+assert([urgent !in Tag, "late" !in Tag], [false, true])
+assert(color !in palette, color not in palette)
+unlisted
+# return: false
 ```

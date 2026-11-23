@@ -594,19 +594,28 @@ equalityOperator
       | IS NOT?
 
 /*
- * Membership contract (NUC 97):
+ * Membership contract (NUC 97, NUC 135):
  * - IN, and NOT directly followed by IN, after an additive operand build
  *   BinaryOp::In and BinaryOp::NotIn on the left-associative level of
  *   LESS, LESS_EQUAL, GREATER and GREATER_EQUAL, sharing its MAX_CHAIN
  *   operand limit. NOT before an operand stays a prefix, so
  *   'NOT a IN b' is '(NOT a) IN b'.
+ * - BANG directly followed by IN builds BinaryOp::NotIn in the same place
+ *   (NUC 135), with the tree of NOT IN, only when the IN token starts on
+ *   the line of the BANG, in the column right after it: no whitespace,
+ *   comment or line break lies between them. Otherwise BANG stays a prefix
+ *   and IN keeps its accepted reading and error, so 'a ! in b' fails as
+ *   before. BANG before an operand stays a prefix, so 'BANG a IN b' is
+ *   '(BANG a) IN b'.
  * - Not at the top level of an interpolation or of an expressionInput,
- *   whose trailing tokens are ignored: IN stays their first ignored token.
+ *   whose trailing tokens are ignored: IN, NOT or BANG stays their first
+ *   ignored token.
  * - Not when COLON directly follows the right operand outside a clause:
- *   such a colon can only close a malformed quantifier, so IN keeps its
- *   accepted reading and error, "Unexpected keyword 'in'" where it would
- *   begin a statement and the enclosing construct's error elsewhere, such
- *   as "Expected '}' but found keyword 'in'" in an object value.
+ *   such a colon can only close a malformed quantifier, so IN, NOT and BANG
+ *   keep their accepted readings and errors, "Unexpected keyword 'in'"
+ *   where IN would begin a statement and the enclosing construct's error
+ *   elsewhere, such as "Expected '}' but found keyword 'in'", or "Expected
+ *   '}' but found '!'" for BANG IN, in an object value.
  */
 relational
     ::= additive (relationalOperator additive)*              /* Expr::Binary, left */
@@ -618,6 +627,7 @@ relationalOperator
       | GREATER_EQUAL
       | IN                                                  /* BinaryOp::In */
       | NOT IN                                              /* BinaryOp::NotIn */
+      | BANG IN                                             /* BinaryOp::NotIn */
 
 additive
     ::= term ((PLUS | MINUS) term)*                          /* Expr::Binary, left */

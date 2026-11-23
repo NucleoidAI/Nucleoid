@@ -854,9 +854,10 @@ settings.size
 - Comparison: `==`, `!=`, `<`, `>`, `<=`, `>=`.
 - Comparison words: `is` and `is not`, spellings of `==` and `!=` with a bare
   word rule; see [is and is not comparisons](#is-and-is-not-comparisons).
-- Membership: `item in collection` and `item not in collection` for lists,
-  classes and strings, at the level of `<`; see
-  [membership tests](#membership-tests).
+- Membership: `item in collection` and `item not in collection`, also
+  written `item !in collection` as in Kotlin, for lists, classes and
+  strings, at the level of `<`; see [membership tests](#membership-tests)
+  and [negated membership with `!in`](#negated-membership-with-in).
 - Logical: `and` / `&&`, `or` / `||`, `not` / `!`.
 - Conditional: `condition ? consequent : alternate` or
   `consequent if condition else alternate`; see below.
@@ -1088,7 +1089,8 @@ Full detail: [NUC 64](nuc-0064.md).
   quantifier does, so `"a" in {a: 1}` is an error rather than `undefined`.
 - They stand at the level of `<` and `>`: `x + 1 in xs` adds first,
   `x in xs and y in ys` tests both, and `not x in xs` is `(not x) in xs`, as
-  `not x < y` is; write `x not in xs` to negate the test.
+  `not x < y` is; write `x not in xs`, or `x !in xs` as Kotlin does, to
+  negate the test.
 - A declaration that uses one stays live: it follows the list, the string
   or the class's population, and whatever `item` reads.
 
@@ -1119,6 +1121,44 @@ listed
   section.
 
 Full detail: [NUC 97](nuc-0097.md).
+
+### Negated membership with !in
+
+```
+palette = ["red", "green"]
+color = "blue"
+unlisted = color !in palette
+assert(unlisted, true)
+palette.push("blue")
+assert(unlisted, false)
+assert(["z" !in "green", "ee" !in "green"], [true, false])
+class Tag
+urgent = Tag()
+assert([urgent !in Tag, "late" !in Tag], [false, true])
+assert(color !in palette, color not in palette)
+unlisted
+```
+
+- This is the complete `Nucleoid negates membership tests with !in` program
+  in `tests/reference.md`, without its title and expected-return metadata;
+  it returns `false`.
+- `item !in collection` is Kotlin's spelling of `item not in collection`:
+  the same test, at the same level of `<`, over the same lists, classes and
+  strings, with the same `null` waiting and `TypeError`. A declaration that
+  uses it stays live, as `unlisted` follows `palette`.
+- `!` and `in` are written together, on one line, as Kotlin writes them.
+  `x ! in xs` and a `!` at the end of a line keep their syntax errors, and
+  `!` before anything else keeps its prefix reading, so `!inx` negates
+  `inx`.
+- The test renders as `(item not in collection)` in rules, `why`, `affects`
+  and `--graph`. At the top level of a template interpolation `!` stays an
+  ignored token, as `not` does: `` `${x !in xs}` `` renders `x`, while
+  `` `${(x !in xs)}` `` tests membership. Grammar, errors and edge cases are
+  in the authoritative
+  [negated membership with !in](../nucleoid.spec.md#negated-membership-with-in)
+  section.
+
+Full detail: [NUC 135](nuc-0135.md).
 
 ### Indexing, slicing, and length
 
@@ -5590,7 +5630,7 @@ Messages are exact and are part of the observable behaviour of the language.
 | Missing or non-function `sortBy` selector, including `null`, even on an empty receiver | `sortBy expects a function` |
 | Missing or non-function `partition` predicate, including `null`, even on an empty receiver | `partition expects a function` |
 | An `all` or `any` quantifier over a value that is neither null nor a list or a declared class's instances | `<collection> is not a collection` |
-| An `in` or `not in` membership test over a value that is neither null nor a list, a string or a declared class's instances | `<collection> is not a collection` |
+| An `in`, `not in` or `!in` membership test over a value that is neither null nor a list, a string or a declared class's instances | `<collection> is not a collection` |
 | A `depth` stage limit that is neither `null`, undefined nor a non-negative integer number | `<limit> is not a non-negative integer` |
 | A two-name `for key, value of source` loop over a value that is not an object | `<source> is not an object` |
 | A spread entry `...source` whose source is neither an object nor `null` or undefined | `<source> is not an object` |
@@ -5767,6 +5807,7 @@ base ** exponent                       exactly Math.pow(base, exponent), right-a
 name **= exponent                      name = name ** (exponent) (NUC 64)
 item in collection                     list, class or string membership at the level of < (NUC 97)
 item not in collection                 its negation; not item in xs is (not item) in xs (NUC 97)
+item !in collection                    Kotlin spelling: exactly item not in collection, ! and in adjacent (NUC 135)
 
 for name of source:                    class/object-list/scalar-string iteration
 for name in source:                    equivalent explicit iteration
