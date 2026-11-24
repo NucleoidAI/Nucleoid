@@ -1,5 +1,5 @@
 {
-  "class_declaration": "class Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, tag: str = 'l9100'):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.tag is tag",
+  "class_declaration": "class Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, kind: str = 'l9100'):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.kind is kind",
   "declarations": [
     "$Obj.orientation is ($Obj.orientation@first + 180) % 360",
     "$Obj.x is canvas_width - $Obj.x@first - $Obj.width",
@@ -32,8 +32,8 @@
             [8, 3, 3]
           ],
           "implementation": "obj0c2414cf33eb is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=6)",
-          "input_value": {"height":3,"id":"obj0c2414cf33eb","orientation":0,"tag":"l9100","volume":6,"width":3,"x":0,"y":0},
-          "output_value": {"height":3,"id":"obj0c2414cf33eb","orientation":180,"tag":"l9100","volume":6,"width":3,"x":0,"y":0}
+          "input_value": {"height":3,"id":"obj0c2414cf33eb","orientation":0,"kind":"l9100","volume":6,"width":3,"x":0,"y":0},
+          "output_value": {"height":3,"id":"obj0c2414cf33eb","orientation":180,"kind":"l9100","volume":6,"width":3,"x":0,"y":0}
         }
       ]
     },
@@ -62,8 +62,8 @@
             [2, 5, 5]
           ],
           "implementation": "obj19002ca3b8ed is Obj(x=0, y=0, width=3, height=2, orientation=315, volume=4)",
-          "input_value": {"height":2,"id":"obj19002ca3b8ed","orientation":315,"tag":"l9100","volume":4,"width":3,"x":0,"y":0},
-          "output_value": {"height":2,"id":"obj19002ca3b8ed","orientation":135,"tag":"l9100","volume":4,"width":3,"x":0,"y":1}
+          "input_value": {"height":2,"id":"obj19002ca3b8ed","orientation":315,"kind":"l9100","volume":4,"width":3,"x":0,"y":0},
+          "output_value": {"height":2,"id":"obj19002ca3b8ed","orientation":135,"kind":"l9100","volume":4,"width":3,"x":0,"y":1}
         }
       ]
     },
@@ -92,8 +92,8 @@
             [5, 3, 6]
           ],
           "implementation": "obj18d0a3065349 is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=6)",
-          "input_value": {"height":3,"id":"obj18d0a3065349","orientation":0,"tag":"l9100","volume":6,"width":3,"x":0,"y":0},
-          "output_value": {"height":3,"id":"obj18d0a3065349","orientation":180,"tag":"l9100","volume":6,"width":3,"x":0,"y":0}
+          "input_value": {"height":3,"id":"obj18d0a3065349","orientation":0,"kind":"l9100","volume":6,"width":3,"x":0,"y":0},
+          "output_value": {"height":3,"id":"obj18d0a3065349","orientation":180,"kind":"l9100","volume":6,"width":3,"x":0,"y":0}
         }
       ]
     }

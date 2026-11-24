@@ -1,5 +1,5 @@
 {
-  "class_declaration": "class Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, tag: str = 'l9100'):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.tag is tag",
+  "class_declaration": "class Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, kind: str = 'l9100'):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.kind is kind",
   "declarations": [
     "$Obj.mirror_axis is {start: {x: $Obj.x@first, y: $Obj.y@first}, end: {x: $Obj.x@first + $Obj.width@first - 1, y: $Obj.y@first + $Obj.height@first - 1}}"
   ],
@@ -30,8 +30,8 @@
             [1, 1, 2]
           ],
           "implementation": "obj98ecd3af71f1 is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=9)",
-          "input_value": {"height":3,"id":"obj98ecd3af71f1","orientation":0,"tag":"l9100","volume":9,"width":3,"x":0,"y":0},
-          "output_value": {"height":3,"id":"obj98ecd3af71f1","mirror_axis":{"end":{"x":2,"y":2},"start":{"x":0,"y":0}},"orientation":0,"tag":"l9100","volume":9,"width":3,"x":0,"y":0}
+          "input_value": {"height":3,"id":"obj98ecd3af71f1","orientation":0,"kind":"l9100","volume":9,"width":3,"x":0,"y":0},
+          "output_value": {"height":3,"id":"obj98ecd3af71f1","mirror_axis":{"end":{"x":2,"y":2},"start":{"x":0,"y":0}},"orientation":0,"kind":"l9100","volume":9,"width":3,"x":0,"y":0}
         }
       ]
     },
@@ -60,8 +60,8 @@
             [5, 2, 5]
           ],
           "implementation": "objffef4308101e is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=9)",
-          "input_value": {"height":3,"id":"objffef4308101e","orientation":0,"tag":"l9100","volume":9,"width":3,"x":0,"y":0},
-          "output_value": {"height":3,"id":"objffef4308101e","mirror_axis":{"end":{"x":2,"y":2},"start":{"x":0,"y":0}},"orientation":0,"tag":"l9100","volume":9,"width":3,"x":0,"y":0}
+          "input_value": {"height":3,"id":"objffef4308101e","orientation":0,"kind":"l9100","volume":9,"width":3,"x":0,"y":0},
+          "output_value": {"height":3,"id":"objffef4308101e","mirror_axis":{"end":{"x":2,"y":2},"start":{"x":0,"y":0}},"orientation":0,"kind":"l9100","volume":9,"width":3,"x":0,"y":0}
         }
       ]
     },
@@ -90,8 +90,8 @@
             [5, 8, 9]
           ],
           "implementation": "objb5bc2fe94345 is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=9)",
-          "input_value": {"height":3,"id":"objb5bc2fe94345","orientation":0,"tag":"l9100","volume":9,"width":3,"x":0,"y":0},
-          "output_value": {"height":3,"id":"objb5bc2fe94345","mirror_axis":{"end":{"x":2,"y":2},"start":{"x":0,"y":0}},"orientation":0,"tag":"l9100","volume":9,"width":3,"x":0,"y":0}
+          "input_value": {"height":3,"id":"objb5bc2fe94345","orientation":0,"kind":"l9100","volume":9,"width":3,"x":0,"y":0},
+          "output_value": {"height":3,"id":"objb5bc2fe94345","mirror_axis":{"end":{"x":2,"y":2},"start":{"x":0,"y":0}},"orientation":0,"kind":"l9100","volume":9,"width":3,"x":0,"y":0}
         }
       ]
     },
@@ -120,8 +120,8 @@
             [6, 1, 2]
           ],
           "implementation": "objf024b87c2f1b is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=9)",
-          "input_value": {"height":3,"id":"objf024b87c2f1b","orientation":0,"tag":"l9100","volume":9,"width":3,"x":0,"y":0},
-          "output_value": {"height":3,"id":"objf024b87c2f1b","mirror_axis":{"end":{"x":2,"y":2},"start":{"x":0,"y":0}},"orientation":0,"tag":"l9100","volume":9,"width":3,"x":0,"y":0}
+          "input_value": {"height":3,"id":"objf024b87c2f1b","orientation":0,"kind":"l9100","volume":9,"width":3,"x":0,"y":0},
+          "output_value": {"height":3,"id":"objf024b87c2f1b","mirror_axis":{"end":{"x":2,"y":2},"start":{"x":0,"y":0}},"orientation":0,"kind":"l9100","volume":9,"width":3,"x":0,"y":0}
         }
       ]
     },
@@ -150,8 +150,8 @@
             [4, 4, 4]
           ],
           "implementation": "obj661249916bd0 is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=9)",
-          "input_value": {"height":3,"id":"obj661249916bd0","orientation":0,"tag":"l9100","volume":9,"width":3,"x":0,"y":0},
-          "output_value": {"height":3,"id":"obj661249916bd0","mirror_axis":{"end":{"x":2,"y":2},"start":{"x":0,"y":0}},"orientation":0,"tag":"l9100","volume":9,"width":3,"x":0,"y":0}
+          "input_value": {"height":3,"id":"obj661249916bd0","orientation":0,"kind":"l9100","volume":9,"width":3,"x":0,"y":0},
+          "output_value": {"height":3,"id":"obj661249916bd0","mirror_axis":{"end":{"x":2,"y":2},"start":{"x":0,"y":0}},"orientation":0,"kind":"l9100","volume":9,"width":3,"x":0,"y":0}
         }
       ]
     }

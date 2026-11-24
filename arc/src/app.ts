@@ -9,7 +9,7 @@ import synthesizer from "./synthesizer.ts";
 import object from "./object.ts";
 
 // Genesis puzzle_id: 3aa6fb7a
-export async function start(puzzle_id: string = "3aa6fb7a") {
+export async function start(puzzle_id: string = "6150a2bd") {
   const { arc_train, test_input_matrix, test_output_matrix } =
     await arc_dataset.load(puzzle_id);
 
@@ -83,7 +83,7 @@ export async function start(puzzle_id: string = "3aa6fb7a") {
     Array(test_input_matrix[0].length).fill(0)
   );
 
-  const input_instances = [];
+  const test_input_instances = [];
 
   for (const { input_instance_matrix } of instances) {
     const instance_name: string = next_instance_name();
@@ -95,7 +95,7 @@ export async function start(puzzle_id: string = "3aa6fb7a") {
       input_instance_matrix,
     });
 
-    input_instances.push({
+    test_input_instances.push({
       instance_name,
       implementation,
       input_value,
@@ -107,10 +107,10 @@ export async function start(puzzle_id: string = "3aa6fb7a") {
     class_declaration,
     declarations,
     input_matrix: test_input_matrix,
-    input_instances,
+    input_instances: test_input_instances,
   });
 
-  for (const input_instance of input_instances) {
+  for (const input_instance of test_input_instances) {
     const { output_instance_matrix } = await visualizer.output_instance_matrix({
       phase: "visualization",
       test_input_matrix,
@@ -123,7 +123,7 @@ export async function start(puzzle_id: string = "3aa6fb7a") {
     result_matrix = Matrix.merge(result_matrix, output_instance_matrix);
   }
 
-  milestone.test_output_composed({ instances: input_instances });
+  milestone.test_output_composed({ instances: test_input_instances });
 
   result_matrix = Matrix.canvas(result_matrix, output_canvas);
 
@@ -139,7 +139,7 @@ export async function start(puzzle_id: string = "3aa6fb7a") {
   const debug = {
     puzzle_id,
     train,
-    test_input_instances: input_instances,
+    test_input_instances,
     test_input_matrix,
     test_output_matrix,
     result_matrix,

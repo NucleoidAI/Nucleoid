@@ -1,7 +1,7 @@
 {
-  "class_declaration": "class Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, tag: str = 'l9100', parts: list):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.tag is tag\n    this.parts is parts",
+  "class_declaration": "class Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, kind: str = 'l9100', parts: list):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.kind is kind\n    this.parts is parts",
   "declarations": [
-    "$Obj.tag is l5236",
+    "$Obj.kind is l5236",
     "$Obj.fill_color is mode of $Obj.parts",
     "$Obj.volume is $Obj.width * $Obj.height"
   ],
@@ -32,8 +32,8 @@
             [4, 4, 4]
           ],
           "implementation": "obja1b60a6c90dc is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=8, parts=[4, 4, 8, 6, 4, 3, 6, 3])",
-          "input_value": {"height":3,"id":"obja1b60a6c90dc","orientation":0,"parts":[4,4,8,6,4,3,6,3],"tag":"l9100","volume":8,"width":3,"x":0,"y":0},
-          "output_value": {"fill_color":4,"height":3,"id":"obja1b60a6c90dc","orientation":0,"parts":[4,4,8,6,4,3,6,3],"tag":"l5236","volume":9,"width":3,"x":0,"y":0}
+          "input_value": {"height":3,"id":"obja1b60a6c90dc","orientation":0,"parts":[4,4,8,6,4,3,6,3],"kind":"l9100","volume":8,"width":3,"x":0,"y":0},
+          "output_value": {"fill_color":4,"height":3,"id":"obja1b60a6c90dc","orientation":0,"parts":[4,4,8,6,4,3,6,3],"kind":"l5236","volume":9,"width":3,"x":0,"y":0}
         }
       ]
     },
@@ -62,8 +62,8 @@
             [9, 9, 9]
           ],
           "implementation": "obj2f95578125dc is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=9, parts=[6, 8, 9, 1, 8, 1, 9, 4, 9])",
-          "input_value": {"height":3,"id":"obj2f95578125dc","orientation":0,"parts":[6,8,9,1,8,1,9,4,9],"tag":"l9100","volume":9,"width":3,"x":0,"y":0},
-          "output_value": {"fill_color":9,"height":3,"id":"obj2f95578125dc","orientation":0,"parts":[6,8,9,1,8,1,9,4,9],"tag":"l5236","volume":9,"width":3,"x":0,"y":0}
+          "input_value": {"height":3,"id":"obj2f95578125dc","orientation":0,"parts":[6,8,9,1,8,1,9,4,9],"kind":"l9100","volume":9,"width":3,"x":0,"y":0},
+          "output_value": {"fill_color":9,"height":3,"id":"obj2f95578125dc","orientation":0,"parts":[6,8,9,1,8,1,9,4,9],"kind":"l5236","volume":9,"width":3,"x":0,"y":0}
         }
       ]
     },
@@ -92,8 +92,8 @@
             [6, 6, 6]
           ],
           "implementation": "obj0a1a67aea6eb is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=9, parts=[4, 6, 9, 6, 4, 1, 8, 8, 6])",
-          "input_value": {"height":3,"id":"obj0a1a67aea6eb","orientation":0,"parts":[4,6,9,6,4,1,8,8,6],"tag":"l9100","volume":9,"width":3,"x":0,"y":0},
-          "output_value": {"fill_color":6,"height":3,"id":"obj0a1a67aea6eb","orientation":0,"parts":[4,6,9,6,4,1,8,8,6],"tag":"l5236","volume":9,"width":3,"x":0,"y":0}
+          "input_value": {"height":3,"id":"obj0a1a67aea6eb","orientation":0,"parts":[4,6,9,6,4,1,8,8,6],"kind":"l9100","volume":9,"width":3,"x":0,"y":0},
+          "output_value": {"fill_color":6,"height":3,"id":"obj0a1a67aea6eb","orientation":0,"parts":[4,6,9,6,4,1,8,8,6],"kind":"l5236","volume":9,"width":3,"x":0,"y":0}
         }
       ]
     },
@@ -122,8 +122,8 @@
             [8, 8, 8]
           ],
           "implementation": "objea33ebd2f6a8 is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=8, parts=[8, 8, 6, 4, 6, 9, 8, 3])",
-          "input_value": {"height":3,"id":"objea33ebd2f6a8","orientation":0,"parts":[8,8,6,4,6,9,8,3],"tag":"l9100","volume":8,"width":3,"x":0,"y":0},
-          "output_value": {"fill_color":8,"height":3,"id":"objea33ebd2f6a8","orientation":0,"parts":[8,8,6,4,6,9,8,3],"tag":"l5236","volume":9,"width":3,"x":0,"y":0}
+          "input_value": {"height":3,"id":"objea33ebd2f6a8","orientation":0,"parts":[8,8,6,4,6,9,8,3],"kind":"l9100","volume":8,"width":3,"x":0,"y":0},
+          "output_value": {"fill_color":8,"height":3,"id":"objea33ebd2f6a8","orientation":0,"parts":[8,8,6,4,6,9,8,3],"kind":"l5236","volume":9,"width":3,"x":0,"y":0}
         }
       ]
     }

@@ -174,6 +174,26 @@ No NUC was requested, so no proposal strategy was selected and strategy
 learning did not apply. No solver run has measured this version, so its
 difference is unknown, not zero.
 
+### Kind instead of tag
+
+On 24-Nov-2026, at the user's request, the property that names the object's
+geometry is called `kind` instead of `tag`. It acts as a child class that the
+rules assign declaratively, since Nucleoid never converts an instance to
+another class. The class takes `kind: str = 'l9100'` and stores it with
+`this.kind is kind`, and no rule changes it, so every instance keeps the kind
+`l9100`. Every snapshot's `tag` key is now `kind`, and every value is
+unchanged.
+
+Offline, with the accepted runtime at `9dac162` (last runtime change
+`fda179e`), all 14 input and 14 output snapshots of the 7 pairs replay
+unchanged apart from that key, and the old and new datasets replay alike. The
+dataset differs from the old one only in its 31 uses of the name, byte for
+byte.
+
+No NUC was requested, so no proposal strategy was selected and strategy
+learning did not apply. No solver run has measured this version, so its
+difference is unknown, not zero.
+
 ## Runs
 
 ### 8-Nov-2026 -- Run not started

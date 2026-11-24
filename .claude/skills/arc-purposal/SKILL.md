@@ -86,7 +86,7 @@ solver run.
 ## References
 
 The workflow and its workers may use every dataset in `arc/src/dataset/` as a
-reference for structure, world-model idioms, properties, rules, and tags.
+reference for structure, world-model idioms, properties, rules, and kinds.
 The solver sends every JSON instruction dataset as shared few-shot context,
 including the running puzzle's own annotated test pairs. That is intended
 while the datasets are prepared as few-shot examples, under the
@@ -148,7 +148,7 @@ wherever the run's runtime, run as `arc/src/lib/nucleoid.ts` runs it, reads
 that word as the same value, as NUC 86, NUC 93 and NUC 94 read `right` in
 `if $Obj.repeat_direction is right:`, `$Obj.repeat_direction is right` and
 `$Obj.repeat_direction is right if $Obj.wide else down`. The arc-dataset
-profile's quoted default, `tag: str = 'lNNNN'`, is a quote that accepted
+profile's quoted default, `kind: str = 'lNNNN'`, is a quote that accepted
 Nucleoid cannot do without, because it rejects a bare parameter default
 with `SyntaxError`. Have the
 handoff list every quote it keeps, with the actual result of its bare

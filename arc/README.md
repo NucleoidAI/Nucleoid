@@ -400,12 +400,12 @@ color-9 point with its color-2 rim below and a color-4 point with its color-8
 rim above, and a vertical line that extends up from its bottom endpoint with
 a horizontal line that extends left from its right endpoint.
 Each genesis class takes the standard entries `x`, `y`, `width`, `height`,
-`orientation`, and `volume` first, then the optional `tag`, then its
+`orientation`, and `volume` first, then the optional `kind`, then its
 descriptive properties in their existing order, and every implementation
 passes the input shape's bounding-box `width` and `height` and its input
-mask's `volume`, its number of nonzero cells, and leaves out `tag`. A rule
+mask's `volume`, its number of nonzero cells, and leaves out `kind`. A rule
 that grows a shape computes its new size
-from its first values in the branch that sets its output tag: a core corner
+from its first values in the branch that sets its output kind: a core corner
 grows from 2 by 2 to 3 by 3 with its outside marker, and its origin moves one
 column left when it points west, at orientation 225 or 315, and one row up
 when it points north, at orientation 45 or 315; a curve point grows from
@@ -439,16 +439,19 @@ every program it runs, as
 rules read it from those variables. Native snapshots are captured the same
 way, with the pair's `input_matrix` size declared first.
 
-Every class takes `tag` right after `volume` as an optional parameter whose
-default is the dataset's initial tag, such as `tag: str = 'l9100'`, and its
-constructor stores it with `this.tag is tag`. An implementation passes `tag`
-only when its object needs a tag other than that default: every
-implementation of `dataset.27a28665.json` passes the tag of its block's
-shape, as in `tag='l4262'`, and every other implementation leaves it out, so
+Every class takes `kind` right after `volume` as an optional parameter whose
+default is the dataset's initial kind, such as `kind: str = 'l9100'`, and its
+constructor stores it with `this.kind is kind`. An implementation passes `kind`
+only when its object needs a kind other than that default: every
+implementation of `dataset.27a28665.json` passes the kind of its block's
+shape, as in `kind='l4262'`, and every other implementation leaves it out, so
 its input state carries the default. The parameter comes before the
 descriptive parameters, in the order of the constructor's assignments:
 Nucleoid lets a default occupy any parameter slot, and every implementation
-names its arguments.
+names its arguments. A kind acts as a child class that the rules assign
+declaratively: Nucleoid never converts an instance to another class, so a
+class-level rule such as `$Obj.kind is l1707` moves the instance to another
+kind instead. The property was called `tag` until 24-Nov-2026.
 
 Every dataset writes its assignments with `is`, the opt-in assignment of
 [NUC 93](../docs/nuc-0093.md), and its equality tests with `is` and `is not`,
@@ -459,15 +462,15 @@ and implementations construct
 each `target is value` builds exactly the syntax tree of `target = value`. When
 a whole value, or the whole right operand of an `is` comparison, is one bare
 word, it reads the name of that spelling if one exists and otherwise its own
-text, so tags and directions drop their quotes there, as in
-`$Obj.tag is l3337` and `$Obj.extension_direction is right`, while
-`this.tag is tag` reads the constructor's `tag` parameter. No dataset
+text, so kinds and directions drop their quotes there, as in
+`$Obj.kind is l3337` and `$Obj.extension_direction is right`, while
+`this.kind is kind` reads the constructor's `kind` parameter. No dataset
 program defines a name with those spellings, and the solver adds only
 `canvas_width` and `canvas_height`. Other strings keep their quotes, such as
 the object keys of the `fill_color` rule in `dataset.27a28665.json`, keyword
-arguments such as `tag='l1707'`, which are not assignments, and the default
-of the `tag` parameter, such as `tag: str = 'l9100'`: accepted Nucleoid takes
-only a literal as a parameter default and rejects the bare `tag: str = l9100`
+arguments such as `kind='l1707'`, which are not assignments, and the default
+of the `kind` parameter, such as `kind: str = 'l9100'`: accepted Nucleoid takes
+only a literal as a parameter default and rejects the bare `kind: str = l9100`
 with `SyntaxError: Expected a scalar literal parameter default`.
 `src\lib\nucleoid.ts` passes no syntax flag: the runtime reads `is`
 assignments without one since `d945213`, which removed the opt-in syntax
@@ -508,14 +511,14 @@ derives them as `COMMENT`:
 
 ```nuc
 # Each object is all the cells of one color, touching or not. Every color except the one with the most cells turns 5
-class Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, tag: str = 'l9100', color: int):
+class Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, kind: str = 'l9100', color: int):
     this.x is x
     this.y is y
     this.width is width
     this.height is height
     this.orientation is orientation
     this.volume is volume
-    this.tag is tag
+    this.kind is kind
     this.color is color
 
 # A color group that some other group outnumbers turns color 5; only the group with the most cells keeps its color
@@ -568,7 +571,7 @@ input.
 `period` is the smallest number of rows such that every row of the box equals
 the row that many rows below it, wherever that row is still inside the box;
 like `height`, it is measured on the pattern's own box rather than the canvas.
-Unconditional class-level rules set the output tag and introduce one
+Unconditional class-level rules set the output kind and introduce one
 property, `extension_direction`, which is absent before the rules run and is
 `down`, as in `dataset.line.json`.
 The rules also rewrite `height` to `$Obj.height@first * 3 / 2`, 9 rows, the
@@ -578,7 +581,7 @@ input's, 3, 3, 2, and 3 columns, and they leave `x` and `y` unchanged because
 the pattern keeps its top-left origin. The training pairs alone also fit a
 fixed 9-row output; the rules scale the pattern's height instead. Native
 output snapshots are captured with the pair's implementation followed by
-`Obj[:]`. Tags identify the geometry: `l9100` is a single shape, as in
+`Obj[:]`. Kinds identify the geometry: `l9100` is a single shape, as in
 `dataset.28bf18c6.json` and `dataset.6150a2bd.json`, and `l8384` is a pattern
 whose rows repeat every `period` rows down to its height. Input masks retain
 each pair's full-size 6 by 3 input canvas, with zero cells padded `0`, and
@@ -608,7 +611,7 @@ to 3 by 3 with `$Obj.width is $Obj.width@first + 2` and
 with `$Obj.volume is $Obj.volume@first + 4`; color-6 and color-8 points keep
 their 1 by 1 size and volume 1. The two branches are guarded by
 `if $Obj.vertex_color is 1:` and `if $Obj.vertex_color is 2:`, with `is`, the spelling of `==` that
-[NUC 86](../docs/nuc-0086.md) adds. Tags identify the geometry: `l1707` is an
+[NUC 86](../docs/nuc-0086.md) adds. Kinds identify the geometry: `l1707` is an
 orthogonal cross, `l2404` is a diagonal cross, and `l7544` remains a single
 point.
 Every instance mask retains the complete 9 by 9 canvas. The x/y metadata
@@ -652,11 +655,11 @@ The `@first` anchors read the input color because the rule
 rewrites `color` itself; a dictionary from every color to its partner would
 state each pair twice. The two callbacks are chained rather than nested, so
 each reads only its own parameter and the stripe. The rules create no
-property and leave `x`, `y`, `width`, `height`, `orientation`, and the tag
+property and leave `x`, `y`, `width`, `height`, `orientation`, and the kind
 unchanged, since a stripe keeps its size when it changes color, so input
 and output states share the same keys. Native output snapshots are captured
 with all of the same pair's implementations together, followed by `Obj[:]`.
-The tag `l6953` is a vertical bar, as in `dataset.d037b0a7.json` and
+The kind `l6953` is a vertical bar, as in `dataset.d037b0a7.json` and
 `dataset.9af7a82c.json`, in both states. Input masks retain each pair's
 full-size 3 by 3 input canvas and output masks the complete 3 by 3 output,
 each padded with `0` outside its stripe; merging them reproduces each pair's
@@ -705,12 +708,12 @@ expression of [NUC 59](../docs/nuc-0059.md) gives such a row color 5 and
 every other row the background color 0. A second unconditional rule,
 `$Obj.volume is 0 if $Obj.fill_color is 0 else $Obj.volume@first`, empties a
 cleared row and keeps a bar's 3 cells. The rules create no other property and
-leave `x`, `y`, `width`, `height`, `orientation`, and the tag unchanged, since
+leave `x`, `y`, `width`, `height`, `orientation`, and the kind unchanged, since
 a row keeps its size whether it becomes a bar or is cleared, so each output
 state adds only `fill_color` to its input state's keys. Native
 snapshots start with the pair's `canvas_width` and `canvas_height`, and
 output snapshots are captured with all of the same pair's implementations
-together, followed by `Obj[:]`. The tag `l3058` is a horizontal bar, as in
+together, followed by `Obj[:]`. The kind `l3058` is a horizontal bar, as in
 `dataset.d631b094.json`, in both states. Input masks retain each pair's
 full-size 3 by 3 input canvas and output masks the complete 3 by 3 output,
 each padded with `0` outside its row, so a cleared row's output mask is all
@@ -763,11 +766,11 @@ both. One unconditional class-level rule rewrites `y` as
 single figure and shows no relation between objects, so no population
 operation appears; the class-level rule moves every figure on its own. The
 rules create no property and leave `x`, `width`, `height`, `orientation`,
-and the tag unchanged, since the figure moves without changing its size, so
+and the kind unchanged, since the figure moves without changing its size, so
 input and output states share the same keys and differ only in `y`. Native
 snapshots start with the pair's `canvas_width` and `canvas_height`, and output
 snapshots are captured with the pair's implementation followed by `Obj[:]`.
-The tag `l9100` is a single shape, as in `dataset.28bf18c6.json` and
+The kind `l9100` is a single shape, as in `dataset.28bf18c6.json` and
 `dataset.6150a2bd.json`, in both states. Input masks retain each pair's
 full-size input canvas and output masks the complete output, each padded with
 `0` outside its figure; merging them reproduces each pair's input and output.
@@ -806,29 +809,29 @@ code: every block has 5 cells; both crosses keep every mirror and quarter-turn
 symmetry of the canvas yet give 2 and 6; the hollow diamond and the square
 with a tail each mirror only across one diagonal yet give 1 and 3; and their
 3, 5, 2, and 1 edge-connected pieces do not order the codes. Each block is
-therefore one instance whose tag names its shape, and the rules look the code
-up by that tag. The class takes the standard entries `x`, `y`, `width`,
+therefore one instance whose kind names its shape, and the rules look the code
+up by that kind. The class takes the standard entries `x`, `y`, `width`,
 `height`, `orientation`, and `volume`, where `width` and `height` are the
 column and row counts of the block's bounding box and `volume` the number of
-its nonzero cells, 3, 3, and 5 in every pair, and `tag` as its only descriptive
-property, such as `tag='l4262'` for the first training input, with no color,
-parts list, canvas size, or matrix of cells. Like every class, it takes `tag`
+its nonzero cells, 3, 3, and 5 in every pair, and `kind` as its only descriptive
+property, such as `kind='l4262'` for the first training input, with no color,
+parts list, canvas size, or matrix of cells. Like every class, it takes `kind`
 right after `volume` as an optional parameter, here with the default `l9100`,
-a single shape, but every implementation passes its block's tag, so no
+a single shape, but every implementation passes its block's kind, so no
 instance takes the default, the input state names the shape, and no input
 property names the code. One class serves every shape because the
 solver reads output states with `Obj[:]`, which lists no instance of a
-subclass. Tags identify the geometry: `l4262` is the hollow diamond with a
+subclass. Kinds identify the geometry: `l4262` is the hollow diamond with a
 filled corner and `l3743` the square with a diagonal tail, while `l2404` is a
 diagonal cross and `l1707` an orthogonal cross, as in `dataset.0ca9ddb6.json`.
-Unconditional class-level rules set the output tag `l7544`, a single point, as
+Unconditional class-level rules set the output kind `l7544`, a single point, as
 in `dataset.44f52bb0.json`, shrink the block to that point's size, `width` 1
 and `height` 1, and introduce one property, `fill_color`, which is absent
 before the rules run, as
-`{'l4262': 1, 'l2404': 2, 'l3743': 3, 'l1707': 6}[$Obj.tag@first]`: the object
+`{'l4262': 1, 'l2404': 2, 'l3743': 3, 'l1707': 6}[$Obj.kind@first]`: the object
 literal states each shape's code once, and object bracket access reads the
-code of the block's input tag, anchored with `@first` because the tag rule
-turns the tag into `l7544`. `$Obj.volume is $Obj.width * $Obj.height` counts
+code of the block's input kind, anchored with `@first` because the kind rule
+turns the kind into `l7544`. `$Obj.volume is $Obj.width * $Obj.height` counts
 the filled point's single cell. The rules create no other properties, so each
 output state adds only `fill_color` to its input state's keys, and they leave
 `x` and `y` unchanged because the point sits at the block's origin, 0 and 0 in
@@ -867,7 +870,7 @@ input shape while its `height` stays 3, multiply its cells the same way with
 `$Obj.volume is $Obj.volume@first * $Obj.repeat_count`, and move `x` and `y`
 to the output origin 0. Each output state's `width` and `height` are therefore
 the repeated shape's bounding box, the whole 3 by 6 output, and its `volume`
-the output's number of nonzero cells. Tags identify the geometry:
+the output's number of nonzero cells. Kinds identify the geometry:
 `l9100` is a single shape and `l4305` is the shape repeated side by side.
 Input masks retain each pair's input canvas and output masks its output
 canvas. Orientation is 0 in both states because the shapes are not rotated.
@@ -894,17 +897,17 @@ every corner, and `volume` the number of its nonzero cells, 3, and then
 `color`, 8 for every corner; each implementation passes `width=2, height=2`
 right after `y`. Three unconditional class-level rules hold for every
 instance, with no color condition and no population query, because every
-corner changes alike and independently of the others: `$Obj.tag is l3337`
-sets the output tag, `$Obj.marker_color is 1` introduces `marker_color`,
+corner changes alike and independently of the others: `$Obj.kind is l3337`
+sets the output kind, `$Obj.marker_color is 1` introduces `marker_color`,
 which is absent before the rules run, and
 `$Obj.volume is $Obj.volume@first + 1` counts the marker's cell, 4 in all. The
 marker fills a cell of the corner's own box, so the rules leave `x`, `y`,
 `width`, `height`, `orientation`, and `color` unchanged; each output state
-changes only the tag and `volume` and adds `marker_color` to its input state's
+changes only the kind and `volume` and adds `marker_color` to its input state's
 keys. Native snapshots start with the pair's `canvas_width`
 and `canvas_height`; input states run the class alone, and output states run
 each pair's implementations together with all declarations, followed by
-`Obj[:]`. Tags identify the geometry: `l6747` is a corner, as in
+`Obj[:]`. Kinds identify the geometry: `l6747` is a corner, as in
 `dataset.core.json` and `dataset.extension.json`, and `l3337` is a corner with
 its inside marker, as in `dataset.extension.json`. Input masks retain each
 pair's full 7 by 7 input canvas and output masks its full 7 by 7 output,
@@ -918,7 +921,7 @@ box, 135 at the bottom right, 225 at the bottom left, and 315 at the top left,
 and keeps that orientation with its inside marker: the training corners point
 at 225 and 45, and at 45, 225, and 135, and the test corners at 45, 315, 225,
 and 135, so only the test pair has a corner at 315. The declarations write
-their assignments with `is` and their tags as bare words, with no quoted
+their assignments with `is` and their kinds as bare words, with no quoted
 string. The test pair follows the training pairs at the same level and is
 annotated by the same rules.
 
@@ -957,11 +960,11 @@ rules state the half turn alone, a choice fixed from the training
 pairs before the test pair was read. Each training grid holds a
 single mosaic and shows no relation between objects, so no population
 operation appears. The rules create no property and leave `x`, `y`, `width`,
-`height`, and the tag unchanged, since a turn changes the orientation alone,
+`height`, and the kind unchanged, since a turn changes the orientation alone,
 not the mosaic's size, so input and output states share the same keys
 and differ only in `orientation`. Native snapshots start with the pair's
 `canvas_width` and `canvas_height`, and output snapshots are captured with
-the pair's implementation followed by `Obj[:]`. The tag `l9100` is a single
+the pair's implementation followed by `Obj[:]`. The kind `l9100` is a single
 shape, as in `dataset.28bf18c6.json` and `dataset.6150a2bd.json`, in both
 states. Input masks retain each pair's full-size 3 by 3 input canvas and
 output masks the complete 3 by 3 output; with no zero cell, each mask equals
@@ -1009,7 +1012,7 @@ first training input. It takes no color, canvas size, symmetry
 flag, output color, or matrix of cells, so no input property states the
 symmetry or the answer; the rules read the canvas's width from the solver's
 `canvas_width`, not the pattern's own `width`. Unconditional class-level rules
-set the output tag, shrink the pattern to the output point's size, `width` 1
+set the output kind, shrink the pattern to the output point's size, `width` 1
 and `height` 1, and introduce two properties, absent before the rules run.
 `symmetric` is
 `all point in $Obj.points: $Obj.points.includes([canvas_width - 1 - point[0], point[1]])`:
@@ -1023,7 +1026,7 @@ list against the points with the deep equality of
 and `$Obj.volume is $Obj.width * $Obj.height` counts the point's single cell.
 The rules also move `x` and `y` to the output origin 0, which changes `y` in
 the fourth training pair and the second test pair. Native output snapshots
-are captured with the pair's implementation followed by `Obj[:]`. Tags
+are captured with the pair's implementation followed by `Obj[:]`. Kinds
 identify the geometry: `l9100` is a single shape, as in
 `dataset.28bf18c6.json` and `dataset.017c7c7b.json`, and `l7544` is a single
 point, as in `dataset.0ca9ddb6.json` and `dataset.d037b0a7.json`. Input masks
@@ -1066,7 +1069,7 @@ flat list of the block's nonzero cell colors in reading order, such as
 descriptive property, with no other count, histogram, fill color, canvas size,
 or matrix of cells, so no input property names a color's count or
 the fill color.
-Unconditional class-level rules set the output tag and introduce one property,
+Unconditional class-level rules set the output kind and introduce one property,
 `fill_color`, which is absent before the rules run, as `mode of $Obj.parts`.
 That is the noun form of `$Obj.parts.mode()`: the accepted list query `mode`
 from [NUC 75](../docs/nuc-0075.md) returns the most frequent item of `parts`,
@@ -1080,7 +1083,7 @@ state adds only `fill_color` to its input state's keys, and they leave `x` and
 `width` and `height` unchanged because the fill covers the block's 3 by 3
 bounding box.
 Native output snapshots are captured with the pair's implementation followed
-by `Obj[:]`. Tags identify the geometry: `l9100` is a single shape, as in
+by `Obj[:]`. Kinds identify the geometry: `l9100` is a single shape, as in
 `dataset.28bf18c6.json`, and `l5236` is a solid rectangle that fills the whole
 canvas. Input masks retain each pair's full-size 3 by 3 input canvas, with the
 zero cell padded `0`, and output masks the complete 3 by 3 output; merging
@@ -1119,7 +1122,7 @@ anchors: `($Obj.orientation@first + 180) % 360` gives `orientation`,
 `width` and `height` unchanged, because a half turn keeps the box's size while
 `orientation` carries the turn, and create no other properties, so input and
 output states share the same keys. Native output snapshots are captured with
-the pair's implementation followed by `Obj[:]`. The tag `l9100` is a single
+the pair's implementation followed by `Obj[:]`. The kind `l9100` is a single
 shape, as in `dataset.28bf18c6.json` and `dataset.5582e5ca.json`, in both
 states. Input masks retain each pair's full-size 3 by 3 input canvas, with its
 zero cells padded `0`, and output masks the complete 3 by 3 output; merging
@@ -1167,21 +1170,21 @@ the rules need none: the block's cells travel in its masks. Its class
 declaration is that of `dataset.6150a2bd.json`. Each implementation passes
 `x=0, y=0, width=3, height=3, orientation=0, volume=9`. Three unconditional
 class-level rules turn every block into the figure it forms with its mirror
-image: `$Obj.tag is l6919` names that geometry,
+image: `$Obj.kind is l6919` names that geometry,
 `$Obj.width is $Obj.width@first * 2` makes the figure twice as wide as the
 block, 6 columns, as `dataset.28bf18c6.json` multiplies its shape's width by
 its copies, and `$Obj.volume is $Obj.volume@first * 2` counts the block's
 cells with their mirror images. The rules leave `x`, `y`, `height`, and
 `orientation` unchanged, because the figure keeps the block's top-left corner
-and rows, and state no `mirror_axis`, because the tag already names a mirror
+and rows, and state no `mirror_axis`, because the kind already names a mirror
 image to the right and the box grows only in `width`. Each grid holds a single
 block and shows no relation between objects, so no population operation
 appears. The rules create no property, so input and output states share the
-same keys and differ only in the tag, `width`, and `volume`, and they give the
+same keys and differ only in the kind, `width`, and `volume`, and they give the
 same states in reverse order and when
 declared after the instance. Native snapshots start with the pair's
 `canvas_width` and `canvas_height`, and output snapshots are captured with
-the pair's implementation followed by `Obj[:]`. Tags identify the geometry:
+the pair's implementation followed by `Obj[:]`. Kinds identify the geometry:
 `l9100` is a single shape, as in `dataset.6150a2bd.json`, and `l6919` is a
 shape beside its left-right mirror image, symmetric about the vertical
 center line of its box, as in `dataset.c9e6f938.json`. Input masks retain
@@ -1227,7 +1230,7 @@ pairs before the test pair was read, and in the test mosaic colors 2 and 3
 each split into three single cells. Every canvas is 3 by 3, so the training
 pairs alone also fit a line of three cells on a canvas of any size; the line
 instead crosses the whole canvas, from edge to edge or corner to corner, and
-its tag names that geometry, so the rules state no length: every line keeps
+its kind names that geometry, so the rules state no length: every line keeps
 the mosaic's `width`, which spans the canvas. The class takes the standard
 entries `x`, `y`, `width`, `height`, `orientation`, and `volume` first, in that
 order, where `width` and `height` are the column and row counts of the mosaic's
@@ -1239,7 +1242,7 @@ training input, as its only descriptive property, with no color list, color
 count, line direction, canvas size, or matrix of cells, so no input property
 names the count or the line. Each implementation passes `width=3, height=3`
 right after `y`. Four unconditional class-level rules and one conditional
-rule turn the mosaic into the line. `$Obj.tag is l6074` names the line, and
+rule turn the mosaic into the line. `$Obj.kind is l6074` names the line, and
 `$Obj.fill_color is 5` introduces `fill_color`, which is absent before the
 rules run, because the line is gray whatever the mosaic's colors.
 `$Obj.volume is max of [$Obj.width, $Obj.height]` counts the line's cells, one
@@ -1253,7 +1256,7 @@ convention for straight lines without a head, where vertical is 0 and
 horizontal is 90, so the main diagonal, which runs from northwest to southeast,
 is 135 and the other diagonal 45. No
 arithmetic relates the counts to the axes, so the rule looks the axis up, as
-`dataset.27a28665.json` looks up its code by tag, and it reads no
+`dataset.27a28665.json` looks up its code by kind, and it reads no
 orientation, so it rewrites `orientation` without an `@first` anchor. The
 conditional rule `if $Obj.orientation is 90:` uses `is`, the spelling of `==`
 that [NUC 86](../docs/nuc-0086.md) adds, and sets `height` to 1, guarding on a
@@ -1268,13 +1271,13 @@ own cells. The rules leave `x` and `y` unchanged, because every line's box
 starts at the canvas's origin, 0 and 0, where the mosaic's box starts, also
 for the other diagonal, whose cells run from the top-right corner. They create
 no other property, so each output state adds only `fill_color` to its input
-state's keys, its tag turns `l6074`, its orientation turns 90, 135, or 45, and
+state's keys, its kind turns `l6074`, its orientation turns 90, 135, or 45, and
 its `height` turns 1 for the top-row line, so its `width` and `height` are the
 line's bounding box: 3 and 1 for the top row and 3 and 3 for a diagonal, and
 its `volume` turns 3.
 Native snapshots start with the pair's `canvas_width` and `canvas_height`, and
 output snapshots are captured with the pair's implementation followed by
-`Obj[:]`. Tags identify the geometry: `l9100` is a single shape, as in
+`Obj[:]`. Kinds identify the geometry: `l9100` is a single shape, as in
 `dataset.28bf18c6.json` and `dataset.3c9b0459.json`, and `l6074` is a straight
 line of cells across the whole canvas, along the axis its orientation gives.
 Input masks retain each pair's full-size 3 by 3 input canvas and output masks
@@ -1325,22 +1328,22 @@ block's cells travel in its masks. Its declaration is that of
 `dataset.6d0aefbc.json`, and each implementation passes
 `x=0, y=0, width=3, height=3, orientation=0, volume=9`. Three unconditional
 class-level rules turn every block into the figure it forms with its mirror
-image: `$Obj.tag is l7511` names that geometry,
+image: `$Obj.kind is l7511` names that geometry,
 `$Obj.height is $Obj.height@first * 2` makes the figure twice as tall as the
 block, 6 rows, anchored with `@first` because the rule rewrites `height`
 itself, and `$Obj.volume is $Obj.volume@first * 2` counts the block's cells
 with their mirror images, anchored the same way. The rules leave `x`, `y`,
 `width`, and `orientation` unchanged, because the figure keeps the block's
 top-left corner and columns, and state no `mirror_axis`, the property of
-`dataset.74dd1130.json`, because the tag already names a mirror image below
+`dataset.74dd1130.json`, because the kind already names a mirror image below
 the shape and the box grows only in `height`. Each grid holds a single block
 and shows no relation between objects, so no population operation appears.
 The rules create no property, so input and output states share the same keys
-and differ only in the tag, `height`, and `volume`,
+and differ only in the kind, `height`, and `volume`,
 and they give the same states in reverse order and when declared after the
 instance. Native snapshots start with the pair's `canvas_width` and
 `canvas_height`, and output snapshots are captured with the pair's
-implementation followed by `Obj[:]`. Tags identify the geometry: `l9100` is
+implementation followed by `Obj[:]`. Kinds identify the geometry: `l9100` is
 a single shape, as in `dataset.6d0aefbc.json` and `dataset.3c9b0459.json`,
 and `l7511` is a shape over its top-bottom mirror image, symmetric about the
 horizontal center line of its box, as in `dataset.8be77c9e.json`. Input masks
@@ -1412,14 +1415,14 @@ origin; the rules state the flip alone, a choice fixed from the training pairs
 before the test pair was read. Each training grid holds a single mosaic and
 shows no relation between objects, so no population operation appears. The
 rules create no other property and leave `x`, `y`, `width`, `height`,
-`orientation`, and the tag unchanged, because the flip keeps the square box's
+`orientation`, and the kind unchanged, because the flip keeps the square box's
 size and `mirror_axis` carries it, so each output state adds only
 `mirror_axis` to its input state's keys, as
 `{"end":{"x":2,"y":2},"start":{"x":0,"y":0}}` in every pair, its keys in the
 runtime's order. The rule gives the same states when declared after the
 instances. Native snapshots start with the
 pair's `canvas_width` and `canvas_height`, and output snapshots are captured
-with the pair's implementation followed by `Obj[:]`. The tag `l9100` is a
+with the pair's implementation followed by `Obj[:]`. The kind `l9100` is a
 single shape, as in `dataset.28bf18c6.json` and `dataset.3c9b0459.json`, in
 both states. Input masks retain each pair's full-size 3 by 3 input canvas and
 output masks the complete 3 by 3 output; with no zero cell, each mask equals
@@ -1473,7 +1476,7 @@ which the rules never read. Each implementation passes
 `width` and `height` right after `y`, such as
 `x=0, y=1, width=1, height=1, orientation=0, volume=1` for the first
 training input. Seven unconditional class-level rules turn the pattern into the
-tally. `$Obj.tag is l5714` names the tally, and `$Obj.fill_color is 2`
+tally. `$Obj.kind is l5714` names the tally, and `$Obj.fill_color is 2`
 introduces `fill_color`, which is absent before the rules run, because the
 tally is red whatever the pattern. `width` is
 `min of [$Obj.volume, canvas_width]`, the noun form of the list query
@@ -1497,11 +1500,11 @@ changes `x` in the fourth and fifth training pairs and the first test pair,
 and `y` in the first training pair. Each grid holds a single pattern and
 shows no relation between objects, so no population operation appears; the
 count is the pattern's own scalar. The rules create no other property, so
-each output state adds only `fill_color` to its input state's keys, its tag
+each output state adds only `fill_color` to its input state's keys, its kind
 turns `l5714`, and its `width` and `height` are the tally's box: 1 and 1,
 2 and 1, 3 and 1, or 3 and 2. Native snapshots start with the pair's
 `canvas_width` and `canvas_height`, and output snapshots are captured with the
-pair's implementation followed by `Obj[:]`. Tags identify the geometry:
+pair's implementation followed by `Obj[:]`. Kinds identify the geometry:
 `l9100` is a single shape, as in `dataset.28bf18c6.json` and
 `dataset.d631b094.json`, and `l5714` is a tally, a bar along the top row
 filled from the left up to the canvas's width, with the remaining cells as a
@@ -1563,7 +1566,7 @@ and `height` right after `y`, such as
 `x=0, y=0, width=3, height=2, orientation=0, volume=5` for the first
 training input.
 Three unconditional class-level rules turn every pattern into the figure it
-forms with its mirror image. `$Obj.tag is l7511` names that geometry, and
+forms with its mirror image. `$Obj.kind is l7511` names that geometry, and
 `$Obj.height is 2 * (canvas_height - $Obj.y@first)` grows the box down to the
 mirror image of its top row: twice the distance from the pattern's top row to
 the canvas's bottom edge, so the mirror line lies at the box's center. That
@@ -1575,16 +1578,16 @@ rule moves `y`. `$Obj.volume is 2 * $Obj.volume@first` counts the pattern's
 cells with their mirror images. The rules leave `x`, `y`, `width`, and
 `orientation` unchanged, because the mirror image keeps the pattern's columns
 and the figure starts on the pattern's top row. They state no `mirror_axis`,
-the property of `dataset.74dd1130.json`: the tag already names a mirror image
+the property of `dataset.74dd1130.json`: the kind already names a mirror image
 below the shape, and the box grows only in `height`, so an axis would restate
 them. Each grid holds a single pattern and shows no relation between objects,
 so no population operation appears. The rules give the same states in reverse
 order and when they are declared after the instances. They create no property,
-so input and output states share the same keys and differ only in the tag,
+so input and output states share the same keys and differ only in the kind,
 `height`, and `volume`.
 Native snapshots start with the pair's `canvas_width` and `canvas_height`, and
 output snapshots are captured with the pair's implementation followed by
-`Obj[:]`. Tags identify the geometry: `l9100` is a single shape, as in
+`Obj[:]`. Kinds identify the geometry: `l9100` is a single shape, as in
 `dataset.28bf18c6.json` and `dataset.25ff71a9.json`, and `l7511` is a shape
 over its top-bottom mirror image, symmetric about the horizontal center line
 of its box. Input masks retain each pair's full-size 3 by 3 input canvas and
@@ -1655,13 +1658,13 @@ population, and `$Obj.volume` reads the region the rule is evaluated for.
 The condition reads no color, so the rule rewrites `color` without an
 `@first` anchor, and a tie for the most cells, which no pair has, would keep
 every tied region's color. The rules create no property and leave `x`, `y`,
-`width`, `height`, `orientation`, and the tag unchanged, since a region keeps
+`width`, `height`, `orientation`, and the kind unchanged, since a region keeps
 its cells when it turns gray, so input and output states share the same
 keys, and a gray region's output state differs from its input state only
 in `color`. Native snapshots start with the pair's `canvas_width` and
 `canvas_height`, and output snapshots are captured with all of the same pair's
 implementations together, followed by `Obj[:]`, so every region is compared
-with its whole pair. The tag `l9100` is a single shape, as in
+with its whole pair. The kind `l9100` is a single shape, as in
 `dataset.9af7a82c.json` and `dataset.d631b094.json`, in both states. Input
 masks retain each pair's full-size 3 by 3 input canvas and output masks the
 complete 3 by 3 output, each padded with `0` outside its region; merging them
@@ -1702,7 +1705,7 @@ added. The bar's size is the object's own `width` and `height`, so the rules
 create no property, and input and output states share the same keys. Each pair
 lists its instances largest first. Native output snapshots are captured with
 all of the same pair's implementations together, followed by `Obj[:]`, so
-every recorded `x` counts all larger regions of its pair. Tags
+every recorded `x` counts all larger regions of its pair. Kinds
 identify the geometry: `l9100` is a single shape, as in
 `dataset.28bf18c6.json`, and `l6953` is a vertical bar. Input masks retain
 each pair's full-size, zero-padded input canvas; output masks retain each
@@ -1758,7 +1761,7 @@ marker's box and `volume` the number of its nonzero cells, each 1, and no
 descriptive property, with no color, column list, canvas size,
 or matrix of cells: every marker is gray, which the rules never read, and the
 marker's column is its `x`. Unconditional class-level rules set the output
-tag and orientation, introduce one property, `fill_color`, absent before the
+kind and orientation, introduce one property, `fill_color`, absent before the
 rules run, widen the marker into its bar, and move `x` to the left edge, 0,
 while `y` keeps the marker's row. `fill_color` is
 `[2, 4, 3][$Obj.x@first]`: the list holds one color per column of the
@@ -1773,12 +1776,12 @@ pair every marker lies in the right column, yet every bar spans the whole row.
 Each bar depends only on its own marker, and the training pairs show no
 relation between markers, so no population operation appears. The rules create
 no other property and leave `y` and `height` unchanged, so each output state
-adds only `fill_color` to its input state's keys, its tag turns `l3058`, its
+adds only `fill_color` to its input state's keys, its kind turns `l3058`, its
 `width` and `volume` turn 3, its `x` turns 0, and its `orientation` 90. Native
 snapshots
 start with the pair's `canvas_width` and `canvas_height`, and output snapshots
 are captured with all of the same pair's implementations together, followed by
-`Obj[:]`. Tags
+`Obj[:]`. Kinds
 identify the geometry: `l7544` is a single point, as in
 `dataset.0ca9ddb6.json` and `dataset.d037b0a7.json`, and `l3058` is a
 horizontal bar, as in `dataset.d631b094.json` and `dataset.25d8a9c8.json`.
@@ -1827,7 +1830,7 @@ color, canvas size, or matrix of cells: every point has color 2, which the
 rules never read. Each implementation passes `width=1, height=1` right after
 `y`, such as `x=1, y=1, width=1, height=1, orientation=0, volume=1` for the
 first training input. Seven unconditional class-level rules turn every point
-into its figure. `$Obj.tag is l2898` names the figure, and
+into its figure. `$Obj.kind is l2898` names the figure, and
 `$Obj.corner_colors is [[3, 6], [8, 7]]` introduces `corner_colors`, which is
 absent before the rules run: the corners' colors as they lie around the
 point, the top row's left and right corners first and then the bottom row's.
@@ -1857,7 +1860,7 @@ clipping at fixed rows and columns, because every canvas is 3 by 5; the rules
 read `canvas_width` and `canvas_height` instead, a choice fixed from the
 training pairs before the test pair was read. The rules create no other
 property, so each output state adds only `corner_colors` to its input state's
-keys, its tag turns `l2898`, its `volume` counts the remaining corners, and
+keys, its kind turns `l2898`, its `volume` counts the remaining corners, and
 its `x`, `y`, `width`, and `height` become
 the remaining corners' box: origin 0 and 0, 3 columns by 3 rows, in the first
 training pair; 3 and 1, 1 column by 1 row, in the second; 1 and 1, 3 columns
@@ -1866,7 +1869,7 @@ and 0, 1 column by 3 rows, in the test pair. The rules give the same states
 in reverse order and when they are declared after the instances. Native
 snapshots start with the pair's `canvas_width` and `canvas_height`, and
 output snapshots are captured with all of the same pair's implementations
-together, followed by `Obj[:]`. Tags identify the geometry: `l7544` is a
+together, followed by `Obj[:]`. Kinds identify the geometry: `l7544` is a
 single point, as in `dataset.0ca9ddb6.json`, `dataset.d037b0a7.json`, and
 `dataset.a85d4709.json`, and `l2898` is the four corners of a 3 by 3 box
 around its empty center, in the colors of `corner_colors`, unlike `l2404`,
@@ -1941,12 +1944,12 @@ but restate every other region's color. Each region's change depends only on
 its own color, and no relation between regions decides it, so no population
 operation appears. The rule gives the same states when it is declared after
 the instances. The rules create no property and leave `x`, `y`, `width`,
-`height`, `orientation`, and the tag unchanged, since a region keeps its cells
+`height`, `orientation`, and the kind unchanged, since a region keeps its cells
 when it turns gray, so input and output states share the same keys, and a gray
 region's output state differs from its input state only in `color`. Native
 snapshots start with the pair's `canvas_width` and `canvas_height`, and output
 snapshots are captured with all of the same pair's implementations together,
-followed by `Obj[:]`. The tag `l9100` is a single shape, as in
+followed by `Obj[:]`. The kind `l9100` is a single shape, as in
 `dataset.28bf18c6.json`, `dataset.9565186b.json`, and `dataset.d631b094.json`,
 in both states. Input masks retain each pair's full-size input canvas and
 output masks the complete output, each padded with `0` outside its region;
@@ -1998,7 +2001,7 @@ implementation passes `width` and `height` right after `y`, such as
 `x=1, y=0, width=2, height=3, orientation=0, volume=4` for the first
 training input.
 Three unconditional class-level rules turn every pattern into the figure it
-forms with its mirror image. `$Obj.tag is l6919` names that geometry, and
+forms with its mirror image. `$Obj.kind is l6919` names that geometry, and
 `$Obj.width is 2 * (canvas_width - $Obj.x@first)` grows the box right to the
 mirror image of its left column: twice the distance from the pattern's left
 column to the canvas's right edge, so the mirror line lies at the box's
@@ -2011,16 +2014,16 @@ read the pattern's input column, as there, although no rule moves `x`.
 mirror images. The rules leave `x`, `y`, `height`, and `orientation`
 unchanged, because the mirror image keeps the pattern's rows and the figure
 starts at the pattern's left column. They state no `mirror_axis`, the property
-of `dataset.74dd1130.json`: the tag already names a mirror image to the right
+of `dataset.74dd1130.json`: the kind already names a mirror image to the right
 of the shape, and the box grows only in `width`, so an axis would restate
 them. Each grid holds a single pattern and shows no relation between objects,
 so no population operation appears. The rules give the same states in reverse
 order and when they are declared after the instances. They create no
 property, so input and output states share the same keys and differ only in
-the tag, `width`, and `volume`. Native snapshots start with the pair's
+the kind, `width`, and `volume`. Native snapshots start with the pair's
 `canvas_width`
 and `canvas_height`, and output snapshots are captured with the pair's
-implementation followed by `Obj[:]`. Tags identify the geometry: `l9100` is a
+implementation followed by `Obj[:]`. Kinds identify the geometry: `l9100` is a
 single shape, as in `dataset.28bf18c6.json` and `dataset.8be77c9e.json`, and
 `l6919` is a shape beside its left-right mirror image, symmetric about the
 vertical center line of its box, the left-right counterpart of the `l7511` of
@@ -2066,7 +2069,7 @@ takes the standard entries `x`, `y`, `width`, `height`, `orientation`, and
 `volume`, where `width` and `height` are the column and row counts of the
 point's box and `volume` the number of its nonzero cells, each 1, and `color`
 as its only descriptive scalar, with no canvas size or
-matrix of cells. Unconditional class-level rules set the output tag, grow
+matrix of cells. Unconditional class-level rules set the output kind, grow
 the point's `height` into the bar's, `canvas_height - $Obj.y@first`, reading
 the canvas's height from the solver's `canvas_height`, and count the bar's
 cells with `$Obj.volume is $Obj.width * $Obj.height`. They leave `x`, `y`, and
@@ -2077,7 +2080,7 @@ no property, so input and output states share the same keys. The bottom edge
 comes from the canvas, not the
 population: the second training pair's lowest point lies on the middle row,
 yet its bars reach the bottom row. Native output snapshots are captured with
-all of the same pair's implementations together, followed by `Obj[:]`. Tags
+all of the same pair's implementations together, followed by `Obj[:]`. Kinds
 identify the geometry: `l7544` is a single point, as in
 `dataset.0ca9ddb6.json`, and `l6953` is a vertical bar, as in
 `dataset.9af7a82c.json`. Input masks retain each pair's full-size,
@@ -2108,7 +2111,7 @@ Unconditional class-level rules resize every region into its bar, with `width`
 the cell count, as `$Obj.width is $Obj.volume` sets it, and `height` 1, and
 move `x` and `y` to the output origin 0.
 The bar's size is the object's own `width` and `height`, so the rules create
-no property, and input and output states share the same keys. Tags identify
+no property, and input and output states share the same keys. Kinds identify
 the geometry:
 `l9100` is a single shape, as in `dataset.28bf18c6.json`, and `l3058` is a
 horizontal bar. Input masks retain each pair's full-size, zero-padded 3 by 3
@@ -2156,12 +2159,12 @@ only a right-panel figure with `$Obj.x = $Obj.x@first - canvas_width / 2`;
 the `@first` anchor reads its input origin without cumulative movement.
 The other rule introduces only `fill_color`, absent from input states, as
 `$Obj.fill_color = 6`, the common color of every occupied output cell.
-The rules leave `y`, size, orientation, and tag unchanged and need no
+The rules leave `y`, size, orientation, and kind unchanged and need no
 population query: the canvas determines registration, while identically
 colored masks compose the union regardless of their order. Native snapshots
 start with the pair's input `canvas_width` and `canvas_height`; input states
 run the class alone, and output states run both implementations together with
-all declarations, followed by `Obj[:]`. The tag `l9100` is a single shape,
+all declarations, followed by `Obj[:]`. The kind `l9100` is a single shape,
 as in `dataset.28bf18c6.json`, in both states. Both instance masks retain
 their respective pair's complete canvas and pad every other cell with `0`;
 merging the input masks and the overlapping output masks reproduces every
@@ -2204,7 +2207,7 @@ the checkerboard follows from its row. Each implementation passes
 `width=6, height=1` right after `y`, such as
 `x=0, y=1, width=6, height=1, orientation=90, volume=6` for the bottom bar of
 the first training input. Five unconditional class-level rules turn every bar
-into its share of the checkerboard. `$Obj.tag is l5973` names that geometry,
+into its share of the checkerboard. `$Obj.kind is l5973` names that geometry,
 `$Obj.orientation is 0` marks it as a pattern that points no way, and
 `$Obj.parity is $Obj.y@first % 2` introduces `parity`, which is absent before
 the rules run: the parity of the bar's input row, 0 for the top bar and 1 for
@@ -2223,11 +2226,11 @@ also fit a checkerboard over only the rows the bars cover; the rules cover the
 canvas instead, a choice fixed from the training pairs before the test pair
 was read. The rules give the same states in reverse order and when they are
 declared after the instances. They create no other property, so each output
-state adds only `parity` to its input state's keys, its tag turns `l5973`, its
+state adds only `parity` to its input state's keys, its kind turns `l5973`, its
 `orientation` becomes 0, its `height` turns 2, and its `y` turns 0. Native
 snapshots start with the pair's
 `canvas_width` and `canvas_height`, and output snapshots are captured with all
-of the same pair's implementations together, followed by `Obj[:]`. Tags
+of the same pair's implementations together, followed by `Obj[:]`. Kinds
 identify the geometry: `l3058` is a horizontal bar, as in
 `dataset.d631b094.json`, `dataset.25d8a9c8.json`, and
 `dataset.a85d4709.json`, and `l5973` is one color of a checkerboard, the cells
@@ -2319,7 +2322,7 @@ and output states share the same keys; they differ only in `orientation` in
 the training pairs, and also in `x` and `y` in the test pair. Native
 snapshots start with the pair's `canvas_width` and `canvas_height`, and output
 snapshots are captured with the pair's implementation followed by `Obj[:]`.
-The tag `l9100` is a single shape, as in `dataset.28bf18c6.json`,
+The kind `l9100` is a single shape, as in `dataset.28bf18c6.json`,
 `dataset.3c9b0459.json`, and `dataset.6150a2bd.json`, in both states. Input
 masks retain each pair's full-size 3 by 3 input canvas and output masks the
 complete 3 by 3 output, with zero cells padded `0`; with one pattern per grid,
@@ -2380,7 +2383,7 @@ therefore the input property. One unconditional class-level rule introduces
 the holes of the figure's own panel that every figure's panel also has, read
 with the quantifier `all` of [NUC 62](../docs/nuc-0062.md) over the class's
 population and with `includes`, which matches `[column, row]` lists by the deep
-equality of [NUC 61](../docs/nuc-0061.md). Others set the output tag and
+equality of [NUC 61](../docs/nuc-0061.md). Others set the output kind and
 introduce `fill_color` as 2, and four rewrite the box to the bounding box of
 `points` with the list
 extremes of [NUC 69](../docs/nuc-0069.md): `$Obj.points.min(point => point[0])`
@@ -2399,7 +2402,7 @@ order, and with the rules declared after the instances. They leave
 property, so each output state adds `points` and `fill_color` to its input
 state's keys. Native snapshots start with the pair's `canvas_width` and
 `canvas_height`; input states run the class alone, and output states run both
-implementations together with all declarations, followed by `Obj[:]`. Tags
+implementations together with all declarations, followed by `Obj[:]`. Kinds
 identify the geometry: `l9100` is a single shape, as in
 `dataset.28bf18c6.json` and `dataset.dae9d2b5.json`, and `l8372` is the empty
 space that every panel shares, the cells listed in `points`. Input masks
@@ -2426,7 +2429,7 @@ others. No rule sets `orientation`. The test output's two cells touch only at
 a corner, a line that falls to the right, which the shape convention reads as
 135; the rules, fixed from training outputs that all read 0, do not turn it,
 so its output state keeps 0. The declarations write their assignments with
-`is` and their tags as bare words, with no quoted string. The test pair follows
+`is` and their kinds as bare words, with no quoted string. The test pair follows
 the training pairs at the same level and is annotated by the same rules.
 
 ## ARC proposal agent
@@ -2605,9 +2608,9 @@ It also infers the `output_canvas` from the training pairs.
 
 ```json
 {
-  "class_declaration": "class Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, tag: str = 'l6747', vertex_color: int, vertical_segment_color: int, horizontal_segment_color: int):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.tag is tag\n    this.vertex_color is vertex_color\n    this.vertical_segment_color is vertical_segment_color\n    this.horizontal_segment_color is horizontal_segment_color",
+  "class_declaration": "class Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, kind: str = 'l6747', vertex_color: int, vertical_segment_color: int, horizontal_segment_color: int):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.kind is kind\n    this.vertex_color is vertex_color\n    this.vertical_segment_color is vertical_segment_color\n    this.horizontal_segment_color is horizontal_segment_color",
   "declarations": [
-    "if $Obj.vertex_color is 9 and $Obj.vertical_segment_color is 9 and $Obj.horizontal_segment_color is 9:\n    $Obj.tag is l6624\n    $Obj.marker_color is 4\n    $Obj.x is $Obj.x@first - 1 if $Obj.orientation > 180 else $Obj.x@first\n    $Obj.y is $Obj.y@first - 1 if $Obj.orientation < 90 or $Obj.orientation > 270 else $Obj.y@first\n    $Obj.width is $Obj.width@first + 1\n    $Obj.height is $Obj.height@first + 1\n    $Obj.volume is $Obj.volume@first + 1"
+    "if $Obj.vertex_color is 9 and $Obj.vertical_segment_color is 9 and $Obj.horizontal_segment_color is 9:\n    $Obj.kind is l6624\n    $Obj.marker_color is 4\n    $Obj.x is $Obj.x@first - 1 if $Obj.orientation > 180 else $Obj.x@first\n    $Obj.y is $Obj.y@first - 1 if $Obj.orientation < 90 or $Obj.orientation > 270 else $Obj.y@first\n    $Obj.width is $Obj.width@first + 1\n    $Obj.height is $Obj.height@first + 1\n    $Obj.volume is $Obj.volume@first + 1"
   ],
   "output_canvas": "EXACT"
 }
@@ -2651,7 +2654,7 @@ orientation fields give each state's numeric angle. Core, extension, and
 line keep each object's orientation, while a curve point's rim turns it
 into a V, as the convention below describes.
 Native snapshots use `x`, `y`, `width`, `height`, `orientation`, and `volume`;
-`tag` replaces `shape` with shortened identifiers such as `l6747`.
+`kind` replaces `shape` with shortened identifiers such as `l6747`.
 Matrices already follow the canvas axes; composition does not rotate them.
 
 Angles run clockwise from north: `N = 0`, `NE = 45`, `E = 90`, `SE = 135`,
@@ -2929,7 +2932,7 @@ The LLM also represents identified instances in `nuc` lang. This step is crucial
         "horizontal_segment_color": 9,
         "id": "obj0",
         "orientation": 135,
-        "tag": "l6747",
+        "kind": "l6747",
         "vertex_color": 9,
         "vertical_segment_color": 9,
         "volume": 3,
@@ -2943,7 +2946,7 @@ The LLM also represents identified instances in `nuc` lang. This step is crucial
         "id": "obj0",
         "marker_color": 1,
         "orientation": 135,
-        "tag": "l6624",
+        "kind": "l6624",
         "vertex_color": 9,
         "vertical_segment_color": 9,
         "volume": 4,

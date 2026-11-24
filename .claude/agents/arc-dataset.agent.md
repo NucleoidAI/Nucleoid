@@ -79,7 +79,7 @@ output-canvas mode for the whole dataset, inferred only from the training pairs.
 Before writing, read `arc/src/dataset/dataset.28bf18c6.json`, at least one other
 dataset, and the "Instruction datasets" and "Analysis" sections of
 `arc/README.md`. Every dataset in `arc/src/dataset/` may serve as a reference
-for world-model idioms, properties, rules, and tags. The solver sends every
+for world-model idioms, properties, rules, and kinds. The solver sends every
 JSON instruction dataset as shared few-shot context. Match their structure,
 key order, and
 formatting exactly:
@@ -129,16 +129,16 @@ formatting exactly:
 - `declarations[0]` holds every class declaration of the world model, because
   the solver runs it alone to build input states. Existing datasets declare
   one class, `Obj(x: int, y: int, width: int, height: int, orientation: int,
-  volume: int, tag: str = 'lNNNN', ...)`; add another class only for a
-  distinct kind of object the transformation needs. Each class whose
+  volume: int, kind: str = 'lNNNN', ...)`; add another class only for a
+  distinct sort of object the transformation needs. Each class whose
   instances are annotated objects takes the standard entries `x: int, y: int,
   width: int, height: int, orientation: int, volume: int` first, in that
-  order, then the optional `tag: str = 'lNNNN'`, whose default is the class's
-  initial tag, and its body assigns every parameter to `this`, the tag with
-  `this.tag is tag` right after `this.volume is volume`. An implementation
-  passes `tag` only when its object needs a tag other than the default, as
+  order, then the optional `kind: str = 'lNNNN'`, whose default is the class's
+  initial kind, and its body assigns every parameter to `this`, the kind with
+  `this.kind is kind` right after `this.volume is volume`. An implementation
+  passes `kind` only when its object needs a kind other than the default, as
   every implementation in `dataset.27a28665.json` names its block's shape
-  with `tag='l4262'` and the like; otherwise it leaves `tag` out. The default
+  with `kind='l4262'` and the like; otherwise it leaves `kind` out. The default
   keeps its quotes, because accepted Nucleoid takes only a literal as a
   parameter default. Add only the descriptive properties the transformation
   needs, such as categorical colors.
@@ -182,9 +182,11 @@ formatting exactly:
   populations, such as `Obj.filter`, `map`, `reduce`, `some`, `every`,
   `find`, and reasoning selections, where they express the rule. Avoid `for`
   loops, imperative steps, and manual bookkeeping.
-- A tag is `l` followed by four digits and names a geometry. Reuse the tag an
-  existing dataset uses for the same geometry; otherwise mint one unused
-  elsewhere.
+- A kind is `l` followed by four digits and names a geometry. It acts as a
+  child class that the rules assign declaratively: an instance never changes
+  its class, so a rule such as `$Obj.kind is l1707` moves it to another kind.
+  Reuse the kind an existing dataset uses for the same geometry; otherwise
+  mint one unused elsewhere.
 - Orientation is degrees clockwise from north (N = 0, E = 90, S = 180,
   W = 270, diagonals 45, 135, 225, and 315). Use 0 for shapes that are
   symmetric or not rotated.
@@ -331,7 +333,7 @@ Add one paragraph about the dataset to the "Instruction datasets" section of
 `arc/README.md`, in the style of the `dataset.28bf18c6.json` paragraph: source
 puzzle, its single canonical path, that it contains the exact original training
 pairs in order followed by the test pairs, pair and instance counts,
-instances, the transformation, properties the rules create, tags, the original
+instances, the transformation, properties the rules create, kinds, the original
 canvas and object sizes, and orientation.
 With a candidate executable, also name the NUC whose feature the rules use.
 
