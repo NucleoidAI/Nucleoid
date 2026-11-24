@@ -1,13 +1,13 @@
 {
-  "class_declaration": "# Each object is all the color-1 cells of the grid together, touching or not. The output counts them as a color-2 tally from the top-left corner: a bar along the top row, then a stem down from its middle\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, tag: str = 'l9100'):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.tag is tag",
+  "class_declaration": "class Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, tag: str = 'l9100'):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.tag is tag",
   "declarations": [
-    "# Each pattern becomes l5714, a tally: a top bar, then a stem\n$Obj.tag is l5714",
-    "# The tally is drawn in color 2\n$Obj.fill_color is 2",
-    "# The bar holds one cell per input cell, up to the grid width\n$Obj.width is min of [$Obj.volume, canvas_width]",
-    "# Each cell beyond the bar adds one row of stem below the middle of the bar\n$Obj.height is 1 + $Obj.volume - $Obj.width",
-    "# A one-row bar of 2 or more cells lies at 90; a single cell or a T is 0\n$Obj.orientation is 90 if $Obj.height is 1 and $Obj.width > 1 else 0",
-    "# The tally starts at the left edge\n$Obj.x is 0",
-    "# The tally starts at the top edge\n$Obj.y is 0"
+    "$Obj.tag is l5714",
+    "$Obj.fill_color is 2",
+    "$Obj.width is min of [$Obj.volume, canvas_width]",
+    "$Obj.height is 1 + $Obj.volume - $Obj.width",
+    "$Obj.orientation is 90 if $Obj.height is 1 and $Obj.width > 1 else 0",
+    "$Obj.x is 0",
+    "$Obj.y is 0"
   ],
   "output_canvas": "EXACT",
   "dataset": [
@@ -35,7 +35,7 @@
             [0, 0, 0],
             [0, 0, 0]
           ],
-          "implementation": "# Single color-1 cell\nobjb1da83745473 is Obj(x=0, y=1, width=1, height=1, orientation=0, volume=1)",
+          "implementation": "objb1da83745473 is Obj(x=0, y=1, width=1, height=1, orientation=0, volume=1)",
           "input_value": {"height":1,"id":"objb1da83745473","orientation":0,"tag":"l9100","volume":1,"width":1,"x":0,"y":1},
           "output_value": {"fill_color":2,"height":1,"id":"objb1da83745473","orientation":0,"tag":"l5714","volume":1,"width":1,"x":0,"y":0}
         }
@@ -65,7 +65,7 @@
             [0, 0, 0],
             [0, 0, 0]
           ],
-          "implementation": "# The 2 color-1 cells, forming a diagonal line rising to the right\nobjc12bde7f9292 is Obj(x=0, y=0, width=2, height=2, orientation=45, volume=2)",
+          "implementation": "objc12bde7f9292 is Obj(x=0, y=0, width=2, height=2, orientation=45, volume=2)",
           "input_value": {"height":2,"id":"objc12bde7f9292","orientation":45,"tag":"l9100","volume":2,"width":2,"x":0,"y":0},
           "output_value": {"fill_color":2,"height":1,"id":"objc12bde7f9292","orientation":90,"tag":"l5714","volume":2,"width":2,"x":0,"y":0}
         }
@@ -95,7 +95,7 @@
             [0, 0, 0],
             [0, 0, 0]
           ],
-          "implementation": "# The 2 color-1 cells, in 2 separate pieces\nobj03a3715a37ce is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=2)",
+          "implementation": "obj03a3715a37ce is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=2)",
           "input_value": {"height":3,"id":"obj03a3715a37ce","orientation":0,"tag":"l9100","volume":2,"width":3,"x":0,"y":0},
           "output_value": {"fill_color":2,"height":1,"id":"obj03a3715a37ce","orientation":90,"tag":"l5714","volume":2,"width":2,"x":0,"y":0}
         }
@@ -125,7 +125,7 @@
             [0, 0, 0],
             [0, 0, 0]
           ],
-          "implementation": "# The 2 color-1 cells, forming a diagonal line falling to the right\nobjce836f575e66 is Obj(x=1, y=0, width=2, height=2, orientation=135, volume=2)",
+          "implementation": "objce836f575e66 is Obj(x=1, y=0, width=2, height=2, orientation=135, volume=2)",
           "input_value": {"height":2,"id":"objce836f575e66","orientation":135,"tag":"l9100","volume":2,"width":2,"x":1,"y":0},
           "output_value": {"fill_color":2,"height":1,"id":"objce836f575e66","orientation":90,"tag":"l5714","volume":2,"width":2,"x":0,"y":0}
         }
@@ -155,7 +155,7 @@
             [0, 0, 0],
             [0, 0, 0]
           ],
-          "implementation": "# Single color-1 cell\nobj3bf63a836a8d is Obj(x=2, y=0, width=1, height=1, orientation=0, volume=1)",
+          "implementation": "obj3bf63a836a8d is Obj(x=2, y=0, width=1, height=1, orientation=0, volume=1)",
           "input_value": {"height":1,"id":"obj3bf63a836a8d","orientation":0,"tag":"l9100","volume":1,"width":1,"x":2,"y":0},
           "output_value": {"fill_color":2,"height":1,"id":"obj3bf63a836a8d","orientation":0,"tag":"l5714","volume":1,"width":1,"x":0,"y":0}
         }
@@ -185,7 +185,7 @@
             [0, 0, 0],
             [0, 0, 0]
           ],
-          "implementation": "# The 3 color-1 cells, in 2 separate pieces\nobj75a1ff051e74 is Obj(x=0, y=0, width=2, height=3, orientation=0, volume=3)",
+          "implementation": "obj75a1ff051e74 is Obj(x=0, y=0, width=2, height=3, orientation=0, volume=3)",
           "input_value": {"height":3,"id":"obj75a1ff051e74","orientation":0,"tag":"l9100","volume":3,"width":2,"x":0,"y":0},
           "output_value": {"fill_color":2,"height":1,"id":"obj75a1ff051e74","orientation":90,"tag":"l5714","volume":3,"width":3,"x":0,"y":0}
         }
@@ -215,7 +215,7 @@
             [0, 0, 0],
             [0, 0, 0]
           ],
-          "implementation": "# The 3 color-1 cells, forming a corner with its vertex at the bottom right\nobj1fe5a8d61959 is Obj(x=0, y=0, width=2, height=2, orientation=135, volume=3)",
+          "implementation": "obj1fe5a8d61959 is Obj(x=0, y=0, width=2, height=2, orientation=135, volume=3)",
           "input_value": {"height":2,"id":"obj1fe5a8d61959","orientation":135,"tag":"l9100","volume":3,"width":2,"x":0,"y":0},
           "output_value": {"fill_color":2,"height":1,"id":"obj1fe5a8d61959","orientation":90,"tag":"l5714","volume":3,"width":3,"x":0,"y":0}
         }
@@ -245,7 +245,7 @@
             [0, 2, 0],
             [0, 0, 0]
           ],
-          "implementation": "# The 4 color-1 cells, in 3 separate pieces\nobjd64dad12f41d is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=4)",
+          "implementation": "objd64dad12f41d is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=4)",
           "input_value": {"height":3,"id":"objd64dad12f41d","orientation":0,"tag":"l9100","volume":4,"width":3,"x":0,"y":0},
           "output_value": {"fill_color":2,"height":2,"id":"objd64dad12f41d","orientation":0,"tag":"l5714","volume":4,"width":3,"x":0,"y":0}
         }
@@ -275,7 +275,7 @@
             [0, 2, 0],
             [0, 0, 0]
           ],
-          "implementation": "# The 4 color-1 cells, forming one piece\nobj1cc43f45f6ab is Obj(x=0, y=0, width=2, height=3, orientation=0, volume=4)",
+          "implementation": "obj1cc43f45f6ab is Obj(x=0, y=0, width=2, height=3, orientation=0, volume=4)",
           "input_value": {"height":3,"id":"obj1cc43f45f6ab","orientation":0,"tag":"l9100","volume":4,"width":2,"x":0,"y":0},
           "output_value": {"fill_color":2,"height":2,"id":"obj1cc43f45f6ab","orientation":0,"tag":"l5714","volume":4,"width":3,"x":0,"y":0}
         }
@@ -305,7 +305,7 @@
             [0, 2, 0],
             [0, 0, 0]
           ],
-          "implementation": "# The 4 color-1 cells, in 2 separate pieces\nobj526c8ba46213 is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=4)",
+          "implementation": "obj526c8ba46213 is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=4)",
           "input_value": {"height":3,"id":"obj526c8ba46213","orientation":0,"tag":"l9100","volume":4,"width":3,"x":0,"y":0},
           "output_value": {"fill_color":2,"height":2,"id":"obj526c8ba46213","orientation":0,"tag":"l5714","volume":4,"width":3,"x":0,"y":0}
         }
@@ -335,7 +335,7 @@
             [0, 0, 0],
             [0, 0, 0]
           ],
-          "implementation": "# The 2 color-1 cells, in 2 separate pieces\nobjda05df28ce22 is Obj(x=1, y=0, width=1, height=3, orientation=0, volume=2)",
+          "implementation": "objda05df28ce22 is Obj(x=1, y=0, width=1, height=3, orientation=0, volume=2)",
           "input_value": {"height":3,"id":"objda05df28ce22","orientation":0,"tag":"l9100","volume":2,"width":1,"x":1,"y":0},
           "output_value": {"fill_color":2,"height":1,"id":"objda05df28ce22","orientation":90,"tag":"l5714","volume":2,"width":2,"x":0,"y":0}
         }
@@ -365,7 +365,7 @@
             [0, 2, 0],
             [0, 0, 0]
           ],
-          "implementation": "# The 4 color-1 cells, forming one piece\nobjb94b84628749 is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=4)",
+          "implementation": "objb94b84628749 is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=4)",
           "input_value": {"height":3,"id":"objb94b84628749","orientation":0,"tag":"l9100","volume":4,"width":3,"x":0,"y":0},
           "output_value": {"fill_color":2,"height":2,"id":"objb94b84628749","orientation":0,"tag":"l5714","volume":4,"width":3,"x":0,"y":0}
         }

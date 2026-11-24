@@ -1,12 +1,12 @@
 {
-  "class_declaration": "# Each object is one color-5 cell, one in every row. The output paints its whole row in a color picked by its column: 2 for the left column, 4 for the middle, 3 for the right\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, tag: str = 'l7544'):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.tag is tag",
+  "class_declaration": "class Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, tag: str = 'l7544'):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.tag is tag",
   "declarations": [
-    "# Each cell becomes l3058, a horizontal bar\n$Obj.tag is l3058",
-    "# A horizontal bar lies at 90\n$Obj.orientation is 90",
-    "# Its input column picks the bar color: 2 left, 4 middle, 3 right\n$Obj.fill_color is [2, 4, 3][$Obj.x@first]",
-    "# The bar spans the full width of the grid\n$Obj.width is canvas_width",
-    "# The bar starts at the left edge\n$Obj.x is 0",
-    "# Every cell of the bar is filled\n$Obj.volume is $Obj.width * $Obj.height"
+    "$Obj.tag is l3058",
+    "$Obj.orientation is 90",
+    "$Obj.fill_color is [2, 4, 3][$Obj.x@first]",
+    "$Obj.width is canvas_width",
+    "$Obj.x is 0",
+    "$Obj.volume is $Obj.width * $Obj.height"
   ],
   "output_canvas": "EXACT",
   "dataset": [
@@ -34,7 +34,7 @@
             [0, 0, 0],
             [0, 0, 0]
           ],
-          "implementation": "# Single color-5 cell in the right column\nobja98bf6900c1c is Obj(x=2, y=0, width=1, height=1, orientation=0, volume=1)",
+          "implementation": "obja98bf6900c1c is Obj(x=2, y=0, width=1, height=1, orientation=0, volume=1)",
           "input_value": {"height":1,"id":"obja98bf6900c1c","orientation":0,"tag":"l7544","volume":1,"width":1,"x":2,"y":0},
           "output_value": {"fill_color":3,"height":1,"id":"obja98bf6900c1c","orientation":90,"tag":"l3058","volume":3,"width":3,"x":0,"y":0}
         },
@@ -50,7 +50,7 @@
             [4, 4, 4],
             [0, 0, 0]
           ],
-          "implementation": "# Single color-5 cell in the middle column\nobj9ab2c883b000 is Obj(x=1, y=1, width=1, height=1, orientation=0, volume=1)",
+          "implementation": "obj9ab2c883b000 is Obj(x=1, y=1, width=1, height=1, orientation=0, volume=1)",
           "input_value": {"height":1,"id":"obj9ab2c883b000","orientation":0,"tag":"l7544","volume":1,"width":1,"x":1,"y":1},
           "output_value": {"fill_color":4,"height":1,"id":"obj9ab2c883b000","orientation":90,"tag":"l3058","volume":3,"width":3,"x":0,"y":1}
         },
@@ -66,7 +66,7 @@
             [0, 0, 0],
             [2, 2, 2]
           ],
-          "implementation": "# Single color-5 cell in the left column\nobj6d8b02455a90 is Obj(x=0, y=2, width=1, height=1, orientation=0, volume=1)",
+          "implementation": "obj6d8b02455a90 is Obj(x=0, y=2, width=1, height=1, orientation=0, volume=1)",
           "input_value": {"height":1,"id":"obj6d8b02455a90","orientation":0,"tag":"l7544","volume":1,"width":1,"x":0,"y":2},
           "output_value": {"fill_color":2,"height":1,"id":"obj6d8b02455a90","orientation":90,"tag":"l3058","volume":3,"width":3,"x":0,"y":2}
         }
@@ -96,7 +96,7 @@
             [0, 0, 0],
             [0, 0, 0]
           ],
-          "implementation": "# Single color-5 cell in the right column\nobjcf7eaf55c47f is Obj(x=2, y=0, width=1, height=1, orientation=0, volume=1)",
+          "implementation": "objcf7eaf55c47f is Obj(x=2, y=0, width=1, height=1, orientation=0, volume=1)",
           "input_value": {"height":1,"id":"objcf7eaf55c47f","orientation":0,"tag":"l7544","volume":1,"width":1,"x":2,"y":0},
           "output_value": {"fill_color":3,"height":1,"id":"objcf7eaf55c47f","orientation":90,"tag":"l3058","volume":3,"width":3,"x":0,"y":0}
         },
@@ -112,7 +112,7 @@
             [3, 3, 3],
             [0, 0, 0]
           ],
-          "implementation": "# Single color-5 cell in the right column\nobj3f6ca29afbc2 is Obj(x=2, y=1, width=1, height=1, orientation=0, volume=1)",
+          "implementation": "obj3f6ca29afbc2 is Obj(x=2, y=1, width=1, height=1, orientation=0, volume=1)",
           "input_value": {"height":1,"id":"obj3f6ca29afbc2","orientation":0,"tag":"l7544","volume":1,"width":1,"x":2,"y":1},
           "output_value": {"fill_color":3,"height":1,"id":"obj3f6ca29afbc2","orientation":90,"tag":"l3058","volume":3,"width":3,"x":0,"y":1}
         },
@@ -128,7 +128,7 @@
             [0, 0, 0],
             [3, 3, 3]
           ],
-          "implementation": "# Single color-5 cell in the right column\nobjbd5858949c26 is Obj(x=2, y=2, width=1, height=1, orientation=0, volume=1)",
+          "implementation": "objbd5858949c26 is Obj(x=2, y=2, width=1, height=1, orientation=0, volume=1)",
           "input_value": {"height":1,"id":"objbd5858949c26","orientation":0,"tag":"l7544","volume":1,"width":1,"x":2,"y":2},
           "output_value": {"fill_color":3,"height":1,"id":"objbd5858949c26","orientation":90,"tag":"l3058","volume":3,"width":3,"x":0,"y":2}
         }
@@ -158,7 +158,7 @@
             [0, 0, 0],
             [0, 0, 0]
           ],
-          "implementation": "# Single color-5 cell in the left column\nobj2474c72b37ce is Obj(x=0, y=0, width=1, height=1, orientation=0, volume=1)",
+          "implementation": "obj2474c72b37ce is Obj(x=0, y=0, width=1, height=1, orientation=0, volume=1)",
           "input_value": {"height":1,"id":"obj2474c72b37ce","orientation":0,"tag":"l7544","volume":1,"width":1,"x":0,"y":0},
           "output_value": {"fill_color":2,"height":1,"id":"obj2474c72b37ce","orientation":90,"tag":"l3058","volume":3,"width":3,"x":0,"y":0}
         },
@@ -174,7 +174,7 @@
             [4, 4, 4],
             [0, 0, 0]
           ],
-          "implementation": "# Single color-5 cell in the middle column\nobjaed8e33db4c8 is Obj(x=1, y=1, width=1, height=1, orientation=0, volume=1)",
+          "implementation": "objaed8e33db4c8 is Obj(x=1, y=1, width=1, height=1, orientation=0, volume=1)",
           "input_value": {"height":1,"id":"objaed8e33db4c8","orientation":0,"tag":"l7544","volume":1,"width":1,"x":1,"y":1},
           "output_value": {"fill_color":4,"height":1,"id":"objaed8e33db4c8","orientation":90,"tag":"l3058","volume":3,"width":3,"x":0,"y":1}
         },
@@ -190,7 +190,7 @@
             [0, 0, 0],
             [2, 2, 2]
           ],
-          "implementation": "# Single color-5 cell in the left column\nobjb0a0c5cdd8e5 is Obj(x=0, y=2, width=1, height=1, orientation=0, volume=1)",
+          "implementation": "objb0a0c5cdd8e5 is Obj(x=0, y=2, width=1, height=1, orientation=0, volume=1)",
           "input_value": {"height":1,"id":"objb0a0c5cdd8e5","orientation":0,"tag":"l7544","volume":1,"width":1,"x":0,"y":2},
           "output_value": {"fill_color":2,"height":1,"id":"objb0a0c5cdd8e5","orientation":90,"tag":"l3058","volume":3,"width":3,"x":0,"y":2}
         }
@@ -220,7 +220,7 @@
             [0, 0, 0],
             [0, 0, 0]
           ],
-          "implementation": "# Single color-5 cell in the middle column\nobj841ba2992b5b is Obj(x=1, y=0, width=1, height=1, orientation=0, volume=1)",
+          "implementation": "obj841ba2992b5b is Obj(x=1, y=0, width=1, height=1, orientation=0, volume=1)",
           "input_value": {"height":1,"id":"obj841ba2992b5b","orientation":0,"tag":"l7544","volume":1,"width":1,"x":1,"y":0},
           "output_value": {"fill_color":4,"height":1,"id":"obj841ba2992b5b","orientation":90,"tag":"l3058","volume":3,"width":3,"x":0,"y":0}
         },
@@ -236,7 +236,7 @@
             [3, 3, 3],
             [0, 0, 0]
           ],
-          "implementation": "# Single color-5 cell in the right column\nobjd02c45de0173 is Obj(x=2, y=1, width=1, height=1, orientation=0, volume=1)",
+          "implementation": "objd02c45de0173 is Obj(x=2, y=1, width=1, height=1, orientation=0, volume=1)",
           "input_value": {"height":1,"id":"objd02c45de0173","orientation":0,"tag":"l7544","volume":1,"width":1,"x":2,"y":1},
           "output_value": {"fill_color":3,"height":1,"id":"objd02c45de0173","orientation":90,"tag":"l3058","volume":3,"width":3,"x":0,"y":1}
         },
@@ -252,7 +252,7 @@
             [0, 0, 0],
             [4, 4, 4]
           ],
-          "implementation": "# Single color-5 cell in the middle column\nobjc7fe68b94a5b is Obj(x=1, y=2, width=1, height=1, orientation=0, volume=1)",
+          "implementation": "objc7fe68b94a5b is Obj(x=1, y=2, width=1, height=1, orientation=0, volume=1)",
           "input_value": {"height":1,"id":"objc7fe68b94a5b","orientation":0,"tag":"l7544","volume":1,"width":1,"x":1,"y":2},
           "output_value": {"fill_color":4,"height":1,"id":"objc7fe68b94a5b","orientation":90,"tag":"l3058","volume":3,"width":3,"x":0,"y":2}
         }
@@ -282,7 +282,7 @@
             [0, 0, 0],
             [0, 0, 0]
           ],
-          "implementation": "# Single color-5 cell in the right column\nobj1bcc31ba8d87 is Obj(x=2, y=0, width=1, height=1, orientation=0, volume=1)",
+          "implementation": "obj1bcc31ba8d87 is Obj(x=2, y=0, width=1, height=1, orientation=0, volume=1)",
           "input_value": {"height":1,"id":"obj1bcc31ba8d87","orientation":0,"tag":"l7544","volume":1,"width":1,"x":2,"y":0},
           "output_value": {"fill_color":3,"height":1,"id":"obj1bcc31ba8d87","orientation":90,"tag":"l3058","volume":3,"width":3,"x":0,"y":0}
         },
@@ -298,7 +298,7 @@
             [2, 2, 2],
             [0, 0, 0]
           ],
-          "implementation": "# Single color-5 cell in the left column\nobje9e3160f1271 is Obj(x=0, y=1, width=1, height=1, orientation=0, volume=1)",
+          "implementation": "obje9e3160f1271 is Obj(x=0, y=1, width=1, height=1, orientation=0, volume=1)",
           "input_value": {"height":1,"id":"obje9e3160f1271","orientation":0,"tag":"l7544","volume":1,"width":1,"x":0,"y":1},
           "output_value": {"fill_color":2,"height":1,"id":"obje9e3160f1271","orientation":90,"tag":"l3058","volume":3,"width":3,"x":0,"y":1}
         },
@@ -314,7 +314,7 @@
             [0, 0, 0],
             [4, 4, 4]
           ],
-          "implementation": "# Single color-5 cell in the middle column\nobj0695f02efe73 is Obj(x=1, y=2, width=1, height=1, orientation=0, volume=1)",
+          "implementation": "obj0695f02efe73 is Obj(x=1, y=2, width=1, height=1, orientation=0, volume=1)",
           "input_value": {"height":1,"id":"obj0695f02efe73","orientation":0,"tag":"l7544","volume":1,"width":1,"x":1,"y":2},
           "output_value": {"fill_color":4,"height":1,"id":"obj0695f02efe73","orientation":90,"tag":"l3058","volume":3,"width":3,"x":0,"y":2}
         }

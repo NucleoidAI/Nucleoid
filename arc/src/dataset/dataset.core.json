@@ -1,7 +1,7 @@
 {
-  "class_declaration": "# Each object is one corner: 3 cells of a 2x2 box that meet at its vertex cell, pointing toward that vertex. An all-9 corner gains a color-4 marker one cell diagonally past its vertex\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, tag: str = 'l6747', vertex_color: int, vertical_segment_color: int, horizontal_segment_color: int):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.tag is tag\n    this.vertex_color is vertex_color\n    this.vertical_segment_color is vertical_segment_color\n    this.horizontal_segment_color is horizontal_segment_color",
+  "class_declaration": "class Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, tag: str = 'l6747', vertex_color: int, vertical_segment_color: int, horizontal_segment_color: int):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.tag is tag\n    this.vertex_color is vertex_color\n    this.vertical_segment_color is vertical_segment_color\n    this.horizontal_segment_color is horizontal_segment_color",
   "declarations": [
-    "# A corner whose 3 cells are all color 9 gains a color-4 marker one cell diagonally past its vertex\nif $Obj.vertex_color is 9 and $Obj.vertical_segment_color is 9 and $Obj.horizontal_segment_color is 9:\n    $Obj.tag is l6624\n    $Obj.marker_color is 4\n    $Obj.x is $Obj.x@first - 1 if $Obj.orientation > 180 else $Obj.x@first\n    $Obj.y is $Obj.y@first - 1 if $Obj.orientation < 90 or $Obj.orientation > 270 else $Obj.y@first\n    $Obj.width is $Obj.width@first + 1\n    $Obj.height is $Obj.height@first + 1\n    $Obj.volume is $Obj.volume@first + 1"
+    "if $Obj.vertex_color is 9 and $Obj.vertical_segment_color is 9 and $Obj.horizontal_segment_color is 9:\n    $Obj.tag is l6624\n    $Obj.marker_color is 4\n    $Obj.x is $Obj.x@first - 1 if $Obj.orientation > 180 else $Obj.x@first\n    $Obj.y is $Obj.y@first - 1 if $Obj.orientation < 90 or $Obj.orientation > 270 else $Obj.y@first\n    $Obj.width is $Obj.width@first + 1\n    $Obj.height is $Obj.height@first + 1\n    $Obj.volume is $Obj.volume@first + 1"
   ],
   "output_canvas": "EXACT",
   "dataset": [
@@ -49,7 +49,7 @@
             [0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "# Color-9 corner with its vertex at the bottom right\nobj7e96305711c2 is Obj(x=5, y=1, width=2, height=2, orientation=135, volume=3, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)",
+          "implementation": "obj7e96305711c2 is Obj(x=5, y=1, width=2, height=2, orientation=135, volume=3, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)",
           "input_value": {"height":2,"horizontal_segment_color":9,"id":"obj7e96305711c2","orientation":135,"tag":"l6747","vertex_color":9,"vertical_segment_color":9,"volume":3,"width":2,"x":5,"y":1},
           "output_value": {"height":3,"horizontal_segment_color":9,"id":"obj7e96305711c2","marker_color":4,"orientation":135,"tag":"l6624","vertex_color":9,"vertical_segment_color":9,"volume":4,"width":3,"x":5,"y":1}
         },
@@ -75,7 +75,7 @@
             [0, 0, 9, 9, 0, 0, 0, 0],
             [0, 4, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "# Color-9 corner with its vertex at the bottom left\nobj4a5e1d49d8a8 is Obj(x=2, y=5, width=2, height=2, orientation=225, volume=3, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)",
+          "implementation": "obj4a5e1d49d8a8 is Obj(x=2, y=5, width=2, height=2, orientation=225, volume=3, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)",
           "input_value": {"height":2,"horizontal_segment_color":9,"id":"obj4a5e1d49d8a8","orientation":225,"tag":"l6747","vertex_color":9,"vertical_segment_color":9,"volume":3,"width":2,"x":2,"y":5},
           "output_value": {"height":3,"horizontal_segment_color":9,"id":"obj4a5e1d49d8a8","marker_color":4,"orientation":225,"tag":"l6624","vertex_color":9,"vertical_segment_color":9,"volume":4,"width":3,"x":1,"y":5}
         }
@@ -125,7 +125,7 @@
             [0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "# Color-9 corner with its vertex at the bottom right\nobj4837a1872f63 is Obj(x=2, y=1, width=2, height=2, orientation=135, volume=3, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)",
+          "implementation": "obj4837a1872f63 is Obj(x=2, y=1, width=2, height=2, orientation=135, volume=3, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)",
           "input_value": {"height":2,"horizontal_segment_color":9,"id":"obj4837a1872f63","orientation":135,"tag":"l6747","vertex_color":9,"vertical_segment_color":9,"volume":3,"width":2,"x":2,"y":1},
           "output_value": {"height":3,"horizontal_segment_color":9,"id":"obj4837a1872f63","marker_color":4,"orientation":135,"tag":"l6624","vertex_color":9,"vertical_segment_color":9,"volume":4,"width":3,"x":2,"y":1}
         },
@@ -151,7 +151,7 @@
             [0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "# Color-9 corner with its vertex at the top right\nobj09c863f4a1f2 is Obj(x=5, y=2, width=2, height=2, orientation=45, volume=3, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)",
+          "implementation": "obj09c863f4a1f2 is Obj(x=5, y=2, width=2, height=2, orientation=45, volume=3, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)",
           "input_value": {"height":2,"horizontal_segment_color":9,"id":"obj09c863f4a1f2","orientation":45,"tag":"l6747","vertex_color":9,"vertical_segment_color":9,"volume":3,"width":2,"x":5,"y":2},
           "output_value": {"height":3,"horizontal_segment_color":9,"id":"obj09c863f4a1f2","marker_color":4,"orientation":45,"tag":"l6624","vertex_color":9,"vertical_segment_color":9,"volume":4,"width":3,"x":5,"y":1}
         },
@@ -177,7 +177,7 @@
             [0, 9, 9, 0, 0, 0, 0, 0],
             [4, 0, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "# Color-9 corner with its vertex at the bottom left\nobj2d9a28fe473f is Obj(x=1, y=5, width=2, height=2, orientation=225, volume=3, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)",
+          "implementation": "obj2d9a28fe473f is Obj(x=1, y=5, width=2, height=2, orientation=225, volume=3, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)",
           "input_value": {"height":2,"horizontal_segment_color":9,"id":"obj2d9a28fe473f","orientation":225,"tag":"l6747","vertex_color":9,"vertical_segment_color":9,"volume":3,"width":2,"x":1,"y":5},
           "output_value": {"height":3,"horizontal_segment_color":9,"id":"obj2d9a28fe473f","marker_color":4,"orientation":225,"tag":"l6624","vertex_color":9,"vertical_segment_color":9,"volume":4,"width":3,"x":0,"y":5}
         }
@@ -227,7 +227,7 @@
             [0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "# Color-9 corner with its vertex at the bottom left\nobje642e90734f5 is Obj(x=1, y=0, width=2, height=2, orientation=225, volume=3, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)",
+          "implementation": "obje642e90734f5 is Obj(x=1, y=0, width=2, height=2, orientation=225, volume=3, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)",
           "input_value": {"height":2,"horizontal_segment_color":9,"id":"obje642e90734f5","orientation":225,"tag":"l6747","vertex_color":9,"vertical_segment_color":9,"volume":3,"width":2,"x":1,"y":0},
           "output_value": {"height":3,"horizontal_segment_color":9,"id":"obje642e90734f5","marker_color":4,"orientation":225,"tag":"l6624","vertex_color":9,"vertical_segment_color":9,"volume":4,"width":3,"x":0,"y":0}
         },
@@ -253,7 +253,7 @@
             [0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "# Color-9 corner with its vertex at the top right\nobj2712ba28a6ea is Obj(x=5, y=1, width=2, height=2, orientation=45, volume=3, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)",
+          "implementation": "obj2712ba28a6ea is Obj(x=5, y=1, width=2, height=2, orientation=45, volume=3, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)",
           "input_value": {"height":2,"horizontal_segment_color":9,"id":"obj2712ba28a6ea","orientation":45,"tag":"l6747","vertex_color":9,"vertical_segment_color":9,"volume":3,"width":2,"x":5,"y":1},
           "output_value": {"height":3,"horizontal_segment_color":9,"id":"obj2712ba28a6ea","marker_color":4,"orientation":45,"tag":"l6624","vertex_color":9,"vertical_segment_color":9,"volume":4,"width":3,"x":5,"y":0}
         },
@@ -279,7 +279,7 @@
             [0, 9, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "# Color-9 corner with its vertex at the top left\nobjccce8d81e316 is Obj(x=1, y=5, width=2, height=2, orientation=315, volume=3, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)",
+          "implementation": "objccce8d81e316 is Obj(x=1, y=5, width=2, height=2, orientation=315, volume=3, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)",
           "input_value": {"height":2,"horizontal_segment_color":9,"id":"objccce8d81e316","orientation":315,"tag":"l6747","vertex_color":9,"vertical_segment_color":9,"volume":3,"width":2,"x":1,"y":5},
           "output_value": {"height":3,"horizontal_segment_color":9,"id":"objccce8d81e316","marker_color":4,"orientation":315,"tag":"l6624","vertex_color":9,"vertical_segment_color":9,"volume":4,"width":3,"x":0,"y":4}
         },
@@ -305,7 +305,7 @@
             [0, 0, 0, 0, 0, 0, 0, 4],
             [0, 0, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "# Color-9 corner with its vertex at the bottom right\nobj328ea79cc351 is Obj(x=5, y=4, width=2, height=2, orientation=135, volume=3, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)",
+          "implementation": "obj328ea79cc351 is Obj(x=5, y=4, width=2, height=2, orientation=135, volume=3, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)",
           "input_value": {"height":2,"horizontal_segment_color":9,"id":"obj328ea79cc351","orientation":135,"tag":"l6747","vertex_color":9,"vertical_segment_color":9,"volume":3,"width":2,"x":5,"y":4},
           "output_value": {"height":3,"horizontal_segment_color":9,"id":"obj328ea79cc351","marker_color":4,"orientation":135,"tag":"l6624","vertex_color":9,"vertical_segment_color":9,"volume":4,"width":3,"x":5,"y":4}
         }
@@ -351,7 +351,7 @@
             [0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "# Color-9 corner with its vertex at the bottom right\nobjb10dd4029d3e is Obj(x=3, y=1, width=2, height=2, orientation=135, volume=3, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)",
+          "implementation": "objb10dd4029d3e is Obj(x=3, y=1, width=2, height=2, orientation=135, volume=3, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)",
           "input_value": {"height":2,"horizontal_segment_color":9,"id":"objb10dd4029d3e","orientation":135,"tag":"l6747","vertex_color":9,"vertical_segment_color":9,"volume":3,"width":2,"x":3,"y":1},
           "output_value": {"height":3,"horizontal_segment_color":9,"id":"objb10dd4029d3e","marker_color":4,"orientation":135,"tag":"l6624","vertex_color":9,"vertical_segment_color":9,"volume":4,"width":3,"x":3,"y":1}
         }
@@ -397,7 +397,7 @@
             [0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "# Color-9 corner with its vertex at the top right\nobj1d3e297e70a8 is Obj(x=3, y=1, width=2, height=2, orientation=45, volume=3, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)",
+          "implementation": "obj1d3e297e70a8 is Obj(x=3, y=1, width=2, height=2, orientation=45, volume=3, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)",
           "input_value": {"height":2,"horizontal_segment_color":9,"id":"obj1d3e297e70a8","orientation":45,"tag":"l6747","vertex_color":9,"vertical_segment_color":9,"volume":3,"width":2,"x":3,"y":1},
           "output_value": {"height":3,"horizontal_segment_color":9,"id":"obj1d3e297e70a8","marker_color":4,"orientation":45,"tag":"l6624","vertex_color":9,"vertical_segment_color":9,"volume":4,"width":3,"x":3,"y":0}
         },
@@ -421,7 +421,7 @@
             [0, 9, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "# Color-9 corner with its vertex at the top left\nobj20499ff135c0 is Obj(x=1, y=4, width=2, height=2, orientation=315, volume=3, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)",
+          "implementation": "obj20499ff135c0 is Obj(x=1, y=4, width=2, height=2, orientation=315, volume=3, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)",
           "input_value": {"height":2,"horizontal_segment_color":9,"id":"obj20499ff135c0","orientation":315,"tag":"l6747","vertex_color":9,"vertical_segment_color":9,"volume":3,"width":2,"x":1,"y":4},
           "output_value": {"height":3,"horizontal_segment_color":9,"id":"obj20499ff135c0","marker_color":4,"orientation":315,"tag":"l6624","vertex_color":9,"vertical_segment_color":9,"volume":4,"width":3,"x":0,"y":3}
         }

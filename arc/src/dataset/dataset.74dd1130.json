@@ -1,7 +1,7 @@
 {
-  "class_declaration": "# Each object is the whole mosaic that fills the grid. The output flips it across its main diagonal, from top left to bottom right, so its rows become its columns\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, tag: str = 'l9100'):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.tag is tag",
+  "class_declaration": "class Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, tag: str = 'l9100'):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.tag is tag",
   "declarations": [
-    "# Each mosaic is mirrored across the line from the top-left cell of its input box to its bottom-right cell; the cells on that line stay in place\n$Obj.mirror_axis is {start: {x: $Obj.x@first, y: $Obj.y@first}, end: {x: $Obj.x@first + $Obj.width@first - 1, y: $Obj.y@first + $Obj.height@first - 1}}"
+    "$Obj.mirror_axis is {start: {x: $Obj.x@first, y: $Obj.y@first}, end: {x: $Obj.x@first + $Obj.width@first - 1, y: $Obj.y@first + $Obj.height@first - 1}}"
   ],
   "output_canvas": "EXACT",
   "dataset": [
@@ -29,7 +29,7 @@
             [2, 5, 2],
             [1, 1, 2]
           ],
-          "implementation": "# Whole-grid mosaic of colors 1, 2 and 5\nobj98ecd3af71f1 is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=9)",
+          "implementation": "obj98ecd3af71f1 is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=9)",
           "input_value": {"height":3,"id":"obj98ecd3af71f1","orientation":0,"tag":"l9100","volume":9,"width":3,"x":0,"y":0},
           "output_value": {"height":3,"id":"obj98ecd3af71f1","mirror_axis":{"end":{"x":2,"y":2},"start":{"x":0,"y":0}},"orientation":0,"tag":"l9100","volume":9,"width":3,"x":0,"y":0}
         }
@@ -59,7 +59,7 @@
             [2, 2, 5],
             [5, 2, 5]
           ],
-          "implementation": "# Whole-grid mosaic of colors 2, 5 and 6\nobjffef4308101e is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=9)",
+          "implementation": "objffef4308101e is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=9)",
           "input_value": {"height":3,"id":"objffef4308101e","orientation":0,"tag":"l9100","volume":9,"width":3,"x":0,"y":0},
           "output_value": {"height":3,"id":"objffef4308101e","mirror_axis":{"end":{"x":2,"y":2},"start":{"x":0,"y":0}},"orientation":0,"tag":"l9100","volume":9,"width":3,"x":0,"y":0}
         }
@@ -89,7 +89,7 @@
             [9, 5, 8],
             [5, 8, 9]
           ],
-          "implementation": "# Whole-grid mosaic of colors 5, 8 and 9\nobjb5bc2fe94345 is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=9)",
+          "implementation": "objb5bc2fe94345 is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=9)",
           "input_value": {"height":3,"id":"objb5bc2fe94345","orientation":0,"tag":"l9100","volume":9,"width":3,"x":0,"y":0},
           "output_value": {"height":3,"id":"objb5bc2fe94345","mirror_axis":{"end":{"x":2,"y":2},"start":{"x":0,"y":0}},"orientation":0,"tag":"l9100","volume":9,"width":3,"x":0,"y":0}
         }
@@ -119,7 +119,7 @@
             [6, 1, 6],
             [6, 1, 2]
           ],
-          "implementation": "# Whole-grid mosaic of colors 1, 2 and 6\nobjf024b87c2f1b is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=9)",
+          "implementation": "objf024b87c2f1b is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=9)",
           "input_value": {"height":3,"id":"objf024b87c2f1b","orientation":0,"tag":"l9100","volume":9,"width":3,"x":0,"y":0},
           "output_value": {"height":3,"id":"objf024b87c2f1b","mirror_axis":{"end":{"x":2,"y":2},"start":{"x":0,"y":0}},"orientation":0,"tag":"l9100","volume":9,"width":3,"x":0,"y":0}
         }
@@ -149,7 +149,7 @@
             [3, 4, 3],
             [4, 4, 4]
           ],
-          "implementation": "# Whole-grid mosaic of colors 3, 4 and 9\nobj661249916bd0 is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=9)",
+          "implementation": "obj661249916bd0 is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=9)",
           "input_value": {"height":3,"id":"obj661249916bd0","orientation":0,"tag":"l9100","volume":9,"width":3,"x":0,"y":0},
           "output_value": {"height":3,"id":"obj661249916bd0","mirror_axis":{"end":{"x":2,"y":2},"start":{"x":0,"y":0}},"orientation":0,"tag":"l9100","volume":9,"width":3,"x":0,"y":0}
         }

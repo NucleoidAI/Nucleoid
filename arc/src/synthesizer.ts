@@ -5,9 +5,9 @@ import * as nucleoid from "./lib/nucleoid.ts";
 import * as milestone from "./lib/milestone.ts";
 
 const SYNTHESIZING_ROUTINE = [
-  { x: 1, y: 0, rotation: 90 },
-  { x: 1, y: 1, rotation: 180 },
-  { x: 0, y: 1, rotation: 270 },
+  { x: 1, y: 1, rotation: 90 },
+  // { x: 1, y: 1, rotation: 180 },
+  // { x: 0, y: 1, rotation: 270 },
 ];
 
 async function synthesize({ train }) {

@@ -1,13 +1,13 @@
 {
-  "class_declaration": "# Each object is the one shape in the grid, inside a 3x3 box. The output shows the shape twice side by side, cropped to the two copies\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, tag: str = 'l9100', color: int):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.tag is tag\n    this.color is color",
+  "class_declaration": "class Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, tag: str = 'l9100', color: int):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.tag is tag\n    this.color is color",
   "declarations": [
-    "# Each shape becomes l4305, a shape repeated side by side\n$Obj.tag is l4305",
-    "# The output holds 2 copies\n$Obj.repeat_count is 2",
-    "# The second copy sits right of the first\n$Obj.repeat_direction is right",
-    "# The two copies together are twice its input width\n$Obj.width is $Obj.width@first * $Obj.repeat_count",
-    "# The cropped output starts at the left edge of the copies\n$Obj.x is 0",
-    "# The cropped output starts at the top edge of the copies\n$Obj.y is 0",
-    "# Both copies count their cells: twice its input cells\n$Obj.volume is $Obj.volume@first * $Obj.repeat_count"
+    "$Obj.tag is l4305",
+    "$Obj.repeat_count is 2",
+    "$Obj.repeat_direction is right",
+    "$Obj.width is $Obj.width@first * $Obj.repeat_count",
+    "$Obj.x is 0",
+    "$Obj.y is 0",
+    "$Obj.volume is $Obj.volume@first * $Obj.repeat_count"
   ],
   "output_canvas": "FIT",
   "dataset": [
@@ -45,7 +45,7 @@
             [0, 8, 0, 0, 8, 0],
             [8, 8, 8, 8, 8, 8]
           ],
-          "implementation": "# Color-8 shape in a 3x3 box, the only object in the grid\nobj9b9fe2a02df1 is Obj(x=1, y=1, width=3, height=3, orientation=0, volume=6, color=8)",
+          "implementation": "obj9b9fe2a02df1 is Obj(x=1, y=1, width=3, height=3, orientation=0, volume=6, color=8)",
           "input_value": {"color":8,"height":3,"id":"obj9b9fe2a02df1","orientation":0,"tag":"l9100","volume":6,"width":3,"x":1,"y":1},
           "output_value": {"color":8,"height":3,"id":"obj9b9fe2a02df1","orientation":0,"repeat_count":2,"repeat_direction":"right","tag":"l4305","volume":12,"width":6,"x":0,"y":0}
         }
@@ -85,7 +85,7 @@
             [2, 2, 2, 2, 2, 2],
             [2, 2, 0, 2, 2, 0]
           ],
-          "implementation": "# Color-2 shape in a 3x3 box, the only object in the grid\nobje0404a753c87 is Obj(x=2, y=5, width=3, height=3, orientation=0, volume=6, color=2)",
+          "implementation": "obje0404a753c87 is Obj(x=2, y=5, width=3, height=3, orientation=0, volume=6, color=2)",
           "input_value": {"color":2,"height":3,"id":"obje0404a753c87","orientation":0,"tag":"l9100","volume":6,"width":3,"x":2,"y":5},
           "output_value": {"color":2,"height":3,"id":"obje0404a753c87","orientation":0,"repeat_count":2,"repeat_direction":"right","tag":"l4305","volume":12,"width":6,"x":0,"y":0}
         }
@@ -125,7 +125,7 @@
             [1, 0, 0, 1, 0, 0],
             [0, 1, 0, 0, 1, 0]
           ],
-          "implementation": "# Color-1 shape in a 3x3 box, the only object in the grid\nobjb063b1a80b04 is Obj(x=4, y=1, width=3, height=3, orientation=0, volume=4, color=1)",
+          "implementation": "objb063b1a80b04 is Obj(x=4, y=1, width=3, height=3, orientation=0, volume=4, color=1)",
           "input_value": {"color":1,"height":3,"id":"objb063b1a80b04","orientation":0,"tag":"l9100","volume":4,"width":3,"x":4,"y":1},
           "output_value": {"color":1,"height":3,"id":"objb063b1a80b04","orientation":0,"repeat_count":2,"repeat_direction":"right","tag":"l4305","volume":8,"width":6,"x":0,"y":0}
         }
@@ -165,7 +165,7 @@
             [3, 3, 3, 3, 3, 3],
             [3, 0, 0, 3, 0, 0]
           ],
-          "implementation": "# Color-3 shape in a 3x3 box, the only object in the grid\nobj4b7b41624747 is Obj(x=1, y=4, width=3, height=3, orientation=0, volume=5, color=3)",
+          "implementation": "obj4b7b41624747 is Obj(x=1, y=4, width=3, height=3, orientation=0, volume=5, color=3)",
           "input_value": {"color":3,"height":3,"id":"obj4b7b41624747","orientation":0,"tag":"l9100","volume":5,"width":3,"x":1,"y":4},
           "output_value": {"color":3,"height":3,"id":"obj4b7b41624747","orientation":0,"repeat_count":2,"repeat_direction":"right","tag":"l4305","volume":10,"width":6,"x":0,"y":0}
         }

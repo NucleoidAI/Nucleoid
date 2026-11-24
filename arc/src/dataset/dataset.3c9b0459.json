@@ -1,7 +1,7 @@
 {
-  "class_declaration": "# Each object is the whole mosaic that fills the grid. The output turns it a half turn, 180 degrees\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, tag: str = 'l9100'):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.tag is tag",
+  "class_declaration": "class Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, tag: str = 'l9100'):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.tag is tag",
   "declarations": [
-    "# Each mosaic turns 180 degrees from its input orientation; its cells turn with it, and its box stays in place\n$Obj.orientation is ($Obj.orientation@first + 180) % 360"
+    "$Obj.orientation is ($Obj.orientation@first + 180) % 360"
   ],
   "output_canvas": "EXACT",
   "dataset": [
@@ -29,7 +29,7 @@
             [2, 1, 2],
             [1, 2, 2]
           ],
-          "implementation": "# Whole-grid mosaic of colors 1, 2 and 8\nobjad2abfd1734f is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=9)",
+          "implementation": "objad2abfd1734f is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=9)",
           "input_value": {"height":3,"id":"objad2abfd1734f","orientation":0,"tag":"l9100","volume":9,"width":3,"x":0,"y":0},
           "output_value": {"height":3,"id":"objad2abfd1734f","orientation":180,"tag":"l9100","volume":9,"width":3,"x":0,"y":0}
         }
@@ -59,7 +59,7 @@
             [4, 4, 2],
             [4, 2, 9]
           ],
-          "implementation": "# Whole-grid mosaic of colors 2, 4 and 9\nobj67fe33c11cd0 is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=9)",
+          "implementation": "obj67fe33c11cd0 is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=9)",
           "input_value": {"height":3,"id":"obj67fe33c11cd0","orientation":0,"tag":"l9100","volume":9,"width":3,"x":0,"y":0},
           "output_value": {"height":3,"id":"obj67fe33c11cd0","orientation":180,"tag":"l9100","volume":9,"width":3,"x":0,"y":0}
         }
@@ -89,7 +89,7 @@
             [8, 5, 5],
             [8, 8, 8]
           ],
-          "implementation": "# Whole-grid mosaic of colors 5 and 8\nobj6862d9b15c0c is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=9)",
+          "implementation": "obj6862d9b15c0c is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=9)",
           "input_value": {"height":3,"id":"obj6862d9b15c0c","orientation":0,"tag":"l9100","volume":9,"width":3,"x":0,"y":0},
           "output_value": {"height":3,"id":"obj6862d9b15c0c","orientation":180,"tag":"l9100","volume":9,"width":3,"x":0,"y":0}
         }
@@ -119,7 +119,7 @@
             [9, 9, 9],
             [9, 2, 3]
           ],
-          "implementation": "# Whole-grid mosaic of colors 2, 3 and 9\nobj176130d1ca05 is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=9)",
+          "implementation": "obj176130d1ca05 is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=9)",
           "input_value": {"height":3,"id":"obj176130d1ca05","orientation":0,"tag":"l9100","volume":9,"width":3,"x":0,"y":0},
           "output_value": {"height":3,"id":"obj176130d1ca05","orientation":180,"tag":"l9100","volume":9,"width":3,"x":0,"y":0}
         }
@@ -149,7 +149,7 @@
             [4, 6, 6],
             [4, 4, 6]
           ],
-          "implementation": "# Whole-grid mosaic of colors 4, 6 and 7\nobj661d3fe38fde is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=9)",
+          "implementation": "obj661d3fe38fde is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=9)",
           "input_value": {"height":3,"id":"obj661d3fe38fde","orientation":0,"tag":"l9100","volume":9,"width":3,"x":0,"y":0},
           "output_value": {"height":3,"id":"obj661d3fe38fde","orientation":180,"tag":"l9100","volume":9,"width":3,"x":0,"y":0}
         }

@@ -1,11 +1,11 @@
 {
-  "class_declaration": "# Each object is the whole mosaic that fills the grid. The output replaces it with a line of 5 whose direction depends on how many colors the mosaic has\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, tag: str = 'l9100', parts: list):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.tag is tag\n    this.parts is parts",
+  "class_declaration": "class Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, tag: str = 'l9100', parts: list):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.tag is tag\n    this.parts is parts",
   "declarations": [
-    "# Each mosaic becomes l6074, a straight line across the grid\n$Obj.tag is l6074",
-    "# The number of distinct colors picks the line: 1 color the top row at 90, 2 colors the diagonal falling to the right at 135, 3 colors the diagonal rising to the right at 45\n$Obj.orientation is {1: 90, 2: 135, 3: 45}[$Obj.parts.distinct().length]",
-    "# A top-row line, at 90, is one row tall\nif $Obj.orientation is 90:\n    $Obj.height is 1",
-    "# The line is drawn in color 5\n$Obj.fill_color is 5",
-    "# The line has one cell per column: 3 cells\n$Obj.volume is max of [$Obj.width, $Obj.height]"
+    "$Obj.tag is l6074",
+    "$Obj.orientation is {1: 90, 2: 135, 3: 45}[$Obj.parts.distinct().length]",
+    "if $Obj.orientation is 90:\n    $Obj.height is 1",
+    "$Obj.fill_color is 5",
+    "$Obj.volume is max of [$Obj.width, $Obj.height]"
   ],
   "output_canvas": "EXACT",
   "dataset": [
@@ -33,7 +33,7 @@
             [0, 5, 0],
             [0, 0, 5]
           ],
-          "implementation": "# Mosaic of 2 colors: 2 and 3\nobjf30b9a69fe75 is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=9, parts=[2, 2, 2, 3, 2, 3, 3, 3, 3])",
+          "implementation": "objf30b9a69fe75 is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=9, parts=[2, 2, 2, 3, 2, 3, 3, 3, 3])",
           "input_value": {"height":3,"id":"objf30b9a69fe75","orientation":0,"parts":[2,2,2,3,2,3,3,3,3],"tag":"l9100","volume":9,"width":3,"x":0,"y":0},
           "output_value": {"fill_color":5,"height":3,"id":"objf30b9a69fe75","orientation":135,"parts":[2,2,2,3,2,3,3,3,3],"tag":"l6074","volume":3,"width":3,"x":0,"y":0}
         }
@@ -63,7 +63,7 @@
             [0, 5, 0],
             [5, 0, 0]
           ],
-          "implementation": "# Mosaic of 3 colors: 2, 3 and 4\nobj9b3f65ec8bbe is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=9, parts=[3, 3, 3, 4, 2, 2, 4, 4, 2])",
+          "implementation": "obj9b3f65ec8bbe is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=9, parts=[3, 3, 3, 4, 2, 2, 4, 4, 2])",
           "input_value": {"height":3,"id":"obj9b3f65ec8bbe","orientation":0,"parts":[3,3,3,4,2,2,4,4,2],"tag":"l9100","volume":9,"width":3,"x":0,"y":0},
           "output_value": {"fill_color":5,"height":3,"id":"obj9b3f65ec8bbe","orientation":45,"parts":[3,3,3,4,2,2,4,4,2],"tag":"l6074","volume":3,"width":3,"x":0,"y":0}
         }
@@ -93,7 +93,7 @@
             [0, 0, 0],
             [0, 0, 0]
           ],
-          "implementation": "# Mosaic of a single color: 4\nobj23d15ee33476 is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=9, parts=[4, 4, 4, 4, 4, 4, 4, 4, 4])",
+          "implementation": "obj23d15ee33476 is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=9, parts=[4, 4, 4, 4, 4, 4, 4, 4, 4])",
           "input_value": {"height":3,"id":"obj23d15ee33476","orientation":0,"parts":[4,4,4,4,4,4,4,4,4],"tag":"l9100","volume":9,"width":3,"x":0,"y":0},
           "output_value": {"fill_color":5,"height":1,"id":"obj23d15ee33476","orientation":90,"parts":[4,4,4,4,4,4,4,4,4],"tag":"l6074","volume":3,"width":3,"x":0,"y":0}
         }
@@ -123,7 +123,7 @@
             [0, 0, 0],
             [0, 0, 0]
           ],
-          "implementation": "# Mosaic of a single color: 3\nobjb16c3542a556 is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=9, parts=[3, 3, 3, 3, 3, 3, 3, 3, 3])",
+          "implementation": "objb16c3542a556 is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=9, parts=[3, 3, 3, 3, 3, 3, 3, 3, 3])",
           "input_value": {"height":3,"id":"objb16c3542a556","orientation":0,"parts":[3,3,3,3,3,3,3,3,3],"tag":"l9100","volume":9,"width":3,"x":0,"y":0},
           "output_value": {"fill_color":5,"height":1,"id":"objb16c3542a556","orientation":90,"parts":[3,3,3,3,3,3,3,3,3],"tag":"l6074","volume":3,"width":3,"x":0,"y":0}
         }
@@ -153,7 +153,7 @@
             [0, 5, 0],
             [0, 0, 5]
           ],
-          "implementation": "# Mosaic of 2 colors: 3 and 4\nobjde2fe15d0cff is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=9, parts=[4, 4, 4, 4, 4, 4, 3, 3, 3])",
+          "implementation": "objde2fe15d0cff is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=9, parts=[4, 4, 4, 4, 4, 4, 3, 3, 3])",
           "input_value": {"height":3,"id":"objde2fe15d0cff","orientation":0,"parts":[4,4,4,4,4,4,3,3,3],"tag":"l9100","volume":9,"width":3,"x":0,"y":0},
           "output_value": {"fill_color":5,"height":3,"id":"objde2fe15d0cff","orientation":135,"parts":[4,4,4,4,4,4,3,3,3],"tag":"l6074","volume":3,"width":3,"x":0,"y":0}
         }
@@ -183,7 +183,7 @@
             [0, 5, 0],
             [5, 0, 0]
           ],
-          "implementation": "# Mosaic of 3 colors: 2, 3 and 4\nobj19a35427d914 is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=9, parts=[4, 4, 4, 2, 3, 2, 3, 2, 3])",
+          "implementation": "obj19a35427d914 is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=9, parts=[4, 4, 4, 2, 3, 2, 3, 2, 3])",
           "input_value": {"height":3,"id":"obj19a35427d914","orientation":0,"parts":[4,4,4,2,3,2,3,2,3],"tag":"l9100","volume":9,"width":3,"x":0,"y":0},
           "output_value": {"fill_color":5,"height":3,"id":"obj19a35427d914","orientation":45,"parts":[4,4,4,2,3,2,3,2,3],"tag":"l6074","volume":3,"width":3,"x":0,"y":0}
         }

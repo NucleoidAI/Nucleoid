@@ -1,9 +1,9 @@
 {
-  "class_declaration": "# Each object is the whole 3x3 block that fills the grid. The output sets its top-bottom mirror image below it\nclass Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, tag: str = 'l9100'):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.tag is tag",
+  "class_declaration": "class Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, tag: str = 'l9100'):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.tag is tag",
   "declarations": [
-    "# Each block becomes l7511, a shape over its mirror image\n$Obj.tag is l7511",
-    "# Twice its input height: the block, then its mirror image below\n$Obj.height is $Obj.height@first * 2",
-    "# The mirror image doubles its cells\n$Obj.volume is $Obj.volume@first * 2"
+    "$Obj.tag is l7511",
+    "$Obj.height is $Obj.height@first * 2",
+    "$Obj.volume is $Obj.volume@first * 2"
   ],
   "output_canvas": "EXACT",
   "dataset": [
@@ -37,7 +37,7 @@
             [9, 1, 4],
             [9, 1, 4]
           ],
-          "implementation": "# Whole-grid block of colors 1, 2, 4 and 9\nobj54b166493c46 is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=9)",
+          "implementation": "obj54b166493c46 is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=9)",
           "input_value": {"height":3,"id":"obj54b166493c46","orientation":0,"tag":"l9100","volume":9,"width":3,"x":0,"y":0},
           "output_value": {"height":6,"id":"obj54b166493c46","orientation":0,"tag":"l7511","volume":18,"width":3,"x":0,"y":0}
         }
@@ -73,7 +73,7 @@
             [7, 6, 7],
             [4, 8, 4]
           ],
-          "implementation": "# Whole-grid block of colors 4, 6, 7 and 8\nobj277b0edf4557 is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=9)",
+          "implementation": "obj277b0edf4557 is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=9)",
           "input_value": {"height":3,"id":"obj277b0edf4557","orientation":0,"tag":"l9100","volume":9,"width":3,"x":0,"y":0},
           "output_value": {"height":6,"id":"obj277b0edf4557","orientation":0,"tag":"l7511","volume":18,"width":3,"x":0,"y":0}
         }
@@ -109,7 +109,7 @@
             [9, 5, 5],
             [7, 7, 7]
           ],
-          "implementation": "# Whole-grid block of colors 1, 5, 7 and 9\nobj342ec195f31f is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=9)",
+          "implementation": "obj342ec195f31f is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=9)",
           "input_value": {"height":3,"id":"obj342ec195f31f","orientation":0,"tag":"l9100","volume":9,"width":3,"x":0,"y":0},
           "output_value": {"height":6,"id":"obj342ec195f31f","orientation":0,"tag":"l7511","volume":18,"width":3,"x":0,"y":0}
         }
@@ -145,7 +145,7 @@
             [2, 6, 9],
             [2, 6, 9]
           ],
-          "implementation": "# Whole-grid block of colors 2, 6 and 9\nobjaa6b82d62f4e is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=9)",
+          "implementation": "objaa6b82d62f4e is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=9)",
           "input_value": {"height":3,"id":"objaa6b82d62f4e","orientation":0,"tag":"l9100","volume":9,"width":3,"x":0,"y":0},
           "output_value": {"height":6,"id":"objaa6b82d62f4e","orientation":0,"tag":"l7511","volume":18,"width":3,"x":0,"y":0}
         }
@@ -181,7 +181,7 @@
             [8, 5, 2],
             [2, 9, 2]
           ],
-          "implementation": "# Whole-grid block of colors 2, 5, 8 and 9\nobj8c1478ec6c90 is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=9)",
+          "implementation": "obj8c1478ec6c90 is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=9)",
           "input_value": {"height":3,"id":"obj8c1478ec6c90","orientation":0,"tag":"l9100","volume":9,"width":3,"x":0,"y":0},
           "output_value": {"height":6,"id":"obj8c1478ec6c90","orientation":0,"tag":"l7511","volume":18,"width":3,"x":0,"y":0}
         }
