@@ -2786,6 +2786,14 @@ Full detail: [NUC 9](nuc-0009.md), [NUC 46](nuc-0046.md), [NUC 119](nuc-0119.md)
   See the [cotangent contract](../nucleoid.spec.md#reactive-cotangent),
   `Nucleoid preserves cotangent argument dependencies` in `tests/reference.md`,
   and the [direction example](examples.md#reactive-cotangent).
+- [NUC 138](nuc-0138.md) adds only native static `Math.sec(value)`, exactly
+  `1 / Math.cos(value)` in radians, preserving cosine rounding followed by
+  reciprocal rounding, not a pole shortcut. Both zero signs yield positive
+  `1`; omission gives NaN. The supplied top-level-Undefined gate, intrinsic
+  first-input conversion, eager extras, dependencies, deferral, shadowing and
+  rollback remain unchanged.
+  See the [secant contract](../nucleoid.spec.md#reactive-secant) and the
+  [argument-dependency case](#reactive-secant-argument-dependencies).
 - Accepted [NUC 56](nuc-0056.md) adds only static `Math.exp2(value)`, computing
   exactly the accepted `Math.pow(2, value)` host powf operation after intrinsic
   first-input conversion and the existing supplied-Undefined gate. The
@@ -5946,6 +5954,7 @@ Math.remap(start, end, targetStart, targetEnd, value) unclamped static remapping
 Math.toRadians(value)                   static division-first degree conversion (NUC 50 candidate)
 Math.exp2(value)                        static powf-based base-two power (Accepted NUC 56)
 Math.cot(value)                         static reciprocal of tangent in radians (NUC 100 candidate)
+Math.sec(value)                         static reciprocal of cosine in radians (NUC 138)
 Name[0]  Name["id"]  Name.find(...)    address an instance
 value[start:end]  value[-n:]           slice, negative counts from the end
 Name[start:end]  Name[:]  Name[-n:]    instance list range (NUC 61)
@@ -6045,6 +6054,41 @@ selection |> diff                     steps new or changed since the running blo
 ```
 
 ---
+
+## Reactive secant argument dependencies
+
+```
+angle = 0
+gate = 1
+ratio = Math.sec(angle, gate)
+assert(ratio, 1)
+angle = Math.PI
+assert(ratio, -1)
+gate = 2
+assert(ratio, -1)
+delete gate
+assert(ratio, undefined)
+gate = 3
+assert(ratio, -1)
+angle = 0
+assert(ratio, 1)
+ratio
+```
+
+- This is the complete `Nucleoid preserves secant argument dependencies`
+  case in `tests/reference.md`, without its title and return comments; its
+  explicit expected return is `1`. The specification's
+  [secant contract](../nucleoid.spec.md#reactive-secant) is authoritative.
+- Every argument evaluates once left to right, even after Undefined.
+  Extras retain strict errors, effects, reads and dependencies without numeric
+  conversion. Deleting the ignored `gate` defers the live call; restoring it
+  recovers the result.
+- Preserve native cosine followed by reciprocal rounding; no range
+  normalization, pole shortcut or accuracy/performance claim is added.
+  Literal-null coercion and live-null/parameter deferral stay distinct.
+- Native method value reads remain Undefined/non-callable, ordinary `.sec`
+  and `.Math` members and Math shadowing stay ordinary, and existing class
+  subscriptions, captured values, frames and rollback are unchanged.
 
 ## Copyright
 

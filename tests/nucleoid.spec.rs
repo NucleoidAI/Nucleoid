@@ -23079,6 +23079,41 @@ absent
 # return: false"#);
 }
 
+/// Nucleoid keeps secants reactive
+#[rustfmt::skip]
+#[test]
+fn keeps_secants_reactive() {
+    let mut run = runner();
+    run("angle = 0");
+    run("ratio = Math.sec(angle)");
+    assert_eq!(run("ratio"), 1);
+    run("angle = Math.PI");
+    assert_eq!(run("ratio"), -1);
+    run("angle = Math.PI / 3");
+    {
+        let actual = run("ratio");
+        let expected = run("(1 / Math.cos(angle))");
+        assert_eq!(actual, expected);
+    }
+    run("angle = -Math.PI / 3");
+    {
+        let actual = run("ratio");
+        let expected = run("(1 / Math.cos(angle))");
+        assert_eq!(actual, expected);
+    }
+    run("angle = Math.PI / 2");
+    {
+        let actual = run("ratio");
+        let expected = run("(1 / Math.cos(angle))");
+        assert_eq!(actual, expected);
+    }
+    run("angle = 0");
+    assert_eq!(run("ratio"), 1);
+    run(r#"ratio
+
+# return: 1"#);
+}
+
 /// The committed tests must not drift from their generated JSONL export.
 #[rustfmt::skip]
 #[test]

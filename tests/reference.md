@@ -3109,4 +3109,23 @@ assert([urgent !in Tag, "late" !in Tag], [false, true])
 assert(color !in palette, color not in palette)
 unlisted
 # return: false
+---
+# Nucleoid preserves secant argument dependencies
+
+angle = 0
+gate = 1
+ratio = Math.sec(angle, gate)
+assert(ratio, 1)
+angle = Math.PI
+assert(ratio, -1)
+gate = 2
+assert(ratio, -1)
+delete gate
+assert(ratio, undefined)
+gate = 3
+assert(ratio, -1)
+angle = 0
+assert(ratio, 1)
+ratio
+# return: 1
 ```

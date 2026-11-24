@@ -29457,6 +29457,24 @@ tags = ["blue"]
 assert(untagged, true)
 absent
 # return: false
+---
+# Nucleoid keeps secants reactive
+
+angle = 0
+ratio = Math.sec(angle)
+assert(ratio, 1)
+angle = Math.PI
+assert(ratio, -1)
+angle = Math.PI / 3
+assert(ratio, 1 / Math.cos(angle))
+angle = -Math.PI / 3
+assert(ratio, 1 / Math.cos(angle))
+angle = Math.PI / 2
+assert(ratio, 1 / Math.cos(angle))
+angle = 0
+assert(ratio, 1)
+ratio
+# return: 1
 ```
 
 ## Floating-point absolute value alias
@@ -29478,3 +29496,33 @@ absent
   Native method value reads remain Undefined, not callable references.
 - No global aliases, additional receivers, other math names, flags,
   parser/lexer changes, public API changes or dependencies are introduced.
+
+## Reactive secant
+
+- NUC 138 adds only native static `Math.sec(value)`, with radians as input
+  and exactly the accepted `1 / Math.cos(value)` result.
+- After successful eager evaluation of every argument, the existing
+  any-supplied-top-level-Undefined gate returns Undefined before conversion.
+  Otherwise intrinsically convert only the first value with `Value::to_number`,
+  then compute exactly `1.0 / first.cos()`. Omission gives numeric NaN.
+- Preserve cosine rounding followed by reciprocal rounding: no normalization,
+  approximation, inferred pole infinity, rearrangement or shadowable helper.
+  Non-NaNs match the accepted composition by bits; NaNs match by classification.
+  Both zero signs yield positive `1`; finite extremes, subnormals and values
+  near `Math.PI / 2` follow the actual cosine, while infinite inputs give NaN.
+- Extras still evaluate exactly once left to right, including after Undefined,
+  with their effects, strict errors, reads and dependencies; they are not
+  numerically converted. Only top-level Undefined triggers the native gate.
+- Literal null retains numeric zero conversion. Inherited live-input and
+  parameter-null deferral, named functions, independent class rules, instance
+  subscriptions, deletion/recovery, frames, captured values and rollback stay
+  unchanged. Numeric conversion does not resolve shadowable `Number`.
+- State/local/receiver `Math` shadowing and ordinary `.Math` or `.sec` lookup
+  stay ordinary. Native `Math.sec` value reads remain Undefined/non-callable.
+  No aliases, global forms, non-native receiver methods or syntax are added;
+  list/population aggregates keep their existing closed method-name dispatch.
+- Formerly failing native `sec` calls gain numbers only after successful
+  argument evaluation without supplied Undefined. Already successful calls
+  with supplied Undefined retain Undefined. All other accepted behavior,
+  strict diagnostics, error positions and transaction effects remain unchanged;
+  `Math.toDegrees` remains unsupported.
