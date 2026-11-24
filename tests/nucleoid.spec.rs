@@ -22889,6 +22889,112 @@ assert(events.count, 0)
 assert(Shape.length, 0)"#);
 }
 
+/// Nucleoid tells two explanations apart with xor
+#[rustfmt::skip]
+#[test]
+fn tells_two_explanations_apart_with_xor() {
+    let mut run = runner();
+    run("price = 10");
+    run("quantity = 3");
+    run("rate = 0.2");
+    run("subtotal = price * quantity");
+    run("tax = subtotal * rate");
+    run("shipping = quantity * 2");
+    run("total = subtotal + tax");
+    run("freight = shipping + rate");
+    run("apart = total |> why |> xor(freight |> why)");
+    run("contrast = why freight |> xor(why total)");
+    assert_eq!(run("apart.map(s -> s.node)"), serde_json::json!(["total", "subtotal", "tax", "price", "freight", "shipping"]));
+    assert_eq!(run("contrast.map(s -> s.node)"), serde_json::json!(["freight", "shipping", "total", "subtotal", "tax", "price"]));
+    run("shipping = price + 1");
+    assert_eq!(run("apart.map(s -> s.node)"), serde_json::json!(["total", "subtotal", "tax", "quantity", "freight", "shipping"]));
+    assert_eq!(run("contrast.map(s -> s.node)"), serde_json::json!(["freight", "shipping", "total", "subtotal", "tax", "quantity"]));
+    run("quantity = 5");
+    assert_eq!(run("apart.map(s -> s.holds)"), serde_json::json!([60, 50, 10, 5, 11.2, 11]));
+}
+
+/// Nucleoid finds what a change of only one of two inputs reaches with xor
+#[rustfmt::skip]
+#[test]
+fn finds_what_a_change_of_only_one_of_two_inputs_reaches_with_xor() {
+    let mut run = runner();
+    run("price = 10");
+    run("quantity = 3");
+    run("rate = 0.2");
+    run("subtotal = price * quantity");
+    run("tax = subtotal * rate");
+    run("shipping = quantity * 2");
+    run("total = subtotal + tax");
+    run("freight = shipping + rate");
+    run("moved = price |> affects |> xor(rate |> affects)");
+    run("spread = affects quantity |> xor(affects price)");
+    assert_eq!(run("moved.map(s -> s.node)"), serde_json::json!(["subtotal", "freight"]));
+    assert_eq!(run("spread.map(s -> s.node)"), serde_json::json!(["shipping", "freight"]));
+    run("freight = shipping + rate * price");
+    assert_eq!(run("moved.map(s -> s.node)"), serde_json::json!(["subtotal"]));
+    assert_eq!(run("spread.map(s -> s.node)"), serde_json::json!(["shipping"]));
+    run("price = 20");
+    assert_eq!(run("moved.map(s -> s.holds)"), serde_json::json!([60]));
+    run(r#"moved.length
+
+# return: 1"#);
+}
+
+/// Nucleoid separates what two changes of each instance reach with xor
+#[rustfmt::skip]
+#[test]
+fn separates_what_two_changes_of_each_instance_reach_with_xor() {
+    let mut run = runner();
+    run(r#"class Part(cost, weight):
+    this.cost = cost
+    this.weight = weight"#);
+    run("$Part.price = $Part.cost * 2");
+    run("$Part.freight = $Part.weight * 3");
+    run("$Part.charge = $Part.price + $Part.freight");
+    run("$Part.split = $Part.cost |> affects |> xor($Part.weight |> affects)");
+    run("bolt = Part(4, 1)");
+    run("nut = Part(2, 5)");
+    assert_eq!(run("bolt.split.map(s -> s.node)"), serde_json::json!(["bolt.price", "bolt.freight"]));
+    assert_eq!(run("nut.split.map(s -> s.node)"), serde_json::json!(["nut.price", "nut.freight"]));
+    run("$Part.duty = $Part.weight * 0.1");
+    assert_eq!(run("nut.split.map(s -> s.node)"), serde_json::json!(["nut.price", "nut.freight", "nut.duty"]));
+    run("$Part.price = $Part.cost * 2 + $Part.weight");
+    assert_eq!(run("bolt.split.map(s -> s.node)"), serde_json::json!(["bolt.freight", "bolt.duty"]));
+    run("nut.weight = 10");
+    assert_eq!(run("nut.split.map(s -> s.holds)"), serde_json::json!([30, 1]));
+    run(r#"nut.split.length
+
+# return: 2"#);
+}
+
+/// Nucleoid restores symmetric differences after failed changes
+#[rustfmt::skip]
+#[test]
+fn restores_symmetric_differences_after_failed_changes() {
+    let mut run = runner();
+    run(r#"price = 10
+quantity = 3
+subtotal = price * quantity
+shipping = quantity * 2
+apart = why subtotal |> xor(why shipping)
+failure = ""
+try:
+    apart = why subtotal |> xor(1)
+catch error:
+    failure = error
+assert(failure, TypeError("Cannot explain 1"))
+assert(apart.map(s -> s.node), ["subtotal", "price", "shipping"])
+try:
+    shipping = price / 2
+    assert(apart.map(s -> s.node), ["subtotal", "quantity", "shipping"])
+    throw "UNDO"
+catch error:
+    assert(error, "UNDO")
+assert(apart.map(s -> s.node), ["subtotal", "price", "shipping"])
+quantity = 6
+assert(apart.map(s -> s.holds), [60, 10, 12])"#);
+}
+
 /// Nucleoid tests negated membership with Kotlin's !in
 #[rustfmt::skip]
 #[test]

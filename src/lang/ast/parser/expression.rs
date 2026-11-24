@@ -367,6 +367,13 @@ impl Parser {
                 });
             }
 
+            if name == "xor" && self.peek_at(1) == &Token::LeftParen {
+                return Ok(Expr::Xor {
+                    source: Box::new(source),
+                    other: self.selection_argument()?,
+                });
+            }
+
             return Err(Error::type_error(format!("{name} is not an operation")));
         }
 

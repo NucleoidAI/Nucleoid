@@ -39,6 +39,7 @@ pub(crate) enum Link<'a> {
     Path(&'a Expr),
     Combine(SetOperation, &'a Expr),
     Union(&'a Expr),
+    Xor(&'a Expr),
 }
 
 impl Link<'_> {
@@ -51,7 +52,10 @@ impl Link<'_> {
     }
 
     pub(crate) fn freezes_argument(self) -> bool {
-        matches!(self, Link::Depth(_) | Link::Combine(..) | Link::Union(_))
+        matches!(
+            self,
+            Link::Depth(_) | Link::Combine(..) | Link::Union(_) | Link::Xor(_)
+        )
     }
 
     fn operation(self) -> Option<&'static str> {
@@ -71,6 +75,7 @@ impl Link<'_> {
             Link::Path(_) => Some("path"),
             Link::Combine(operation, _) => Some(operation.as_str()),
             Link::Union(_) => Some("union"),
+            Link::Xor(_) => Some("xor"),
         }
     }
 }
@@ -99,6 +104,7 @@ pub(crate) fn split(expression: &Expr) -> Option<(Link<'_>, &Expr)> {
             other,
         } => Some((Link::Combine(*operation, other), source)),
         Expr::Union { source, other } => Some((Link::Union(other), source)),
+        Expr::Xor { source, other } => Some((Link::Xor(other), source)),
         _ => None,
     }
 }
@@ -134,6 +140,10 @@ impl Runtime {
                 },
                 Link::Union(other) => match self.other_selection(other, scope)? {
                     Some(other) => selection = selection.union(other),
+                    None => return Ok(None),
+                },
+                Link::Xor(other) => match self.other_selection(other, scope)? {
+                    Some(other) => selection = selection.xor(other),
                     None => return Ok(None),
                 },
                 Link::Depth(_) => {}
@@ -219,6 +229,10 @@ impl Runtime {
                 },
                 Link::Union(other) => match self.other_ranked(other, scope)? {
                     Some(other) => ranked.union(other),
+                    None => return Ok(None),
+                },
+                Link::Xor(other) => match self.other_ranked(other, scope)? {
+                    Some(other) => ranked.xor(other),
                     None => return Ok(None),
                 },
             };

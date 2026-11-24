@@ -4577,6 +4577,34 @@ heavy
   [root contract](../nucleoid.spec.md#unknown-constructor-arguments-as-properties)
   define. A vehicle built without a `color` label has none.
 
+## Symmetric difference reasoning selections
+
+**Xor lists what tells two diagnoses apart**
+
+```nuc
+temperature = 39
+cough = true
+white_cells = 12
+fever = temperature > 38
+flu = fever && cough
+infection = fever && white_cells > 11
+apart = why flu |> xor(why infection) |> stated
+assert(apart.map(step -> step.node), ["cough", "white_cells"])
+infection = fever && white_cells > 11 && cough
+[apart.map(step -> step.node), infection]
+# return: [["white_cells"],true]
+```
+
+- `why flu |> xor(why infection)` is what one diagnosis rests on and the
+  other does not: the flu's own steps, in their order, then the
+  infection's. The fever and the temperature behind both diagnoses are left
+  out, and `|> stated` keeps the findings that tell them apart, the cough
+  and the white cell count.
+- The selection follows the model: once the infection rule also reads the
+  cough, the cough supports both diagnoses and only the white cell count
+  still tells them apart. See [NUC 139](nuc-0139.md) and the
+  [root contract](../nucleoid.spec.md#symmetric-difference-reasoning-selections).
+
 ## Negated membership with !in
 
 **Negated membership keeps a support queue's open tickets live**

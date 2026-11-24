@@ -66,7 +66,8 @@ impl Runtime {
             | Expr::Depth { .. }
             | Expr::Path { .. }
             | Expr::Combine { .. }
-            | Expr::Union { .. } => self.freeze_pipeline(expression, scope),
+            | Expr::Union { .. }
+            | Expr::Xor { .. } => self.freeze_pipeline(expression, scope),
             other => Ok(other.clone()),
         }
     }
@@ -110,6 +111,10 @@ impl Runtime {
                     source: Box::new(frozen),
                     other: Box::new(self.freeze_selection(other, scope)?),
                 },
+                Link::Xor(other) => Expr::Xor {
+                    source: Box::new(frozen),
+                    other: Box::new(self.freeze_selection(other, scope)?),
+                },
             };
         }
         Ok(frozen)
@@ -122,7 +127,8 @@ impl Runtime {
             | Expr::Depth { .. }
             | Expr::Path { .. }
             | Expr::Combine { .. }
-            | Expr::Union { .. } => self.freeze(other, scope),
+            | Expr::Union { .. }
+            | Expr::Xor { .. } => self.freeze(other, scope),
             _ => Ok(other.clone()),
         }
     }

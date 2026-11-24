@@ -3049,6 +3049,35 @@ item.total
   labels are unchanged. See the
   [root contract](nucleoid.spec.md#unknown-constructor-arguments-as-properties).
 
+## Symmetric difference reasoning selections
+
+**Xor tells two alarms apart**
+
+```nuc
+smoke = 4
+heat = 60
+humidity = 70
+haze = smoke * 2
+fire = haze > 5 && heat > 50
+fog = haze > 5 && humidity > 60
+apart = why fire |> xor(why fog) |> stated
+assert(apart.map(step -> step.node), ["heat", "humidity"])
+fire = haze > 5 && heat > 50 && humidity < 90
+assert(apart.map(step -> step.node), ["heat"])
+```
+
+- [NUC 139](docs/nuc-0139.md) adds the reasoning stage `|> xor(OTHER)`, the
+  symmetric difference of two selections. `why fire |> xor(why fog)` keeps
+  the steps of the fire alarm's explanation whose node the fog alarm's does
+  not hold, then the steps of the fog alarm's explanation whose node the
+  fire alarm's does not hold. The haze and the smoke behind both alarms are
+  left out, so what remains tells the two alarms apart.
+- The result is still a selection, so `|> stated` narrows it to the facts,
+  the heat and the humidity, and it stays live: once the fire rule also
+  checks the humidity, the humidity stands behind both alarms and only the
+  heat sets the fire alarm apart. See the
+  [root contract](nucleoid.spec.md#symmetric-difference-reasoning-selections).
+
 ## Negated membership with !in
 
 **Kotlin's !in keeps an access rule live**

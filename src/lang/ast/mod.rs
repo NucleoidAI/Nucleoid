@@ -260,6 +260,10 @@ pub enum Expr {
         source: Box<Expr>,
         other: Box<Expr>,
     },
+    Xor {
+        source: Box<Expr>,
+        other: Box<Expr>,
+    },
     Model,
     Quantified {
         quantifier: Quantifier,

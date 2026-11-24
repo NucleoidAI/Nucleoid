@@ -188,6 +188,11 @@ impl Selection {
         self
     }
 
+    pub(crate) fn xor(self, other: Selection) -> Selection {
+        let kept = self.clone().combined(SetOperation::Except, &other);
+        kept.union(other.combined(SetOperation::Except, &self))
+    }
+
     fn members(&self) -> HashSet<&NodeKey> {
         self.steps.iter().map(|step| &step.node).collect()
     }
@@ -229,6 +234,13 @@ impl Ranked {
         self.selection.steps.extend(added.selection.steps);
         self.distances.extend(added.distances);
         self
+    }
+
+    pub(crate) fn xor(self, other: Ranked) -> Self {
+        let kept = self
+            .clone()
+            .combined(SetOperation::Except, &other.selection);
+        kept.union(other.combined(SetOperation::Except, &self.selection))
     }
 
     fn filtered(self, state: StepState) -> Self {

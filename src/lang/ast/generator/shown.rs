@@ -194,6 +194,7 @@ impl<'a> Shown<'a> {
             Link::Path(target) => self.stage(f, source, "path", target),
             Link::Combine(operation, other) => self.stage(f, source, operation.as_str(), other),
             Link::Union(other) => self.stage(f, source, "union", other),
+            Link::Xor(other) => self.stage(f, source, "xor", other),
         }
     }
 
@@ -320,7 +321,8 @@ impl fmt::Display for Shown<'_> {
             | Expr::Depth { .. }
             | Expr::Path { .. }
             | Expr::Combine { .. }
-            | Expr::Union { .. } => shown.link(f),
+            | Expr::Union { .. }
+            | Expr::Xor { .. } => shown.link(f),
             Expr::Model => f.write_str("model"),
             Expr::Quantified {
                 quantifier,

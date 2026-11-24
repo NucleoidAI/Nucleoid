@@ -214,6 +214,7 @@ fn groups_power_exponent(operand: &Expr) -> bool {
         | Expr::Path { .. }
         | Expr::Combine { .. }
         | Expr::Union { .. }
+        | Expr::Xor { .. }
         | Expr::Function(_) => true,
         _ => false,
     }

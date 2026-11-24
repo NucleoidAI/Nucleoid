@@ -5135,6 +5135,66 @@ facts.map(step => step.node)
   [union reasoning selections](../nucleoid.spec.md#union-reasoning-selections)
   section.
 
+### Symmetric difference selections
+
+```
+price = 10
+quantity = 3
+rate = 0.2
+subtotal = price * quantity
+tax = subtotal * rate
+shipping = quantity * 2
+apart = tax |> why |> xor(shipping |> why)
+facts = tax |> why |> xor(shipping |> why) |> stated
+assert(apart.map(step => step.node), ["tax", "subtotal", "rate", "price", "shipping"])
+assert(facts.map(step => step.node), ["rate", "price"])
+fee = 2
+shipping = quantity * 2 + fee
+facts.map(step => step.node)
+```
+
+- This is the complete `Nucleoid separates two explanations with xor`
+  program in `tests/reference.md`, without its title and expected-return
+  metadata; it returns `["rate","price","fee"]`.
+- [NUC 139](nuc-0139.md) adds the stage `selection |> xor(other)`, the
+  symmetric difference of two selections. It selects the steps of
+  `selection` whose node `other` does not select, in their order, followed
+  by the steps of `other` whose node `selection` does not select, in
+  `other`'s order, with their fields unchanged. So
+  `tax |> why |> xor(shipping |> why)` is what the tax rests on and the
+  shipping does not, then what the shipping rests on and the tax does not;
+  the quantity, which both rest on, is left out. It is exactly
+  `selection |> except(other) |> union(other |> except(selection))`, which
+  writes each selection twice.
+- `other` is written and evaluated as for `union`: a reference, `model`, a
+  prefix stage such as `why shipping` or a pipeline, evaluated in place each
+  time the stage applies, with steps compared by their node, whatever they
+  hold.
+- The result is a selection. `stated`, `derived`, `diff`, `intersect` and
+  `except` after it keep what they keep of each side, so
+  `tax |> why |> xor(shipping |> why) |> stated` is the facts that tell the
+  two values apart, and a later `why` or `affects` walks from every step.
+  Each step keeps the distance of the walk that selected it, so a later
+  `depth(n)` measures each side from its own walk, and the stage keeps the
+  direction of the selection's most recent walk, which a later `path` uses
+  for every step.
+- An `other` that is undefined, because a `depth` in it has a `null` limit,
+  makes the selection undefined, as it makes the accepted spelling. An
+  invalid `other` keeps the diagnostics of a pipeline source, such as
+  `TypeError("Cannot explain 1")`.
+- Only `|>` followed by `xor` and `(` is the stage; `xor` stays an ordinary
+  name everywhere else, and a bare `|> xor` keeps its parse-time
+  `TypeError("xor is not an operation")`. A local or parameter, variable,
+  function or class named `xor` shadows the stage, as bindings shadow the
+  other stages: the stage then raises `TypeError("xor is not an operation")`
+  before selecting its source.
+- The selection stays live through every observation of both selections,
+  including the steps each one leaves out. It renders as
+  `selection|>xor(other)`.
+- The authoritative contract is the
+  [symmetric difference reasoning selections](../nucleoid.spec.md#symmetric-difference-reasoning-selections)
+  section.
+
 ### Origins and outcomes of reasoning selections
 
 ```
@@ -5180,8 +5240,8 @@ fee = qty * 2
   change enters and one of the model's results.
 - The result is a selection: the kept steps keep their distances and the
   direction of the selection's most recent walk, so every stage applies to
-  it, and both stages may stand in an `intersect`, `except` or `union`
-  argument. A `path` target is a reference, so a `path` argument that ends
+  it, and both stages may stand in an `intersect`, `except`, `union` or
+  `xor` argument. A `path` target is a reference, so a `path` argument that ends
   with either stage raises `TypeError("Cannot explain <target>")`. A
   selection that a `depth(null)` makes undefined stays undefined.
 - Only `|>` followed by `origins` or `outcomes` is a stage; both names stay
@@ -5234,9 +5294,9 @@ facts
   `TypeError("number.map is not a function")`. An empty selection gives `[]`,
   and a selection that a `depth(null)` makes undefined gives undefined.
 - The stage ends the pipeline: a stage after it, or an `intersect`, `except`,
-  `union` or `path` argument that ends with it, has a list of names rather
-  than a selection and raises `TypeError("Cannot explain <source>")`, as it
-  does after the accepted spelling.
+  `union`, `xor` or `path` argument that ends with it, has a list of names
+  rather than a selection and raises `TypeError("Cannot explain <source>")`,
+  as it does after the accepted spelling.
 - Only `|>` followed by `nodes` is the stage; `nodes` stays an ordinary name
   everywhere else, and there is no prefix form. A local or parameter,
   variable, function or class named `nodes` shadows the stage, as bindings
@@ -5287,8 +5347,8 @@ price = 20
   selection gives `[]`, and a selection that a `depth(null)` makes undefined
   gives undefined.
 - The stage ends the pipeline, as `nodes` does: a stage after it, `nodes`
-  included, or an `intersect`, `except`, `union` or `path` argument that
-  ends with it, has a list of values rather than a selection and raises
+  included, or an `intersect`, `except`, `union`, `xor` or `path` argument
+  that ends with it, has a list of values rather than a selection and raises
   `TypeError("Cannot explain <source>")`, as it does after the accepted
   spelling.
 - Only `|>` followed by `holds` is the stage; `holds` stays an ordinary name
@@ -5349,8 +5409,8 @@ shipping = price / 2
   `(S |> edges).filter(edge => kept.includes(edge[0]))` keeps only the edges
   between the steps of `S`.
 - The stage ends the pipeline, as `nodes` and `holds` do: a stage after it,
-  or an `intersect`, `except`, `union` or `path` argument that ends with it,
-  has a list of pairs rather than a selection and raises
+  or an `intersect`, `except`, `union`, `xor` or `path` argument that ends
+  with it, has a list of pairs rather than a selection and raises
   `TypeError("Cannot explain <source>")`, as it does after the accepted
   spelling.
 - Only `|>` followed by `edges` is the stage; `edges` stays an ordinary name
@@ -5413,10 +5473,12 @@ c = b * 2
   the values of a selection's steps and, like `nodes`, returns a list, the
   [NUC 128](nuc-0128.md) candidate adds `origins` and `outcomes` stages,
   which keep the steps at the two ends of a selection and which NUC 11 does
-  not plan either, and the [NUC 133](nuc-0133.md) candidate adds a final
+  not plan either, the [NUC 133](nuc-0133.md) candidate adds a final
   `edges` stage, which lists the dependency edges of a selection's steps
-  and, like `nodes` and `holds`, returns a list. Other NUC 11 operations
-  remain proposals, not dependencies.
+  and, like `nodes` and `holds`, returns a list, and the
+  [NUC 139](nuc-0139.md) candidate adds a `xor(other)` stage, the symmetric
+  difference of two selections, which NUC 11 does not plan either. Other
+  NUC 11 operations remain proposals, not dependencies.
 
 ### Quantifiers
 
@@ -5946,6 +6008,10 @@ why a |> union(why b)                 what a or b rests on, each node once (NUC 
 affects a |> union(affects b)         what a change of a or of b reaches (NUC 120)
 selection |> union(other)             the steps, then other's steps whose node they lack (NUC 120)
 selection |> union(other) |> stated   the stated steps of either selection (NUC 120)
+why a |> xor(why b)                   what one of a and b rests on and the other does not (NUC 139)
+affects a |> xor(affects b)           what a change of exactly one of a and b reaches (NUC 139)
+selection |> xor(other)               steps whose node other lacks, then other's steps whose node they lack (NUC 139)
+selection |> xor(other) |> stated     the stated steps that tell two selections apart (NUC 139)
 reference |> affects |> origins       where a change of the reference enters the model (NUC 128)
 reference |> affects |> outcomes      where a change of the reference ends (NUC 128)
 model |> origins                      the model's sources, which rest on no node (NUC 128)

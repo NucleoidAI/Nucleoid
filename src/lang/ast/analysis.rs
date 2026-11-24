@@ -81,6 +81,7 @@ impl Expr {
             | Expr::Path { .. }
             | Expr::Combine { .. }
             | Expr::Union { .. }
+            | Expr::Xor { .. }
             | Expr::Model => true,
             Expr::Member { object, .. }
             | Expr::Index { object, .. }

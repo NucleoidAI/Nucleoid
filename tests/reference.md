@@ -3077,6 +3077,23 @@ assert(shape1, {"id": "shape1", "type": "SQUARE", "color": "RED"})
 shape1.color
 # return: "RED"
 ---
+# Nucleoid separates two explanations with xor
+
+price = 10
+quantity = 3
+rate = 0.2
+subtotal = price * quantity
+tax = subtotal * rate
+shipping = quantity * 2
+apart = tax |> why |> xor(shipping |> why)
+facts = tax |> why |> xor(shipping |> why) |> stated
+assert(apart.map(step => step.node), ["tax", "subtotal", "rate", "price", "shipping"])
+assert(facts.map(step => step.node), ["rate", "price"])
+fee = 2
+shipping = quantity * 2 + fee
+facts.map(step => step.node)
+# return: ["rate","price","fee"]
+---
 # Nucleoid negates membership tests with !in
 
 palette = ["red", "green"]
