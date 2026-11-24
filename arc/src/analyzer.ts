@@ -134,37 +134,3 @@ export async function value({ instance_name, train, input_matrix, instance }) {
   instance.implementation = implementation;
   instance.input_value = input_value;
 }
-
-export async function state(train) {
-  const objects = [];
-
-  for (const dataset of train.dataset) {
-    const implementations = dataset.instances.map(
-      ({ implementation }) => implementation
-    );
-
-    const canvas_width: number = dataset.input_matrix[0].length;
-    const canvas_height: number = dataset.input_matrix.length;
-    const obj_list = await nucleoid.run(
-      [
-        `canvas_width = ${canvas_width}`,
-        `canvas_height = ${canvas_height}`,
-        train.class_declaration,
-        ...train.declarations,
-        ...implementations,
-        "Obj[:]",
-      ].join("\n\n")
-    );
-
-    objects.push(...obj_list);
-
-    [...obj_list].forEach((instance) => {
-      const found_instance = dataset.instances.find(
-        ({ instance_name }) => instance.id === instance_name
-      );
-      found_instance.output_value = instance;
-    });
-  }
-
-  milestone.state({ phase: "analysis", objects: objects });
-}

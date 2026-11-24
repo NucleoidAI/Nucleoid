@@ -85,8 +85,10 @@ async function synthesize({ train }) {
         ({ implementation }) => implementation
       );
 
-      const canvas_width: number = dataset.input_matrix[0].length;
-      const canvas_height: number = dataset.input_matrix.length;
+      const canvas_width: number =
+        potential_instances[0].input_instance_matrix[0].length;
+      const canvas_height: number =
+        potential_instances[0].input_instance_matrix.length;
 
       const potential_objects = await nucleoid.run(
         [

@@ -134,11 +134,9 @@ async function state({
   class_declaration,
   declarations,
   input_matrix,
-  input_instances,
+  instances,
 }) {
-  const implementations = input_instances.map(
-    ({ implementation }) => implementation
-  );
+  const implementations = instances.map(({ implementation }) => implementation);
 
   const canvas_width: number = input_matrix[0].length;
   const canvas_height: number = input_matrix.length;
@@ -155,8 +153,8 @@ async function state({
 
   milestone.state({ phase: "visualization", objects });
 
-  [...objects].forEach((object) => {
-    const found_instance = input_instances.find(
+  objects.forEach((object) => {
+    const found_instance = instances.find(
       ({ instance_name }) => object.id === instance_name
     );
     found_instance.output_value = object;
