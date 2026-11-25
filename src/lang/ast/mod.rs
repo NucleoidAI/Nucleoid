@@ -50,6 +50,10 @@ pub enum Stmt {
         target: Expr,
         value: Expr,
     },
+    NullishValueAssign {
+        target: Expr,
+        value: Expr,
+    },
     Expression(Expr),
     If {
         condition: Expr,
@@ -57,6 +61,7 @@ pub enum Stmt {
         alternate: Option<Box<Stmt>>,
     },
     Block(Vec<Stmt>),
+    Defer(Vec<Stmt>),
     Class(ClassDecl),
     Function(Arc<Function>),
     For {

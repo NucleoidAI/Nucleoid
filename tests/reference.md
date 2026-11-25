@@ -3109,4 +3109,164 @@ assert([urgent !in Tag, "late" !in Tag], [false, true])
 assert(color !in palette, color not in palette)
 unlisted
 # return: false
+---
+# Nucleoid preserves secant argument dependencies
+
+angle = 0
+gate = 1
+ratio = Math.sec(angle, gate)
+assert(ratio, 1)
+angle = Math.PI
+assert(ratio, -1)
+gate = 2
+assert(ratio, -1)
+delete gate
+assert(ratio, undefined)
+gate = 3
+assert(ratio, -1)
+angle = 0
+assert(ratio, 1)
+ratio
+# return: 1
+---
+# Nucleoid preserves cosecant argument dependencies
+
+angle = Math.PI / 2
+gate = 1
+ratio = Math.csc(angle, gate)
+assert(ratio, 1)
+angle = -Math.PI / 2
+assert(ratio, -1)
+gate = 2
+assert(ratio, -1)
+delete gate
+assert(ratio, undefined)
+gate = 3
+assert(ratio, -1)
+angle = Math.PI / 2
+assert(ratio, 1)
+ratio
+# return: 1
+---
+# Nucleoid preserves sign copying argument dependencies
+
+magnitude = 3
+direction = -1
+gate = 1
+copied = Math.copySign(magnitude, direction, gate)
+assert(copied, -3)
+direction = 1
+assert(copied, 3)
+gate = 2
+assert(copied, 3)
+delete gate
+assert(copied, undefined)
+gate = 3
+assert(copied, 3)
+direction = -1
+assert(copied, -3)
+1
+# return: 1
+---
+# Nucleoid preserves squaring argument dependencies
+
+probe = {amplitude: 3, extra: 7}
+offset = 2
+squared = Math.square(probe.amplitude + offset, probe.extra)
+assert(squared, 25)
+probe.amplitude = -4
+assert(squared, 4)
+delete probe.extra
+assert(squared, undefined)
+probe.extra = 9
+assert(squared, 4)
+offset = 1
+assert(squared, 9)
+probe.extra = Number.NaN
+assert(squared, 9)
+1
+# return: 1
+---
+# Nucleoid keeps nullish assignment guards isolated
+
+paid = false
+stock = 4
+chosen = null
+if paid:
+    chosen ??:= stock
+paid = true
+assert(chosen, 4)
+stock = 9
+assert(chosen, 4)
+chosen = null
+assert(chosen, null)
+paid = false
+assert(chosen, null)
+paid = true
+assert(chosen, 9)
+stock = 12
+assert(chosen, 9)
+1
+# return: 1
+
+---
+
+# Nucleoid keeps reasoning input counts reactive
+
+source = 2
+offset = 3
+first = source + offset
+second = first * 2
+total = first + second
+impact = source |> affects |> indegrees
+assert(impact, [2, 1, 2])
+source = 5
+assert(impact, [2, 1, 2])
+second = source + offset + first
+assert(impact, [2, 3, 2])
+first = 10
+assert(impact, [3, 2])
+second = 20
+assert(impact, [])
+first = source
+assert(impact, [1, 2])
+1
+# return: 1
+---
+# Nucleoid preserves cubing argument dependencies
+
+probe = {input: 2, extra: 7}
+offset = 1
+observed = Math.cube(probe.input + offset, probe.extra)
+assert(observed, 27)
+probe.input = 3
+assert(observed, 64)
+delete probe.extra
+assert(observed, null)
+probe.extra = 0
+assert(observed, 64)
+offset = -2
+assert(observed, 1)
+probe.input = -1
+assert(observed, -27)
+1
+# return: 1
+---
+# Nucleoid unwinds deferred suites in reverse order
+
+history = []
+def unwind(value):
+    defer:
+        history.push(value * 10 + 1)
+    defer:
+        history.push(value * 10 + 2)
+    return value
+assert(unwind(0), 0)
+assert(history, [2, 1])
+assert(unwind(2), 2)
+assert(history, [2, 1, 22, 21])
+assert(unwind(-2), -2)
+assert(history, [2, 1, 22, 21, -18, -19])
+1
+# return: 1
 ```

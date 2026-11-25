@@ -525,6 +525,86 @@ fn inverse_lerp_missing_inputs_and_unconverted_extras_keep_the_supplied_undefine
 }
 
 #[test]
+fn square_matches_intrinsic_multiplication_for_every_value_kind() {
+    for value in values() {
+        let expected = binary(BinaryOp::Multiply, &value, &value).unwrap();
+        assert_smoothing_same(
+            &math("square", std::slice::from_ref(&value)).unwrap(),
+            &expected,
+        );
+    }
+}
+
+#[test]
+fn square_preserves_multiplication_bits_at_rounding_overflow_and_underflow_boundaries() {
+    let smallest_square_root = 0x1e60_0000_0000_0000_u64;
+    let overflowing_square_root = 0x5ff0_0000_0000_0000_u64;
+    for input in [
+        0.0,
+        -0.0,
+        f64::from_bits(1),
+        -f64::from_bits(1),
+        f64::MIN_POSITIVE,
+        -f64::MIN_POSITIVE,
+        f64::from_bits(smallest_square_root - 1),
+        f64::from_bits(smallest_square_root),
+        f64::from_bits(smallest_square_root + 1),
+        0.1,
+        -0.1,
+        f64::from_bits(1.0_f64.to_bits() - 1),
+        f64::from_bits(1.0_f64.to_bits() + 1),
+        f64::from_bits(overflowing_square_root - 1),
+        f64::from_bits(overflowing_square_root),
+        f64::from_bits(overflowing_square_root + 1),
+        f64::MAX,
+        f64::MIN,
+        f64::INFINITY,
+        f64::NEG_INFINITY,
+        f64::NAN,
+        f64::from_bits(0xfff8_0000_0000_0143),
+    ] {
+        let value = Value::Number(input);
+        let expected = binary(BinaryOp::Multiply, &value, &value).unwrap();
+        assert_smoothing_same(&math("square", &[value]).unwrap(), &expected);
+    }
+    let mut bits = 0x143a_2d75_1e90_b6cf_u64;
+    for _ in 0..4_096 {
+        bits = bits
+            .wrapping_mul(6_364_136_223_846_793_005)
+            .wrapping_add(1_442_695_040_888_963_407);
+        let value = Value::Number(f64::from_bits(bits));
+        let expected = binary(BinaryOp::Multiply, &value, &value).unwrap();
+        assert_smoothing_same(&math("square", &[value]).unwrap(), &expected);
+    }
+}
+
+#[test]
+fn square_omission_extras_and_unknown_names_keep_the_preconversion_undefined_gate() {
+    assert_smoothing_same(&math("square", &[]).unwrap(), &Value::Number(f64::NAN));
+    let inputs = values();
+    for value in &inputs {
+        let product = binary(BinaryOp::Multiply, value, value).unwrap();
+        for extra in &inputs {
+            let expected = if extra.is_undefined() {
+                &Value::Undefined
+            } else {
+                &product
+            };
+            let arguments = [value.clone(), extra.clone(), Value::Number(f64::NAN)];
+            assert_smoothing_same(&math("square", &arguments).unwrap(), expected);
+        }
+    }
+    for position in 0..7 {
+        let mut arguments = vec![Value::Number(3.0); 7];
+        arguments[position] = Value::Undefined;
+        for name in ["square", "unknown", "random"] {
+            assert_eq!(math(name, &arguments).unwrap(), Value::Undefined);
+        }
+    }
+    assert!(math_constant("square").is_none());
+}
+
+#[test]
 fn fract_matches_independent_floor_subtraction_for_every_value_kind() {
     for value in values() {
         let floor = math("floor", std::slice::from_ref(&value)).unwrap();

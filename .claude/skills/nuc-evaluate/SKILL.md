@@ -352,9 +352,7 @@ unstaged work. Baselines and reports remain in the session workspace.
 
 After recording the outcome, follow the
 [continuous-cycle rule](../nuc-proposal/SKILL.md#continue-with-the-next-nuc-caller-only)
-without requesting confirmation to record outcomes or continue, clearing
-build caches before the next cycle under the
-[disk-space policy](../../rules/disk-space.instructions.md). For uncertain
+without requesting confirmation to record outcomes or continue. For uncertain
 category additions, selections, updates, or assignments, workers return the
 question to the caller, who asks the user for confirmation under the proposal skill's
 [classification rule](../nuc-proposal/SKILL.md#classify-every-proposal).

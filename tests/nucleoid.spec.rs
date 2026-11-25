@@ -23079,6 +23079,236 @@ absent
 # return: false"#);
 }
 
+/// Nucleoid keeps secants reactive
+#[rustfmt::skip]
+#[test]
+fn keeps_secants_reactive() {
+    let mut run = runner();
+    run("angle = 0");
+    run("ratio = Math.sec(angle)");
+    assert_eq!(run("ratio"), 1);
+    run("angle = Math.PI");
+    assert_eq!(run("ratio"), -1);
+    run("angle = Math.PI / 3");
+    {
+        let actual = run("ratio");
+        let expected = run("(1 / Math.cos(angle))");
+        assert_eq!(actual, expected);
+    }
+    run("angle = -Math.PI / 3");
+    {
+        let actual = run("ratio");
+        let expected = run("(1 / Math.cos(angle))");
+        assert_eq!(actual, expected);
+    }
+    run("angle = Math.PI / 2");
+    {
+        let actual = run("ratio");
+        let expected = run("(1 / Math.cos(angle))");
+        assert_eq!(actual, expected);
+    }
+    run("angle = 0");
+    assert_eq!(run("ratio"), 1);
+    run(r#"ratio
+
+# return: 1"#);
+}
+
+/// Nucleoid keeps cosecants reactive
+#[rustfmt::skip]
+#[test]
+fn keeps_cosecants_reactive() {
+    let mut run = runner();
+    run("angle = Math.PI / 2");
+    run("ratio = Math.csc(angle)");
+    assert_eq!(run("ratio"), 1);
+    run("angle = -Math.PI / 2");
+    assert_eq!(run("ratio"), -1);
+    run("angle = Math.PI / 6");
+    {
+        let actual = run("ratio");
+        let expected = run("(1 / Math.sin(angle))");
+        assert_eq!(actual, expected);
+    }
+    run("angle = -Math.PI / 6");
+    {
+        let actual = run("ratio");
+        let expected = run("(1 / Math.sin(angle))");
+        assert_eq!(actual, expected);
+    }
+    run("angle = Math.PI");
+    {
+        let actual = run("ratio");
+        let expected = run("(1 / Math.sin(angle))");
+        assert_eq!(actual, expected);
+    }
+    run("angle = Math.PI / 2");
+    assert_eq!(run("ratio"), 1);
+    run(r#"ratio
+
+# return: 1"#);
+}
+
+/// Nucleoid keeps sign copying reactive
+#[rustfmt::skip]
+#[test]
+fn keeps_sign_copying_reactive() {
+    let mut run = runner();
+    run("magnitude = 3");
+    run("direction = -1");
+    run("copied = Math.copySign(magnitude, direction)");
+    assert_eq!(run("copied"), -3);
+    run("direction = 1");
+    assert_eq!(run("copied"), 3);
+    run("magnitude = -7");
+    assert_eq!(run("copied"), 7);
+    run("direction = -0");
+    assert_eq!(run("copied"), -7);
+    run("magnitude = 0");
+    {
+        let actual = run("1 / copied");
+        let expected = run("(Number.NEGATIVE_INFINITY)");
+        assert_eq!(actual, expected);
+    }
+    run("direction = 0");
+    {
+        let actual = run("1 / copied");
+        let expected = run("(Number.POSITIVE_INFINITY)");
+        assert_eq!(actual, expected);
+    }
+    run(r#"1
+
+# return: 1"#);
+}
+
+/// Nucleoid keeps squares reactive
+#[rustfmt::skip]
+#[test]
+fn keeps_squares_reactive() {
+    let mut run = runner();
+    run("sample = {amplitude: 3}");
+    run("offset = 2");
+    run("squared = Math.square(sample.amplitude + offset)");
+    assert_eq!(run("squared"), 25);
+    run("sample.amplitude = -4");
+    assert_eq!(run("squared"), 4);
+    run("offset = 1");
+    assert_eq!(run("squared"), 9);
+    run("sample.amplitude = 0");
+    assert_eq!(run("squared"), 1);
+    run("offset = -1");
+    assert_eq!(run("squared"), 1);
+    run("sample.amplitude = 3");
+    assert_eq!(run("squared"), 4);
+    run(r#"1
+
+# return: 1"#);
+}
+
+/// Nucleoid fills nullish values with one-shot assignments
+#[rustfmt::skip]
+#[test]
+fn fills_nullish_values_with_one_shot_assignments() {
+    let mut run = runner();
+    run("source = 5");
+    run("chosen = null");
+    run("chosen ??:= source");
+    assert_eq!(run("chosen"), 5);
+    run("source = 9");
+    assert_eq!(run("chosen"), 5);
+    run("chosen = 0");
+    run("chosen ??:= missing");
+    assert_eq!(run("chosen"), 0);
+    run("chosen = false");
+    run("chosen ??:= missing");
+    assert_eq!(run("chosen"), false);
+    run(r#"chosen = """#);
+    run("chosen ??:= missing");
+    assert_eq!(run("chosen"), "");
+    run("chosen = null");
+    run("chosen ??:= 99");
+    assert_eq!(run("chosen"), 99);
+    run(r#"1
+
+# return: 1"#);
+}
+
+/// Nucleoid counts direct inputs in reasoning selections
+#[rustfmt::skip]
+#[test]
+fn counts_direct_inputs_in_reasoning_selections() {
+    let mut run = runner();
+    run("price = 3");
+    run("quantity = 4");
+    run("subtotal = price * quantity");
+    run("tax = subtotal / 10");
+    run("total = subtotal + tax");
+    run("counts = total |> why |> indegrees");
+    assert_eq!(run("counts"), serde_json::json!([2, 2, 1, 0, 0]));
+    run("price = 5");
+    assert_eq!(run("counts"), serde_json::json!([2, 2, 1, 0, 0]));
+    run("tax = price * quantity");
+    assert_eq!(run("counts"), serde_json::json!([2, 2, 2, 0, 0]));
+    run("tax = 0");
+    assert_eq!(run("counts"), serde_json::json!([2, 2, 0, 0, 0]));
+    run("total = subtotal");
+    assert_eq!(run("counts"), serde_json::json!([1, 2, 0, 0]));
+    run("subtotal = price");
+    assert_eq!(run("counts"), serde_json::json!([1, 1, 0]));
+    run(r#"1
+
+# return: 1"#);
+}
+
+/// Nucleoid keeps cubes reactive
+#[rustfmt::skip]
+#[test]
+fn keeps_cubes_reactive() {
+    let mut run = runner();
+    run("sample = {amplitude: 3}");
+    run("offset = 2");
+    run("cubed = Math.cube(sample.amplitude + offset)");
+    assert_eq!(run("cubed"), 125);
+    run("sample.amplitude = -4");
+    assert_eq!(run("cubed"), -8);
+    run("offset = 1");
+    assert_eq!(run("cubed"), -27);
+    run("sample.amplitude = 0");
+    assert_eq!(run("cubed"), 1);
+    run("offset = -1");
+    assert_eq!(run("cubed"), -1);
+    run("sample.amplitude = 3");
+    assert_eq!(run("cubed"), 8);
+    run(r#"1
+
+# return: 1"#);
+}
+
+/// Nucleoid runs deferred suites on block exit
+#[rustfmt::skip]
+#[test]
+fn runs_deferred_suites_on_block_exit() {
+    let mut run = runner();
+    run("audit = []");
+    run(r#"def complete(value):
+    defer:
+        audit.push(value)
+    if value > 0:
+        return value * 2
+    if value < 0:
+        return -value
+    return 0"#);
+    assert_eq!(run("complete(3)"), 6);
+    assert_eq!(run("audit"), serde_json::json!([3]));
+    assert_eq!(run("complete(-4)"), 4);
+    assert_eq!(run("audit"), serde_json::json!([3, -4]));
+    assert_eq!(run("complete(0)"), 0);
+    assert_eq!(run("audit"), serde_json::json!([3, -4, 0]));
+    run(r#"1
+
+# return: 1"#);
+}
+
 /// The committed tests must not drift from their generated JSONL export.
 #[rustfmt::skip]
 #[test]

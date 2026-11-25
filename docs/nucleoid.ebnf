@@ -23,6 +23,10 @@
  * - Ordinary tokenization reads the longest token at each position. Only the
  *   rules of this contract supply INDENT, DEDENT, VERSION_INDEX, REGEX and
  *   EOF.
+ * - '??:=' is the existing COALESCE then VALUE_ASSIGN tokens, not a new
+ *   token. Ordinary inter-token whitespace/comments are permitted; logical
+ *   layout still applies. '??=' remains COALESCE then ASSIGN and keeps its
+ *   accepted error, never a nullish assignment.
  * - Where ordinary tokenization would read '/' or '/=', first read a
  *   C_COMMENT, then, in operand position, a REGEX. Strings, templates and
  *   '#' comments are read whole before that, so neither starts inside
@@ -68,7 +72,8 @@ program
     ::= separator* (statement separator*)* EOF
 
 /* parse_expression skips leading separators and ignores trailing tokens.
-   Its top level forms no membership test, as an interpolation's does not. */
+   Its top level forms no membership test, as an interpolation's does not.
+   Neither enables the nullishValueAssignment statement-head boundary. */
 expressionInput
     ::= separator* expression remainingTokens EOF
 
@@ -131,6 +136,7 @@ statement
       | classStmt
       | functionDecl
       | tryStmt
+      | deferStmt
       | PASS                              /* Stmt::Pass */
       | returnStmt
       | THROW expression                  /* Stmt::Throw */
@@ -139,6 +145,7 @@ statement
       | typeDeclaration
       | assertStmt
       | supposeStmt
+      | nullishValueAssignment
       | valueAssignment
       | isAssignment
       | predicateSentence
@@ -184,6 +191,16 @@ premise
 
 valueAssignment
     ::= path VALUE_ASSIGN expression      /* Stmt::ValueAssign */
+
+/* Only at the expression-statement head's own expression nesting level,
+   stop ordinary coalescing before the exact COALESCE VALUE_ASSIGN pair.
+   Validate the same bounded path as valueAssignment, with grouping erased.
+   The RHS is the ordinary value expression with its lexical receiver.
+   Nested expressions, return/header/default/argument positions, public
+   expressionInput and interpolation parsing keep their accepted behavior.
+   Parentheses may group a target, never make an assignment expression. */
+nullishValueAssignment
+    ::= path COALESCE VALUE_ASSIGN expression  /* Stmt::NullishValueAssign */
 
 /*
  * Is-assignment contract (NUC 93, NUC 94, NUC 95, NUC 96):
@@ -375,6 +392,23 @@ exceptClause
 finallyClause
     ::= NEWLINE* FINALLY suite
 
+/* DEFER is still an Identifier in the Rust token source. Only at a genuine
+   statement start (input start or after NEWLINE, SEMI, INDENT, DEDENT,
+   LBRACE or COLON) does DEFER COLON followed immediately by the real layout
+   prefix of indentedBlock register a suite. No expression/header tokens or
+   same-line body intervene. Typed 'defer: name', bare-name lines before
+   blocks, properties, keys, calls and operator sections keep their existing
+   paths. Parentheses/brackets suppress layout, so they cannot qualify.
+   The existing suite parser and statement depth guard parse the body.
+   Each executable statement list owns its reached registrations; it runs
+   them LIFO at exit in the active scope, before that scope is removed.
+   Deferred suites use new bounded child lists, never append to an unwinding
+   parent, and enter the existing runtime statement-depth guard.
+   Graph labels use defer{...}; suite-aware declaration source uses defer:
+   and real indentation. Every old tree/Debug/source path is unchanged. */
+deferStmt
+    ::= DEFER COLON indentedBlock          /* Stmt::Defer */
+
 functionDecl
     ::= FUNCTION name parameters block    /* Stmt::Function */
       | DEF name defParameters defBody
@@ -529,7 +563,7 @@ assignmentOperator
       | AND_ASSIGN
       | OR_ASSIGN
 
-/* Compound assignments, ':=' and isAssignment require a path, not an
+/* Compound assignments, ':=', '??:=' and isAssignment require a path, not an
    arbitrary expression. The parser checks the tree, where grouping leaves
    no trace, so parentheses may enclose the path or any part of it that
    starts at its root. A class root needs at least one link, and a path has
@@ -568,6 +602,7 @@ stage
       | NODES
       | HOLDS
       | EDGES
+      | INDEGREES
       | ORIGINS
       | OUTCOMES                                            /* Expr::Reason */
       | DEPTH LPAREN expression RPAREN                       /* Expr::Depth */
@@ -801,8 +836,9 @@ atVariable
 /*
  * Receiver-read contract (NUC 102):
  * - It applies only in the final parse of the parse-pass contract, in the
- *   value of an assignment with a receiver. ASSIGN, VALUE_ASSIGN and the
- *   compound operators give their value the receiver of their target: a
+ *   value of an assignment with a receiver. ASSIGN, VALUE_ASSIGN, the
+ *   COALESCE VALUE_ASSIGN statement pair and the compound operators give
+ *   their value the receiver of their target: a
  *   path whose last link is a member, rooted in a name, CLASS_REF,
  *   spelledClass or THIS, without that last member. A variable, a
  *   destructuring pattern, a computed target and a path ending in a
@@ -967,6 +1003,7 @@ enumName
       | REPEAT
       | UNTIL
       | FINALLY
+      | DEFER
       | ENUM
       | EXTENDS
       | IS
@@ -993,6 +1030,7 @@ enumName
       | NODES
       | HOLDS
       | EDGES
+      | INDEGREES
       | ORIGINS
       | OUTCOMES
       | MODEL
@@ -1059,6 +1097,7 @@ WHILE            ::= 'while'
 REPEAT           ::= 'repeat'
 UNTIL            ::= 'until'
 FINALLY          ::= 'finally'
+DEFER            ::= 'defer'
 ENUM             ::= 'enum'
 EXTENDS          ::= 'extends'
 ASSERT           ::= 'assert'
@@ -1088,6 +1127,7 @@ XOR              ::= 'xor'
 NODES            ::= 'nodes'
 HOLDS            ::= 'holds'
 EDGES            ::= 'edges'
+INDEGREES        ::= 'indegrees'
 ORIGINS          ::= 'origins'
 OUTCOMES         ::= 'outcomes'
 MODEL            ::= 'model'
@@ -1165,11 +1205,11 @@ NAME
 WORD_TOKEN
     ::= AND | CATCH | CLASS | DEF | DELETE | ELSE | FALSE | FOR | FUNCTION | IF
       | IN | NEW | NOT | NULL | OF | OR | PASS | RETURN | SUPER | THIS | THROW
-      | TRUE | TRY | TYPEOF | WHILE | REPEAT | UNTIL | FINALLY | ENUM | EXTENDS
+      | TRUE | TRY | TYPEOF | WHILE | REPEAT | UNTIL | FINALLY | DEFER | ENUM | EXTENDS
       | ASSERT | SUPPOSE | LAMBDA | IS | ALL | EVERY | ANY | SUM | MAX | MIN
       | MODE | WHY | AFFECTS | STATED | DERIVED | DIFF | DEPTH | PATH
       | INTERSECT | EXCEPT | EXCEPTION | AS | UNION | XOR | NODES | HOLDS
-      | EDGES | ORIGINS | OUTCOMES | MODEL | FIRST | LAST | PREVIOUS | INIT
+      | EDGES | INDEGREES | ORIGINS | OUTCOMES | MODEL | FIRST | LAST | PREVIOUS | INIT
       | PYTHON_INIT
 
 NEWLINE
@@ -1357,6 +1397,15 @@ REGEX_ESCAPE
  *                             list of each of s's steps. It ends the pipeline
  *                             as nodes and holds do, and a binding named
  *                             edges shadows it at run time.
+ * s |> indegrees           -> Expr::Reason with Stage::Indegrees, one Number
+ *                             equal to each selected step's from length, in
+ *                             selection order, including inputs not selected
+ *                             by s. It ends the pipeline as nodes, holds and
+ *                             edges do, with the same source coercion and
+ *                             binding-shadow error precedence. INDEGREES is
+ *                             an ordinary Rust Identifier in the enumName
+ *                             grammar group, not a reserved word or new lexer
+ *                             token kind; no prefix or call alias is lowered.
  * s |> origins             -> Expr::Reason with Stage::Origins, the steps of s
  *                             that rest on no step of s, and
  *                             s |> outcomes -> Stage::Outcomes, the steps that

@@ -278,7 +278,12 @@ impl Parser {
         let mut lefts = Vec::new();
         let mut last = first;
 
-        while self.eat(&Token::QuestionQuestion) {
+        while self.check(&Token::QuestionQuestion) {
+            if self.nullish_assignment_depth == Some(self.depth) && self.starts_nullish_assignment()
+            {
+                break;
+            }
+            self.advance();
             if lefts.len() >= MAX_CHAIN {
                 return Err(self.error("Expression has too many operands"));
             }
@@ -324,6 +329,7 @@ impl Parser {
                 "nodes" => Some(Stage::Nodes),
                 "holds" => Some(Stage::Holds),
                 "edges" => Some(Stage::Edges),
+                "indegrees" => Some(Stage::Indegrees),
                 "origins" => Some(Stage::Origins),
                 "outcomes" => Some(Stage::Outcomes),
                 other => Stage::from_name(other),

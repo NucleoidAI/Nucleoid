@@ -1132,6 +1132,40 @@ assert(radians, Math.PI / 2)
   evaluation, reactive reads, errors and the existing supplied-Undefined gate.
   See the [root contract](nucleoid.spec.md#reactive-degree-to-radian-conversion).
 
+- [NUC 142](docs/nuc-0142.md) adds native static `Math.copySign(value, sign)`.
+  Intrinsic first-two-value conversion copies the non-NaN sign bit without
+  changing magnitude bits, including signed zeros, subnormals and infinities.
+  A NaN or omitted sign yields numeric NaN; NaN payload/sign bits are not
+  promised. Ignored extras retain eager reads, effects and strict errors;
+  any top-level Undefined still gates the call before conversion. Live-null
+  deferral, shadowing, class rules and rollback remain unchanged. No aliases,
+  receiver methods or syntax are added. See the
+  [root contract](nucleoid.spec.md#reactive-sign-copying).
+
+- [NUC 143](docs/nuc-0143.md) adds only native static
+  `Math.square(value)`: intrinsically convert the first value, then compute
+  exactly `first * first` with ordinary multiplication, not exponentiation.
+  Either zero sign squares to positive zero; overflow, underflow, infinities
+  and NaN classification retain multiplication's behavior. Extras still
+  evaluate once left to right with effects, strict errors and subscriptions;
+  any supplied top-level Undefined gates the call before conversion.
+  Omission gives numeric NaN. Live/parameter-null deferral, shadowing,
+  native method-value reads and existing rollback remain unchanged.
+  See the [root contract](nucleoid.spec.md#reactive-squaring) and
+  [argument-dependency case](docs/README.md#reactive-squaring-argument-dependencies).
+
+- The [NUC 146 candidate](docs/nuc-0146.md) adds native static
+  `Math.cube(value)`: intrinsically convert the first value, square it, then
+  multiply by that same value, using two separate ordinary multiplications.
+  Ordered rounding, negative zero, signed underflow, overflow and nonfinite
+  classification follow those operations, not a universal `** 3` alias.
+  All arguments evaluate once left to right; ignored extras retain effects,
+  strict errors and subscriptions without conversion. The supplied
+  top-level-Undefined gate, live/parameter-null deferral, shadowing, captures
+  and transaction behavior remain unchanged. No aliases or syntax are added.
+  See the [root contract](nucleoid.spec.md#reactive-cubing) and
+  [argument-dependency case](docs/README.md#reactive-cubing-argument-dependencies).
+
 ## String iteration
 
 **String iteration reads characters directly**
@@ -1261,6 +1295,14 @@ assert(multiplier, 32)
   Math's existing behavior. It adds no syntax or callable method reference.
   See the [contract](nucleoid.spec.md#reactive-cotangent) and
   [reactive direction example](docs/examples.md#reactive-cotangent).
+- The [NUC 141](docs/nuc-0141.md) names only native static
+  `Math.csc(value)`, exactly the accepted reciprocal of sine in radians.
+  Intrinsic conversion, rounded sine and reciprocal stay in that order;
+  zero signs retain signed infinities, and PI uses the actual rounded sine.
+  Eager extras, the supplied-Undefined gate, live-null/parameter deferral,
+  dependency subscriptions, shadowing and rollback remain unchanged.
+  See the [contract](nucleoid.spec.md#reactive-cosecant) and
+  [argument-dependency case](docs/README.md#reactive-cosecant-argument-dependencies).
 
 **Thin arrows and lambdas spell the same callbacks**
 
@@ -1455,6 +1497,11 @@ assert: (why paid)[0].rule, "paid = 12"
 - `quote` is a declaration, a law that follows `price` and `quantity`. `paid`
   is an action taken at one moment, so it keeps `12`, and `why` shows the
   stated literal. See the [root contract](nucleoid.spec.md#value-assignment).
+- [NUC 144](docs/nuc-0144.md) adds `TARGET ??:= EXPR` for a one-shot fill:
+  only Null or Undefined takes the same action. Every other value skips the
+  RHS and preserves the target's standing law, identity and history. Guard
+  and action reads stay isolated from enclosing rules; see
+  [Nullish value assignment](nucleoid.spec.md#nullish-value-assignment).
 
 ## List and population sums
 
@@ -2902,6 +2949,20 @@ assert(wiring, ["heat -> alarm", "damp -> alarm", "wind -> alarm", "temp -> heat
   the way the explanation does: once the alarm also reads the wind, the
   wind's edge joins the wiring. See the
   [root contract](nucleoid.spec.md#edge-lists-of-reasoning-selections).
+
+## Input counts of reasoning selections
+
+- [NUC 145](docs/nuc-0145.md) adds the final stage `selection |> indegrees`,
+  exactly `(selection).map(step -> step.from.length)` for that graph
+  selection. `alarm |> why |> indegrees` reports how many recorded inputs
+  each explanation step has, in its order; an alarm with two direct inputs
+  starts with `2`, and one that also reads wind starts with `3`.
+- Counts include inputs outside the selection, stay reactive through
+  equal-valued rewiring, give `0` for zero-input steps and `[]` for an empty
+  selection. The stage keeps the same source coercion, observer exclusion,
+  shadowing and final-projection boundaries as `nodes`, `holds` and `edges`.
+  See the [root contract](nucleoid.spec.md#input-counts-of-reasoning-selections)
+  and its two executed, behavior-equivalent specification/reference cases.
 
 ## Reactive list flattening
 

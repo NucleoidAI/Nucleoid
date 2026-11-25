@@ -407,6 +407,30 @@ qty = 5
   `tests/reference.md`; the root contract is
   [Value assignment](../nucleoid.spec.md#value-assignment).
 
+### Nullish value assignment
+
+- [NUC 144](nuc-0144.md) adds the statement `target ??:= expression`:
+  perform the existing one-shot `:=` action only when the target's ordinary
+  current value is Null or Undefined. False, either zero sign, empty text,
+  NaN and every other supplied value skip without evaluating the RHS.
+- A skip changes no declaration, identity, history or dependencies. Existing
+  target relationships stay live. A take keeps `:=`'s effects, storage,
+  scope, constructor naming, target timing, instance-rule and transaction
+  semantics, including RHS null-read settlement.
+- The guard, target and taken expression, including called code and structural
+  reads, are isolated from all enclosing tracking frames. Guard null reads
+  cannot defer a constant fill. No standing conditional guard is installed.
+- Use the same grouped paths and bounds as `:=`. Unbound root names remain
+  errors; missing ordinary object properties may be filled. Existing class,
+  read-only-version, invalid-owner and forbidden-property errors still apply.
+- `??:=` is two existing tokens, `??` then `:=`, with ordinary inter-token
+  spacing or comments permitted. It is statement-only, not an assignment
+  expression or a new meaning for `??=`. Public expression parsing and
+  ignored interpolation suffixes retain their old behavior.
+- The executable reference case is
+  `Nucleoid keeps nullish assignment guards isolated`; see the
+  [root contract](../nucleoid.spec.md#nullish-value-assignment).
+
 ### Is assignments
 
 - `target is value` is a spelling of `target = value` for variables and
@@ -1529,7 +1553,7 @@ order.label
 
 - This is the complete `Nucleoid reads properties of the assigned object with a leading dot` program in `tests/reference.md`, without its title and expected-return metadata; it returns `"6 for 30"`.
 - [NUC 102](nuc-0102.md) reads a `.` that begins an operand, directly followed by a name, in the value of an assignment to a property path as that property of the path's object, the receiver. `$Order.total = .price * .qty` is `$Order.total = $Order.price * $Order.qty`, `order.customer.label = .first` reads `order.customer.first`, and `this.area = .w * .h` reads `this.w` and `this.h`.
-- The forms are `=`, `:=` and every compound assignment. The target is a plain path whose last link is a property, rooted in a name, `$Class`, `every Class`, `all Class` or `any Class`, `this` or `self`; a variable, a destructuring pattern or a computed target such as `xs[0].p` has no receiver.
+- The forms are `=`, `:=`, `??:=` and every compound assignment. The target is a plain path whose last link is a property, rooted in a name, `$Class`, `every Class`, `all Class` or `any Class`, `this` or `self`; a variable, a destructuring pattern or a computed target such as `xs[0].p` has no receiver.
 - The read continues as member access does, so `.a.b`, `.a[0]`, `.a()` and `.a@first` work, in every operand of the value: operators, `?:` and Python-style conditionals with their conditions, lists, objects, subscripts, lambda and function bodies and template interpolations. The innermost assignment decides, so in `o.p = (q.r = .a)` the dot reads `q.a`.
 - The parser builds the written-out member path, so evaluation, dependencies, `why`, `affects`, graph keys, rendering and rollback are those of that path, and `why` reports `$Order.total = $Order.price*$Order.qty`.
 - These keep their accepted readings and errors: a call argument that starts with `.`, which is a selector or its error; `is` assignments; a statement or target that starts with `.`; a dot after a name, such as `x .a`; the values of variables and destructuring declarations; and every position without a property target.
@@ -2710,6 +2734,51 @@ visits.length
   before a `catch`. See the
   [root contract](../nucleoid.spec.md#finally-clauses).
 
+### Deferred suites
+
+```
+history = []
+def unwind(value):
+    defer:
+        history.push(value * 10 + 1)
+    defer:
+        history.push(value * 10 + 2)
+    return value
+assert(unwind(0), 0)
+assert(history, [2, 1])
+assert(unwind(2), 2)
+assert(history, [2, 1, 22, 21])
+assert(unwind(-2), -2)
+assert(history, [2, 1, 22, 21, -18, -19])
+1
+```
+
+- This is the complete `Nucleoid unwinds deferred suites in reverse order`
+  case in `tests/reference.md`, without its title and expected-return
+  metadata; it returns `1`. The specification's
+  [deferred-suite contract](../nucleoid.spec.md#deferred-suites) is authoritative.
+- [NUC 147](nuc-0147.md) adds contextual `defer:` with a real indented
+  suite. Reaching it registers work for exit of the current executable
+  statement list, not necessarily the whole function. The program,
+  branches, loop iterations, try/catch/finally and deferred bodies are
+  separate lists; nested lists finish their cleanup before returning.
+- Remaining work completes, returns or fails first. Registrations then run
+  LIFO in the still-active parameter, loop, catch or receiver scope,
+  reading exit-time values rather than capturing arguments or closures.
+  A pending return keeps its computed value. A deferred return or failure
+  replaces the pending outcome, but older registrations still run.
+- A failed body rolls its state and queued work back before cleanup; a
+  failed deferred suite rolls back before the next older one. These are
+  NUC 119 savepoints, not snapshots of local bindings. Successful cleanup
+  remains part of the enclosing transaction and rolls back if an error escapes.
+- `defer` remains an ordinary name everywhere else. Typed `defer: NAME`,
+  bare-name lines followed by blocks, calls, properties, keys and operator
+  sections keep their old meaning. Inline/braced or layout-suppressed
+  forms are not deferred suites. Ordinary `try` still requires a catch.
+- The REPL's existing colon buffering holds a deferred suite until a blank
+  line; cleanup belongs to that submitted program, not to the REPL session.
+  No resource protocol, async operation or new loop-exit behavior is added.
+
 ### Python-style except clauses
 
 ```
@@ -2758,7 +2827,7 @@ share
   unbinds it. See the
   [root contract](../nucleoid.spec.md#python-style-except-clauses).
 
-Full detail: [NUC 9](nuc-0009.md), [NUC 46](nuc-0046.md), [NUC 119](nuc-0119.md), [NUC 122](nuc-0122.md).
+Full detail: [NUC 9](nuc-0009.md), [NUC 46](nuc-0046.md), [NUC 119](nuc-0119.md), [NUC 122](nuc-0122.md), [NUC 147](nuc-0147.md).
 
 ---
 
@@ -2786,6 +2855,141 @@ Full detail: [NUC 9](nuc-0009.md), [NUC 46](nuc-0046.md), [NUC 119](nuc-0119.md)
   See the [cotangent contract](../nucleoid.spec.md#reactive-cotangent),
   `Nucleoid preserves cotangent argument dependencies` in `tests/reference.md`,
   and the [direction example](examples.md#reactive-cotangent).
+- [NUC 138](nuc-0138.md) adds only native static `Math.sec(value)`, exactly
+  `1 / Math.cos(value)` in radians, preserving cosine rounding followed by
+  reciprocal rounding, not a pole shortcut. Both zero signs yield positive
+  `1`; omission gives NaN. The supplied top-level-Undefined gate, intrinsic
+  first-input conversion, eager extras, dependencies, deferral, shadowing and
+  rollback remain unchanged.
+  See the [secant contract](../nucleoid.spec.md#reactive-secant) and the
+  [argument-dependency case](#reactive-secant-argument-dependencies).
+- The [NUC 141](nuc-0141.md) adds only native static
+  `Math.csc(value)`, exactly `1 / Math.sin(value)` in radians: intrinsic
+  first-value conversion, rounded sine, then reciprocal. Both zero signs
+  retain their signed infinities; omission gives NaN, and values near PI
+  use the actual sine, without pole shortcuts. The top-level-Undefined gate,
+  eager ignored extras, dependency subscriptions, live-null/parameter
+  deferral, shadowing, captured values, frames and rollback are unchanged.
+  Native method-value reads remain Undefined/non-callable; no global alias,
+  receiver method, syntax, configuration or aggregate dispatch is added.
+  See the [cosecant contract](../nucleoid.spec.md#reactive-cosecant) and the
+  [argument-dependency case](#reactive-cosecant-argument-dependencies).
+- [NUC 142](nuc-0142.md) adds only native static
+  `Math.copySign(value, sign)`: intrinsically convert the first two values,
+  retain the first magnitude and copy the second sign bit. A converted NaN
+  sign, including omission, gives numeric NaN; a NaN magnitude stays NaN
+  without payload/sign promises. Non-NaNs retain exact magnitude bits and
+  the sign of either zero or infinity, without arithmetic rescaling.
+  The top-level-Undefined gate includes ignored extras, whose effects,
+  strict errors, reads and subscriptions remain eager. Literal-null coercion
+  does not override live/parameter-null deferral; shadowing, captured values,
+  frames, independent class rules, deletion/recovery and rollback stay
+  ordinary. Native value reads remain Undefined/non-callable; no alias,
+  receiver/aggregate dispatch or syntax is added. See the
+  [sign-copying contract](../nucleoid.spec.md#reactive-sign-copying).
+
+- [NUC 143](nuc-0143.md) adds only native static
+  `Math.square(value)`: intrinsically convert the first value and multiply
+  that converted value by itself with ordinary `f64` multiplication.
+  It does not lower to exponentiation or call shadowable helpers.
+  Either zero sign produces positive zero; subnormals, underflow, overflow
+  and infinities follow multiplication, while NaNs match by classification.
+  Omission gives numeric NaN. The supplied top-level-Undefined gate includes
+  numerically ignored extras, whose effects, errors, reads and subscriptions
+  remain eager and once-only, left to right. Live-input/parameter-null
+  deferral, shadowing, captured values/classes, ordinary AST/graph source,
+  frames, independent class rules, deletion/recovery and existing rollback
+  behavior stay unchanged. Native `Math.square` property reads remain
+  Undefined/non-callable; no alias, receiver/aggregate dispatch or syntax
+  is added. See the [squaring contract](../nucleoid.spec.md#reactive-squaring).
+
+- The [NUC 146 candidate](nuc-0146.md) adds only native static
+  `Math.cube(value)`: intrinsically convert the first value, multiply it by
+  itself, then multiply that square by the same converted value, with two
+  separate ordinary `f64` multiplications. This is not an exponentiation
+  alias: retain ordered rounding, negative signs, signed-zero underflow and
+  overflow/nonfinite classification; NaN payload/sign is not promised.
+  Omission gives numeric NaN. All arguments still evaluate once, left to
+  right, even after Undefined; ignored extras are not converted and retain
+  their reads, effects, errors and subscriptions. The top-level-Undefined
+  gate, live/parameter-null deferral, shadowing, observation, captures,
+  independent class rules, frames, deletion/recovery and existing rollback
+  remain unchanged. Native method-value reads stay Undefined/non-callable.
+  No aliases, receiver methods or syntax are added. See the
+  [cubing contract](../nucleoid.spec.md#reactive-cubing).
+
+### Reactive cubing argument dependencies
+
+```
+probe = {input: 2, extra: 7}
+offset = 1
+observed = Math.cube(probe.input + offset, probe.extra)
+assert(observed, 27)
+probe.input = 3
+assert(observed, 64)
+delete probe.extra
+assert(observed, null)
+probe.extra = 0
+assert(observed, 64)
+offset = -2
+assert(observed, 1)
+probe.input = -1
+assert(observed, -27)
+1
+```
+
+- This is the complete `Nucleoid preserves cubing argument dependencies`
+  program in `tests/reference.md`, without title or expected-return metadata;
+  its expected return is `1`.
+
+### Reactive squaring argument dependencies
+
+```
+probe = {amplitude: 3, extra: 7}
+offset = 2
+squared = Math.square(probe.amplitude + offset, probe.extra)
+assert(squared, 25)
+probe.amplitude = -4
+assert(squared, 4)
+delete probe.extra
+assert(squared, undefined)
+probe.extra = 9
+assert(squared, 4)
+offset = 1
+assert(squared, 9)
+probe.extra = Number.NaN
+assert(squared, 9)
+1
+```
+
+- This is the complete `Nucleoid preserves squaring argument dependencies`
+  program in `tests/reference.md`, without title or expected-return metadata;
+  its expected return is `1`.
+
+### Reactive sign copying argument dependencies
+
+```
+magnitude = 3
+direction = -1
+gate = 1
+copied = Math.copySign(magnitude, direction, gate)
+assert(copied, -3)
+direction = 1
+assert(copied, 3)
+gate = 2
+assert(copied, 3)
+delete gate
+assert(copied, undefined)
+gate = 3
+assert(copied, 3)
+direction = -1
+assert(copied, -3)
+1
+```
+
+- This is the complete new executable reference program, with its title and
+  expected-return metadata omitted; its expected return is `1`.
+
 - Accepted [NUC 56](nuc-0056.md) adds only static `Math.exp2(value)`, computing
   exactly the accepted `Math.pow(2, value)` host powf operation after intrinsic
   first-input conversion and the existing supplied-Undefined gate. The
@@ -2896,7 +3100,7 @@ Full detail: [NUC 9](nuc-0009.md), [NUC 46](nuc-0046.md), [NUC 119](nuc-0119.md)
 | `Object` | `Object()` -- a plain object, not an instance of any type |
 | `Boolean` | `Boolean(value)` |
 | `Number` | `Number.MAX_INTEGER` |
-| `Math` | `pow`, `sqrt`, `floor`, `round`, `max`, `min`, `clamp` ([NUC 21](nuc-0021.md)), `lerp` ([NUC 22](nuc-0022.md)), `saturate` ([NUC 23](nuc-0023.md)), `smoothstep(lower, upper, value)` (accepted [NUC 33](nuc-0033.md)), `smootherstep(lower, upper, value)` (accepted [NUC 35](nuc-0035.md)), `remap(start, end, targetStart, targetEnd, value)` (accepted [NUC 39](nuc-0039.md)) |
+| `Math` | `pow`, `sqrt`, `floor`, `round`, `max`, `min`, `clamp` ([NUC 21](nuc-0021.md)), `lerp` ([NUC 22](nuc-0022.md)), `saturate` ([NUC 23](nuc-0023.md)), `smoothstep(lower, upper, value)` (accepted [NUC 33](nuc-0033.md)), `smootherstep(lower, upper, value)` (accepted [NUC 35](nuc-0035.md)), `remap(start, end, targetStart, targetEnd, value)` (accepted [NUC 39](nuc-0039.md)), `copySign(value, sign)` ([NUC 142](nuc-0142.md)) |
 | `String` | `String.fromCharCode`; instance `charAt`, `length`, `lower`, `replace`, `replaceAll` (accepted [NUC 42](nuc-0042.md)), `repeat`, `split`, `padStart` and `padEnd` ([NUC 111](nuc-0111.md)), Python's `startswith`, `endswith` and `join(items)`, with the separator as the receiver ([NUC 110](nuc-0110.md)), Rust's `starts_with(prefix)` and `ends_with(suffix)` ([NUC 132](nuc-0132.md)), the size and emptiness methods `length()`, `size()`, `len()`, `isEmpty()`, `is_empty()` and `isNotEmpty()` ([NUC 116](nuc-0116.md)), the case conversion aliases `uppercase()`, `to_uppercase()` and `uppercased()` of `toUpperCase()`, and `lowercase()`, `to_lowercase()` and `lowercased()` of `toLowerCase()` ([NUC 118](nuc-0118.md)), and the reversals `reverse()` and `reversed()`, exactly `text[::-1]` ([NUC 131](nuc-0131.md)) |
 | `Date` | `Date()`, `Date(string)`, `Date(number)`, `Date.now()`, `Date.parse()`; instance `getTime`, `getYear`, `toDateString` |
 | `List` | `push`, `pop`, `filter`, `map`, their Ruby aliases `select` and `collect` ([NUC 134](nuc-0134.md)), `flatMap` (accepted [NUC 41](nuc-0041.md)), `flat` ([NUC 103](nuc-0103.md)), `reduce`, `find`, `some`, `every`, `slice`, `reverse` (a new list in reverse order), `sort` (in place, [NUC 58](nuc-0058.md)), `join`, `length`, and the queries `at`, `includes`, `indexOf`, `lastIndexOf`, `findIndex`, `findLast`, `findLastIndex` and `concat` ([NUC 61](nuc-0061.md)), `sum` ([NUC 68](nuc-0068.md)), `max` and `min` ([NUC 69](nuc-0069.md)), `distinct` ([NUC 71](nuc-0071.md)), `count(predicate)` ([NUC 73](nuc-0073.md)), `mode` ([NUC 75](nuc-0075.md)), `maxBy` and `minBy` ([NUC 77](nuc-0077.md)), `average` ([NUC 80](nuc-0080.md)), `median` ([NUC 84](nuc-0084.md)), `sortBy` ([NUC 105](nuc-0105.md)), `partition` ([NUC 108](nuc-0108.md)), `product` ([NUC 114](nuc-0114.md)), `variance` and `stdev` ([NUC 123](nuc-0123.md)), `quantile` ([NUC 124](nuc-0124.md)), `zip(other)` and `zip(other, combine)` ([NUC 129](nuc-0129.md)), the size and emptiness aliases `size()`, `len()`, `isEmpty()`, `is_empty()` and `isNotEmpty()` ([NUC 116](nuc-0116.md)), the first and last element aliases `first()`, `last()`, `first(predicate)` and `last(predicate)` ([NUC 117](nuc-0117.md)), and the reversal aliases `reversed()` and `toReversed()` of `reverse()` ([NUC 131](nuc-0131.md)); `sum`, `max`, `min` and `mode` also read as `sum of list` ([NUC 75](nuc-0075.md) revision 2) |
@@ -4867,6 +5071,9 @@ route.shift()
 - `selection |> edges` lists the steps' dependency edges, one
   `[input, node]` pair for each name in each step's `from` list
   ([NUC 133](nuc-0133.md)).
+- `selection |> indegrees` lists each selected step's recorded input
+  count in its existing order, including inputs not selected themselves
+  ([NUC 145](nuc-0145.md)).
 
 ```
 a = 1
@@ -5426,6 +5633,55 @@ shipping = price / 2
   [edge lists of reasoning selections](../nucleoid.spec.md#edge-lists-of-reasoning-selections)
   section.
 
+### Input counts of reasoning selections
+
+```
+source = 2
+offset = 3
+first = source + offset
+second = first * 2
+total = first + second
+impact = source |> affects |> indegrees
+assert(impact, [2, 1, 2])
+source = 5
+assert(impact, [2, 1, 2])
+second = source + offset + first
+assert(impact, [2, 3, 2])
+first = 10
+assert(impact, [3, 2])
+second = 20
+assert(impact, [])
+first = source
+assert(impact, [1, 2])
+1
+```
+
+- This is the complete `Nucleoid keeps reasoning input counts reactive`
+  program in `tests/reference.md`, without its title and return metadata;
+  all six assertions run and its explicit return is `1`.
+- [NUC 145](nuc-0145.md) adds only `selection |> indegrees`, exactly
+  `(selection).map(step -> step.from.length)` for the graph selection
+  its source denotes. Each result is a Number, in selection order. The
+  offset's own step is not in `source |> affects`, but it still counts
+  among `first`'s two inputs. The total counts both inputs even if another
+  filter removes their steps.
+- Empty selections give `[]`; zero-input steps give `0`. Counts follow
+  recorded direct inputs, not selection cardinality, transitive paths or
+  induced-subgraph degree. Rewiring refreshes counts even when held values
+  stay equal, and an empty impact remains subscribed for reattachment.
+- Reference coercion, selected metadata, observer exclusion, null/missing
+  behavior, class/function contexts, `.value` snapshots and hypotheses
+  remain those of `nodes`, `holds` and `edges`. A variable holding a
+  selection denotes its own graph node, not its stored list.
+- This is a final projection: a later reasoning stage or a selection
+  argument ending with it raises `TypeError("Cannot explain <source>")`.
+  A binding named `indegrees` shadows it with
+  `TypeError("indegrees is not an operation")`. Elsewhere it remains an
+  ordinary name; no prefix or call alias, keyword, token kind, record
+  field, graph mutation or new traversal is added.
+- The authoritative contract is
+  [input counts of reasoning selections](../nucleoid.spec.md#input-counts-of-reasoning-selections).
+
 ### Live structure
 
 - A reasoning assignment follows both values and graph structure.
@@ -5767,6 +6023,8 @@ requirements; the Rust parser remains the implementation of those requirements.
 name = expression                      variable assignment
 name := expression                     value assignment: once, no dependency (NUC 66)
 name.property := expression            value assignment to a property (NUC 66)
+name ??:= expression                   one-shot value assignment only for Null/Undefined (NUC 144)
+name.property ??:= expression          nullish value assignment to a property (NUC 144)
 name is expression                     is assignment: name = expression (NUC 93)
 name.property is word                  a bare word reads its name, else its text "word" (NUC 93)
 name is A if c else B                  bare-word branches are words too (NUC 94)
@@ -5935,6 +6193,8 @@ except:                                Python's spelling of catch:, binding erro
     statement
 finally:                               runs however the statement ends (NUC 119)
     statement
+defer:                                 registers an indented suite for this block's exit (NUC 147)
+    statement
 return expression                      yield from a block or function
 assert(actual, expected)                existing equality-check helper
 assert: actual, expected                optional statement spelling (Accepted NUC 45)
@@ -5946,6 +6206,11 @@ Math.remap(start, end, targetStart, targetEnd, value) unclamped static remapping
 Math.toRadians(value)                   static division-first degree conversion (NUC 50 candidate)
 Math.exp2(value)                        static powf-based base-two power (Accepted NUC 56)
 Math.cot(value)                         static reciprocal of tangent in radians (NUC 100 candidate)
+Math.sec(value)                         static reciprocal of cosine in radians (NUC 138)
+Math.csc(value)                         static reciprocal of sine in radians (NUC 141)
+Math.copySign(value, sign)               static magnitude with the converted non-NaN sign bit (NUC 142)
+Math.square(value)                       static intrinsic first-value multiplication by itself (NUC 143)
+Math.cube(value)                         ordered square-then-multiply of the intrinsic first value (NUC 146 candidate)
 Name[0]  Name["id"]  Name.find(...)    address an instance
 value[start:end]  value[-n:]           slice, negative counts from the end
 Name[start:end]  Name[:]  Name[-n:]    instance list range (NUC 61)
@@ -6032,6 +6297,10 @@ reference |> why |> edges             the [input, node] edges of an explanation'
 reference |> affects |> edges         the edges that a change of the reference travels (NUC 133)
 model |> edges                        the edges of the current model's nodes (NUC 133)
 selection |> edges                    one [input, step.node] pair per name of each step's from; ends the pipeline (NUC 133)
+reference |> why |> indegrees         each explanation step's recorded input count, in its order (NUC 145)
+reference |> affects |> indegrees     counts every input of each reached step, selected or not (NUC 145)
+model |> indegrees                    the recorded input counts of the current model's steps (NUC 145)
+selection |> indegrees                the list (selection).map(step -> step.from.length); ends the pipeline (NUC 145)
 all name in collection: condition     true when the condition holds for every member (NUC 62)
 every name in collection: condition   the same quantifier as all (NUC 98)
 any name in collection: condition     true when the condition holds for some member (NUC 62)
@@ -6045,6 +6314,75 @@ selection |> diff                     steps new or changed since the running blo
 ```
 
 ---
+
+## Reactive secant argument dependencies
+
+```
+angle = 0
+gate = 1
+ratio = Math.sec(angle, gate)
+assert(ratio, 1)
+angle = Math.PI
+assert(ratio, -1)
+gate = 2
+assert(ratio, -1)
+delete gate
+assert(ratio, undefined)
+gate = 3
+assert(ratio, -1)
+angle = 0
+assert(ratio, 1)
+ratio
+```
+
+- This is the complete `Nucleoid preserves secant argument dependencies`
+  case in `tests/reference.md`, without its title and return comments; its
+  explicit expected return is `1`. The specification's
+  [secant contract](../nucleoid.spec.md#reactive-secant) is authoritative.
+- Every argument evaluates once left to right, even after Undefined.
+  Extras retain strict errors, effects, reads and dependencies without numeric
+  conversion. Deleting the ignored `gate` defers the live call; restoring it
+  recovers the result.
+- Preserve native cosine followed by reciprocal rounding; no range
+  normalization, pole shortcut or accuracy/performance claim is added.
+  Literal-null coercion and live-null/parameter deferral stay distinct.
+- Native method value reads remain Undefined/non-callable, ordinary `.sec`
+  and `.Math` members and Math shadowing stay ordinary, and existing class
+  subscriptions, captured values, frames and rollback are unchanged.
+
+## Reactive cosecant argument dependencies
+
+```
+angle = Math.PI / 2
+gate = 1
+ratio = Math.csc(angle, gate)
+assert(ratio, 1)
+angle = -Math.PI / 2
+assert(ratio, -1)
+gate = 2
+assert(ratio, -1)
+delete gate
+assert(ratio, undefined)
+gate = 3
+assert(ratio, -1)
+angle = Math.PI / 2
+assert(ratio, 1)
+ratio
+```
+
+- This is the complete `Nucleoid preserves cosecant argument dependencies`
+  case in `tests/reference.md`, without its title and return comments; its
+  explicit expected return is `1`. The specification's
+  [cosecant contract](../nucleoid.spec.md#reactive-cosecant) is authoritative.
+- Every expression evaluates once left to right, including after Undefined.
+  Ignored extras retain errors, effects, reads and subscriptions; deleting
+  `gate` defers the call and restoring it recovers the result.
+- Literal-null conversion and live-input/parameter-null deferral remain
+  distinct. Sine rounding and reciprocal rounding remain separate, with no
+  normalization, pole detection or accuracy/performance claim.
+- Native `Math.csc` value reads remain Undefined/non-callable. Math
+  shadowing, ordinary `.csc`/`.Math` members, class rules, captured values,
+  frames, graph source and transactions use the unchanged machinery.
 
 ## Copyright
 

@@ -83,10 +83,15 @@ impl Property {
         Ok(())
     }
 
-    pub fn run(&mut self, runtime: &mut Runtime, scope: &mut Scope) -> Result<Outcome> {
+    pub(crate) fn check_name(&self) -> Result<()> {
         if self.name == "value" {
             return Err(Error::type_error("Cannot use 'value' as a property"));
         }
+        Ok(())
+    }
+
+    pub fn run(&mut self, runtime: &mut Runtime, scope: &mut Scope) -> Result<Outcome> {
+        self.check_name()?;
 
         match &self.owner {
             Owner::Class(class) => {

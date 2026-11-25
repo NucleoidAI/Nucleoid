@@ -19,10 +19,7 @@ Work on exactly one proposal revision in the caller's isolated candidate.
 Every `/nuc-proposal` task runs in this order, and every continuous cycle
 repeats it:
 
-1. **Pull.** In continuous mode, first check free disk space and, when it is
-   low, clear the machine's finished build caches under the
-   [disk-space policy](../../rules/disk-space.instructions.md). Then, as
-   always before starting a task, pull the primary checkout with
+1. **Pull.** As always before starting a task, pull the primary checkout with
    `git pull --no-rebase --autostash` under the
    [git synchronization policy](../../rules/git.instructions.md#pull-first),
    so the task runs against the most current remote state. Report the commits
@@ -544,13 +541,10 @@ next cycle:
 - **Rejected:** record and commit only rejection documentation and index/outcome
   metadata; leave rejected language changes isolated.
 
-Then clear the finished cycle's own build directories and check free disk
-space under the [disk-space policy](../../rules/disk-space.instructions.md),
-clearing the machine's finished build caches when less than 50 GB is free.
 Immediately start another fresh "purpose a NUC" cycle without waiting for a
 new user prompt. Repeat sequentially in the active agent session until the
 user stops, pauses or redirects the work, the session ends, or a resource limit
-is reached; space that stays low after clearing is such a limit. A `Blocked` decision, failed outcome recording, or missing required
+is reached. A `Blocked` decision, failed outcome recording, or missing required
 input pauses continuation; report the blocker instead of bypassing it.
 
 Continuous cycles do not ask for confirmation before recording an outcome or

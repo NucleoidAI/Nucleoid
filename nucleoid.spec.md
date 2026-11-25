@@ -4859,7 +4859,7 @@ statement positions; caught values and transaction recovery are unchanged.
   `$Order.total = .price * .qty` is
   `$Order.total = $Order.price * $Order.qty`. No token, keyword, syntax tree
   node, error type or message is added.
-- **Receivers.** The assignment forms are `=`, `:=`, `+=`, `-=`, `*=`,
+- **Receivers.** The assignment forms are `=`, `:=`, `??:=`, `+=`, `-=`, `*=`,
   `**=`, `/=`, `%=`, `&&=` and `||=`. A target that is a plain path whose
   last link is a property, `RECEIVER.NAME`, rooted in a name, a class
   reference `$Class`, `every Class`, `all Class` or `any Class`, `this` or
@@ -6820,6 +6820,55 @@ t.promote(bob)
   `Nucleoid applies a value assignment once` through
   `Nucleoid rolls back failed value assignments` specify the executable
   behavior.
+
+## Nullish value assignment
+
+- [NUC 144](docs/nuc-0144.md) adds only the statement `TARGET ??:= EXPR`.
+  It reads the target's ordinary current value, then performs one existing
+  `:=` action only for the actual Null or Undefined value kinds. False,
+  positive and negative zero, empty text, NaN, containers, objects, functions,
+  classes, Dates and regular expressions are supplied values and skip.
+- A skip evaluates no RHS, makes no declaration, appends no history and
+  changes no identity or dependency. An existing relationship on the target
+  remains live. This is not `TARGET := TARGET ?? EXPR`, which would replace
+  that relationship even when the value was already supplied.
+- A take uses the same assignment evaluator as `:=`: evaluate `EXPR` once,
+  retain its effects and ordinary storage/null-read semantics, and preserve
+  target-resolution timing, named-constructor naming, local scopes, instance
+  rules, class boundaries and transactions. Where `:=` files a stated fact,
+  so does this statement; imperative bodies instead perform it once per entry
+  without filing, exactly as `:=` does.
+- The whole operation is isolated from dependency tracking, including guard
+  and target reads, the taken RHS and the functions, methods, callbacks and
+  structural queries it calls. It adds no subscription to an enclosing rule.
+  Checking nullishness creates no standing guard. An enclosing `if paid`
+  still depends only on the ordinary reads outside the action, such as `paid`.
+- Guard reads restore the enclosing null/undefined-read flags before a taken
+  action. A null target and constant RHS therefore fill normally, while
+  `slot ??:= nullable + 1` retains `:=`'s existing RHS null-read settlement.
+  This does not bypass argument-null deferral in surrounding function calls.
+- Targets, grouping and resource limits are those of `:=`. Ordinary lookup
+  still applies: an unbound root name raises its existing lookup error rather
+  than being declared. A missing ordinary object property may be Undefined
+  and can be filled. Invalid owners, forbidden `value` properties, read-only
+  versions and class-level writes retain the existing errors, even on a
+  supplied target. A per-instance class rule can use the instance target.
+- The lexer emits the existing `??` then `:=` tokens; ordinary whitespace or
+  comments may separate them, but logical newlines retain their boundaries.
+  Only an expression-statement head stops before this pair. Parenthesizing
+  a path is permitted; embedding this statement in a call, list, return,
+  header, default or other expression is not. Its RHS gets the ordinary
+  lexical property receiver, including leading-dot reads.
+- `??=` and all old diagnostics remain unchanged. Public `parse_expression`
+  and ignored template-interpolation suffixes retain their accepted behavior;
+  no keyword, token kind or general assignment expression is added.
+- Canonical rendering is `target??:=value`. A taken statement returns its
+  action's value; a skipped statement has the ordinary no-op `pass` result.
+  Existing transaction recovery and runtime limits are reused, not expanded
+  into a guarantee about inherited multi-dependent rollback ordering.
+- The appended cases `Nucleoid fills nullish values with one-shot assignments`
+  and `Nucleoid keeps nullish assignment guards isolated` in the executable
+  reference each execute six assertions and explicitly return `1`.
 
 ## List and population sums
 
@@ -29457,6 +29506,166 @@ tags = ["blue"]
 assert(untagged, true)
 absent
 # return: false
+---
+# Nucleoid keeps secants reactive
+
+angle = 0
+ratio = Math.sec(angle)
+assert(ratio, 1)
+angle = Math.PI
+assert(ratio, -1)
+angle = Math.PI / 3
+assert(ratio, 1 / Math.cos(angle))
+angle = -Math.PI / 3
+assert(ratio, 1 / Math.cos(angle))
+angle = Math.PI / 2
+assert(ratio, 1 / Math.cos(angle))
+angle = 0
+assert(ratio, 1)
+ratio
+# return: 1
+---
+# Nucleoid keeps cosecants reactive
+
+angle = Math.PI / 2
+ratio = Math.csc(angle)
+assert(ratio, 1)
+angle = -Math.PI / 2
+assert(ratio, -1)
+angle = Math.PI / 6
+assert(ratio, 1 / Math.sin(angle))
+angle = -Math.PI / 6
+assert(ratio, 1 / Math.sin(angle))
+angle = Math.PI
+assert(ratio, 1 / Math.sin(angle))
+angle = Math.PI / 2
+assert(ratio, 1)
+ratio
+# return: 1
+---
+# Nucleoid keeps sign copying reactive
+
+magnitude = 3
+direction = -1
+copied = Math.copySign(magnitude, direction)
+assert(copied, -3)
+direction = 1
+assert(copied, 3)
+magnitude = -7
+assert(copied, 7)
+direction = -0
+assert(copied, -7)
+magnitude = 0
+assert(1 / copied, Number.NEGATIVE_INFINITY)
+direction = 0
+assert(1 / copied, Number.POSITIVE_INFINITY)
+1
+# return: 1
+---
+# Nucleoid keeps squares reactive
+
+sample = {amplitude: 3}
+offset = 2
+squared = Math.square(sample.amplitude + offset)
+assert(squared, 25)
+sample.amplitude = -4
+assert(squared, 4)
+offset = 1
+assert(squared, 9)
+sample.amplitude = 0
+assert(squared, 1)
+offset = -1
+assert(squared, 1)
+sample.amplitude = 3
+assert(squared, 4)
+1
+# return: 1
+---
+# Nucleoid fills nullish values with one-shot assignments
+
+source = 5
+chosen = null
+chosen ??:= source
+assert(chosen, 5)
+source = 9
+assert(chosen, 5)
+chosen = 0
+chosen ??:= missing
+assert(chosen, 0)
+chosen = false
+chosen ??:= missing
+assert(chosen, false)
+chosen = ""
+chosen ??:= missing
+assert(chosen, "")
+chosen = null
+chosen ??:= 99
+assert(chosen, 99)
+1
+# return: 1
+
+---
+
+# Nucleoid counts direct inputs in reasoning selections
+
+price = 3
+quantity = 4
+subtotal = price * quantity
+tax = subtotal / 10
+total = subtotal + tax
+counts = total |> why |> indegrees
+assert(counts, [2, 2, 1, 0, 0])
+price = 5
+assert(counts, [2, 2, 1, 0, 0])
+tax = price * quantity
+assert(counts, [2, 2, 2, 0, 0])
+tax = 0
+assert(counts, [2, 2, 0, 0, 0])
+total = subtotal
+assert(counts, [1, 2, 0, 0])
+subtotal = price
+assert(counts, [1, 1, 0])
+1
+# return: 1
+---
+# Nucleoid keeps cubes reactive
+
+sample = {amplitude: 3}
+offset = 2
+cubed = Math.cube(sample.amplitude + offset)
+assert(cubed, 125)
+sample.amplitude = -4
+assert(cubed, -8)
+offset = 1
+assert(cubed, -27)
+sample.amplitude = 0
+assert(cubed, 1)
+offset = -1
+assert(cubed, -1)
+sample.amplitude = 3
+assert(cubed, 8)
+1
+# return: 1
+---
+# Nucleoid runs deferred suites on block exit
+
+audit = []
+def complete(value):
+    defer:
+        audit.push(value)
+    if value > 0:
+        return value * 2
+    if value < 0:
+        return -value
+    return 0
+assert(complete(3), 6)
+assert(audit, [3])
+assert(complete(-4), 4)
+assert(audit, [3, -4])
+assert(complete(0), 0)
+assert(audit, [3, -4, 0])
+1
+# return: 1
 ```
 
 ## Floating-point absolute value alias
@@ -29478,3 +29687,357 @@ absent
   Native method value reads remain Undefined, not callable references.
 - No global aliases, additional receivers, other math names, flags,
   parser/lexer changes, public API changes or dependencies are introduced.
+
+## Reactive secant
+
+- NUC 138 adds only native static `Math.sec(value)`, with radians as input
+  and exactly the accepted `1 / Math.cos(value)` result.
+- After successful eager evaluation of every argument, the existing
+  any-supplied-top-level-Undefined gate returns Undefined before conversion.
+  Otherwise intrinsically convert only the first value with `Value::to_number`,
+  then compute exactly `1.0 / first.cos()`. Omission gives numeric NaN.
+- Preserve cosine rounding followed by reciprocal rounding: no normalization,
+  approximation, inferred pole infinity, rearrangement or shadowable helper.
+  Non-NaNs match the accepted composition by bits; NaNs match by classification.
+  Both zero signs yield positive `1`; finite extremes, subnormals and values
+  near `Math.PI / 2` follow the actual cosine, while infinite inputs give NaN.
+- Extras still evaluate exactly once left to right, including after Undefined,
+  with their effects, strict errors, reads and dependencies; they are not
+  numerically converted. Only top-level Undefined triggers the native gate.
+- Literal null retains numeric zero conversion. Inherited live-input and
+  parameter-null deferral, named functions, independent class rules, instance
+  subscriptions, deletion/recovery, frames, captured values and rollback stay
+  unchanged. Numeric conversion does not resolve shadowable `Number`.
+- State/local/receiver `Math` shadowing and ordinary `.Math` or `.sec` lookup
+  stay ordinary. Native `Math.sec` value reads remain Undefined/non-callable.
+  No aliases, global forms, non-native receiver methods or syntax are added;
+  list/population aggregates keep their existing closed method-name dispatch.
+- Formerly failing native `sec` calls gain numbers only after successful
+  argument evaluation without supplied Undefined. Already successful calls
+  with supplied Undefined retain Undefined. All other accepted behavior,
+  strict diagnostics, error positions and transaction effects remain unchanged;
+  `Math.toDegrees` remains unsupported.
+
+## Reactive cosecant
+
+- NUC 141 adds only native static `Math.csc(value)`, taking
+  radians and naming the accepted `1 / Math.sin(value)` composition.
+- After successful eager evaluation of all supplied expressions, retain
+  Math's any-supplied-top-level-Undefined gate before numeric conversion.
+  Otherwise intrinsically convert only the first value with `Value::to_number`,
+  then compute exactly `1.0 / first.sin()`. Omission gives numeric NaN.
+- Preserve the rounded sine followed by reciprocal rounding. Non-NaN result
+  bits match the accepted composition; NaNs match by classification, without
+  a payload promise. Positive and negative zero yield their corresponding
+  signed infinities. Subnormals, finite extremes, `Math.PI` and neighboring
+  values use the actual sine, without normalization, inferred pole values,
+  clamping, algebraic shortcuts or another numerical model. Infinities give NaN.
+- Every argument evaluates exactly once left to right, even after Undefined.
+  Numerically ignored extras retain errors, effects, reads and dependency
+  subscriptions. Nested Undefined does not trigger the top-level native gate.
+- Literal-null zero coercion does not bypass existing live-input or
+  parameter-null deferral. Named functions, independent class rules and
+  instances, deletion/recovery, captured values, frames, graph source and
+  transaction rollback retain their existing behavior. Conversion never
+  resolves shadowable `Number` or lowers to shadowable sine source.
+- Native `Math` shadowing and ordinary `.Math` and `.csc` members remain
+  ordinary lookup. Reading native `Math.csc` as a value remains
+  Undefined/non-callable. List and population aggregates retain their closed
+  dispatch; there is no global alias or new non-native receiver method.
+- No new arity, conversion, range or numeric errors are introduced.
+  Strict missing reads retain `ReferenceError("<name> is not defined")`,
+  including extras after Undefined. Unsupported native names retain
+  `TypeError("Math.<name> is not a function")`, and `Math.random()` retains
+  `TypeError("Math.random is not supported")`, after the unchanged gate.
+  Numeric `Math = 7` still raises
+  `TypeError("number.csc is not a function")`. Positions, caught values and
+  rollback remain unchanged.
+- Only formerly failing native `Math.csc(...)` calls gain the documented
+  results. Previously successful supplied-Undefined calls still return
+  Undefined. All other accepted successful outputs, syntax and diagnostics
+  stay unchanged, including `Math.cot`, `Math.sec` and unsupported
+  `Math.csch`/`Math.toDegrees`.
+- `Nucleoid keeps cosecants reactive` and
+  `Nucleoid preserves cosecant argument dependencies` preserve the caller's
+  executed sine counterparts except for their ratio construction. Their
+  six assertions each, sine controls, expected return `1` and coverage stay
+  intact. No parser/lexer, public API, dependency, option or version changes
+  are introduced.
+
+## Reactive sign copying
+
+- NUC 142 adds only native static `Math.copySign(value, sign)`.
+  The accepted numeric composition
+  `Math.abs(value) * Math.sign(Math.sign(sign) + 1 / sign)` remains available.
+- Evaluate every supplied expression exactly once left to right, then retain
+  Math's any-supplied-top-level-Undefined gate before numeric conversion,
+  including every extra position. Nested Undefined does not trigger that gate.
+- Otherwise intrinsically convert only the first two values with the existing
+  `Value::to_number` conversion. Each omitted value supplies numeric NaN.
+  If the converted sign is NaN, return numeric NaN; otherwise compute ordinary
+  `first.copysign(second)`. A NaN first input remains NaN by classification.
+  No NaN payload or sign bits are promised, and a NaN sign never supplies a
+  representational sign to a finite magnitude.
+- For non-NaNs, retain all magnitude bits of the converted first value and
+  copy the converted second value's sign bit, including both zeros,
+  subnormals, finite extrema and infinities. There is no arithmetic
+  rescaling, overflow, underflow, zero normalization or range validation.
+- Numbers, literal null as zero, booleans, trimmed numeric strings,
+  empty/singleton lists and millisecond dates retain intrinsic numeric
+  conversion. Invalid conversions produce numeric NaN, not new type errors.
+  Extras are neither converted nor used numerically, including NaN extras,
+  but retain their eager effects, strict errors, reads and subscriptions.
+- Literal-null conversion does not override live-input or parameter-null
+  deferral. Named functions, independent class rules, deletion/recovery,
+  captured values/classes, call frames, receivers and complete transaction
+  rollback use the existing machinery. Conversion never resolves shadowable
+  `Number` or rewrites the call to shadowable arithmetic helpers.
+- State/local `Math` bindings and ordinary `.Math`/`.copySign` members retain
+  lookup. Native `Math.copySign` value reads remain Undefined/non-callable.
+  Add no global or lowercase alias, non-native receiver method, population
+  or list aggregate dispatch, parser/lexer syntax, public API or option.
+- Add no arity, conversion, range or numeric errors. Strict missing reads
+  retain `ReferenceError("<name> is not defined")`, including arguments
+  after Undefined. Unsupported native methods retain
+  `TypeError("Math.<name> is not a function")`, and `Math.random()` retains
+  `TypeError("Math.random is not supported")`, after the unchanged gate.
+  Numeric `Math = 7` gives
+  `TypeError("number.copySign is not a function")`. Error positions, caught
+  values and recovery are unchanged.
+- Only formerly failing native `Math.copySign(...)` calls gain these results.
+  Already successful supplied-Undefined calls still return Undefined.
+  Every other native Math arm, accepted source form and output remains
+  unchanged; `Math.toDegrees` stays unsupported.
+- `Nucleoid keeps sign copying reactive` and
+  `Nucleoid preserves sign copying argument dependencies` retain the caller's
+  executed arithmetic programs except for their copied-expression RHS.
+  Both keep all six canonical assertions in order and explicit return `1`.
+  Historical executable cases and synthesized records are unchanged.
+
+## Reactive squaring
+
+- NUC 143 adds only native static `Math.square(value)`. After the existing
+  any-supplied-top-level-Undefined gate, intrinsically convert only the first
+  supplied value with `Value::to_number`, then compute exactly `first * first`
+  with ordinary `f64` multiplication. Omission supplies numeric NaN.
+- Preserve multiplication's rounding, positive-zero result for either zero
+  sign, subnormal results, underflow to positive zero, overflow to positive
+  infinity and positive infinity for either infinity sign. NaNs match by
+  classification, without payload or sign promises. No `powf`, exponentiation
+  lowering, fused arithmetic, rescaling or alternative numerical model is used.
+- Numbers, literal null as zero, booleans, trimmed numeric strings,
+  empty/singleton lists and millisecond dates retain intrinsic conversion.
+  Invalid conversions give numeric NaN rather than new type errors.
+  Conversion never calls or tracks shadowable `Number` or another Math helper.
+- Every supplied expression evaluates exactly once left to right, even after
+  Undefined. Extras are ignored numerically, not converted; their eager
+  effects, strict errors, reads and subscriptions remain. Any supplied
+  top-level Undefined, including an extra, returns Undefined before conversion.
+  Nested Undefined does not trigger that native gate.
+- Literal-null conversion does not override live-input or parameter-null
+  deferral. Named functions, independent class rules, deletion/recovery,
+  captured values/classes, ordinary AST and graph source, call frames and
+  existing transaction rollback behavior are unchanged. This utility does
+  not repair inherited graph-dependent rollback ordering limitations.
+- State/local `Math` shadowing and ordinary `.Math`/`.square` members retain
+  lookup. Native `Math.square` property reads remain Undefined/non-callable.
+  No alias, global function, non-native receiver method, list/population
+  aggregate, lexer/parser syntax, public Rust API, dependency or option is added.
+- No new arity, conversion, range or numeric errors are introduced.
+  Strict missing reads retain `ReferenceError("<name> is not defined")`,
+  including ignored extras after Undefined. Unsupported native names retain
+  `TypeError("Math.<name> is not a function")`, and `Math.random()` retains
+  `TypeError("Math.random is not supported")`, after the unchanged gate.
+  Numeric `Math = 7` still raises
+  `TypeError("number.square is not a function")`. Error positions and caught
+  values remain ordinary.
+- Only formerly failing native `Math.square(...)` calls gain these results.
+  Previously successful calls gated by supplied Undefined still return
+  Undefined. Every other accepted successful output and diagnostic is
+  unchanged; the repeated-multiplication spelling remains supported.
+- `Nucleoid keeps squares reactive` and
+  `Nucleoid preserves squaring argument dependencies` change only the
+  caller's two executed counterpart expressions. Each retains all six
+  canonical assertions in order, explicit return `1` and executed coverage.
+
+## Input counts of reasoning selections
+
+- NUC 145 adds only the final reasoning stage `selection |> indegrees`.
+  For each selected `Step`, in its existing order, return a nonnegative
+  Number equal to the length of its recorded `from` list. Include inputs
+  whose own steps are not selected. This is the ordered projection
+  `(selection).map(step -> step.from.length)`, where `selection` denotes
+  the graph selection the source names, not a value coerced into a list.
+- An empty selection returns `[]`. Each stated or other zero-input step
+  contributes `0`; a derived class-governed step with no recorded inputs
+  also contributes `0`. This is not the number of selected steps, a
+  transitive degree, or a degree restricted to the selected subgraph.
+- Sources keep `nodes`, `holds` and `edges` reference coercion: a reference
+  denotes its own one-step selection, `model` denotes current selectable
+  nodes, and prefix or pipeline selection stages retain their existing
+  ordering, filters, metadata and traversal. A variable holding a
+  materialized selection still denotes that variable's node, not the
+  stored records. No Step field, dependency traversal or graph mutation
+  is added.
+- Structural subscriptions, observer exclusion, input reads and record
+  materialization stay those of the existing projections. Standing
+  declarations refresh on rewiring, including equal-valued rewiring,
+  declaration/deletion, class-rule replacement and source reattachment.
+  Empty selections retain their source subscriptions. Value changes
+  alone do not change counts when recorded input lists stay unchanged.
+- Functions, methods, class-level rules, hypotheses, snapshots through
+  `.value`, nullish deferral and transactions retain existing selection
+  behavior. A selected null-valued step still contributes its input
+  count; a selection made Undefined by `depth(null)` stays Undefined.
+  Standing declarations keep the existing deferred-null result and
+  recover when the depth becomes defined.
+  An absent property or a deleted formerly defined node contributes no
+  step, and a never-defined source keeps
+  `ReferenceError("<name> is not defined")`.
+- The projection is final. A following reasoning stage, or a `path`,
+  `intersect`, `except`, `union` or `xor` argument ending in the projection,
+  parses and raises `TypeError("Cannot explain <source>")`. Display the
+  source in its ordinary compact form, such as `total|>why|>indegrees`.
+  Normal list operations on a parenthesized projection remain valid.
+- `indegrees` is an ordinary Identifier, recognized as this stage only
+  after `|>`. A local, parameter, variable, function or class binding
+  named `indegrees` shadows the stage and raises
+  `TypeError("indegrees is not an operation")` before source selection.
+  Existing final-projection error precedence and source positions remain.
+  Bare names, members and ordinary calls keep ordinary lookup; no prefix,
+  bare or call alias, reserved word or lexer token kind is introduced.
+- Existing errors of earlier selection stages remain unchanged, including
+  invalid sources, non-negative-depth checks and
+  `TypeError("Cannot use 'diff' outside suppose")`. No arity, conversion
+  or new graph-limit error is added. Accepted `nodes`, `holds`, `edges`
+  and the map spelling keep their behavior.
+- `Nucleoid counts direct inputs in reasoning selections` and the
+  reference case `Nucleoid keeps reasoning input counts reactive` are the
+  only new executable-document cases. Their accepted controls were
+  executed and sealed before preparation; only construction of `counts`
+  or `impact` changes. Each retains six ordered canonical assertions,
+  explicit return `1` and executed coverage.
+
+## Reactive cubing
+
+- The NUC 146 candidate adds only native static `Math.cube(value)`. After
+  the existing any-supplied-top-level-Undefined gate, intrinsically convert
+  only the first value, compute `square = first * first`, then
+  `square * first`, as two separate ordinary `f64` multiplications.
+  Omission supplies numeric NaN.
+- Keep that operation order and its rounding, signed zeros, subnormals,
+  underflow, overflow and nonfinite classification. Negative zero cubes to
+  negative zero, and negative inputs retain their sign. NaN payload/sign
+  bits are not promised. This is not a universal alias to `** 3`, `powf`
+  or `powi`; there is no fused/rescaled arithmetic or cube-root operation.
+- Numbers, literal null as zero, booleans, trimmed numeric strings,
+  empty/singleton lists and millisecond dates keep intrinsic numeric
+  conversion. Invalid conversions produce numeric NaN, not new errors.
+  Conversion never calls or tracks shadowable `Number` or `Math.square`.
+- Every supplied expression evaluates exactly once, left to right, even
+  following Undefined. Numerically ignored extras are not converted, but
+  keep their eager reads, effects, strict errors and subscriptions. Any
+  supplied top-level Undefined, including an extra, returns Undefined before
+  conversion. Nested Undefined alone does not trigger that native gate.
+- Literal-null coercion does not override live-input/parameter-null
+  deferral. Named functions, independent class rules, captures, `.value`
+  snapshots, observation, ordinary AST/graph source, call frames,
+  deletion/recovery and transaction behavior remain unchanged. This utility
+  does not repair inherited graph-dependent rollback ordering or runtime
+  value-depth limitations.
+- State/local `Math` shadowing and ordinary `.Math`/`.cube` members keep
+  existing lookup. Native `Math.cube` value reads remain
+  Undefined/non-callable. No alias, prefix/global/lowercase form, receiver
+  method, aggregate dispatch, lexer/parser change, option, dependency or
+  public Rust API/type is added.
+- No new arity, conversion, range or numeric errors are introduced.
+  Strict missing reads keep `ReferenceError("<name> is not defined")`,
+  including ignored extras following Undefined. Unsupported native names
+  retain `TypeError("Math.<name> is not a function")`, and `Math.random()`
+  retains `TypeError("Math.random is not supported")`, after the unchanged
+  gate. Numeric `Math = 7` keeps
+  `TypeError("number.cube is not a function")`. Error positions, catches,
+  rollback and recovery stay ordinary.
+- Only formerly failing native `Math.cube(...)` calls gain defined numeric
+  results. Previously successful Undefined-gated native calls still return
+  Undefined. All sibling helpers, including unsupported `Math.toDegrees`,
+  and every other accepted successful output and diagnostic stay unchanged.
+- `Nucleoid keeps cubes reactive` and
+  `Nucleoid preserves cubing argument dependencies` change only the RHS
+  specified in the caller's two executed accepted controls. Each preserves
+  all six ordered canonical assertions, explicit return `1` and coverage.
+  Their accepted square-call-times-repeated-pure-expression spelling is a
+  fair ordered-arithmetic counterpart, not a promise to duplicate a future
+  call argument's effects. Every historical executable case is unchanged.
+
+## Deferred suites
+
+- NUC 147 adds `defer:` followed by a genuinely indented suite. The name
+  must begin an executable statement: at input start, or after a logical
+  newline, semicolon, indent, dedent, opening block brace or suite colon.
+  The colon must be followed by the real layout prefix of an indented
+  block; whitespace and comments do not replace that prefix.
+- Only reaching the registration has an effect. It saves the suite's
+  statements, without evaluating them, taking argument/value snapshots or
+  capturing a closure. Each executable statement list owns its registrations:
+  the program passed to `Runtime::run`, a function/method/constructor body,
+  a branch, explicit block, loop iteration, try/catch/finally or deferred
+  suite, and a hypothetical body. A nested list unwinds before its caller
+  continues; a loop iteration unwinds before its loop scope is removed.
+- Remaining statements run normally, until completion, a return or an
+  error. Existing loop outcomes pass through unchanged; no new loop-exit
+  syntax or behavior is added. Reached suites then run once in reverse
+  registration order, before parameter, loop, catch or receiver context
+  is removed. An unreached registration does nothing.
+- A registration contributes no value. Normal deferred completion ignores
+  its own value and keeps the pending outcome, including the last
+  non-assertion, non-registration value of a normally completed block.
+  A pending return keeps its already-computed value, including copied
+  list elements; deferred statements read the active exit-time bindings.
+  Deferred `return` or failure replaces the pending outcome, but every
+  older registration still runs and may replace it again.
+- Use NUC 119's savepoints, not foreign-language transaction rules. A
+  block containing registrations opens a savepoint at entry. If its body
+  fails after reaching a registration, restore the body's state, graph,
+  pending propagation and deletion tracking before cleanup. Each deferred
+  suite has its own savepoint; if it fails, restore its partial changes
+  before running an older suite. Local bindings are not transaction
+  snapshots, just as in accepted finalization: the same active scope
+  remains. Successful cleanup writes belong to the enclosing transaction;
+  an escaping error lets enclosing rollback undo them.
+- An unreplaced error keeps its kind, message and existing position; it
+  is not converted into a thrown string. The normal top-level statement
+  position still fills an unpositioned error. An otherwise unpositioned
+  error escaping a top-level deferred suite is placed at its registration.
+- `defer` remains an ordinary identifier in declarations, functions,
+  parameters, calls, properties, object keys, enum names, expressions,
+  operator sections and bare-name lines before indented blocks.
+  `defer: NAME` stays a typed declaration, including runtime-failing ones.
+  Inline, braced, colon-free and layout-suppressed `defer` forms keep
+  their accepted reading or diagnostic; adjacency alone is not a new
+  statement boundary. No keyword or lexer token is added.
+- `try` still requires `catch` or its accepted `except` spelling. In
+  particular, `try`/`finally` without a catch keeps
+  `SyntaxError("Expected 'catch' after 'try'")`. No async cleanup, implicit
+  resource protocol, callback, closure, dependency or option is added.
+- Parsing uses the existing 64-level statement/expression guard. A
+  frame's finite source list permits at most one registration per reached
+  statement; nested deferred execution has a fresh list and passes the
+  existing 192-level runtime guard. It cannot append to the unwinding
+  parent's queue. Limit diagnostics remain
+  `SyntaxError("Statements are nested too deeply")` and
+  `TypeError("Maximum statement depth exceeded")`.
+- The public syntax tree adds `Stmt::Defer(Vec<Stmt>)`; all old trees and
+  existing item signatures/variants remain unchanged. Graph-label
+  generation uses `defer{...}`, while suite-aware rendering of
+  default/rest-bearing declarations uses real indented `defer:` syntax.
+  Registration belongs to execution of a statement list, not a standalone
+  node. Direct `Nuc::convert` of the new variant reports
+  `SyntaxError("Deferred suite requires an executable statement block")`.
+  The additive public enum variant needs human SemVer review; no project
+  version changes.
+- The normative `Nucleoid runs deferred suites on block exit` case and
+  reference `Nucleoid unwinds deferred suites in reverse order` case
+  retain their executed accepted try/catch/finally controls' identities,
+  six ordered canonical assertions each and explicit expected return `1`.
+  Every historical executable case is unchanged.

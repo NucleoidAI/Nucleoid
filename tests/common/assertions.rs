@@ -12,7 +12,9 @@ pub fn protected_assertions(statements: &[Stmt]) -> Vec<String> {
 
 fn statement_assertions(statement: &Stmt, assertions: &mut Vec<String>) {
     match statement {
-        Stmt::Assign { target, value } | Stmt::ValueAssign { target, value } => {
+        Stmt::Assign { target, value }
+        | Stmt::ValueAssign { target, value }
+        | Stmt::NullishValueAssign { target, value } => {
             expression_assertions(target, assertions);
             expression_assertions(value, assertions);
         }
@@ -33,7 +35,7 @@ fn statement_assertions(statement: &Stmt, assertions: &mut Vec<String>) {
                 statement_assertions(statement, assertions);
             }
         }
-        Stmt::Block(body) => {
+        Stmt::Block(body) | Stmt::Defer(body) => {
             for statement in body {
                 statement_assertions(statement, assertions);
             }

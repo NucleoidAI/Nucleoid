@@ -1195,6 +1195,16 @@ catch error:
 
 Full detail: [README.md §11](README.md#11-built-in-objects), [NUC 10](nuc-0010.md).
 
+- The [NUC 146 candidate](nuc-0146.md) adds native static `Math.cube(value)`.
+  Convert the first value intrinsically, square it, then multiply by that
+  same converted value with separate ordinary multiplications, preserving
+  their rounding and signs rather than promising equivalence to `** 3`.
+  All argument expressions still evaluate once left to right, including
+  ignored extras and reads following Undefined. The existing top-level gate,
+  live-null deferral, shadowing and rollback remain; no alias or syntax is
+  added. The complete [reactive argument-dependency example](README.md#reactive-cubing-argument-dependencies)
+  and [root contract](../nucleoid.spec.md#reactive-cubing) cover recovery.
+
 ---
 
 ## 12. Reasoning Operations
@@ -2794,6 +2804,11 @@ Deposit.map(deposit -> deposit.rate)
   updates both, while `opening := total` keeps the total from the moment it
   was taken. See [NUC 66](nuc-0066.md) and the
   [root contract](../nucleoid.spec.md#value-assignment).
+- For a value that should be supplied only if still Null or Undefined,
+  [NUC 144](nuc-0144.md) adds the statement `TARGET ??:= EXPR`. Its taken
+  branch is the same one-shot action; a supplied value skips the RHS and
+  leaves its declaration and history untouched. The entire check and action
+  are isolated from enclosing rule dependencies.
 
 ## List and population sums
 
@@ -4410,6 +4425,21 @@ moved
   from the assembly to the shipping date is gone. See
   [NUC 133](nuc-0133.md) and the
   [root contract](../nucleoid.spec.md#edge-lists-of-reasoning-selections).
+
+## Input counts of reasoning selections
+
+- [NUC 145](nuc-0145.md) adds `selection |> indegrees`, the ordered Number
+  projection `(selection).map(step -> step.from.length)`. For the schedule
+  above, `delay |> affects |> indegrees` reports each reached step's fan-in,
+  including the testing input even though delay does not reach testing.
+- Replacing shipping's two inputs by three changes its count even if its
+  value stays the same. Stated/zero-input steps contribute `0`, and an empty
+  selection gives `[]` while retaining its structural subscriptions.
+- The complete paired reference program and its six reactive assertions are
+  in [the language reference](README.md#input-counts-of-reasoning-selections);
+  the [root contract](../nucleoid.spec.md#input-counts-of-reasoning-selections)
+  specifies unchanged source coercion, observers, shadowing and final-list
+  boundaries. No additional executable-document case is introduced here.
 
 ## Reactive list flattening
 

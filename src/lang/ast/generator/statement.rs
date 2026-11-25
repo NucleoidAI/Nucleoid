@@ -16,19 +16,15 @@ pub fn generate(statement: &Stmt) -> String {
     match statement {
         Stmt::Assign { target, value } => assignment_source(target, value),
         Stmt::ValueAssign { target, value } => format!("{target}:={value}"),
+        Stmt::NullishValueAssign { target, value } => format!("{target}??:={value}"),
         Stmt::Expression(expression) => expression.to_string(),
         Stmt::If {
             condition,
             consequent,
             alternate,
-        } => {
-            let alternate = alternate
-                .as_ref()
-                .map(|branch| format!("else{{{}}}", generate(branch)))
-                .unwrap_or_default();
-            format!("if({condition}){{{}}}{alternate}", generate_all(consequent))
-        }
+        } => conditional_source(condition, consequent, alternate.as_deref()),
         Stmt::Block(statements) => format!("{{{}}}", generate_all(statements)),
+        Stmt::Defer(body) => format!("defer{{{}}}", generate_all(body)),
         Stmt::Return(Some(expression)) => format!("return {expression}"),
         Stmt::Return(None) => "return".to_string(),
         Stmt::Throw(expression) => format!("throw {expression}"),
@@ -73,6 +69,26 @@ pub fn generate(statement: &Stmt) -> String {
             )
         }
     }
+}
+
+fn conditional_source(condition: &Expr, consequent: &[Stmt], alternate: Option<&Stmt>) -> String {
+    let alternate = alternate
+        .map(|branch| format!("else{{{}}}", generate(branch)))
+        .unwrap_or_default();
+    format!("if({condition}){{{}}}{alternate}", generate_all(consequent))
+}
+
+fn conditional_suite(condition: &Expr, consequent: &[Stmt], alternate: Option<&Stmt>) -> String {
+    let mut rendered = format!("if {condition}:\n{}", indent(&source_all(consequent)));
+    if let Some(alternate) = alternate {
+        let body = match alternate {
+            Stmt::Block(body) => source_all(body),
+            branch => source(branch),
+        };
+        rendered.push_str("\nelse:\n");
+        rendered.push_str(&indent(&body));
+    }
+    rendered
 }
 
 fn loop_key(word: &str, header: &Expr, body: &[Stmt]) -> String {
@@ -181,18 +197,7 @@ fn source(statement: &Stmt) -> String {
             condition,
             consequent,
             alternate,
-        } => {
-            let mut rendered = format!("if {condition}:\n{}", indent(&source_all(consequent)));
-            if let Some(alternate) = alternate {
-                let body = match alternate.as_ref() {
-                    Stmt::Block(body) => source_all(body),
-                    branch => source(branch),
-                };
-                rendered.push_str("\nelse:\n");
-                rendered.push_str(&indent(&body));
-            }
-            rendered
-        }
+        } => conditional_suite(condition, consequent, alternate.as_deref()),
         Stmt::For {
             variable,
             iterable,
@@ -226,6 +231,7 @@ fn source(statement: &Stmt) -> String {
             catch,
             finally,
         } => finally_suite(&try_suite(body, parameter, catch), finally),
+        Stmt::Defer(body) => format!("defer:\n{}", indent(&source_all(body))),
         Stmt::Block(body) => format!("{{\n{}\n}}", source_all(body)),
         Stmt::Suppose { target, body } => format!(
             "{}suppose:\n{}",

@@ -30,6 +30,11 @@ fn numeric_argument(arguments: &[Value], index: usize) -> f64 {
 fn math_unary(name: &str, first: f64) -> Option<f64> {
     Some(match name {
         "abs" | "fabs" => first.abs(),
+        "square" => first * first,
+        "cube" => {
+            let square = first * first;
+            square * first
+        }
         "ceil" => first.ceil(),
         "floor" => first.floor(),
         "fract" => {
@@ -71,7 +76,9 @@ fn math_unary(name: &str, first: f64) -> Option<f64> {
         "log2" => first.log2(),
         "log10" => first.log10(),
         "sin" => first.sin(),
+        "csc" => 1.0 / first.sin(),
         "cos" => first.cos(),
+        "sec" => 1.0 / first.cos(),
         "tan" => first.tan(),
         "cot" => 1.0 / first.tan(),
         "atan" => first.atan(),
@@ -87,6 +94,14 @@ fn math_interpolation(name: &str, first: f64, arguments: &[Value]) -> Option<f64
     Some(match name {
         "pow" => first.powf(argument(1)),
         "atan2" => first.atan2(argument(1)),
+        "copySign" => {
+            let sign = argument(1);
+            if sign.is_nan() {
+                f64::NAN
+            } else {
+                first.copysign(sign)
+            }
+        }
         "clamp" => numeric_clamp(first, argument(1), argument(2)),
         "saturate" => numeric_clamp(first, 0.0, 1.0),
         "smoothstep" => smoothstep(first, argument(1), argument(2)),

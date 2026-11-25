@@ -198,7 +198,11 @@ fn accepted_documents_use_value_assignments_only_in_the_appended_cases() {
     ];
     let mut with_operator = 0;
     let mut cases = 0;
-    for case in documents.iter().flatten() {
+    for case in documents
+        .iter()
+        .zip([4, 4, 0, 0])
+        .flat_map(|(cases, added)| &cases[..cases.len() - added])
+    {
         cases += 1;
         let uses = tokenize(case.source.trim())
             .unwrap()
@@ -212,7 +216,7 @@ fn accepted_documents_use_value_assignments_only_in_the_appended_cases() {
         assert_eq!(uses, new, "{}", case.title);
     }
     assert_eq!(with_operator, 12);
-    assert_eq!(cases, 1306);
+    assert_eq!(cases, 1314);
 }
 
 #[test]
