@@ -154,6 +154,14 @@ impl Parser {
     }
 
     fn statement_inner(&mut self) -> Result<Stmt> {
+        if self.starts_statement()
+            && matches!(self.peek(), Token::Identifier(name) if name == "defer")
+            && self.has_indented_suite(1)
+        {
+            self.advance();
+            return self.suite().map(Stmt::Defer);
+        }
+
         if let Some(condition) = self.while_condition() {
             let body = self.suite()?;
             return Ok(Stmt::While { condition, body });

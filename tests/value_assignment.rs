@@ -200,7 +200,7 @@ fn accepted_documents_use_value_assignments_only_in_the_appended_cases() {
     let mut cases = 0;
     for case in documents
         .iter()
-        .zip([3, 3, 0, 0])
+        .zip([4, 4, 0, 0])
         .flat_map(|(cases, added)| &cases[..cases.len() - added])
     {
         cases += 1;

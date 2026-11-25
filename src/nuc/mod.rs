@@ -157,6 +157,7 @@ impl Nuc {
                 alternate.clone(),
             )),
             Stmt::Block(statements) => Nuc::Block(Block::new(statements.clone())),
+            Stmt::Defer(_) => return Err(deferred_registration_error()),
             Stmt::Class(declaration) => Nuc::Class(Class::new(declaration.clone())),
             Stmt::Function(function) => Nuc::Function(Function::new(function.clone())),
             Stmt::For {
@@ -368,6 +369,10 @@ impl Nuc {
             _ => Ok(()),
         }
     }
+}
+
+fn deferred_registration_error() -> Error {
+    Error::syntax("Deferred suite requires an executable statement block")
 }
 
 fn for_entries(key: &str, value: &str, iterable: &Expr, body: &[Stmt]) -> Nuc {

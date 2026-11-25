@@ -1,6 +1,8 @@
 //! The runtime: what holds the state and the graph, and drives one statement
 //! after another through its four execution phases.
 
+mod deferred;
+
 use indexmap::IndexSet;
 use std::collections::HashSet;
 
@@ -9,7 +11,6 @@ use crate::graph::{Graph, NodeKey};
 use crate::lang::ast::Stmt;
 use crate::lang::evaluation::{Flow, Tracking, TrackingMode};
 use crate::nuc::Nuc;
-use crate::nuc::expression::is_assertion;
 use crate::scope::Scope;
 use crate::stack::Stack;
 use crate::state::State;
@@ -91,43 +92,18 @@ impl Runtime {
         self.transaction.start();
         self.deleted.clear();
 
-        let mut value = Value::Null;
-        let mut failure = None;
-
-        for (index, statement) in program.statements.iter().enumerate() {
-            debug_assert_eq!(self.transaction.hypotheses(), Vec::<usize>::new());
-            let position = program.positions.get(index).copied();
-
-            match self.execute(statement, &mut scope) {
-                Ok(Flow::Return(returned)) => {
-                    value = returned;
-                    break;
-                }
-                Ok(Flow::Normal(produced)) => {
-                    if !is_assertion(statement) {
-                        value = produced;
-                    }
-                }
-                Err(error) => {
-                    // The statement that was running is where the reader has to
-                    // look, so an error without a place of its own gets this one.
-                    failure = Some(match position {
-                        Some(position) => error.or_at(position),
-                        None => error,
-                    });
-                    break;
-                }
-            }
-        }
+        // The statement that was running is where the reader has to
+        // look, so an error without a place of its own gets this one.
+        let outcome = self.execute_statements(&program.statements, &program.positions, &mut scope);
 
         debug_assert_eq!(self.transaction.hypotheses(), Vec::<usize>::new());
 
-        match failure {
-            None => {
+        match outcome {
+            Ok(Flow::Normal(value) | Flow::Return(value)) => {
                 self.transaction.commit();
                 Ok(value)
             }
-            Some(error) => {
+            Err(error) => {
                 self.transaction.rollback(&mut self.state, &mut self.graph);
                 Err(error)
             }
@@ -213,20 +189,7 @@ impl Runtime {
     // -- statement execution -------------------------------------------------
 
     pub(crate) fn execute_all(&mut self, statements: &[Stmt], scope: &mut Scope) -> Result<Flow> {
-        let mut last = Value::Null;
-
-        for statement in statements {
-            match self.execute(statement, scope)? {
-                Flow::Return(value) => return Ok(Flow::Return(value)),
-                Flow::Normal(value) => {
-                    if !is_assertion(statement) {
-                        last = value;
-                    }
-                }
-            }
-        }
-
-        Ok(Flow::Normal(last))
+        self.execute_statements(statements, &[], scope)
     }
 
     pub(crate) fn execute(&mut self, statement: &Stmt, scope: &mut Scope) -> Result<Flow> {

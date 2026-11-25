@@ -29646,6 +29646,26 @@ sample.amplitude = 3
 assert(cubed, 8)
 1
 # return: 1
+---
+# Nucleoid runs deferred suites on block exit
+
+audit = []
+def complete(value):
+    defer:
+        audit.push(value)
+    if value > 0:
+        return value * 2
+    if value < 0:
+        return -value
+    return 0
+assert(complete(3), 6)
+assert(audit, [3])
+assert(complete(-4), 4)
+assert(audit, [3, -4])
+assert(complete(0), 0)
+assert(audit, [3, -4, 0])
+1
+# return: 1
 ```
 
 ## Floating-point absolute value alias
@@ -29949,3 +29969,75 @@ assert(cubed, 8)
   Their accepted square-call-times-repeated-pure-expression spelling is a
   fair ordered-arithmetic counterpart, not a promise to duplicate a future
   call argument's effects. Every historical executable case is unchanged.
+
+## Deferred suites
+
+- NUC 147 adds `defer:` followed by a genuinely indented suite. The name
+  must begin an executable statement: at input start, or after a logical
+  newline, semicolon, indent, dedent, opening block brace or suite colon.
+  The colon must be followed by the real layout prefix of an indented
+  block; whitespace and comments do not replace that prefix.
+- Only reaching the registration has an effect. It saves the suite's
+  statements, without evaluating them, taking argument/value snapshots or
+  capturing a closure. Each executable statement list owns its registrations:
+  the program passed to `Runtime::run`, a function/method/constructor body,
+  a branch, explicit block, loop iteration, try/catch/finally or deferred
+  suite, and a hypothetical body. A nested list unwinds before its caller
+  continues; a loop iteration unwinds before its loop scope is removed.
+- Remaining statements run normally, until completion, a return or an
+  error. Existing loop outcomes pass through unchanged; no new loop-exit
+  syntax or behavior is added. Reached suites then run once in reverse
+  registration order, before parameter, loop, catch or receiver context
+  is removed. An unreached registration does nothing.
+- A registration contributes no value. Normal deferred completion ignores
+  its own value and keeps the pending outcome, including the last
+  non-assertion, non-registration value of a normally completed block.
+  A pending return keeps its already-computed value, including copied
+  list elements; deferred statements read the active exit-time bindings.
+  Deferred `return` or failure replaces the pending outcome, but every
+  older registration still runs and may replace it again.
+- Use NUC 119's savepoints, not foreign-language transaction rules. A
+  block containing registrations opens a savepoint at entry. If its body
+  fails after reaching a registration, restore the body's state, graph,
+  pending propagation and deletion tracking before cleanup. Each deferred
+  suite has its own savepoint; if it fails, restore its partial changes
+  before running an older suite. Local bindings are not transaction
+  snapshots, just as in accepted finalization: the same active scope
+  remains. Successful cleanup writes belong to the enclosing transaction;
+  an escaping error lets enclosing rollback undo them.
+- An unreplaced error keeps its kind, message and existing position; it
+  is not converted into a thrown string. The normal top-level statement
+  position still fills an unpositioned error. An otherwise unpositioned
+  error escaping a top-level deferred suite is placed at its registration.
+- `defer` remains an ordinary identifier in declarations, functions,
+  parameters, calls, properties, object keys, enum names, expressions,
+  operator sections and bare-name lines before indented blocks.
+  `defer: NAME` stays a typed declaration, including runtime-failing ones.
+  Inline, braced, colon-free and layout-suppressed `defer` forms keep
+  their accepted reading or diagnostic; adjacency alone is not a new
+  statement boundary. No keyword or lexer token is added.
+- `try` still requires `catch` or its accepted `except` spelling. In
+  particular, `try`/`finally` without a catch keeps
+  `SyntaxError("Expected 'catch' after 'try'")`. No async cleanup, implicit
+  resource protocol, callback, closure, dependency or option is added.
+- Parsing uses the existing 64-level statement/expression guard. A
+  frame's finite source list permits at most one registration per reached
+  statement; nested deferred execution has a fresh list and passes the
+  existing 192-level runtime guard. It cannot append to the unwinding
+  parent's queue. Limit diagnostics remain
+  `SyntaxError("Statements are nested too deeply")` and
+  `TypeError("Maximum statement depth exceeded")`.
+- The public syntax tree adds `Stmt::Defer(Vec<Stmt>)`; all old trees and
+  existing item signatures/variants remain unchanged. Graph-label
+  generation uses `defer{...}`, while suite-aware rendering of
+  default/rest-bearing declarations uses real indented `defer:` syntax.
+  Registration belongs to execution of a statement list, not a standalone
+  node. Direct `Nuc::convert` of the new variant reports
+  `SyntaxError("Deferred suite requires an executable statement block")`.
+  The additive public enum variant needs human SemVer review; no project
+  version changes.
+- The normative `Nucleoid runs deferred suites on block exit` case and
+  reference `Nucleoid unwinds deferred suites in reverse order` case
+  retain their executed accepted try/catch/finally controls' identities,
+  six ordered canonical assertions each and explicit expected return `1`.
+  Every historical executable case is unchanged.

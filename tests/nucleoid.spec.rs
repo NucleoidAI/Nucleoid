@@ -23284,6 +23284,31 @@ fn keeps_cubes_reactive() {
 # return: 1"#);
 }
 
+/// Nucleoid runs deferred suites on block exit
+#[rustfmt::skip]
+#[test]
+fn runs_deferred_suites_on_block_exit() {
+    let mut run = runner();
+    run("audit = []");
+    run(r#"def complete(value):
+    defer:
+        audit.push(value)
+    if value > 0:
+        return value * 2
+    if value < 0:
+        return -value
+    return 0"#);
+    assert_eq!(run("complete(3)"), 6);
+    assert_eq!(run("audit"), serde_json::json!([3]));
+    assert_eq!(run("complete(-4)"), 4);
+    assert_eq!(run("audit"), serde_json::json!([3, -4]));
+    assert_eq!(run("complete(0)"), 0);
+    assert_eq!(run("audit"), serde_json::json!([3, -4, 0]));
+    run(r#"1
+
+# return: 1"#);
+}
+
 /// The committed tests must not drift from their generated JSONL export.
 #[rustfmt::skip]
 #[test]

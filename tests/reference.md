@@ -3251,4 +3251,22 @@ probe.input = -1
 assert(observed, -27)
 1
 # return: 1
+---
+# Nucleoid unwinds deferred suites in reverse order
+
+history = []
+def unwind(value):
+    defer:
+        history.push(value * 10 + 1)
+    defer:
+        history.push(value * 10 + 2)
+    return value
+assert(unwind(0), 0)
+assert(history, [2, 1])
+assert(unwind(2), 2)
+assert(history, [2, 1, 22, 21])
+assert(unwind(-2), -2)
+assert(history, [2, 1, 22, 21, -18, -19])
+1
+# return: 1
 ```

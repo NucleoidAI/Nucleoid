@@ -124,7 +124,7 @@ fn declares_class_rule(statements: &[Stmt]) -> bool {
             target,
             Expr::Member { object, .. } if matches!(object.as_ref(), Expr::ClassRef(_))
         ),
-        Stmt::Block(nested) => declares_class_rule(nested),
+        Stmt::Block(nested) | Stmt::Defer(nested) => declares_class_rule(nested),
         Stmt::If {
             consequent,
             alternate,

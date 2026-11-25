@@ -35,7 +35,7 @@ fn statement_assertions(statement: &Stmt, assertions: &mut Vec<String>) {
                 statement_assertions(statement, assertions);
             }
         }
-        Stmt::Block(body) => {
+        Stmt::Block(body) | Stmt::Defer(body) => {
             for statement in body {
                 statement_assertions(statement, assertions);
             }

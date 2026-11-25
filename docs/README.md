@@ -2734,6 +2734,51 @@ visits.length
   before a `catch`. See the
   [root contract](../nucleoid.spec.md#finally-clauses).
 
+### Deferred suites
+
+```
+history = []
+def unwind(value):
+    defer:
+        history.push(value * 10 + 1)
+    defer:
+        history.push(value * 10 + 2)
+    return value
+assert(unwind(0), 0)
+assert(history, [2, 1])
+assert(unwind(2), 2)
+assert(history, [2, 1, 22, 21])
+assert(unwind(-2), -2)
+assert(history, [2, 1, 22, 21, -18, -19])
+1
+```
+
+- This is the complete `Nucleoid unwinds deferred suites in reverse order`
+  case in `tests/reference.md`, without its title and expected-return
+  metadata; it returns `1`. The specification's
+  [deferred-suite contract](../nucleoid.spec.md#deferred-suites) is authoritative.
+- [NUC 147](nuc-0147.md) adds contextual `defer:` with a real indented
+  suite. Reaching it registers work for exit of the current executable
+  statement list, not necessarily the whole function. The program,
+  branches, loop iterations, try/catch/finally and deferred bodies are
+  separate lists; nested lists finish their cleanup before returning.
+- Remaining work completes, returns or fails first. Registrations then run
+  LIFO in the still-active parameter, loop, catch or receiver scope,
+  reading exit-time values rather than capturing arguments or closures.
+  A pending return keeps its computed value. A deferred return or failure
+  replaces the pending outcome, but older registrations still run.
+- A failed body rolls its state and queued work back before cleanup; a
+  failed deferred suite rolls back before the next older one. These are
+  NUC 119 savepoints, not snapshots of local bindings. Successful cleanup
+  remains part of the enclosing transaction and rolls back if an error escapes.
+- `defer` remains an ordinary name everywhere else. Typed `defer: NAME`,
+  bare-name lines followed by blocks, calls, properties, keys and operator
+  sections keep their old meaning. Inline/braced or layout-suppressed
+  forms are not deferred suites. Ordinary `try` still requires a catch.
+- The REPL's existing colon buffering holds a deferred suite until a blank
+  line; cleanup belongs to that submitted program, not to the REPL session.
+  No resource protocol, async operation or new loop-exit behavior is added.
+
 ### Python-style except clauses
 
 ```
@@ -2782,7 +2827,7 @@ share
   unbinds it. See the
   [root contract](../nucleoid.spec.md#python-style-except-clauses).
 
-Full detail: [NUC 9](nuc-0009.md), [NUC 46](nuc-0046.md), [NUC 119](nuc-0119.md), [NUC 122](nuc-0122.md).
+Full detail: [NUC 9](nuc-0009.md), [NUC 46](nuc-0046.md), [NUC 119](nuc-0119.md), [NUC 122](nuc-0122.md), [NUC 147](nuc-0147.md).
 
 ---
 
@@ -6147,6 +6192,8 @@ except Exception as name:              Python's spelling of catch name: (NUC 122
 except:                                Python's spelling of catch:, binding error (NUC 122)
     statement
 finally:                               runs however the statement ends (NUC 119)
+    statement
+defer:                                 registers an indented suite for this block's exit (NUC 147)
     statement
 return expression                      yield from a block or function
 assert(actual, expected)                existing equality-check helper

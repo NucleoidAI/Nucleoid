@@ -61,6 +61,7 @@ pub enum Stmt {
         alternate: Option<Box<Stmt>>,
     },
     Block(Vec<Stmt>),
+    Defer(Vec<Stmt>),
     Class(ClassDecl),
     Function(Arc<Function>),
     For {

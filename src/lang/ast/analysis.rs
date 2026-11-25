@@ -166,7 +166,7 @@ pub(crate) fn collect_assigned_names(statement: &Stmt, names: &mut Vec<String>) 
             target: Expr::Identifier(name),
             ..
         } => names.push(name.clone()),
-        Stmt::Block(nested) => {
+        Stmt::Block(nested) | Stmt::Defer(nested) => {
             for child in nested {
                 collect_assigned_names(child, names);
             }
@@ -213,7 +213,7 @@ pub(crate) fn collect_read_roots(
         | Stmt::Return(Some(expression)) => {
             roots.extend(runtime.expression_roots(expression, scope, false));
         }
-        Stmt::Block(nested) => {
+        Stmt::Block(nested) | Stmt::Defer(nested) => {
             for child in nested {
                 collect_read_roots(child, roots, runtime, scope);
             }
@@ -265,7 +265,7 @@ pub(crate) fn find_class_reference_statement(statement: &Stmt, found: &mut Optio
                 find_class_reference_statement(alternate, found);
             }
         }
-        Stmt::Block(statements) => {
+        Stmt::Block(statements) | Stmt::Defer(statements) => {
             for child in statements {
                 find_class_reference_statement(child, found);
             }
