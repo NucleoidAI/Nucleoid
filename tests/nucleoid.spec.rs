@@ -23181,6 +23181,30 @@ fn keeps_sign_copying_reactive() {
 # return: 1"#);
 }
 
+/// Nucleoid keeps squares reactive
+#[rustfmt::skip]
+#[test]
+fn keeps_squares_reactive() {
+    let mut run = runner();
+    run("sample = {amplitude: 3}");
+    run("offset = 2");
+    run("squared = Math.square(sample.amplitude + offset)");
+    assert_eq!(run("squared"), 25);
+    run("sample.amplitude = -4");
+    assert_eq!(run("squared"), 4);
+    run("offset = 1");
+    assert_eq!(run("squared"), 9);
+    run("sample.amplitude = 0");
+    assert_eq!(run("squared"), 1);
+    run("offset = -1");
+    assert_eq!(run("squared"), 1);
+    run("sample.amplitude = 3");
+    assert_eq!(run("squared"), 4);
+    run(r#"1
+
+# return: 1"#);
+}
+
 /// The committed tests must not drift from their generated JSONL export.
 #[rustfmt::skip]
 #[test]

@@ -2819,6 +2819,45 @@ Full detail: [NUC 9](nuc-0009.md), [NUC 46](nuc-0046.md), [NUC 119](nuc-0119.md)
   receiver/aggregate dispatch or syntax is added. See the
   [sign-copying contract](../nucleoid.spec.md#reactive-sign-copying).
 
+- [NUC 143](nuc-0143.md) adds only native static
+  `Math.square(value)`: intrinsically convert the first value and multiply
+  that converted value by itself with ordinary `f64` multiplication.
+  It does not lower to exponentiation or call shadowable helpers.
+  Either zero sign produces positive zero; subnormals, underflow, overflow
+  and infinities follow multiplication, while NaNs match by classification.
+  Omission gives numeric NaN. The supplied top-level-Undefined gate includes
+  numerically ignored extras, whose effects, errors, reads and subscriptions
+  remain eager and once-only, left to right. Live-input/parameter-null
+  deferral, shadowing, captured values/classes, ordinary AST/graph source,
+  frames, independent class rules, deletion/recovery and existing rollback
+  behavior stay unchanged. Native `Math.square` property reads remain
+  Undefined/non-callable; no alias, receiver/aggregate dispatch or syntax
+  is added. See the [squaring contract](../nucleoid.spec.md#reactive-squaring).
+
+### Reactive squaring argument dependencies
+
+```
+probe = {amplitude: 3, extra: 7}
+offset = 2
+squared = Math.square(probe.amplitude + offset, probe.extra)
+assert(squared, 25)
+probe.amplitude = -4
+assert(squared, 4)
+delete probe.extra
+assert(squared, undefined)
+probe.extra = 9
+assert(squared, 4)
+offset = 1
+assert(squared, 9)
+probe.extra = Number.NaN
+assert(squared, 9)
+1
+```
+
+- This is the complete `Nucleoid preserves squaring argument dependencies`
+  program in `tests/reference.md`, without title or expected-return metadata;
+  its expected return is `1`.
+
 ### Reactive sign copying argument dependencies
 
 ```
@@ -6006,6 +6045,7 @@ Math.cot(value)                         static reciprocal of tangent in radians 
 Math.sec(value)                         static reciprocal of cosine in radians (NUC 138)
 Math.csc(value)                         static reciprocal of sine in radians (NUC 141)
 Math.copySign(value, sign)               static magnitude with the converted non-NaN sign bit (NUC 142)
+Math.square(value)                       static intrinsic first-value multiplication by itself (NUC 143)
 Name[0]  Name["id"]  Name.find(...)    address an instance
 value[start:end]  value[-n:]           slice, negative counts from the end
 Name[start:end]  Name[:]  Name[-n:]    instance list range (NUC 61)

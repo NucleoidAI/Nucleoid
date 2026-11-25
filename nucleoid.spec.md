@@ -29512,6 +29512,25 @@ direction = 0
 assert(1 / copied, Number.POSITIVE_INFINITY)
 1
 # return: 1
+---
+# Nucleoid keeps squares reactive
+
+sample = {amplitude: 3}
+offset = 2
+squared = Math.square(sample.amplitude + offset)
+assert(squared, 25)
+sample.amplitude = -4
+assert(squared, 4)
+offset = 1
+assert(squared, 9)
+sample.amplitude = 0
+assert(squared, 1)
+offset = -1
+assert(squared, 1)
+sample.amplitude = 3
+assert(squared, 4)
+1
+# return: 1
 ```
 
 ## Floating-point absolute value alias
@@ -29659,3 +29678,49 @@ assert(1 / copied, Number.POSITIVE_INFINITY)
   executed arithmetic programs except for their copied-expression RHS.
   Both keep all six canonical assertions in order and explicit return `1`.
   Historical executable cases and synthesized records are unchanged.
+
+## Reactive squaring
+
+- NUC 143 adds only native static `Math.square(value)`. After the existing
+  any-supplied-top-level-Undefined gate, intrinsically convert only the first
+  supplied value with `Value::to_number`, then compute exactly `first * first`
+  with ordinary `f64` multiplication. Omission supplies numeric NaN.
+- Preserve multiplication's rounding, positive-zero result for either zero
+  sign, subnormal results, underflow to positive zero, overflow to positive
+  infinity and positive infinity for either infinity sign. NaNs match by
+  classification, without payload or sign promises. No `powf`, exponentiation
+  lowering, fused arithmetic, rescaling or alternative numerical model is used.
+- Numbers, literal null as zero, booleans, trimmed numeric strings,
+  empty/singleton lists and millisecond dates retain intrinsic conversion.
+  Invalid conversions give numeric NaN rather than new type errors.
+  Conversion never calls or tracks shadowable `Number` or another Math helper.
+- Every supplied expression evaluates exactly once left to right, even after
+  Undefined. Extras are ignored numerically, not converted; their eager
+  effects, strict errors, reads and subscriptions remain. Any supplied
+  top-level Undefined, including an extra, returns Undefined before conversion.
+  Nested Undefined does not trigger that native gate.
+- Literal-null conversion does not override live-input or parameter-null
+  deferral. Named functions, independent class rules, deletion/recovery,
+  captured values/classes, ordinary AST and graph source, call frames and
+  existing transaction rollback behavior are unchanged. This utility does
+  not repair inherited graph-dependent rollback ordering limitations.
+- State/local `Math` shadowing and ordinary `.Math`/`.square` members retain
+  lookup. Native `Math.square` property reads remain Undefined/non-callable.
+  No alias, global function, non-native receiver method, list/population
+  aggregate, lexer/parser syntax, public Rust API, dependency or option is added.
+- No new arity, conversion, range or numeric errors are introduced.
+  Strict missing reads retain `ReferenceError("<name> is not defined")`,
+  including ignored extras after Undefined. Unsupported native names retain
+  `TypeError("Math.<name> is not a function")`, and `Math.random()` retains
+  `TypeError("Math.random is not supported")`, after the unchanged gate.
+  Numeric `Math = 7` still raises
+  `TypeError("number.square is not a function")`. Error positions and caught
+  values remain ordinary.
+- Only formerly failing native `Math.square(...)` calls gain these results.
+  Previously successful calls gated by supplied Undefined still return
+  Undefined. Every other accepted successful output and diagnostic is
+  unchanged; the repeated-multiplication spelling remains supported.
+- `Nucleoid keeps squares reactive` and
+  `Nucleoid preserves squaring argument dependencies` change only the
+  caller's two executed counterpart expressions. Each retains all six
+  canonical assertions in order, explicit return `1` and executed coverage.

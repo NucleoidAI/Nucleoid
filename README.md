@@ -1142,6 +1142,18 @@ assert(radians, Math.PI / 2)
   receiver methods or syntax are added. See the
   [root contract](nucleoid.spec.md#reactive-sign-copying).
 
+- [NUC 143](docs/nuc-0143.md) adds only native static
+  `Math.square(value)`: intrinsically convert the first value, then compute
+  exactly `first * first` with ordinary multiplication, not exponentiation.
+  Either zero sign squares to positive zero; overflow, underflow, infinities
+  and NaN classification retain multiplication's behavior. Extras still
+  evaluate once left to right with effects, strict errors and subscriptions;
+  any supplied top-level Undefined gates the call before conversion.
+  Omission gives numeric NaN. Live/parameter-null deferral, shadowing,
+  native method-value reads and existing rollback remain unchanged.
+  See the [root contract](nucleoid.spec.md#reactive-squaring) and
+  [argument-dependency case](docs/README.md#reactive-squaring-argument-dependencies).
+
 ## String iteration
 
 **String iteration reads characters directly**

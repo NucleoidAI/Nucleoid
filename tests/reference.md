@@ -3167,4 +3167,23 @@ direction = -1
 assert(copied, -3)
 1
 # return: 1
+---
+# Nucleoid preserves squaring argument dependencies
+
+probe = {amplitude: 3, extra: 7}
+offset = 2
+squared = Math.square(probe.amplitude + offset, probe.extra)
+assert(squared, 25)
+probe.amplitude = -4
+assert(squared, 4)
+delete probe.extra
+assert(squared, undefined)
+probe.extra = 9
+assert(squared, 4)
+offset = 1
+assert(squared, 9)
+probe.extra = Number.NaN
+assert(squared, 9)
+1
+# return: 1
 ```
