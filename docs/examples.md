@@ -1195,6 +1195,16 @@ catch error:
 
 Full detail: [README.md §11](README.md#11-built-in-objects), [NUC 10](nuc-0010.md).
 
+- The [NUC 146 candidate](nuc-0146.md) adds native static `Math.cube(value)`.
+  Convert the first value intrinsically, square it, then multiply by that
+  same converted value with separate ordinary multiplications, preserving
+  their rounding and signs rather than promising equivalence to `** 3`.
+  All argument expressions still evaluate once left to right, including
+  ignored extras and reads following Undefined. The existing top-level gate,
+  live-null deferral, shadowing and rollback remain; no alias or syntax is
+  added. The complete [reactive argument-dependency example](README.md#reactive-cubing-argument-dependencies)
+  and [root contract](../nucleoid.spec.md#reactive-cubing) cover recovery.
+
 ---
 
 ## 12. Reasoning Operations

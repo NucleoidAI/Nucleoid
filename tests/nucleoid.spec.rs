@@ -23260,6 +23260,30 @@ fn counts_direct_inputs_in_reasoning_selections() {
 # return: 1"#);
 }
 
+/// Nucleoid keeps cubes reactive
+#[rustfmt::skip]
+#[test]
+fn keeps_cubes_reactive() {
+    let mut run = runner();
+    run("sample = {amplitude: 3}");
+    run("offset = 2");
+    run("cubed = Math.cube(sample.amplitude + offset)");
+    assert_eq!(run("cubed"), 125);
+    run("sample.amplitude = -4");
+    assert_eq!(run("cubed"), -8);
+    run("offset = 1");
+    assert_eq!(run("cubed"), -27);
+    run("sample.amplitude = 0");
+    assert_eq!(run("cubed"), 1);
+    run("offset = -1");
+    assert_eq!(run("cubed"), -1);
+    run("sample.amplitude = 3");
+    assert_eq!(run("cubed"), 8);
+    run(r#"1
+
+# return: 1"#);
+}
+
 /// The committed tests must not drift from their generated JSONL export.
 #[rustfmt::skip]
 #[test]

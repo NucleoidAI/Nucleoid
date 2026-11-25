@@ -1154,6 +1154,18 @@ assert(radians, Math.PI / 2)
   See the [root contract](nucleoid.spec.md#reactive-squaring) and
   [argument-dependency case](docs/README.md#reactive-squaring-argument-dependencies).
 
+- The [NUC 146 candidate](docs/nuc-0146.md) adds native static
+  `Math.cube(value)`: intrinsically convert the first value, square it, then
+  multiply by that same value, using two separate ordinary multiplications.
+  Ordered rounding, negative zero, signed underflow, overflow and nonfinite
+  classification follow those operations, not a universal `** 3` alias.
+  All arguments evaluate once left to right; ignored extras retain effects,
+  strict errors and subscriptions without conversion. The supplied
+  top-level-Undefined gate, live/parameter-null deferral, shadowing, captures
+  and transaction behavior remain unchanged. No aliases or syntax are added.
+  See the [root contract](nucleoid.spec.md#reactive-cubing) and
+  [argument-dependency case](docs/README.md#reactive-cubing-argument-dependencies).
+
 ## String iteration
 
 **String iteration reads characters directly**

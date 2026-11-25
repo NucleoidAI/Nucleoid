@@ -31,6 +31,10 @@ fn math_unary(name: &str, first: f64) -> Option<f64> {
     Some(match name {
         "abs" | "fabs" => first.abs(),
         "square" => first * first,
+        "cube" => {
+            let square = first * first;
+            square * first
+        }
         "ceil" => first.ceil(),
         "floor" => first.floor(),
         "fract" => {

@@ -2858,6 +2858,45 @@ Full detail: [NUC 9](nuc-0009.md), [NUC 46](nuc-0046.md), [NUC 119](nuc-0119.md)
   Undefined/non-callable; no alias, receiver/aggregate dispatch or syntax
   is added. See the [squaring contract](../nucleoid.spec.md#reactive-squaring).
 
+- The [NUC 146 candidate](nuc-0146.md) adds only native static
+  `Math.cube(value)`: intrinsically convert the first value, multiply it by
+  itself, then multiply that square by the same converted value, with two
+  separate ordinary `f64` multiplications. This is not an exponentiation
+  alias: retain ordered rounding, negative signs, signed-zero underflow and
+  overflow/nonfinite classification; NaN payload/sign is not promised.
+  Omission gives numeric NaN. All arguments still evaluate once, left to
+  right, even after Undefined; ignored extras are not converted and retain
+  their reads, effects, errors and subscriptions. The top-level-Undefined
+  gate, live/parameter-null deferral, shadowing, observation, captures,
+  independent class rules, frames, deletion/recovery and existing rollback
+  remain unchanged. Native method-value reads stay Undefined/non-callable.
+  No aliases, receiver methods or syntax are added. See the
+  [cubing contract](../nucleoid.spec.md#reactive-cubing).
+
+### Reactive cubing argument dependencies
+
+```
+probe = {input: 2, extra: 7}
+offset = 1
+observed = Math.cube(probe.input + offset, probe.extra)
+assert(observed, 27)
+probe.input = 3
+assert(observed, 64)
+delete probe.extra
+assert(observed, null)
+probe.extra = 0
+assert(observed, 64)
+offset = -2
+assert(observed, 1)
+probe.input = -1
+assert(observed, -27)
+1
+```
+
+- This is the complete `Nucleoid preserves cubing argument dependencies`
+  program in `tests/reference.md`, without title or expected-return metadata;
+  its expected return is `1`.
+
 ### Reactive squaring argument dependencies
 
 ```
@@ -6124,6 +6163,7 @@ Math.sec(value)                         static reciprocal of cosine in radians (
 Math.csc(value)                         static reciprocal of sine in radians (NUC 141)
 Math.copySign(value, sign)               static magnitude with the converted non-NaN sign bit (NUC 142)
 Math.square(value)                       static intrinsic first-value multiplication by itself (NUC 143)
+Math.cube(value)                         ordered square-then-multiply of the intrinsic first value (NUC 146 candidate)
 Name[0]  Name["id"]  Name.find(...)    address an instance
 value[start:end]  value[-n:]           slice, negative counts from the end
 Name[start:end]  Name[:]  Name[-n:]    instance list range (NUC 61)

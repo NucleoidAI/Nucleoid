@@ -29627,6 +29627,25 @@ subtotal = price
 assert(counts, [1, 1, 0])
 1
 # return: 1
+---
+# Nucleoid keeps cubes reactive
+
+sample = {amplitude: 3}
+offset = 2
+cubed = Math.cube(sample.amplitude + offset)
+assert(cubed, 125)
+sample.amplitude = -4
+assert(cubed, -8)
+offset = 1
+assert(cubed, -27)
+sample.amplitude = 0
+assert(cubed, 1)
+offset = -1
+assert(cubed, -1)
+sample.amplitude = 3
+assert(cubed, 8)
+1
+# return: 1
 ```
 
 ## Floating-point absolute value alias
@@ -29878,3 +29897,55 @@ assert(counts, [1, 1, 0])
   executed and sealed before preparation; only construction of `counts`
   or `impact` changes. Each retains six ordered canonical assertions,
   explicit return `1` and executed coverage.
+
+## Reactive cubing
+
+- The NUC 146 candidate adds only native static `Math.cube(value)`. After
+  the existing any-supplied-top-level-Undefined gate, intrinsically convert
+  only the first value, compute `square = first * first`, then
+  `square * first`, as two separate ordinary `f64` multiplications.
+  Omission supplies numeric NaN.
+- Keep that operation order and its rounding, signed zeros, subnormals,
+  underflow, overflow and nonfinite classification. Negative zero cubes to
+  negative zero, and negative inputs retain their sign. NaN payload/sign
+  bits are not promised. This is not a universal alias to `** 3`, `powf`
+  or `powi`; there is no fused/rescaled arithmetic or cube-root operation.
+- Numbers, literal null as zero, booleans, trimmed numeric strings,
+  empty/singleton lists and millisecond dates keep intrinsic numeric
+  conversion. Invalid conversions produce numeric NaN, not new errors.
+  Conversion never calls or tracks shadowable `Number` or `Math.square`.
+- Every supplied expression evaluates exactly once, left to right, even
+  following Undefined. Numerically ignored extras are not converted, but
+  keep their eager reads, effects, strict errors and subscriptions. Any
+  supplied top-level Undefined, including an extra, returns Undefined before
+  conversion. Nested Undefined alone does not trigger that native gate.
+- Literal-null coercion does not override live-input/parameter-null
+  deferral. Named functions, independent class rules, captures, `.value`
+  snapshots, observation, ordinary AST/graph source, call frames,
+  deletion/recovery and transaction behavior remain unchanged. This utility
+  does not repair inherited graph-dependent rollback ordering or runtime
+  value-depth limitations.
+- State/local `Math` shadowing and ordinary `.Math`/`.cube` members keep
+  existing lookup. Native `Math.cube` value reads remain
+  Undefined/non-callable. No alias, prefix/global/lowercase form, receiver
+  method, aggregate dispatch, lexer/parser change, option, dependency or
+  public Rust API/type is added.
+- No new arity, conversion, range or numeric errors are introduced.
+  Strict missing reads keep `ReferenceError("<name> is not defined")`,
+  including ignored extras following Undefined. Unsupported native names
+  retain `TypeError("Math.<name> is not a function")`, and `Math.random()`
+  retains `TypeError("Math.random is not supported")`, after the unchanged
+  gate. Numeric `Math = 7` keeps
+  `TypeError("number.cube is not a function")`. Error positions, catches,
+  rollback and recovery stay ordinary.
+- Only formerly failing native `Math.cube(...)` calls gain defined numeric
+  results. Previously successful Undefined-gated native calls still return
+  Undefined. All sibling helpers, including unsupported `Math.toDegrees`,
+  and every other accepted successful output and diagnostic stay unchanged.
+- `Nucleoid keeps cubes reactive` and
+  `Nucleoid preserves cubing argument dependencies` change only the RHS
+  specified in the caller's two executed accepted controls. Each preserves
+  all six ordered canonical assertions, explicit return `1` and coverage.
+  Their accepted square-call-times-repeated-pure-expression spelling is a
+  fair ordered-arithmetic counterpart, not a promise to duplicate a future
+  call argument's effects. Every historical executable case is unchanged.

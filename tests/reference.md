@@ -3232,4 +3232,23 @@ first = source
 assert(impact, [1, 2])
 1
 # return: 1
+---
+# Nucleoid preserves cubing argument dependencies
+
+probe = {input: 2, extra: 7}
+offset = 1
+observed = Math.cube(probe.input + offset, probe.extra)
+assert(observed, 27)
+probe.input = 3
+assert(observed, 64)
+delete probe.extra
+assert(observed, null)
+probe.extra = 0
+assert(observed, 64)
+offset = -2
+assert(observed, 1)
+probe.input = -1
+assert(observed, -27)
+1
+# return: 1
 ```
