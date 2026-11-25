@@ -11,6 +11,7 @@ use crate::error::{Error, Position, Result};
 pub(super) struct Scanned {
     pub(super) token: Token,
     pub(super) position: Position,
+    pub(super) end_line: usize,
     pub(super) line_start: bool,
     pub(super) indent: usize,
 }
@@ -55,7 +56,7 @@ pub(super) fn scan_until<'a>(
         if stop(&token) {
             return Ok((scanner.scanned, Some(span.start)));
         }
-        scanner.record(token, span.start);
+        scanner.record(token, span.start, lexer.span().end);
     }
 
     Ok((scanner.scanned, None))
@@ -116,6 +117,7 @@ impl<'a> Scanner<'a> {
                 self.scanned.push(Scanned {
                     token: Token::Newline,
                     position: self.lines.position(start + offset),
+                    end_line: self.lines.position(start + offset + 1).line,
                     line_start: false,
                     indent: 0,
                 });
@@ -138,7 +140,7 @@ impl<'a> Scanner<'a> {
         Some((pattern, start + 1 + consumed))
     }
 
-    fn record(&mut self, token: Token, start: usize) {
+    fn record(&mut self, token: Token, start: usize, end: usize) {
         match token {
             Token::LeftParen | Token::LeftBracket => self.layout_depth += 1,
             Token::RightParen | Token::RightBracket => {
@@ -157,6 +159,7 @@ impl<'a> Scanner<'a> {
         self.scanned.push(Scanned {
             token,
             position: self.lines.position(start),
+            end_line: self.lines.position(end).line,
             line_start,
             indent,
         });

@@ -7,6 +7,7 @@ mod enumeration;
 mod expression;
 mod function;
 mod is_assignment;
+mod list;
 mod postfix;
 mod precedence;
 mod predicate;
@@ -14,16 +15,18 @@ mod primary;
 mod receiver;
 mod section;
 mod self_parameter;
+mod source;
 mod statement;
 mod template;
 
 use std::collections::{BTreeMap, HashMap};
 
-use super::lexer::{Keyword, Spanned, Token, tokenize};
+use super::lexer::{Keyword, Spanned, Token};
 use crate::error::{Error, Position, Result};
 use crate::lang::ast::{BinaryOp, Expr, LogicalOp, Parameter, ParameterDefault, Stmt};
 use at_variable::Rejection;
 use is_assignment::Items;
+use list::ListSeparators;
 use receiver::{Dots, Receiver};
 use section::Sections;
 use self_parameter::Selves;
@@ -115,6 +118,8 @@ enum Lists {
 
 struct Parser {
     tokens: Vec<Spanned>,
+    line_breaks: Vec<Position>,
+    list_separators: ListSeparators,
     position: usize,
     depth: usize,
     context: ExpressionContext,
@@ -203,6 +208,8 @@ impl Parser {
     fn new(tokens: Vec<Spanned>) -> Self {
         Parser {
             tokens,
+            line_breaks: Vec::new(),
+            list_separators: ListSeparators::Commas,
             position: 0,
             depth: 0,
             context: ExpressionContext::Ordinary,
@@ -226,15 +233,6 @@ impl Parser {
             nullish_assignment_depth: None,
             misplaced_every: None,
         }
-    }
-
-    fn from_source(source: &str) -> Result<Self> {
-        Ok(Parser::new(tokenize(source)?))
-    }
-
-    fn attempt<T>(&mut self, parse: impl Fn(&mut Self) -> Result<T>) -> Result<T> {
-        self.attempt_selves(&parse)
-            .or_else(|accepted| self.attempt_sections(&parse, accepted))
     }
 
     fn attempt_selves<T>(&mut self, parse: &impl Fn(&mut Self) -> Result<T>) -> Result<T> {
@@ -302,14 +300,6 @@ impl Parser {
             ..self.rewound()
         };
         parse(self).map_err(|retried| furthest(accepted, retried))
-    }
-
-    fn rewound(&mut self) -> Self {
-        Parser {
-            selves: self.selves,
-            sections: self.sections,
-            ..Parser::new(std::mem::take(&mut self.tokens))
-        }
     }
 
     fn settle<T>(&self, parsed: T) -> Result<T> {

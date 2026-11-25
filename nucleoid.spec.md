@@ -29666,6 +29666,24 @@ assert(complete(0), 0)
 assert(audit, [3, -4, 0])
 1
 # return: 1
+---
+# Nucleoid separates list elements on new lines
+
+seed = 2
+readings = [
+    seed
+    seed + 1
+    seed * 2
+]
+assert(readings, [2, 3, 4])
+assert(readings.length, 3)
+assert(readings[0], 2)
+seed = 5
+assert(readings, [5, 6, 10])
+assert(readings.length, 3)
+assert(readings[2], 10)
+1
+# return: 1
 ```
 
 ## Floating-point absolute value alias
@@ -30040,4 +30058,53 @@ assert(audit, [3, -4, 0])
   reference `Nucleoid unwinds deferred suites in reverse order` case
   retain their executed accepted try/catch/finally controls' identities,
   six ordered canonical assertions each and explicit expected return `1`.
+  Every historical executable case is unchanged.
+
+## Newline-separated list elements
+
+- [NUC 149](docs/nuc-0149.md) makes a list-element comma optional only
+  after a complete ordinary item leaves the next token after a genuine
+  inter-token physical LF. Commas, trailing commas, mixed separators and
+  empty lists remain supported; calls and parameter lists do not change.
+- All original parse readings of the whole input take priority, including
+  word comparisons, comprehensions, receiver reads, receiver parameters
+  and operator sections. Any successful accepted parse wins even if it
+  fails at runtime. Only after that whole sequence fails is it retried
+  once with physical-newline list boundaries enabled.
+- Parse the entire original ordinary item before inspecting a boundary.
+  Propagate its parse error without splitting or recovering a prefix.
+  Calls, subscripts, slices, operators, assignments, conditionals, lambdas,
+  arrows and comprehensions keep their original priority across newlines.
+  In particular, a following `(` or `[` can continue the same expression,
+  so nested rows may still require an outer comma.
+- A contextual `is` or `is not` continues the item through the existing
+  word-comparison reading, even when another list in the same input needs
+  newline separators. Do not treat that `is` as a new element.
+- After a complete item, consume an ordinary comma first. Without one,
+  permit the next item only if its first token begins on a line later
+  than the preceding token's actual ending line. A closing `]` still ends
+  the list. Each loop iteration consumes an item; existing nesting and
+  expression-chain limits remain unchanged.
+- An LF between tokens qualifies, including blank lines, comments and
+  CRLF. A bare CR, horizontal whitespace and a same-line comment do not.
+  Newlines inside a string, template or continued regular-expression token
+  never qualify as a gap after it. A physical LF after that whole token
+  can qualify. Token-start line comparisons alone do not define a boundary.
+- Preserve public `tokenize` output, `Spanned`, `Token` and token positions.
+  Parentheses and brackets still suppress public layout tokens. Private
+  token-end metadata supplies this contextual rule; interpolations use
+  their own independently scanned source boundaries.
+- Reuse `Expr::List` and canonical comma rendering. The `is` assignment's
+  item words, `=` variable reads, scopes, class rules, standing dependencies,
+  propagation, snapshots and transaction rollback are unchanged.
+- Exact `items = [1 2]` retains
+  `SyntaxError("Expected ']' but found number 2")` at line 1, column 12.
+  An unfinished expression retains its own diagnostic. Exact
+  `result = [1` followed by `(2)]` retains its accepted call and
+  `TypeError("1 is not a function")` at line 1, column 1.
+- The appended `Nucleoid separates list elements on new lines` case and
+  reference `Nucleoid nests newline separated lists` case retain the two
+  executed comma-bearing counterparts' identities, six ordered canonical
+  assertions each and explicit expected return `1`. The nested case keeps
+  its outer comma and places each inner row's elements on separate lines.
   Every historical executable case is unchanged.

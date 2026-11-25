@@ -40,7 +40,7 @@ impl Parser {
         }
         *self = Parser {
             sections: Sections::Read,
-            ..Parser::new(std::mem::take(&mut self.tokens))
+            ..self.restarted()
         };
         self.attempt_selves(parse)
             .map_err(|sectioned| furthest(accepted, sectioned))

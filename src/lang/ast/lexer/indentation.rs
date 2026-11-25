@@ -91,7 +91,7 @@ pub(super) fn line_position(source: &str, start: usize) -> (bool, usize) {
 
 /// Turns the flat token stream into a block-structured one by inserting
 /// `Indent`, `Dedent` and `Newline` tokens. Layout is suppressed inside `(` and
-/// `[`, where line breaks carry no meaning.
+/// `[`.
 pub(super) fn layout(scanned: Vec<Scanned>, end: Position) -> Vec<Spanned> {
     let mut layout = Layout::new();
     let mut depth = 0usize;

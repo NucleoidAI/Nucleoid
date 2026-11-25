@@ -1,6 +1,7 @@
 mod indentation;
 mod raw;
 mod scanner;
+mod source;
 mod token;
 
 use std::ops::Range;
@@ -8,6 +9,7 @@ use std::ops::Range;
 use crate::error::{Position, Result};
 use indentation::{Lines, layout};
 use scanner::scan_until;
+pub(super) use source::tokenize_source;
 pub use token::{Keyword, Token};
 
 pub(crate) const EXPECTED_VERSION_SELECTOR: &str =
@@ -54,6 +56,11 @@ fn unescape(slice: &str) -> String {
 pub struct Spanned {
     pub token: Token,
     pub position: Position,
+}
+
+pub(super) struct SourceTokens {
+    pub(super) tokens: Vec<Spanned>,
+    pub(super) line_breaks: Vec<Position>,
 }
 
 pub fn tokenize(source: &str) -> Result<Vec<Spanned>> {

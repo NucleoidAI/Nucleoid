@@ -3269,4 +3269,27 @@ assert(unwind(-2), -2)
 assert(history, [2, 1, 22, 21, -18, -19])
 1
 # return: 1
+---
+# Nucleoid nests newline separated lists
+
+seed = 2
+rows = [
+    [
+        seed
+        seed + 1
+    ],
+    [
+        seed * 2
+        seed * 3
+    ]
+]
+assert(rows[0], [2, 3])
+assert(rows[1], [4, 6])
+assert(rows.length, 2)
+seed = 4
+assert(rows[0], [4, 5])
+assert(rows[1], [8, 12])
+assert(rows[1].length, 2)
+1
+# return: 1
 ```

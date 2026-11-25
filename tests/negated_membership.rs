@@ -251,7 +251,7 @@ fn the_appended_cases_run_every_assertion_and_end_each_document() {
         }
         assert_eq!(
             first + own.len(),
-            cases.len() - 8 * usize::from(own[0] == SPEC_TITLES[0] || own[0] == REFERENCE_TITLE),
+            cases.len() - 9 * usize::from(own[0] == SPEC_TITLES[0] || own[0] == REFERENCE_TITLE),
             "the appended cases end the document of {}",
             own[0]
         );
@@ -290,7 +290,7 @@ fn only_the_appended_cases_write_bang_in() {
         }
     }
     assert_eq!(written, 25);
-    assert_eq!(cases, 1322);
+    assert_eq!(cases, 1324);
 }
 
 #[test]

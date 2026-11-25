@@ -23309,6 +23309,29 @@ fn runs_deferred_suites_on_block_exit() {
 # return: 1"#);
 }
 
+/// Nucleoid separates list elements on new lines
+#[rustfmt::skip]
+#[test]
+fn separates_list_elements_on_new_lines() {
+    let mut run = runner();
+    run("seed = 2");
+    run(r#"readings = [
+    seed
+    seed + 1
+    seed * 2
+]"#);
+    assert_eq!(run("readings"), serde_json::json!([2, 3, 4]));
+    assert_eq!(run("readings.length"), 3);
+    assert_eq!(run("readings[0]"), 2);
+    run("seed = 5");
+    assert_eq!(run("readings"), serde_json::json!([5, 6, 10]));
+    assert_eq!(run("readings.length"), 3);
+    assert_eq!(run("readings[2]"), 10);
+    run(r#"1
+
+# return: 1"#);
+}
+
 /// The committed tests must not drift from their generated JSONL export.
 #[rustfmt::skip]
 #[test]

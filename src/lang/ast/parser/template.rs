@@ -117,6 +117,7 @@ impl Parser {
         let mut parser = Parser {
             words: self.words,
             lists: self.lists,
+            list_separators: self.list_separators,
             in_class: self.in_class,
             dots: self.dots,
             receiver: self.receiver.clone(),

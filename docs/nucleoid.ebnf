@@ -54,6 +54,11 @@
  *   whitespace has width 1 and comments have width 0. A width between open
  *   levels closes to the shallower level without error.
  * - Finish with the pending NEWLINE, all remaining DEDENTs, then EOF.
+ * - Keep private token-end line metadata for listLineBreak. It is an
+ *   inter-token physical LF, including an LF in comments or CRLF, never
+ *   an LF inside a STRING, TEMPLATE or REGEX. A bare CR does not qualify.
+ *   Public tokens, Spanned start positions and bracket layout stay unchanged;
+ *   listLineBreak is a zero-token contextual boundary, not a new token.
  *
  * WHITESPACE, COMMENT and C_COMMENT may stand between any two tokens and
  * appear in no syntax rule, but the token source reads them for layout.
@@ -933,8 +938,25 @@ lambdaExpression
 
 listDisplay
     ::= LBRACK
-        (expression (comprehension | (COMMA expression)* COMMA?))?
+        (expression (comprehension | (listElementSeparator expression)* COMMA?))?
         RBRACK                                              /* Expr::List */
+
+listElementSeparator
+    ::= COMMA
+      | listLineBreak
+
+/* Enabled only after the whole accepted parse sequence fails. First parse
+   the complete ordinary item successfully, including postfixes, operators,
+   conditionals and the comprehension check. Never stop early or recover
+   an item error. Without COMMA the next token must begin after the previous
+   token's actual ending line, not merely after its starting line. A closing
+   RBRACK ends the list. Calls and subscripts keep priority across lines;
+   nested rows therefore may still need an outer comma. Never take this
+   boundary before contextual 'is'; the word-comparison retry must finish
+   that item, including 'is not', even beside a newline-separated list.
+   Item-word marking and canonical comma rendering are unchanged. */
+listLineBreak
+    ::= ""  /* empty, only at the qualified inter-token physical LF */
 
 /* The source's 'if' belongs to the filter, not a Python conditional.
    Recognition is enabled only in the appropriate later parse pass. */
@@ -1299,6 +1321,17 @@ REGEX_ESCAPE
  * fails too, its error replaces the error above only when it lies further
  * into the source, by line and column; an interpolation maps its errors to
  * program positions before they are compared.
+ * Only when that entire accepted sequence fails, and either the source has
+ * an inter-token physical LF or the tokens hold a TEMPLATE, the whole
+ * sequence runs once more from a fresh parser with listLineBreak enabled.
+ * Interpolations scan their own boundaries even without an LF between the
+ * outer tokens. Every pass and interpolation of that run retains the
+ * ordinary item grammar and its full-expression priority;
+ * item errors propagate rather than triggering prefix recovery. Preserve
+ * the first accepted parse even if it would fail at runtime. If the new
+ * sequence also fails, replace the original error only when its position
+ * is further into the source. This adds one finite outer retry, not an
+ * unbounded sequence or a different nesting/chain limit.
  *
  * Limits:
  * MAX_NESTING = 64, shared by statement/expression nesting:

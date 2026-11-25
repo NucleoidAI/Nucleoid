@@ -107,31 +107,6 @@ impl Parser {
         })))
     }
 
-    fn list_literal(&mut self) -> Result<Expr> {
-        let mut items = Vec::new();
-
-        while !self.check(&Token::RightBracket) {
-            let start = self.position;
-            let mut item = if items.is_empty() {
-                self.list_head()?
-            } else {
-                self.within(true, Self::item)?
-            };
-            if items.is_empty() && self.starts_comprehension() {
-                return self.comprehension(start, item);
-            }
-            self.items.mark(start, self.position, &mut item);
-            items.push(item);
-
-            if !self.eat(&Token::Comma) {
-                break;
-            }
-        }
-
-        self.expect(&Token::RightBracket)?;
-        Ok(Expr::List(items))
-    }
-
     fn object_literal(&mut self) -> Result<Expr> {
         let mut entries = Vec::new();
 

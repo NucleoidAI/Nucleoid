@@ -6384,6 +6384,63 @@ ratio
   shadowing, ordinary `.csc`/`.Math` members, class rules, captured values,
   frames, graph source and transactions use the unchanged machinery.
 
+## Newline-separated list elements
+
+- [NUC 149](nuc-0149.md) optionally replaces a list comma with a physical
+  LF after the preceding complete ordinary item. Keep commas, trailing
+  commas, mixed separators and empty lists. Call and parameter separators
+  are unchanged.
+- Every accepted whole-input parse takes priority, including its word,
+  comprehension, receiver, receiver-parameter and operator-section readings,
+  even when execution raises an error. Only after all those readings fail
+  does the same sequence enable physical-newline list boundaries.
+- The item parser reads the whole original expression first. Calls,
+  subscripts, operators, conditionals, arrows, lambdas and comprehensions
+  can continue across lines. An item error is not recovered or split.
+  Keep an outer comma between rows when the next `[` would be a subscript.
+  Contextual `is` and `is not` still continue the item through the existing
+  comparison retry, including beside other newline-separated lists.
+- The gap must follow the preceding token's actual end, not just its start.
+  LFs in comments and CRLF qualify; a bare CR, spaces, tabs and same-line
+  comments do not. Newlines inside multiline strings, templates or continued
+  regex tokens are not separators after those tokens.
+- Public tokens, start positions and suppressed bracket layout are unchanged.
+  Private source-boundary metadata also applies in template interpolations.
+  Canonical source remains comma-separated; item-word rules, reactive list
+  values, scopes, class rules, propagation and transactions are unchanged.
+- Exact `items = [1 2]` retains
+  `SyntaxError("Expected ']' but found number 2")` at line 1, column 12.
+  A newline before `(2)` does not turn `[1 (2)]` into two elements: its
+  accepted call still raises `TypeError("1 is not a function")`.
+
+```
+seed = 2
+rows = [
+    [
+        seed
+        seed + 1
+    ],
+    [
+        seed * 2
+        seed * 3
+    ]
+]
+assert(rows[0], [2, 3])
+assert(rows[1], [4, 6])
+assert(rows.length, 2)
+seed = 4
+assert(rows[0], [4, 5])
+assert(rows[1], [8, 12])
+assert(rows[1].length, 2)
+1
+```
+
+- This is the complete `Nucleoid nests newline separated lists` reference
+  case without its title and return comments; its explicit expected return
+  is `1`. The specification's
+  [newline separator contract](../nucleoid.spec.md#newline-separated-list-elements)
+  is normative.
+
 ## Copyright
 
 Copyright 2020 Nucleoid
