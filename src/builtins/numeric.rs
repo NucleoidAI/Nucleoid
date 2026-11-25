@@ -89,6 +89,14 @@ fn math_interpolation(name: &str, first: f64, arguments: &[Value]) -> Option<f64
     Some(match name {
         "pow" => first.powf(argument(1)),
         "atan2" => first.atan2(argument(1)),
+        "copySign" => {
+            let sign = argument(1);
+            if sign.is_nan() {
+                f64::NAN
+            } else {
+                first.copysign(sign)
+            }
+        }
         "clamp" => numeric_clamp(first, argument(1), argument(2)),
         "saturate" => numeric_clamp(first, 0.0, 1.0),
         "smoothstep" => smoothstep(first, argument(1), argument(2)),

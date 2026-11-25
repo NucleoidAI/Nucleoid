@@ -23149,6 +23149,38 @@ fn keeps_cosecants_reactive() {
 # return: 1"#);
 }
 
+/// Nucleoid keeps sign copying reactive
+#[rustfmt::skip]
+#[test]
+fn keeps_sign_copying_reactive() {
+    let mut run = runner();
+    run("magnitude = 3");
+    run("direction = -1");
+    run("copied = Math.copySign(magnitude, direction)");
+    assert_eq!(run("copied"), -3);
+    run("direction = 1");
+    assert_eq!(run("copied"), 3);
+    run("magnitude = -7");
+    assert_eq!(run("copied"), 7);
+    run("direction = -0");
+    assert_eq!(run("copied"), -7);
+    run("magnitude = 0");
+    {
+        let actual = run("1 / copied");
+        let expected = run("(Number.NEGATIVE_INFINITY)");
+        assert_eq!(actual, expected);
+    }
+    run("direction = 0");
+    {
+        let actual = run("1 / copied");
+        let expected = run("(Number.POSITIVE_INFINITY)");
+        assert_eq!(actual, expected);
+    }
+    run(r#"1
+
+# return: 1"#);
+}
+
 /// The committed tests must not drift from their generated JSONL export.
 #[rustfmt::skip]
 #[test]

@@ -303,7 +303,7 @@ fn no_document_case_reads_the_instance_of_a_method() {
         assert_eq!(reads, Vec::new(), "{}", case.title);
         property_reads += kept;
     }
-    assert_eq!(cases, 1310);
+    assert_eq!(cases, 1312);
     assert_eq!(property_reads, 3);
     for (source, reads) in [
         (

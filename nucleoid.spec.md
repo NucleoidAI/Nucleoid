@@ -29493,6 +29493,25 @@ angle = Math.PI / 2
 assert(ratio, 1)
 ratio
 # return: 1
+---
+# Nucleoid keeps sign copying reactive
+
+magnitude = 3
+direction = -1
+copied = Math.copySign(magnitude, direction)
+assert(copied, -3)
+direction = 1
+assert(copied, 3)
+magnitude = -7
+assert(copied, 7)
+direction = -0
+assert(copied, -7)
+magnitude = 0
+assert(1 / copied, Number.NEGATIVE_INFINITY)
+direction = 0
+assert(1 / copied, Number.POSITIVE_INFINITY)
+1
+# return: 1
 ```
 
 ## Floating-point absolute value alias
@@ -29590,3 +29609,53 @@ ratio
   six assertions each, sine controls, expected return `1` and coverage stay
   intact. No parser/lexer, public API, dependency, option or version changes
   are introduced.
+
+## Reactive sign copying
+
+- NUC 142 adds only native static `Math.copySign(value, sign)`.
+  The accepted numeric composition
+  `Math.abs(value) * Math.sign(Math.sign(sign) + 1 / sign)` remains available.
+- Evaluate every supplied expression exactly once left to right, then retain
+  Math's any-supplied-top-level-Undefined gate before numeric conversion,
+  including every extra position. Nested Undefined does not trigger that gate.
+- Otherwise intrinsically convert only the first two values with the existing
+  `Value::to_number` conversion. Each omitted value supplies numeric NaN.
+  If the converted sign is NaN, return numeric NaN; otherwise compute ordinary
+  `first.copysign(second)`. A NaN first input remains NaN by classification.
+  No NaN payload or sign bits are promised, and a NaN sign never supplies a
+  representational sign to a finite magnitude.
+- For non-NaNs, retain all magnitude bits of the converted first value and
+  copy the converted second value's sign bit, including both zeros,
+  subnormals, finite extrema and infinities. There is no arithmetic
+  rescaling, overflow, underflow, zero normalization or range validation.
+- Numbers, literal null as zero, booleans, trimmed numeric strings,
+  empty/singleton lists and millisecond dates retain intrinsic numeric
+  conversion. Invalid conversions produce numeric NaN, not new type errors.
+  Extras are neither converted nor used numerically, including NaN extras,
+  but retain their eager effects, strict errors, reads and subscriptions.
+- Literal-null conversion does not override live-input or parameter-null
+  deferral. Named functions, independent class rules, deletion/recovery,
+  captured values/classes, call frames, receivers and complete transaction
+  rollback use the existing machinery. Conversion never resolves shadowable
+  `Number` or rewrites the call to shadowable arithmetic helpers.
+- State/local `Math` bindings and ordinary `.Math`/`.copySign` members retain
+  lookup. Native `Math.copySign` value reads remain Undefined/non-callable.
+  Add no global or lowercase alias, non-native receiver method, population
+  or list aggregate dispatch, parser/lexer syntax, public API or option.
+- Add no arity, conversion, range or numeric errors. Strict missing reads
+  retain `ReferenceError("<name> is not defined")`, including arguments
+  after Undefined. Unsupported native methods retain
+  `TypeError("Math.<name> is not a function")`, and `Math.random()` retains
+  `TypeError("Math.random is not supported")`, after the unchanged gate.
+  Numeric `Math = 7` gives
+  `TypeError("number.copySign is not a function")`. Error positions, caught
+  values and recovery are unchanged.
+- Only formerly failing native `Math.copySign(...)` calls gain these results.
+  Already successful supplied-Undefined calls still return Undefined.
+  Every other native Math arm, accepted source form and output remains
+  unchanged; `Math.toDegrees` stays unsupported.
+- `Nucleoid keeps sign copying reactive` and
+  `Nucleoid preserves sign copying argument dependencies` retain the caller's
+  executed arithmetic programs except for their copied-expression RHS.
+  Both keep all six canonical assertions in order and explicit return `1`.
+  Historical executable cases and synthesized records are unchanged.

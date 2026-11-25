@@ -2805,6 +2805,44 @@ Full detail: [NUC 9](nuc-0009.md), [NUC 46](nuc-0046.md), [NUC 119](nuc-0119.md)
   receiver method, syntax, configuration or aggregate dispatch is added.
   See the [cosecant contract](../nucleoid.spec.md#reactive-cosecant) and the
   [argument-dependency case](#reactive-cosecant-argument-dependencies).
+- [NUC 142](nuc-0142.md) adds only native static
+  `Math.copySign(value, sign)`: intrinsically convert the first two values,
+  retain the first magnitude and copy the second sign bit. A converted NaN
+  sign, including omission, gives numeric NaN; a NaN magnitude stays NaN
+  without payload/sign promises. Non-NaNs retain exact magnitude bits and
+  the sign of either zero or infinity, without arithmetic rescaling.
+  The top-level-Undefined gate includes ignored extras, whose effects,
+  strict errors, reads and subscriptions remain eager. Literal-null coercion
+  does not override live/parameter-null deferral; shadowing, captured values,
+  frames, independent class rules, deletion/recovery and rollback stay
+  ordinary. Native value reads remain Undefined/non-callable; no alias,
+  receiver/aggregate dispatch or syntax is added. See the
+  [sign-copying contract](../nucleoid.spec.md#reactive-sign-copying).
+
+### Reactive sign copying argument dependencies
+
+```
+magnitude = 3
+direction = -1
+gate = 1
+copied = Math.copySign(magnitude, direction, gate)
+assert(copied, -3)
+direction = 1
+assert(copied, 3)
+gate = 2
+assert(copied, 3)
+delete gate
+assert(copied, undefined)
+gate = 3
+assert(copied, 3)
+direction = -1
+assert(copied, -3)
+1
+```
+
+- This is the complete new executable reference program, with its title and
+  expected-return metadata omitted; its expected return is `1`.
+
 - Accepted [NUC 56](nuc-0056.md) adds only static `Math.exp2(value)`, computing
   exactly the accepted `Math.pow(2, value)` host powf operation after intrinsic
   first-input conversion and the existing supplied-Undefined gate. The
@@ -2915,7 +2953,7 @@ Full detail: [NUC 9](nuc-0009.md), [NUC 46](nuc-0046.md), [NUC 119](nuc-0119.md)
 | `Object` | `Object()` -- a plain object, not an instance of any type |
 | `Boolean` | `Boolean(value)` |
 | `Number` | `Number.MAX_INTEGER` |
-| `Math` | `pow`, `sqrt`, `floor`, `round`, `max`, `min`, `clamp` ([NUC 21](nuc-0021.md)), `lerp` ([NUC 22](nuc-0022.md)), `saturate` ([NUC 23](nuc-0023.md)), `smoothstep(lower, upper, value)` (accepted [NUC 33](nuc-0033.md)), `smootherstep(lower, upper, value)` (accepted [NUC 35](nuc-0035.md)), `remap(start, end, targetStart, targetEnd, value)` (accepted [NUC 39](nuc-0039.md)) |
+| `Math` | `pow`, `sqrt`, `floor`, `round`, `max`, `min`, `clamp` ([NUC 21](nuc-0021.md)), `lerp` ([NUC 22](nuc-0022.md)), `saturate` ([NUC 23](nuc-0023.md)), `smoothstep(lower, upper, value)` (accepted [NUC 33](nuc-0033.md)), `smootherstep(lower, upper, value)` (accepted [NUC 35](nuc-0035.md)), `remap(start, end, targetStart, targetEnd, value)` (accepted [NUC 39](nuc-0039.md)), `copySign(value, sign)` ([NUC 142](nuc-0142.md)) |
 | `String` | `String.fromCharCode`; instance `charAt`, `length`, `lower`, `replace`, `replaceAll` (accepted [NUC 42](nuc-0042.md)), `repeat`, `split`, `padStart` and `padEnd` ([NUC 111](nuc-0111.md)), Python's `startswith`, `endswith` and `join(items)`, with the separator as the receiver ([NUC 110](nuc-0110.md)), Rust's `starts_with(prefix)` and `ends_with(suffix)` ([NUC 132](nuc-0132.md)), the size and emptiness methods `length()`, `size()`, `len()`, `isEmpty()`, `is_empty()` and `isNotEmpty()` ([NUC 116](nuc-0116.md)), the case conversion aliases `uppercase()`, `to_uppercase()` and `uppercased()` of `toUpperCase()`, and `lowercase()`, `to_lowercase()` and `lowercased()` of `toLowerCase()` ([NUC 118](nuc-0118.md)), and the reversals `reverse()` and `reversed()`, exactly `text[::-1]` ([NUC 131](nuc-0131.md)) |
 | `Date` | `Date()`, `Date(string)`, `Date(number)`, `Date.now()`, `Date.parse()`; instance `getTime`, `getYear`, `toDateString` |
 | `List` | `push`, `pop`, `filter`, `map`, their Ruby aliases `select` and `collect` ([NUC 134](nuc-0134.md)), `flatMap` (accepted [NUC 41](nuc-0041.md)), `flat` ([NUC 103](nuc-0103.md)), `reduce`, `find`, `some`, `every`, `slice`, `reverse` (a new list in reverse order), `sort` (in place, [NUC 58](nuc-0058.md)), `join`, `length`, and the queries `at`, `includes`, `indexOf`, `lastIndexOf`, `findIndex`, `findLast`, `findLastIndex` and `concat` ([NUC 61](nuc-0061.md)), `sum` ([NUC 68](nuc-0068.md)), `max` and `min` ([NUC 69](nuc-0069.md)), `distinct` ([NUC 71](nuc-0071.md)), `count(predicate)` ([NUC 73](nuc-0073.md)), `mode` ([NUC 75](nuc-0075.md)), `maxBy` and `minBy` ([NUC 77](nuc-0077.md)), `average` ([NUC 80](nuc-0080.md)), `median` ([NUC 84](nuc-0084.md)), `sortBy` ([NUC 105](nuc-0105.md)), `partition` ([NUC 108](nuc-0108.md)), `product` ([NUC 114](nuc-0114.md)), `variance` and `stdev` ([NUC 123](nuc-0123.md)), `quantile` ([NUC 124](nuc-0124.md)), `zip(other)` and `zip(other, combine)` ([NUC 129](nuc-0129.md)), the size and emptiness aliases `size()`, `len()`, `isEmpty()`, `is_empty()` and `isNotEmpty()` ([NUC 116](nuc-0116.md)), the first and last element aliases `first()`, `last()`, `first(predicate)` and `last(predicate)` ([NUC 117](nuc-0117.md)), and the reversal aliases `reversed()` and `toReversed()` of `reverse()` ([NUC 131](nuc-0131.md)); `sum`, `max`, `min` and `mode` also read as `sum of list` ([NUC 75](nuc-0075.md) revision 2) |
@@ -5967,6 +6005,7 @@ Math.exp2(value)                        static powf-based base-two power (Accept
 Math.cot(value)                         static reciprocal of tangent in radians (NUC 100 candidate)
 Math.sec(value)                         static reciprocal of cosine in radians (NUC 138)
 Math.csc(value)                         static reciprocal of sine in radians (NUC 141)
+Math.copySign(value, sign)               static magnitude with the converted non-NaN sign bit (NUC 142)
 Name[0]  Name["id"]  Name.find(...)    address an instance
 value[start:end]  value[-n:]           slice, negative counts from the end
 Name[start:end]  Name[:]  Name[-n:]    instance list range (NUC 61)

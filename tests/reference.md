@@ -3147,4 +3147,24 @@ angle = Math.PI / 2
 assert(ratio, 1)
 ratio
 # return: 1
+---
+# Nucleoid preserves sign copying argument dependencies
+
+magnitude = 3
+direction = -1
+gate = 1
+copied = Math.copySign(magnitude, direction, gate)
+assert(copied, -3)
+direction = 1
+assert(copied, 3)
+gate = 2
+assert(copied, 3)
+delete gate
+assert(copied, undefined)
+gate = 3
+assert(copied, 3)
+direction = -1
+assert(copied, -3)
+1
+# return: 1
 ```

@@ -1132,6 +1132,16 @@ assert(radians, Math.PI / 2)
   evaluation, reactive reads, errors and the existing supplied-Undefined gate.
   See the [root contract](nucleoid.spec.md#reactive-degree-to-radian-conversion).
 
+- [NUC 142](docs/nuc-0142.md) adds native static `Math.copySign(value, sign)`.
+  Intrinsic first-two-value conversion copies the non-NaN sign bit without
+  changing magnitude bits, including signed zeros, subnormals and infinities.
+  A NaN or omitted sign yields numeric NaN; NaN payload/sign bits are not
+  promised. Ignored extras retain eager reads, effects and strict errors;
+  any top-level Undefined still gates the call before conversion. Live-null
+  deferral, shadowing, class rules and rollback remain unchanged. No aliases,
+  receiver methods or syntax are added. See the
+  [root contract](nucleoid.spec.md#reactive-sign-copying).
+
 ## String iteration
 
 **String iteration reads characters directly**
