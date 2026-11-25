@@ -294,7 +294,7 @@ fn no_earlier_document_case_writes_a_union_stage() {
         with_stage += usize::from(uses);
     }
     assert_eq!(with_stage, 7);
-    assert_eq!(cases, 1314);
+    assert_eq!(cases, 1316);
 }
 
 #[test]
@@ -330,7 +330,7 @@ fn the_appended_cases_stand_after_nuc_119_and_before_nuc_103() {
         let index = cases.iter().position(|case| case.title == title).unwrap();
         assert_eq!(
             index,
-            cases.len() - 19 - 6 * usize::from(title == REFERENCE_TITLE),
+            cases.len() - 19 - 7 * usize::from(title == REFERENCE_TITLE),
             "{title}"
         );
         assert_eq!(cases[index - 1].title, previous);

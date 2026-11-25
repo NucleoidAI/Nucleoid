@@ -118,7 +118,9 @@ impl Block {
 /// Whether any statement states a rule about a type, as `$Class.property = ...`.
 fn declares_class_rule(statements: &[Stmt]) -> bool {
     statements.iter().any(|statement| match statement {
-        Stmt::Assign { target, .. } | Stmt::ValueAssign { target, .. } => matches!(
+        Stmt::Assign { target, .. }
+        | Stmt::ValueAssign { target, .. }
+        | Stmt::NullishValueAssign { target, .. } => matches!(
             target,
             Expr::Member { object, .. } if matches!(object.as_ref(), Expr::ClassRef(_))
         ),

@@ -23205,6 +23205,34 @@ fn keeps_squares_reactive() {
 # return: 1"#);
 }
 
+/// Nucleoid fills nullish values with one-shot assignments
+#[rustfmt::skip]
+#[test]
+fn fills_nullish_values_with_one_shot_assignments() {
+    let mut run = runner();
+    run("source = 5");
+    run("chosen = null");
+    run("chosen ??:= source");
+    assert_eq!(run("chosen"), 5);
+    run("source = 9");
+    assert_eq!(run("chosen"), 5);
+    run("chosen = 0");
+    run("chosen ??:= missing");
+    assert_eq!(run("chosen"), 0);
+    run("chosen = false");
+    run("chosen ??:= missing");
+    assert_eq!(run("chosen"), false);
+    run(r#"chosen = """#);
+    run("chosen ??:= missing");
+    assert_eq!(run("chosen"), "");
+    run("chosen = null");
+    run("chosen ??:= 99");
+    assert_eq!(run("chosen"), 99);
+    run(r#"1
+
+# return: 1"#);
+}
+
 /// The committed tests must not drift from their generated JSONL export.
 #[rustfmt::skip]
 #[test]

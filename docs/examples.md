@@ -2794,6 +2794,11 @@ Deposit.map(deposit -> deposit.rate)
   updates both, while `opening := total` keeps the total from the moment it
   was taken. See [NUC 66](nuc-0066.md) and the
   [root contract](../nucleoid.spec.md#value-assignment).
+- For a value that should be supplied only if still Null or Undefined,
+  [NUC 144](nuc-0144.md) adds the statement `TARGET ??:= EXPR`. Its taken
+  branch is the same one-shot action; a supplied value skips the RHS and
+  leaves its declaration and history untouched. The entire check and action
+  are isolated from enclosing rule dependencies.
 
 ## List and population sums
 

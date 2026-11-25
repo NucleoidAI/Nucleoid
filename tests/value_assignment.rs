@@ -198,7 +198,11 @@ fn accepted_documents_use_value_assignments_only_in_the_appended_cases() {
     ];
     let mut with_operator = 0;
     let mut cases = 0;
-    for case in documents.iter().flatten() {
+    for case in documents
+        .iter()
+        .zip([1, 1, 0, 0])
+        .flat_map(|(cases, added)| &cases[..cases.len() - added])
+    {
         cases += 1;
         let uses = tokenize(case.source.trim())
             .unwrap()

@@ -407,6 +407,30 @@ qty = 5
   `tests/reference.md`; the root contract is
   [Value assignment](../nucleoid.spec.md#value-assignment).
 
+### Nullish value assignment
+
+- [NUC 144](nuc-0144.md) adds the statement `target ??:= expression`:
+  perform the existing one-shot `:=` action only when the target's ordinary
+  current value is Null or Undefined. False, either zero sign, empty text,
+  NaN and every other supplied value skip without evaluating the RHS.
+- A skip changes no declaration, identity, history or dependencies. Existing
+  target relationships stay live. A take keeps `:=`'s effects, storage,
+  scope, constructor naming, target timing, instance-rule and transaction
+  semantics, including RHS null-read settlement.
+- The guard, target and taken expression, including called code and structural
+  reads, are isolated from all enclosing tracking frames. Guard null reads
+  cannot defer a constant fill. No standing conditional guard is installed.
+- Use the same grouped paths and bounds as `:=`. Unbound root names remain
+  errors; missing ordinary object properties may be filled. Existing class,
+  read-only-version, invalid-owner and forbidden-property errors still apply.
+- `??:=` is two existing tokens, `??` then `:=`, with ordinary inter-token
+  spacing or comments permitted. It is statement-only, not an assignment
+  expression or a new meaning for `??=`. Public expression parsing and
+  ignored interpolation suffixes retain their old behavior.
+- The executable reference case is
+  `Nucleoid keeps nullish assignment guards isolated`; see the
+  [root contract](../nucleoid.spec.md#nullish-value-assignment).
+
 ### Is assignments
 
 - `target is value` is a spelling of `target = value` for variables and
@@ -1529,7 +1553,7 @@ order.label
 
 - This is the complete `Nucleoid reads properties of the assigned object with a leading dot` program in `tests/reference.md`, without its title and expected-return metadata; it returns `"6 for 30"`.
 - [NUC 102](nuc-0102.md) reads a `.` that begins an operand, directly followed by a name, in the value of an assignment to a property path as that property of the path's object, the receiver. `$Order.total = .price * .qty` is `$Order.total = $Order.price * $Order.qty`, `order.customer.label = .first` reads `order.customer.first`, and `this.area = .w * .h` reads `this.w` and `this.h`.
-- The forms are `=`, `:=` and every compound assignment. The target is a plain path whose last link is a property, rooted in a name, `$Class`, `every Class`, `all Class` or `any Class`, `this` or `self`; a variable, a destructuring pattern or a computed target such as `xs[0].p` has no receiver.
+- The forms are `=`, `:=`, `??:=` and every compound assignment. The target is a plain path whose last link is a property, rooted in a name, `$Class`, `every Class`, `all Class` or `any Class`, `this` or `self`; a variable, a destructuring pattern or a computed target such as `xs[0].p` has no receiver.
 - The read continues as member access does, so `.a.b`, `.a[0]`, `.a()` and `.a@first` work, in every operand of the value: operators, `?:` and Python-style conditionals with their conditions, lists, objects, subscripts, lambda and function bodies and template interpolations. The innermost assignment decides, so in `o.p = (q.r = .a)` the dot reads `q.a`.
 - The parser builds the written-out member path, so evaluation, dependencies, `why`, `affects`, graph keys, rendering and rollback are those of that path, and `why` reports `$Order.total = $Order.price*$Order.qty`.
 - These keep their accepted readings and errors: a call argument that starts with `.`, which is a selector or its error; `is` assignments; a statement or target that starts with `.`; a dot after a name, such as `x .a`; the values of variables and destructuring declarations; and every position without a property target.
@@ -5863,6 +5887,8 @@ requirements; the Rust parser remains the implementation of those requirements.
 name = expression                      variable assignment
 name := expression                     value assignment: once, no dependency (NUC 66)
 name.property := expression            value assignment to a property (NUC 66)
+name ??:= expression                   one-shot value assignment only for Null/Undefined (NUC 144)
+name.property ??:= expression          nullish value assignment to a property (NUC 144)
 name is expression                     is assignment: name = expression (NUC 93)
 name.property is word                  a bare word reads its name, else its text "word" (NUC 93)
 name is A if c else B                  bare-word branches are words too (NUC 94)

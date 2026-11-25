@@ -1485,6 +1485,11 @@ assert: (why paid)[0].rule, "paid = 12"
 - `quote` is a declaration, a law that follows `price` and `quantity`. `paid`
   is an action taken at one moment, so it keeps `12`, and `why` shows the
   stated literal. See the [root contract](nucleoid.spec.md#value-assignment).
+- [NUC 144](docs/nuc-0144.md) adds `TARGET ??:= EXPR` for a one-shot fill:
+  only Null or Undefined takes the same action. Every other value skips the
+  RHS and preserves the target's standing law, identity and history. Guard
+  and action reads stay isolated from enclosing rules; see
+  [Nullish value assignment](nucleoid.spec.md#nullish-value-assignment).
 
 ## List and population sums
 

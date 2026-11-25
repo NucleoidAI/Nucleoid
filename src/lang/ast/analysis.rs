@@ -161,6 +161,10 @@ pub(crate) fn collect_assigned_names(statement: &Stmt, names: &mut Vec<String>) 
         | Stmt::ValueAssign {
             target: Expr::Identifier(name),
             ..
+        }
+        | Stmt::NullishValueAssign {
+            target: Expr::Identifier(name),
+            ..
         } => names.push(name.clone()),
         Stmt::Block(nested) => {
             for child in nested {
@@ -191,7 +195,9 @@ pub(crate) fn collect_read_roots(
     scope: &Scope,
 ) {
     match statement {
-        Stmt::Assign { target, value } | Stmt::ValueAssign { target, value } => {
+        Stmt::Assign { target, value }
+        | Stmt::ValueAssign { target, value }
+        | Stmt::NullishValueAssign { target, value } => {
             if let Expr::Member { object, .. } = target {
                 roots.extend(runtime.expression_roots(object, scope, false));
             }
@@ -236,7 +242,9 @@ pub(crate) fn find_class_reference_statement(statement: &Stmt, found: &mut Optio
     }
 
     match statement {
-        Stmt::Assign { target, value } | Stmt::ValueAssign { target, value } => {
+        Stmt::Assign { target, value }
+        | Stmt::ValueAssign { target, value }
+        | Stmt::NullishValueAssign { target, value } => {
             take(found, target);
             take(found, value);
         }

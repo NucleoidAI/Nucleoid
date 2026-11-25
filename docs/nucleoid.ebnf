@@ -23,6 +23,10 @@
  * - Ordinary tokenization reads the longest token at each position. Only the
  *   rules of this contract supply INDENT, DEDENT, VERSION_INDEX, REGEX and
  *   EOF.
+ * - '??:=' is the existing COALESCE then VALUE_ASSIGN tokens, not a new
+ *   token. Ordinary inter-token whitespace/comments are permitted; logical
+ *   layout still applies. '??=' remains COALESCE then ASSIGN and keeps its
+ *   accepted error, never a nullish assignment.
  * - Where ordinary tokenization would read '/' or '/=', first read a
  *   C_COMMENT, then, in operand position, a REGEX. Strings, templates and
  *   '#' comments are read whole before that, so neither starts inside
@@ -68,7 +72,8 @@ program
     ::= separator* (statement separator*)* EOF
 
 /* parse_expression skips leading separators and ignores trailing tokens.
-   Its top level forms no membership test, as an interpolation's does not. */
+   Its top level forms no membership test, as an interpolation's does not.
+   Neither enables the nullishValueAssignment statement-head boundary. */
 expressionInput
     ::= separator* expression remainingTokens EOF
 
@@ -139,6 +144,7 @@ statement
       | typeDeclaration
       | assertStmt
       | supposeStmt
+      | nullishValueAssignment
       | valueAssignment
       | isAssignment
       | predicateSentence
@@ -184,6 +190,16 @@ premise
 
 valueAssignment
     ::= path VALUE_ASSIGN expression      /* Stmt::ValueAssign */
+
+/* Only at the expression-statement head's own expression nesting level,
+   stop ordinary coalescing before the exact COALESCE VALUE_ASSIGN pair.
+   Validate the same bounded path as valueAssignment, with grouping erased.
+   The RHS is the ordinary value expression with its lexical receiver.
+   Nested expressions, return/header/default/argument positions, public
+   expressionInput and interpolation parsing keep their accepted behavior.
+   Parentheses may group a target, never make an assignment expression. */
+nullishValueAssignment
+    ::= path COALESCE VALUE_ASSIGN expression  /* Stmt::NullishValueAssign */
 
 /*
  * Is-assignment contract (NUC 93, NUC 94, NUC 95, NUC 96):
@@ -529,7 +545,7 @@ assignmentOperator
       | AND_ASSIGN
       | OR_ASSIGN
 
-/* Compound assignments, ':=' and isAssignment require a path, not an
+/* Compound assignments, ':=', '??:=' and isAssignment require a path, not an
    arbitrary expression. The parser checks the tree, where grouping leaves
    no trace, so parentheses may enclose the path or any part of it that
    starts at its root. A class root needs at least one link, and a path has
@@ -801,8 +817,9 @@ atVariable
 /*
  * Receiver-read contract (NUC 102):
  * - It applies only in the final parse of the parse-pass contract, in the
- *   value of an assignment with a receiver. ASSIGN, VALUE_ASSIGN and the
- *   compound operators give their value the receiver of their target: a
+ *   value of an assignment with a receiver. ASSIGN, VALUE_ASSIGN, the
+ *   COALESCE VALUE_ASSIGN statement pair and the compound operators give
+ *   their value the receiver of their target: a
  *   path whose last link is a member, rooted in a name, CLASS_REF,
  *   spelledClass or THIS, without that last member. A variable, a
  *   destructuring pattern, a computed target and a path ending in a

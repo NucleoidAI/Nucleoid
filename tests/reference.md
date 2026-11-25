@@ -3186,4 +3186,26 @@ probe.extra = Number.NaN
 assert(squared, 9)
 1
 # return: 1
+---
+# Nucleoid keeps nullish assignment guards isolated
+
+paid = false
+stock = 4
+chosen = null
+if paid:
+    chosen ??:= stock
+paid = true
+assert(chosen, 4)
+stock = 9
+assert(chosen, 4)
+chosen = null
+assert(chosen, null)
+paid = false
+assert(chosen, null)
+paid = true
+assert(chosen, 9)
+stock = 12
+assert(chosen, 9)
+1
+# return: 1
 ```

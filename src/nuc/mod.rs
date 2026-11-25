@@ -42,6 +42,7 @@ pub mod r#return;
 pub mod r#while;
 
 mod filing;
+mod nullish_value_assign;
 
 use indexmap::IndexSet;
 
@@ -142,6 +143,9 @@ impl Nuc {
             Stmt::ValueAssign { target, value } => {
                 Nuc::value_assignment(runtime, scope, target, value.clone())?
             }
+            Stmt::NullishValueAssign { target, value } => {
+                nullish_value_assign::convert(runtime, scope, target, value)?
+            }
             Stmt::Expression(expression) => Nuc::Expression(Expression::new(expression.clone())),
             Stmt::If {
                 condition,
@@ -165,10 +169,7 @@ impl Nuc {
                 value,
                 iterable,
                 body,
-            } => Nuc::For(For {
-                value: Some(value.clone()),
-                ..For::new(key.clone(), iterable.clone(), body.clone())
-            }),
+            } => for_entries(key, value, iterable, body),
             Stmt::While { condition, body } => {
                 Nuc::While(While::new(condition.clone(), body.clone()))
             }
@@ -367,6 +368,13 @@ impl Nuc {
             _ => Ok(()),
         }
     }
+}
+
+fn for_entries(key: &str, value: &str, iterable: &Expr, body: &[Stmt]) -> Nuc {
+    Nuc::For(For {
+        value: Some(value.to_owned()),
+        ..For::new(key.to_owned(), iterable.clone(), body.to_vec())
+    })
 }
 
 fn repeat_until(body: &[Stmt], condition: &Expr) -> Nuc {

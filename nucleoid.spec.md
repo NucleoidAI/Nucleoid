@@ -4859,7 +4859,7 @@ statement positions; caught values and transaction recovery are unchanged.
   `$Order.total = .price * .qty` is
   `$Order.total = $Order.price * $Order.qty`. No token, keyword, syntax tree
   node, error type or message is added.
-- **Receivers.** The assignment forms are `=`, `:=`, `+=`, `-=`, `*=`,
+- **Receivers.** The assignment forms are `=`, `:=`, `??:=`, `+=`, `-=`, `*=`,
   `**=`, `/=`, `%=`, `&&=` and `||=`. A target that is a plain path whose
   last link is a property, `RECEIVER.NAME`, rooted in a name, a class
   reference `$Class`, `every Class`, `all Class` or `any Class`, `this` or
@@ -6820,6 +6820,55 @@ t.promote(bob)
   `Nucleoid applies a value assignment once` through
   `Nucleoid rolls back failed value assignments` specify the executable
   behavior.
+
+## Nullish value assignment
+
+- [NUC 144](docs/nuc-0144.md) adds only the statement `TARGET ??:= EXPR`.
+  It reads the target's ordinary current value, then performs one existing
+  `:=` action only for the actual Null or Undefined value kinds. False,
+  positive and negative zero, empty text, NaN, containers, objects, functions,
+  classes, Dates and regular expressions are supplied values and skip.
+- A skip evaluates no RHS, makes no declaration, appends no history and
+  changes no identity or dependency. An existing relationship on the target
+  remains live. This is not `TARGET := TARGET ?? EXPR`, which would replace
+  that relationship even when the value was already supplied.
+- A take uses the same assignment evaluator as `:=`: evaluate `EXPR` once,
+  retain its effects and ordinary storage/null-read semantics, and preserve
+  target-resolution timing, named-constructor naming, local scopes, instance
+  rules, class boundaries and transactions. Where `:=` files a stated fact,
+  so does this statement; imperative bodies instead perform it once per entry
+  without filing, exactly as `:=` does.
+- The whole operation is isolated from dependency tracking, including guard
+  and target reads, the taken RHS and the functions, methods, callbacks and
+  structural queries it calls. It adds no subscription to an enclosing rule.
+  Checking nullishness creates no standing guard. An enclosing `if paid`
+  still depends only on the ordinary reads outside the action, such as `paid`.
+- Guard reads restore the enclosing null/undefined-read flags before a taken
+  action. A null target and constant RHS therefore fill normally, while
+  `slot ??:= nullable + 1` retains `:=`'s existing RHS null-read settlement.
+  This does not bypass argument-null deferral in surrounding function calls.
+- Targets, grouping and resource limits are those of `:=`. Ordinary lookup
+  still applies: an unbound root name raises its existing lookup error rather
+  than being declared. A missing ordinary object property may be Undefined
+  and can be filled. Invalid owners, forbidden `value` properties, read-only
+  versions and class-level writes retain the existing errors, even on a
+  supplied target. A per-instance class rule can use the instance target.
+- The lexer emits the existing `??` then `:=` tokens; ordinary whitespace or
+  comments may separate them, but logical newlines retain their boundaries.
+  Only an expression-statement head stops before this pair. Parenthesizing
+  a path is permitted; embedding this statement in a call, list, return,
+  header, default or other expression is not. Its RHS gets the ordinary
+  lexical property receiver, including leading-dot reads.
+- `??=` and all old diagnostics remain unchanged. Public `parse_expression`
+  and ignored template-interpolation suffixes retain their accepted behavior;
+  no keyword, token kind or general assignment expression is added.
+- Canonical rendering is `target??:=value`. A taken statement returns its
+  action's value; a skipped statement has the ordinary no-op `pass` result.
+  Existing transaction recovery and runtime limits are reused, not expanded
+  into a guarantee about inherited multi-dependent rollback ordering.
+- The appended cases `Nucleoid fills nullish values with one-shot assignments`
+  and `Nucleoid keeps nullish assignment guards isolated` in the executable
+  reference each execute six assertions and explicitly return `1`.
 
 ## List and population sums
 
@@ -29529,6 +29578,29 @@ offset = -1
 assert(squared, 1)
 sample.amplitude = 3
 assert(squared, 4)
+1
+# return: 1
+---
+# Nucleoid fills nullish values with one-shot assignments
+
+source = 5
+chosen = null
+chosen ??:= source
+assert(chosen, 5)
+source = 9
+assert(chosen, 5)
+chosen = 0
+chosen ??:= missing
+assert(chosen, 0)
+chosen = false
+chosen ??:= missing
+assert(chosen, false)
+chosen = ""
+chosen ??:= missing
+assert(chosen, "")
+chosen = null
+chosen ??:= 99
+assert(chosen, 99)
 1
 # return: 1
 ```

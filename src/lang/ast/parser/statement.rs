@@ -209,7 +209,10 @@ impl Parser {
     }
 
     fn expression_statement(&mut self) -> Result<Stmt> {
-        let expression = self.without_head_read(Self::expression)?;
+        let outer = self.nullish_assignment_depth.replace(self.depth + 1);
+        let expression = self.without_head_read(Self::expression);
+        self.nullish_assignment_depth = outer;
+        let expression = expression?;
 
         if self.starts_is_assignment(&expression) {
             return self.is_assignment(expression);
@@ -223,6 +226,17 @@ impl Parser {
     }
 
     pub(super) fn expression_tail(&mut self, expression: Expr) -> Result<Stmt> {
+        if self.starts_nullish_assignment() {
+            self.check_path_target(&expression, "Invalid value assignment target")?;
+            self.advance();
+            self.advance();
+            let value = self.receiving(&expression, Self::expression)?;
+            return Ok(Stmt::NullishValueAssign {
+                target: expression,
+                value,
+            });
+        }
+
         if self.check(&Token::ColonAssign) {
             return self.value_assignment(expression);
         }
@@ -232,6 +246,10 @@ impl Parser {
         }
 
         Ok(simple_statement(expression))
+    }
+
+    pub(super) fn starts_nullish_assignment(&self) -> bool {
+        self.check(&Token::QuestionQuestion) && self.peek_at(1) == &Token::ColonAssign
     }
 
     fn return_statement(&mut self) -> Result<Stmt> {

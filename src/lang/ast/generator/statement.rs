@@ -16,18 +16,13 @@ pub fn generate(statement: &Stmt) -> String {
     match statement {
         Stmt::Assign { target, value } => assignment_source(target, value),
         Stmt::ValueAssign { target, value } => format!("{target}:={value}"),
+        Stmt::NullishValueAssign { target, value } => format!("{target}??:={value}"),
         Stmt::Expression(expression) => expression.to_string(),
         Stmt::If {
             condition,
             consequent,
             alternate,
-        } => {
-            let alternate = alternate
-                .as_ref()
-                .map(|branch| format!("else{{{}}}", generate(branch)))
-                .unwrap_or_default();
-            format!("if({condition}){{{}}}{alternate}", generate_all(consequent))
-        }
+        } => conditional_source(condition, consequent, alternate.as_deref()),
         Stmt::Block(statements) => format!("{{{}}}", generate_all(statements)),
         Stmt::Return(Some(expression)) => format!("return {expression}"),
         Stmt::Return(None) => "return".to_string(),
@@ -73,6 +68,13 @@ pub fn generate(statement: &Stmt) -> String {
             )
         }
     }
+}
+
+fn conditional_source(condition: &Expr, consequent: &[Stmt], alternate: Option<&Stmt>) -> String {
+    let alternate = alternate
+        .map(|branch| format!("else{{{}}}", generate(branch)))
+        .unwrap_or_default();
+    format!("if({condition}){{{}}}{alternate}", generate_all(consequent))
 }
 
 fn loop_key(word: &str, header: &Expr, body: &[Stmt]) -> String {
