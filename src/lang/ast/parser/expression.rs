@@ -329,6 +329,7 @@ impl Parser {
                 "nodes" => Some(Stage::Nodes),
                 "holds" => Some(Stage::Holds),
                 "edges" => Some(Stage::Edges),
+                "indegrees" => Some(Stage::Indegrees),
                 "origins" => Some(Stage::Origins),
                 "outcomes" => Some(Stage::Outcomes),
                 other => Stage::from_name(other),

@@ -4987,6 +4987,9 @@ route.shift()
 - `selection |> edges` lists the steps' dependency edges, one
   `[input, node]` pair for each name in each step's `from` list
   ([NUC 133](nuc-0133.md)).
+- `selection |> indegrees` lists each selected step's recorded input
+  count in its existing order, including inputs not selected themselves
+  ([NUC 145](nuc-0145.md)).
 
 ```
 a = 1
@@ -5545,6 +5548,55 @@ shipping = price / 2
 - The authoritative contract is the
   [edge lists of reasoning selections](../nucleoid.spec.md#edge-lists-of-reasoning-selections)
   section.
+
+### Input counts of reasoning selections
+
+```
+source = 2
+offset = 3
+first = source + offset
+second = first * 2
+total = first + second
+impact = source |> affects |> indegrees
+assert(impact, [2, 1, 2])
+source = 5
+assert(impact, [2, 1, 2])
+second = source + offset + first
+assert(impact, [2, 3, 2])
+first = 10
+assert(impact, [3, 2])
+second = 20
+assert(impact, [])
+first = source
+assert(impact, [1, 2])
+1
+```
+
+- This is the complete `Nucleoid keeps reasoning input counts reactive`
+  program in `tests/reference.md`, without its title and return metadata;
+  all six assertions run and its explicit return is `1`.
+- [NUC 145](nuc-0145.md) adds only `selection |> indegrees`, exactly
+  `(selection).map(step -> step.from.length)` for the graph selection
+  its source denotes. Each result is a Number, in selection order. The
+  offset's own step is not in `source |> affects`, but it still counts
+  among `first`'s two inputs. The total counts both inputs even if another
+  filter removes their steps.
+- Empty selections give `[]`; zero-input steps give `0`. Counts follow
+  recorded direct inputs, not selection cardinality, transitive paths or
+  induced-subgraph degree. Rewiring refreshes counts even when held values
+  stay equal, and an empty impact remains subscribed for reattachment.
+- Reference coercion, selected metadata, observer exclusion, null/missing
+  behavior, class/function contexts, `.value` snapshots and hypotheses
+  remain those of `nodes`, `holds` and `edges`. A variable holding a
+  selection denotes its own graph node, not its stored list.
+- This is a final projection: a later reasoning stage or a selection
+  argument ending with it raises `TypeError("Cannot explain <source>")`.
+  A binding named `indegrees` shadows it with
+  `TypeError("indegrees is not an operation")`. Elsewhere it remains an
+  ordinary name; no prefix or call alias, keyword, token kind, record
+  field, graph mutation or new traversal is added.
+- The authoritative contract is
+  [input counts of reasoning selections](../nucleoid.spec.md#input-counts-of-reasoning-selections).
 
 ### Live structure
 
@@ -6158,6 +6210,10 @@ reference |> why |> edges             the [input, node] edges of an explanation'
 reference |> affects |> edges         the edges that a change of the reference travels (NUC 133)
 model |> edges                        the edges of the current model's nodes (NUC 133)
 selection |> edges                    one [input, step.node] pair per name of each step's from; ends the pipeline (NUC 133)
+reference |> why |> indegrees         each explanation step's recorded input count, in its order (NUC 145)
+reference |> affects |> indegrees     counts every input of each reached step, selected or not (NUC 145)
+model |> indegrees                    the recorded input counts of the current model's steps (NUC 145)
+selection |> indegrees                the list (selection).map(step -> step.from.length); ends the pipeline (NUC 145)
 all name in collection: condition     true when the condition holds for every member (NUC 62)
 every name in collection: condition   the same quantifier as all (NUC 98)
 any name in collection: condition     true when the condition holds for some member (NUC 62)

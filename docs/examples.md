@@ -4416,6 +4416,21 @@ moved
   [NUC 133](nuc-0133.md) and the
   [root contract](../nucleoid.spec.md#edge-lists-of-reasoning-selections).
 
+## Input counts of reasoning selections
+
+- [NUC 145](nuc-0145.md) adds `selection |> indegrees`, the ordered Number
+  projection `(selection).map(step -> step.from.length)`. For the schedule
+  above, `delay |> affects |> indegrees` reports each reached step's fan-in,
+  including the testing input even though delay does not reach testing.
+- Replacing shipping's two inputs by three changes its count even if its
+  value stays the same. Stated/zero-input steps contribute `0`, and an empty
+  selection gives `[]` while retaining its structural subscriptions.
+- The complete paired reference program and its six reactive assertions are
+  in [the language reference](README.md#input-counts-of-reasoning-selections);
+  the [root contract](../nucleoid.spec.md#input-counts-of-reasoning-selections)
+  specifies unchanged source coercion, observers, shadowing and final-list
+  boundaries. No additional executable-document case is introduced here.
+
 ## Reactive list flattening
 
 **Flattening keeps the dirty tiles of every room counted**

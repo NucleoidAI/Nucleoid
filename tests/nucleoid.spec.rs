@@ -23233,6 +23233,33 @@ fn fills_nullish_values_with_one_shot_assignments() {
 # return: 1"#);
 }
 
+/// Nucleoid counts direct inputs in reasoning selections
+#[rustfmt::skip]
+#[test]
+fn counts_direct_inputs_in_reasoning_selections() {
+    let mut run = runner();
+    run("price = 3");
+    run("quantity = 4");
+    run("subtotal = price * quantity");
+    run("tax = subtotal / 10");
+    run("total = subtotal + tax");
+    run("counts = total |> why |> indegrees");
+    assert_eq!(run("counts"), serde_json::json!([2, 2, 1, 0, 0]));
+    run("price = 5");
+    assert_eq!(run("counts"), serde_json::json!([2, 2, 1, 0, 0]));
+    run("tax = price * quantity");
+    assert_eq!(run("counts"), serde_json::json!([2, 2, 2, 0, 0]));
+    run("tax = 0");
+    assert_eq!(run("counts"), serde_json::json!([2, 2, 0, 0, 0]));
+    run("total = subtotal");
+    assert_eq!(run("counts"), serde_json::json!([1, 2, 0, 0]));
+    run("subtotal = price");
+    assert_eq!(run("counts"), serde_json::json!([1, 1, 0]));
+    run(r#"1
+
+# return: 1"#);
+}
+
 /// The committed tests must not drift from their generated JSONL export.
 #[rustfmt::skip]
 #[test]

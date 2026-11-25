@@ -2938,6 +2938,20 @@ assert(wiring, ["heat -> alarm", "damp -> alarm", "wind -> alarm", "temp -> heat
   wind's edge joins the wiring. See the
   [root contract](nucleoid.spec.md#edge-lists-of-reasoning-selections).
 
+## Input counts of reasoning selections
+
+- [NUC 145](docs/nuc-0145.md) adds the final stage `selection |> indegrees`,
+  exactly `(selection).map(step -> step.from.length)` for that graph
+  selection. `alarm |> why |> indegrees` reports how many recorded inputs
+  each explanation step has, in its order; an alarm with two direct inputs
+  starts with `2`, and one that also reads wind starts with `3`.
+- Counts include inputs outside the selection, stay reactive through
+  equal-valued rewiring, give `0` for zero-input steps and `[]` for an empty
+  selection. The stage keeps the same source coercion, observer exclusion,
+  shadowing and final-projection boundaries as `nodes`, `holds` and `edges`.
+  See the [root contract](nucleoid.spec.md#input-counts-of-reasoning-selections)
+  and its two executed, behavior-equivalent specification/reference cases.
+
 ## Reactive list flattening
 
 **Flat turns nested lists into one live list**

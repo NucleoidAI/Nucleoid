@@ -7,6 +7,7 @@ use crate::error::{Error, Result};
 use crate::graph::{GraphNode, NodeKey, NodeKind, ShapeKey};
 use crate::lang::ast::SetOperation;
 use crate::nuc::Nuc;
+use crate::number;
 use crate::runtime::Runtime;
 use crate::transaction::{Origin, Start};
 use crate::value::Value;
@@ -24,6 +25,7 @@ pub enum Stage {
     Edges,
     Origins,
     Outcomes,
+    Indegrees,
 }
 
 impl Stage {
@@ -49,7 +51,8 @@ impl Stage {
             | Stage::Holds
             | Stage::Edges
             | Stage::Origins
-            | Stage::Outcomes => None,
+            | Stage::Outcomes
+            | Stage::Indegrees => None,
         }
     }
 
@@ -58,6 +61,7 @@ impl Stage {
             Stage::Nodes => Some(Projection::Field(StepField::Node)),
             Stage::Holds => Some(Projection::Field(StepField::Holds)),
             Stage::Edges => Some(Projection::Edges),
+            Stage::Indegrees => Some(Projection::Field(StepField::Indegree)),
             Stage::Why
             | Stage::Affects
             | Stage::Stated
@@ -81,6 +85,7 @@ impl Stage {
             Stage::Edges => "edges",
             Stage::Origins => "origins",
             Stage::Outcomes => "outcomes",
+            Stage::Indegrees => "indegrees",
         }
     }
 }
@@ -120,6 +125,7 @@ enum End {
 pub(crate) enum StepField {
     Node,
     Holds,
+    Indegree,
 }
 
 impl StepField {
@@ -127,6 +133,7 @@ impl StepField {
         match self {
             StepField::Node => Value::string(step.node.to_string()),
             StepField::Holds => step.value.clone(),
+            StepField::Indegree => Value::Number(number::from_usize(step.from.len())),
         }
     }
 }
@@ -310,7 +317,7 @@ impl Runtime {
             Stage::Affects => self.traverse(selection, Direction::Dependents),
             Stage::Origins => self.ended(selection, End::Origins),
             Stage::Outcomes => self.ended(selection, End::Outcomes),
-            Stage::Nodes | Stage::Holds | Stage::Edges => selection.clone(),
+            Stage::Nodes | Stage::Holds | Stage::Edges | Stage::Indegrees => selection.clone(),
         })
     }
 
@@ -326,7 +333,7 @@ impl Runtime {
             Stage::Affects => self.walk(&ranked.selection, Direction::Dependents),
             Stage::Origins => self.ranked_ends(ranked, End::Origins),
             Stage::Outcomes => self.ranked_ends(ranked, End::Outcomes),
-            Stage::Nodes | Stage::Holds | Stage::Edges => ranked,
+            Stage::Nodes | Stage::Holds | Stage::Edges | Stage::Indegrees => ranked,
         })
     }
 

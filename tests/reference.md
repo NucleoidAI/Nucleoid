@@ -3208,4 +3208,28 @@ stock = 12
 assert(chosen, 9)
 1
 # return: 1
+
+---
+
+# Nucleoid keeps reasoning input counts reactive
+
+source = 2
+offset = 3
+first = source + offset
+second = first * 2
+total = first + second
+impact = source |> affects |> indegrees
+assert(impact, [2, 1, 2])
+source = 5
+assert(impact, [2, 1, 2])
+second = source + offset + first
+assert(impact, [2, 3, 2])
+first = 10
+assert(impact, [3, 2])
+second = 20
+assert(impact, [])
+first = source
+assert(impact, [1, 2])
+1
+# return: 1
 ```

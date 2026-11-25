@@ -29603,6 +29603,30 @@ chosen ??:= 99
 assert(chosen, 99)
 1
 # return: 1
+
+---
+
+# Nucleoid counts direct inputs in reasoning selections
+
+price = 3
+quantity = 4
+subtotal = price * quantity
+tax = subtotal / 10
+total = subtotal + tax
+counts = total |> why |> indegrees
+assert(counts, [2, 2, 1, 0, 0])
+price = 5
+assert(counts, [2, 2, 1, 0, 0])
+tax = price * quantity
+assert(counts, [2, 2, 2, 0, 0])
+tax = 0
+assert(counts, [2, 2, 0, 0, 0])
+total = subtotal
+assert(counts, [1, 2, 0, 0])
+subtotal = price
+assert(counts, [1, 1, 0])
+1
+# return: 1
 ```
 
 ## Floating-point absolute value alias
@@ -29796,3 +29820,61 @@ assert(chosen, 99)
   `Nucleoid preserves squaring argument dependencies` change only the
   caller's two executed counterpart expressions. Each retains all six
   canonical assertions in order, explicit return `1` and executed coverage.
+
+## Input counts of reasoning selections
+
+- NUC 145 adds only the final reasoning stage `selection |> indegrees`.
+  For each selected `Step`, in its existing order, return a nonnegative
+  Number equal to the length of its recorded `from` list. Include inputs
+  whose own steps are not selected. This is the ordered projection
+  `(selection).map(step -> step.from.length)`, where `selection` denotes
+  the graph selection the source names, not a value coerced into a list.
+- An empty selection returns `[]`. Each stated or other zero-input step
+  contributes `0`; a derived class-governed step with no recorded inputs
+  also contributes `0`. This is not the number of selected steps, a
+  transitive degree, or a degree restricted to the selected subgraph.
+- Sources keep `nodes`, `holds` and `edges` reference coercion: a reference
+  denotes its own one-step selection, `model` denotes current selectable
+  nodes, and prefix or pipeline selection stages retain their existing
+  ordering, filters, metadata and traversal. A variable holding a
+  materialized selection still denotes that variable's node, not the
+  stored records. No Step field, dependency traversal or graph mutation
+  is added.
+- Structural subscriptions, observer exclusion, input reads and record
+  materialization stay those of the existing projections. Standing
+  declarations refresh on rewiring, including equal-valued rewiring,
+  declaration/deletion, class-rule replacement and source reattachment.
+  Empty selections retain their source subscriptions. Value changes
+  alone do not change counts when recorded input lists stay unchanged.
+- Functions, methods, class-level rules, hypotheses, snapshots through
+  `.value`, nullish deferral and transactions retain existing selection
+  behavior. A selected null-valued step still contributes its input
+  count; a selection made Undefined by `depth(null)` stays Undefined.
+  Standing declarations keep the existing deferred-null result and
+  recover when the depth becomes defined.
+  An absent property or a deleted formerly defined node contributes no
+  step, and a never-defined source keeps
+  `ReferenceError("<name> is not defined")`.
+- The projection is final. A following reasoning stage, or a `path`,
+  `intersect`, `except`, `union` or `xor` argument ending in the projection,
+  parses and raises `TypeError("Cannot explain <source>")`. Display the
+  source in its ordinary compact form, such as `total|>why|>indegrees`.
+  Normal list operations on a parenthesized projection remain valid.
+- `indegrees` is an ordinary Identifier, recognized as this stage only
+  after `|>`. A local, parameter, variable, function or class binding
+  named `indegrees` shadows the stage and raises
+  `TypeError("indegrees is not an operation")` before source selection.
+  Existing final-projection error precedence and source positions remain.
+  Bare names, members and ordinary calls keep ordinary lookup; no prefix,
+  bare or call alias, reserved word or lexer token kind is introduced.
+- Existing errors of earlier selection stages remain unchanged, including
+  invalid sources, non-negative-depth checks and
+  `TypeError("Cannot use 'diff' outside suppose")`. No arity, conversion
+  or new graph-limit error is added. Accepted `nodes`, `holds`, `edges`
+  and the map spelling keep their behavior.
+- `Nucleoid counts direct inputs in reasoning selections` and the
+  reference case `Nucleoid keeps reasoning input counts reactive` are the
+  only new executable-document cases. Their accepted controls were
+  executed and sealed before preparation; only construction of `counts`
+  or `impact` changes. Each retains six ordered canonical assertions,
+  explicit return `1` and executed coverage.

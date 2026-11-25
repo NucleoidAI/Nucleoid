@@ -769,10 +769,10 @@ fn exactly_the_two_paired_document_cases_are_appended_with_six_assertions_each()
         ),
     ] {
         let cases = common::cases(document);
-        assert_eq!(cases.len(), old_count + 1);
-        assert_eq!(cases.last().unwrap().title, title);
+        assert_eq!(cases.len(), old_count + 2);
+        assert_eq!(cases.get(old_count).unwrap().title, title);
         assert_eq!(cases.iter().filter(|case| case.title == title).count(), 1);
-        let case = cases.last().unwrap();
+        let case = cases.get(old_count).unwrap();
         assert_eq!(case.expected.as_deref(), Some("1"));
         let assertions = common::assertions::protected_assertions(&parse(&case.source).unwrap());
         assert_eq!(assertions.len(), 6);

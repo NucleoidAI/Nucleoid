@@ -584,6 +584,7 @@ stage
       | NODES
       | HOLDS
       | EDGES
+      | INDEGREES
       | ORIGINS
       | OUTCOMES                                            /* Expr::Reason */
       | DEPTH LPAREN expression RPAREN                       /* Expr::Depth */
@@ -1010,6 +1011,7 @@ enumName
       | NODES
       | HOLDS
       | EDGES
+      | INDEGREES
       | ORIGINS
       | OUTCOMES
       | MODEL
@@ -1105,6 +1107,7 @@ XOR              ::= 'xor'
 NODES            ::= 'nodes'
 HOLDS            ::= 'holds'
 EDGES            ::= 'edges'
+INDEGREES        ::= 'indegrees'
 ORIGINS          ::= 'origins'
 OUTCOMES         ::= 'outcomes'
 MODEL            ::= 'model'
@@ -1186,7 +1189,7 @@ WORD_TOKEN
       | ASSERT | SUPPOSE | LAMBDA | IS | ALL | EVERY | ANY | SUM | MAX | MIN
       | MODE | WHY | AFFECTS | STATED | DERIVED | DIFF | DEPTH | PATH
       | INTERSECT | EXCEPT | EXCEPTION | AS | UNION | XOR | NODES | HOLDS
-      | EDGES | ORIGINS | OUTCOMES | MODEL | FIRST | LAST | PREVIOUS | INIT
+      | EDGES | INDEGREES | ORIGINS | OUTCOMES | MODEL | FIRST | LAST | PREVIOUS | INIT
       | PYTHON_INIT
 
 NEWLINE
@@ -1374,6 +1377,15 @@ REGEX_ESCAPE
  *                             list of each of s's steps. It ends the pipeline
  *                             as nodes and holds do, and a binding named
  *                             edges shadows it at run time.
+ * s |> indegrees           -> Expr::Reason with Stage::Indegrees, one Number
+ *                             equal to each selected step's from length, in
+ *                             selection order, including inputs not selected
+ *                             by s. It ends the pipeline as nodes, holds and
+ *                             edges do, with the same source coercion and
+ *                             binding-shadow error precedence. INDEGREES is
+ *                             an ordinary Rust Identifier in the enumName
+ *                             grammar group, not a reserved word or new lexer
+ *                             token kind; no prefix or call alias is lowered.
  * s |> origins             -> Expr::Reason with Stage::Origins, the steps of s
  *                             that rest on no step of s, and
  *                             s |> outcomes -> Stage::Outcomes, the steps that

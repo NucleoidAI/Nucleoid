@@ -68,7 +68,8 @@ impl Link<'_> {
                 | Stage::Holds
                 | Stage::Edges
                 | Stage::Origins
-                | Stage::Outcomes),
+                | Stage::Outcomes
+                | Stage::Indegrees),
             ) => Some(stage.as_str()),
             Link::Stage(Stage::Why | Stage::Affects) => None,
             Link::Depth(_) => Some("depth"),
