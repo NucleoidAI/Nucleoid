@@ -2794,6 +2794,17 @@ Full detail: [NUC 9](nuc-0009.md), [NUC 46](nuc-0046.md), [NUC 119](nuc-0119.md)
   rollback remain unchanged.
   See the [secant contract](../nucleoid.spec.md#reactive-secant) and the
   [argument-dependency case](#reactive-secant-argument-dependencies).
+- The [NUC 141](nuc-0141.md) adds only native static
+  `Math.csc(value)`, exactly `1 / Math.sin(value)` in radians: intrinsic
+  first-value conversion, rounded sine, then reciprocal. Both zero signs
+  retain their signed infinities; omission gives NaN, and values near PI
+  use the actual sine, without pole shortcuts. The top-level-Undefined gate,
+  eager ignored extras, dependency subscriptions, live-null/parameter
+  deferral, shadowing, captured values, frames and rollback are unchanged.
+  Native method-value reads remain Undefined/non-callable; no global alias,
+  receiver method, syntax, configuration or aggregate dispatch is added.
+  See the [cosecant contract](../nucleoid.spec.md#reactive-cosecant) and the
+  [argument-dependency case](#reactive-cosecant-argument-dependencies).
 - Accepted [NUC 56](nuc-0056.md) adds only static `Math.exp2(value)`, computing
   exactly the accepted `Math.pow(2, value)` host powf operation after intrinsic
   first-input conversion and the existing supplied-Undefined gate. The
@@ -5955,6 +5966,7 @@ Math.toRadians(value)                   static division-first degree conversion 
 Math.exp2(value)                        static powf-based base-two power (Accepted NUC 56)
 Math.cot(value)                         static reciprocal of tangent in radians (NUC 100 candidate)
 Math.sec(value)                         static reciprocal of cosine in radians (NUC 138)
+Math.csc(value)                         static reciprocal of sine in radians (NUC 141)
 Name[0]  Name["id"]  Name.find(...)    address an instance
 value[start:end]  value[-n:]           slice, negative counts from the end
 Name[start:end]  Name[:]  Name[-n:]    instance list range (NUC 61)
@@ -6089,6 +6101,40 @@ ratio
 - Native method value reads remain Undefined/non-callable, ordinary `.sec`
   and `.Math` members and Math shadowing stay ordinary, and existing class
   subscriptions, captured values, frames and rollback are unchanged.
+
+## Reactive cosecant argument dependencies
+
+```
+angle = Math.PI / 2
+gate = 1
+ratio = Math.csc(angle, gate)
+assert(ratio, 1)
+angle = -Math.PI / 2
+assert(ratio, -1)
+gate = 2
+assert(ratio, -1)
+delete gate
+assert(ratio, undefined)
+gate = 3
+assert(ratio, -1)
+angle = Math.PI / 2
+assert(ratio, 1)
+ratio
+```
+
+- This is the complete `Nucleoid preserves cosecant argument dependencies`
+  case in `tests/reference.md`, without its title and return comments; its
+  explicit expected return is `1`. The specification's
+  [cosecant contract](../nucleoid.spec.md#reactive-cosecant) is authoritative.
+- Every expression evaluates once left to right, including after Undefined.
+  Ignored extras retain errors, effects, reads and subscriptions; deleting
+  `gate` defers the call and restoring it recovers the result.
+- Literal-null conversion and live-input/parameter-null deferral remain
+  distinct. Sine rounding and reciprocal rounding remain separate, with no
+  normalization, pole detection or accuracy/performance claim.
+- Native `Math.csc` value reads remain Undefined/non-callable. Math
+  shadowing, ordinary `.csc`/`.Math` members, class rules, captured values,
+  frames, graph source and transactions use the unchanged machinery.
 
 ## Copyright
 

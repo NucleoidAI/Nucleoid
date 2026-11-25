@@ -3128,4 +3128,23 @@ angle = 0
 assert(ratio, 1)
 ratio
 # return: 1
+---
+# Nucleoid preserves cosecant argument dependencies
+
+angle = Math.PI / 2
+gate = 1
+ratio = Math.csc(angle, gate)
+assert(ratio, 1)
+angle = -Math.PI / 2
+assert(ratio, -1)
+gate = 2
+assert(ratio, -1)
+delete gate
+assert(ratio, undefined)
+gate = 3
+assert(ratio, -1)
+angle = Math.PI / 2
+assert(ratio, 1)
+ratio
+# return: 1
 ```

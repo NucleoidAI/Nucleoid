@@ -29475,6 +29475,24 @@ angle = 0
 assert(ratio, 1)
 ratio
 # return: 1
+---
+# Nucleoid keeps cosecants reactive
+
+angle = Math.PI / 2
+ratio = Math.csc(angle)
+assert(ratio, 1)
+angle = -Math.PI / 2
+assert(ratio, -1)
+angle = Math.PI / 6
+assert(ratio, 1 / Math.sin(angle))
+angle = -Math.PI / 6
+assert(ratio, 1 / Math.sin(angle))
+angle = Math.PI
+assert(ratio, 1 / Math.sin(angle))
+angle = Math.PI / 2
+assert(ratio, 1)
+ratio
+# return: 1
 ```
 
 ## Floating-point absolute value alias
@@ -29526,3 +29544,49 @@ ratio
   with supplied Undefined retain Undefined. All other accepted behavior,
   strict diagnostics, error positions and transaction effects remain unchanged;
   `Math.toDegrees` remains unsupported.
+
+## Reactive cosecant
+
+- NUC 141 adds only native static `Math.csc(value)`, taking
+  radians and naming the accepted `1 / Math.sin(value)` composition.
+- After successful eager evaluation of all supplied expressions, retain
+  Math's any-supplied-top-level-Undefined gate before numeric conversion.
+  Otherwise intrinsically convert only the first value with `Value::to_number`,
+  then compute exactly `1.0 / first.sin()`. Omission gives numeric NaN.
+- Preserve the rounded sine followed by reciprocal rounding. Non-NaN result
+  bits match the accepted composition; NaNs match by classification, without
+  a payload promise. Positive and negative zero yield their corresponding
+  signed infinities. Subnormals, finite extremes, `Math.PI` and neighboring
+  values use the actual sine, without normalization, inferred pole values,
+  clamping, algebraic shortcuts or another numerical model. Infinities give NaN.
+- Every argument evaluates exactly once left to right, even after Undefined.
+  Numerically ignored extras retain errors, effects, reads and dependency
+  subscriptions. Nested Undefined does not trigger the top-level native gate.
+- Literal-null zero coercion does not bypass existing live-input or
+  parameter-null deferral. Named functions, independent class rules and
+  instances, deletion/recovery, captured values, frames, graph source and
+  transaction rollback retain their existing behavior. Conversion never
+  resolves shadowable `Number` or lowers to shadowable sine source.
+- Native `Math` shadowing and ordinary `.Math` and `.csc` members remain
+  ordinary lookup. Reading native `Math.csc` as a value remains
+  Undefined/non-callable. List and population aggregates retain their closed
+  dispatch; there is no global alias or new non-native receiver method.
+- No new arity, conversion, range or numeric errors are introduced.
+  Strict missing reads retain `ReferenceError("<name> is not defined")`,
+  including extras after Undefined. Unsupported native names retain
+  `TypeError("Math.<name> is not a function")`, and `Math.random()` retains
+  `TypeError("Math.random is not supported")`, after the unchanged gate.
+  Numeric `Math = 7` still raises
+  `TypeError("number.csc is not a function")`. Positions, caught values and
+  rollback remain unchanged.
+- Only formerly failing native `Math.csc(...)` calls gain the documented
+  results. Previously successful supplied-Undefined calls still return
+  Undefined. All other accepted successful outputs, syntax and diagnostics
+  stay unchanged, including `Math.cot`, `Math.sec` and unsupported
+  `Math.csch`/`Math.toDegrees`.
+- `Nucleoid keeps cosecants reactive` and
+  `Nucleoid preserves cosecant argument dependencies` preserve the caller's
+  executed sine counterparts except for their ratio construction. Their
+  six assertions each, sine controls, expected return `1` and coverage stay
+  intact. No parser/lexer, public API, dependency, option or version changes
+  are introduced.

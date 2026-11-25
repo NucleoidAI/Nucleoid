@@ -71,6 +71,7 @@ fn math_unary(name: &str, first: f64) -> Option<f64> {
         "log2" => first.log2(),
         "log10" => first.log10(),
         "sin" => first.sin(),
+        "csc" => 1.0 / first.sin(),
         "cos" => first.cos(),
         "sec" => 1.0 / first.cos(),
         "tan" => first.tan(),

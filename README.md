@@ -1261,6 +1261,14 @@ assert(multiplier, 32)
   Math's existing behavior. It adds no syntax or callable method reference.
   See the [contract](nucleoid.spec.md#reactive-cotangent) and
   [reactive direction example](docs/examples.md#reactive-cotangent).
+- The [NUC 141](docs/nuc-0141.md) names only native static
+  `Math.csc(value)`, exactly the accepted reciprocal of sine in radians.
+  Intrinsic conversion, rounded sine and reciprocal stay in that order;
+  zero signs retain signed infinities, and PI uses the actual rounded sine.
+  Eager extras, the supplied-Undefined gate, live-null/parameter deferral,
+  dependency subscriptions, shadowing and rollback remain unchanged.
+  See the [contract](nucleoid.spec.md#reactive-cosecant) and
+  [argument-dependency case](docs/README.md#reactive-cosecant-argument-dependencies).
 
 **Thin arrows and lambdas spell the same callbacks**
 

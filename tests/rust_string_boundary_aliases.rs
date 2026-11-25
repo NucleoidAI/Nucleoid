@@ -104,7 +104,7 @@ fn only_five_appended_document_cases_call_the_aliases_and_execute_every_assertio
             "{title} is appended once"
         );
     }
-    assert_eq!(documents.iter().map(Vec::len).sum::<usize>(), 1308);
+    assert_eq!(documents.iter().map(Vec::len).sum::<usize>(), 1310);
     assert_eq!(assertions, 22);
     println!("Executed five new document cases, 22 assertions and five explicit returns.");
 }
