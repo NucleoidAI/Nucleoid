@@ -9,7 +9,7 @@ import synthesizer from "./synthesizer.ts";
 import object from "./object.ts";
 
 // Genesis puzzle_id: 3aa6fb7a
-export async function start(puzzle_id: string = "3aa6fb7a") {
+export async function start(puzzle_id: string = "27a28665") {
   const { arc_train, test_input_matrix, test_output_matrix } =
     await arc_dataset.load(puzzle_id);
 

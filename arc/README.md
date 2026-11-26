@@ -444,7 +444,7 @@ default is the dataset's initial kind, such as `kind: str = 'l9100'`, and its
 constructor stores it with `this.kind is kind`. An implementation passes `kind`
 only when its object needs a kind other than that default: every
 implementation of `dataset.27a28665.json` passes the kind of its block's
-shape, as in `kind='l4262'`, and every other implementation leaves it out, so
+shape, as in `kind=l4262`, and every other implementation leaves it out, so
 its input state carries the default. The parameter comes before the
 descriptive parameters, in the order of the constructor's assignments:
 Nucleoid lets a default occupy any parameter slot, and every implementation
@@ -466,12 +466,15 @@ text, so kinds and directions drop their quotes there, as in
 `$Obj.kind is l3337` and `$Obj.extension_direction is right`, while
 `this.kind is kind` reads the constructor's `kind` parameter. No dataset
 program defines a name with those spellings, and the solver adds only
-`canvas_width` and `canvas_height`. Other strings keep their quotes, such as
-the object keys of the `fill_color` rule in `dataset.27a28665.json`, keyword
-arguments such as `kind='l1707'`, which are not assignments, and the default
-of the `kind` parameter, such as `kind: str = 'l9100'`: accepted Nucleoid takes
-only a literal as a parameter default and rejects the bare `kind: str = l9100`
-with `SyntaxError: Expected a scalar literal parameter default`.
+`canvas_width` and `canvas_height`. Inside the value of an `is` assignment,
+the item words of [NUC 95](../docs/nuc-0095.md) read the same way, so the
+named arguments of the implementations in `dataset.27a28665.json` pass bare
+kinds, as in `kind=l1707`, while the object keys of its `fill_color` rule are
+names, as in `{l4262: 1, l2404: 2, l3743: 3, l1707: 6}`, which an object
+literal reads as the same keys. Only the default of the `kind` parameter keeps
+its quotes, such as `kind: str = 'l9100'`: accepted Nucleoid takes only a
+literal as a parameter default and rejects the bare `kind: str = l9100` with
+`SyntaxError: Expected a scalar literal parameter default`.
 `src\lib\nucleoid.ts` passes no syntax flag: the runtime reads `is`
 assignments without one since `d945213`, which removed the opt-in syntax
 options, so the solver needs that runtime or later. An older runtime reads
@@ -814,7 +817,7 @@ up by that kind. The class takes the standard entries `x`, `y`, `width`,
 `height`, `orientation`, and `volume`, where `width` and `height` are the
 column and row counts of the block's bounding box and `volume` the number of
 its nonzero cells, 3, 3, and 5 in every pair, and `kind` as its only descriptive
-property, such as `kind='l4262'` for the first training input, with no color,
+property, such as `kind=l4262` for the first training input, with no color,
 parts list, canvas size, or matrix of cells. Like every class, it takes `kind`
 right after `volume` as an optional parameter, here with the default `l9100`,
 a single shape, but every implementation passes its block's kind, so no
@@ -828,25 +831,55 @@ Unconditional class-level rules set the output kind `l7544`, a single point, as
 in `dataset.44f52bb0.json`, shrink the block to that point's size, `width` 1
 and `height` 1, and introduce one property, `fill_color`, which is absent
 before the rules run, as
-`{'l4262': 1, 'l2404': 2, 'l3743': 3, 'l1707': 6}[$Obj.kind@first]`: the object
-literal states each shape's code once, and object bracket access reads the
-code of the block's input kind, anchored with `@first` because the kind rule
-turns the kind into `l7544`. `$Obj.volume is $Obj.width * $Obj.height` counts
+`{l4262: 1, l2404: 2, l3743: 3, l1707: 6}[$Obj.kind@first]`: the object
+literal states each shape's code once, keyed by the name of its kind, and
+object bracket access reads the code of the block's input kind, anchored with
+`@first` because the kind rule turns the kind into `l7544`. A kind that is not
+a key of the table reads `null` there, as an absent key does, so a class-level
+validation rule, `if $Obj.fill_color is null:` with the body
+`throw $Obj.kind@first`, throws that input kind. An implementation that leaves
+out `kind`, so that its object takes the default `l9100`, or that names a kind
+the table lacks, therefore fails visibly instead of giving the point no color:
+the runtime exits with status 1 and an error that names the kind and the
+implementation's line, such as `l9100 (line 27, column 1)`. The input state,
+built from the class and the implementation alone, still carries the kind; the
+failure comes when the rules run on the pair's world. The rule never fires on
+the ten pairs, and it is Nucleoid's class-level validation, a `throw` in a
+class-level `if`, as the specification's rules that reject an invalid
+instance write it. `$Obj.volume is $Obj.width * $Obj.height` counts
 the filled point's single cell. The rules create no other properties, so each
 output state adds only `fill_color` to its input state's keys, and they leave
 `x` and `y` unchanged because the point sits at the block's origin, 0 and 0 in
-every training pair. Native snapshots start with the pair's `canvas_width` and
+every training pair. The training pairs show each shape in one orientation
+only, so they leave open whether a turn changes its code, while the solver's
+synthesis turns training blocks a quarter turn clockwise, so turned blocks
+reach the rules in every run. A kind names the block's geometry whatever its
+turn, and the orientation carries the turn, as the trominoes of
+`dataset.25ff71a9.json` share `l9100` at 135 and 45 and the genesis corners
+keep `l6747` at every orientation. A turned hollow diamond therefore stays
+`l4262`, with its filled corner at the top right after a quarter turn, and a
+turned square with a tail stays `l3743`, with its square at the bottom right
+and its tail at the top left; each takes the turn as its orientation, 90 after
+a quarter turn, and keeps its shape's code. The crosses look the same after
+any quarter turn, so they keep `l2404` and `l1707` at orientation 0. The table
+thus holds one code per shape, the four that the training pairs show, and
+none per turn. Native snapshots start with the pair's `canvas_width` and
 `canvas_height`, and output snapshots are captured with the pair's
 implementation followed by `Obj[:]`. Input masks retain each pair's full-size
 input canvas, and output masks the complete output; merging them reproduces
-each pair's input and output. The `output_x`/`output_y` fields record the
-cell's nonzero bounding-box origin, equal to `output_value.x`/`output_value.y`,
-and `output_value.width`/`output_value.height` equal its 1 by 1 size.
+each pair's input and output. Each output mask's nonzero bounding box, the
+single cell at 0 and 0, equals the output state's `x`, `y`, `width`, and
+`height`, and each mask's number of nonzero cells, 5 in the input and 1 in the
+output, equals its state's `volume`. The table's keys are names and the
+implementations' kinds bare words, so the class default `'l9100'` is the
+dataset's only quote.
 `output_canvas` is `FIT` because each training output is cropped to its single
 cell instead of keeping the 3 by 3 input canvas. Orientation is 0 in both
-states of the training pairs because no block is turned and the point is
-symmetric. The test pairs follow the training pairs at the same level and are
-annotated by the same rules.
+states of every pair, because each block reads 0 by the shape convention,
+being neither a line, a corner, nor a chevron, no block is turned, and the
+rules leave `orientation` unchanged, so each point keeps 0. The test pairs
+follow the training pairs at the same level and are annotated by the same
+rules.
 
 `dataset.28bf18c6.json` annotates the three original training pairs from
 `data\training\28bf18c6.json`, followed by its test pair, one shape instance
