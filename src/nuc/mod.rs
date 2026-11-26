@@ -42,7 +42,7 @@ pub mod r#return;
 pub mod r#while;
 
 mod filing;
-mod nullish_value_assign;
+mod guarded_value_assign;
 
 use indexmap::IndexSet;
 
@@ -60,6 +60,7 @@ use delete::Delete;
 use expression::Expression;
 use r#for::For;
 use function::Function;
+use guarded_value_assign::Guard;
 use r#if::If;
 use r#let::Let;
 use property::{Owner, Property};
@@ -144,18 +145,17 @@ impl Nuc {
                 Nuc::value_assignment(runtime, scope, target, value.clone())?
             }
             Stmt::NullishValueAssign { target, value } => {
-                nullish_value_assign::convert(runtime, scope, target, value)?
+                guarded_value_assign::convert(runtime, scope, target, value, Guard::Nullish)?
+            }
+            Stmt::TruthyValueAssign { target, value } => {
+                guarded_value_assign::convert(runtime, scope, target, value, Guard::Truthy)?
             }
             Stmt::Expression(expression) => Nuc::Expression(Expression::new(expression.clone())),
             Stmt::If {
                 condition,
                 consequent,
                 alternate,
-            } => Nuc::If(If::new(
-                condition.clone(),
-                consequent.clone(),
-                alternate.clone(),
-            )),
+            } => if_statement(condition, consequent, alternate.as_deref()),
             Stmt::Block(statements) => Nuc::Block(Block::new(statements.clone())),
             Stmt::Defer(_) => return Err(deferred_registration_error()),
             Stmt::Class(declaration) => Nuc::Class(Class::new(declaration.clone())),
@@ -373,6 +373,14 @@ impl Nuc {
 
 fn deferred_registration_error() -> Error {
     Error::syntax("Deferred suite requires an executable statement block")
+}
+
+fn if_statement(condition: &Expr, consequent: &[Stmt], alternate: Option<&Stmt>) -> Nuc {
+    Nuc::If(If::new(
+        condition.clone(),
+        consequent.to_vec(),
+        alternate.cloned().map(Box::new),
+    ))
 }
 
 fn for_entries(key: &str, value: &str, iterable: &Expr, body: &[Stmt]) -> Nuc {

@@ -1502,6 +1502,12 @@ assert: (why paid)[0].rule, "paid = 12"
   RHS and preserves the target's standing law, identity and history. Guard
   and action reads stay isolated from enclosing rules; see
   [Nullish value assignment](nucleoid.spec.md#nullish-value-assignment).
+- [NUC 151](docs/nuc-0151.md) adds `TARGET &&:= EXPR` for a one-shot action
+  only when the current target is truthy. Falsy skips evaluate no RHS and
+  preserve the target's law, identity and history. Guard and action reads
+  are isolated; a taken action retains `:=`'s top-level filing versus
+  imperative-body carry-out distinction. See
+  [Truthy value assignment](nucleoid.spec.md#truthy-value-assignment).
 
 ## List and population sums
 

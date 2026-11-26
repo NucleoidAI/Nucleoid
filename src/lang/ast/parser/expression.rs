@@ -279,7 +279,7 @@ impl Parser {
         let mut last = first;
 
         while self.check(&Token::QuestionQuestion) {
-            if self.nullish_assignment_depth == Some(self.depth) && self.starts_nullish_assignment()
+            if self.guarded_assignment_depth == Some(self.depth) && self.starts_nullish_assignment()
             {
                 break;
             }

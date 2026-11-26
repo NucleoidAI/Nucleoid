@@ -6,11 +6,30 @@ use crate::runtime::Runtime;
 use crate::scope::Scope;
 use crate::value::Value;
 
+#[cfg(test)]
+mod tests;
+
+#[derive(Debug, Clone, Copy)]
+pub(super) enum Guard {
+    Nullish,
+    Truthy,
+}
+
+impl Guard {
+    fn takes(self, value: &Value) -> bool {
+        match self {
+            Self::Nullish => value.is_nullish(),
+            Self::Truthy => value.truthy(),
+        }
+    }
+}
+
 pub(super) fn convert(
     runtime: &mut Runtime,
     scope: &mut Scope,
     target: &Expr,
     value: &Expr,
+    guard: Guard,
 ) -> Result<Nuc> {
     let null_read = runtime.null_read;
     let undefined_read = runtime.undefined_read;
@@ -30,10 +49,7 @@ pub(super) fn convert(
             Some(assignment)
         };
 
-        if !matches!(
-            runtime.evaluate(target, scope)?,
-            Value::Null | Value::Undefined
-        ) {
+        if !guard.takes(&runtime.evaluate(target, scope)?) {
             return Ok(Nuc::Pass);
         }
 

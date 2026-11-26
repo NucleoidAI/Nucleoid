@@ -14,7 +14,8 @@ fn statement_assertions(statement: &Stmt, assertions: &mut Vec<String>) {
     match statement {
         Stmt::Assign { target, value }
         | Stmt::ValueAssign { target, value }
-        | Stmt::NullishValueAssign { target, value } => {
+        | Stmt::NullishValueAssign { target, value }
+        | Stmt::TruthyValueAssign { target, value } => {
             expression_assertions(target, assertions);
             expression_assertions(value, assertions);
         }

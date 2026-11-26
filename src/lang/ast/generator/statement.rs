@@ -17,6 +17,7 @@ pub fn generate(statement: &Stmt) -> String {
         Stmt::Assign { target, value } => assignment_source(target, value),
         Stmt::ValueAssign { target, value } => format!("{target}:={value}"),
         Stmt::NullishValueAssign { target, value } => format!("{target}??:={value}"),
+        Stmt::TruthyValueAssign { target, value } => format!("{target}&&:={value}"),
         Stmt::Expression(expression) => expression.to_string(),
         Stmt::If {
             condition,

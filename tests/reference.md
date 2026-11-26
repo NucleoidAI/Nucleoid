@@ -3292,4 +3292,27 @@ assert(rows[1], [8, 12])
 assert(rows[1].length, 2)
 1
 # return: 1
+---
+# Nucleoid keeps truthy assignment guards isolated
+
+class Gate
+gate = Gate()
+gate.source = 2
+gate.target = gate.source + 1
+enabled = false
+if enabled:
+    gate.target &&:= 12
+assert(gate.target, 3)
+gate.source = 4
+assert(gate.target, 5)
+enabled = true
+assert(gate.target, 12)
+gate.source = 8
+assert(gate.target, 9)
+gate.target &&:= 0
+assert(gate.target, 0)
+gate.target &&:= missing
+assert(gate.target, 0)
+1
+# return: 1
 ```

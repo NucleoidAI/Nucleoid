@@ -54,6 +54,10 @@ pub enum Stmt {
         target: Expr,
         value: Expr,
     },
+    TruthyValueAssign {
+        target: Expr,
+        value: Expr,
+    },
     Expression(Expr),
     If {
         condition: Expr,

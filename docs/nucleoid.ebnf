@@ -27,6 +27,9 @@
  *   token. Ordinary inter-token whitespace/comments are permitted; logical
  *   layout still applies. '??=' remains COALESCE then ASSIGN and keeps its
  *   accepted error, never a nullish assignment.
+ * - '&&:=' is the existing AND_AND then VALUE_ASSIGN tokens, not a new
+ *   token. Ordinary inter-token whitespace/comments are permitted, but a
+ *   logical NEWLINE still separates statements. '&&=' keeps AND_ASSIGN.
  * - Where ordinary tokenization would read '/' or '/=', first read a
  *   C_COMMENT, then, in operand position, a REGEX. Strings, templates and
  *   '#' comments are read whole before that, so neither starts inside
@@ -78,7 +81,8 @@ program
 
 /* parse_expression skips leading separators and ignores trailing tokens.
    Its top level forms no membership test, as an interpolation's does not.
-   Neither enables the nullishValueAssignment statement-head boundary. */
+   Neither enables a nullishValueAssignment or truthyValueAssignment
+   statement-head boundary. */
 expressionInput
     ::= separator* expression remainingTokens EOF
 
@@ -151,6 +155,7 @@ statement
       | assertStmt
       | supposeStmt
       | nullishValueAssignment
+      | truthyValueAssignment
       | valueAssignment
       | isAssignment
       | predicateSentence
@@ -198,7 +203,8 @@ valueAssignment
     ::= path VALUE_ASSIGN expression      /* Stmt::ValueAssign */
 
 /* Only at the expression-statement head's own expression nesting level,
-   stop ordinary coalescing before the exact COALESCE VALUE_ASSIGN pair.
+   stop ordinary coalescing before the exact COALESCE VALUE_ASSIGN pair
+   and ordinary logicalAnd before the exact AND_AND VALUE_ASSIGN pair.
    Validate the same bounded path as valueAssignment, with grouping erased.
    The RHS is the ordinary value expression with its lexical receiver.
    Nested expressions, return/header/default/argument positions, public
@@ -206,6 +212,9 @@ valueAssignment
    Parentheses may group a target, never make an assignment expression. */
 nullishValueAssignment
     ::= path COALESCE VALUE_ASSIGN expression  /* Stmt::NullishValueAssign */
+
+truthyValueAssignment
+    ::= path AND_AND VALUE_ASSIGN expression   /* Stmt::TruthyValueAssign */
 
 /*
  * Is-assignment contract (NUC 93, NUC 94, NUC 95, NUC 96):
@@ -568,7 +577,7 @@ assignmentOperator
       | AND_ASSIGN
       | OR_ASSIGN
 
-/* Compound assignments, ':=', '??:=' and isAssignment require a path, not an
+/* Compound assignments, ':=', '??:=', '&&:=' and isAssignment require a path, not an
    arbitrary expression. The parser checks the tree, where grouping leaves
    no trace, so parentheses may enclose the path or any part of it that
    starts at its root. A class root needs at least one link, and a path has

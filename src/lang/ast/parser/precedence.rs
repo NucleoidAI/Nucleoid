@@ -35,6 +35,10 @@ impl Parser {
         let mut chain = 0;
 
         while self.check(&Token::AndAnd) || self.check(&Token::Keyword(Keyword::And)) {
+            if self.guarded_assignment_depth == Some(self.depth) && self.starts_truthy_assignment()
+            {
+                break;
+            }
             self.advance();
             chain += 1;
 

@@ -448,7 +448,7 @@ fn only_the_appended_cases_take_quantiles_and_they_run_every_assertion() {
     }
     assert_eq!(calls, 12);
     assert_eq!(assertions, 20);
-    assert_eq!(cases, 1324);
+    assert_eq!(cases, 1326);
 }
 
 #[test]
@@ -481,7 +481,7 @@ fn the_appended_cases_stand_after_nuc_123_and_before_nuc_103() {
         let index = cases.iter().position(|case| case.title == title).unwrap();
         assert_eq!(
             index,
-            cases.len() - 15 - 11 * usize::from(title == REFERENCE_TITLE),
+            cases.len() - 15 - 12 * usize::from(title == REFERENCE_TITLE),
             "{title}"
         );
         assert_eq!(cases[index - 1].title, previous);

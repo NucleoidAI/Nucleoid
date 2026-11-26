@@ -144,7 +144,7 @@ struct Parser {
     suppose_premises: HashMap<(usize, usize), Option<SupposePremise>>,
     while_conditions: HashMap<(usize, usize), Option<LoopCondition>>,
     if_statements: usize,
-    nullish_assignment_depth: Option<usize>,
+    guarded_assignment_depth: Option<usize>,
     misplaced_every: Option<Position>,
 }
 
@@ -230,7 +230,7 @@ impl Parser {
             suppose_premises: HashMap::new(),
             while_conditions: HashMap::new(),
             if_statements: 0,
-            nullish_assignment_depth: None,
+            guarded_assignment_depth: None,
             misplaced_every: None,
         }
     }

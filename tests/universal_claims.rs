@@ -326,7 +326,7 @@ fn appended_document_cases_run_every_assertion() {
     assert_eq!(assertions, 32);
     let last: Vec<&str> = spec
         .iter()
-        .skip(spec.len() - SPEC_TITLES.len() - 33)
+        .skip(spec.len() - SPEC_TITLES.len() - 34)
         .take(SPEC_TITLES.len())
         .map(|case| case.title.as_str())
         .collect();
@@ -347,7 +347,7 @@ fn appended_document_cases_run_every_assertion() {
                 .get(
                     cases.len()
                         - 6
-                        - 11 * usize::from(
+                        - 12 * usize::from(
                             title == "Nucleoid states universal claims with every and is"
                         )
                 )

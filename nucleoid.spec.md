@@ -4859,7 +4859,7 @@ statement positions; caught values and transaction recovery are unchanged.
   `$Order.total = .price * .qty` is
   `$Order.total = $Order.price * $Order.qty`. No token, keyword, syntax tree
   node, error type or message is added.
-- **Receivers.** The assignment forms are `=`, `:=`, `??:=`, `+=`, `-=`, `*=`,
+- **Receivers.** The assignment forms are `=`, `:=`, `??:=`, `&&:=`, `+=`, `-=`, `*=`,
   `**=`, `/=`, `%=`, `&&=` and `||=`. A target that is a plain path whose
   last link is a property, `RECEIVER.NAME`, rooted in a name, a class
   reference `$Class`, `every Class`, `all Class` or `any Class`, `this` or
@@ -6869,6 +6869,58 @@ t.promote(bob)
 - The appended cases `Nucleoid fills nullish values with one-shot assignments`
   and `Nucleoid keeps nullish assignment guards isolated` in the executable
   reference each execute six assertions and explicitly return `1`.
+
+## Truthy value assignment
+
+- [NUC 151](docs/nuc-0151.md) adds only `TARGET &&:= EXPR`, a statement
+  that reads the target normally and takes one existing `:=` action only
+  when its current value is truthy. Existing truthiness applies: Null,
+  Undefined, false, both zero signs, NaN and empty text skip; all other
+  values, including empty containers, objects and callable values, take.
+- A falsy skip has the ordinary `pass` result and evaluates no RHS, effects
+  or errors. It files no assignment, changes no identity, declaration,
+  dependencies or history, and leaves an existing target law live. This is
+  not unconditional `TARGET := TARGET && EXPR`, which still files on a skip,
+  nor the standing logical declaration `TARGET &&= EXPR`.
+- A take performs exactly the ordinary value assignment: evaluate the RHS
+  once, with its normal effects, extra arguments, lexical property receiver,
+  constructor naming, local and instance scopes, storage and null-read
+  settlement. At top level it files a literal/fact and replaces the old
+  target law. In a standing `if` branch or another imperative body it is
+  merely carried out and does not replace that law; a later source update
+  can therefore recompute the target. Reentering a branch checks again.
+- Target resolution, the guard, the RHS and called functions, methods,
+  callbacks and structural reads are isolated from dependency tracking,
+  including all enclosing frames. No standing guard is installed. Restore
+  the enclosing null/undefined-read flags after the guard, even on errors;
+  guard reads must not defer a later action, and ordinary RHS settlement
+  must not be disabled.
+- Resolve and validate the same grouped, bounded path as `:=` before any
+  skip. Unbound roots, invalid owners, read-only versions and forbidden
+  `value` properties keep their errors. Missing ordinary object properties
+  read as Undefined and skip without creating a property. Class-level
+  storage outside instance rules retains
+  `TypeError("Cannot use ':=' on a class-level property")`.
+- The lexer emits existing `&&` then `:=` tokens, allowing ordinary
+  inter-token spacing/comments but not a logical newline between them.
+  Only the expression-statement head's own expression level stops before
+  that exact pair. Grouping a target is allowed, but calls, lists, returns,
+  defaults, headers and nested expressions gain no assignment expression.
+  Public expression parsing and ignored interpolation suffixes stay intact.
+- Canonical rendering is `target&&:=value`; a take returns the ordinary
+  action's value. Preserve `&&`, `and`, `&&=`, `||=`, `:=`, `??:=`, pinned
+  `??=` errors and every accepted parser input, including runtime failures.
+  No `||:=`, keyword, token kind, option or alternate truth model is added.
+- Use the existing propagation, transaction and parser/runtime bounds,
+  including their inherited limitations; this adds no general rollback-order
+  or runtime-value-depth guarantee.
+- The appended spec case
+  `Nucleoid writes truthy values with one-shot assignments` and reference
+  case `Nucleoid keeps truthy assignment guards isolated` each retain six
+  ordered canonical assertions and explicit expected return `1`. Their
+  concrete accepted counterparts use `:= target && value` for known-truthy
+  top-level takes and snapshot-guarded `if`/`:=` for skips and the standing
+  branch; those counterparts do not implement arbitrary falsy skips.
 
 ## List and population sums
 
@@ -29682,6 +29734,27 @@ seed = 5
 assert(readings, [5, 6, 10])
 assert(readings.length, 3)
 assert(readings[2], 10)
+1
+# return: 1
+---
+# Nucleoid writes truthy values with one-shot assignments
+
+input = 3
+slot = input + 1
+slot &&:= 9
+assert(slot, 9)
+input = 7
+assert(slot, 9)
+empty = 0
+empty &&:= missing
+assert(empty, 0)
+active = true
+active &&:= 5
+assert(active, 5)
+text = ""
+text &&:= missing
+assert(text, "")
+assert(input, 7)
 1
 # return: 1
 ```

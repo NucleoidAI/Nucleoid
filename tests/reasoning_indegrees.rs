@@ -206,21 +206,21 @@ fn exactly_two_paired_document_cases_keep_all_six_assertions_and_returns() {
             SPEC_TITLE,
             "counts = total |> why |> indegrees",
             "counts = (total |> why).map(step -> step.from.length)",
-            885,
+            886,
         ),
         (
             include_str!("reference.md"),
             REFERENCE_TITLE,
             "impact = source |> affects |> indegrees",
             "impact = (source |> affects).map(step -> step.from.length)",
-            171,
+            172,
         ),
     ] {
         let cases = common::cases(document);
         assert_eq!(cases.len(), count);
-        assert_eq!(cases.get(cases.len() - 4).unwrap().title, title);
+        assert_eq!(cases.get(cases.len() - 5).unwrap().title, title);
         assert_eq!(cases.iter().filter(|case| case.title == title).count(), 1);
-        let case = cases.get(cases.len() - 4).unwrap();
+        let case = cases.get(cases.len() - 5).unwrap();
         assert_eq!(case.source.matches(written).count(), 1);
         assert_eq!(case.expected.as_deref(), Some("1"));
         let assertions = common::assertions::protected_assertions(&parse(&case.source).unwrap());

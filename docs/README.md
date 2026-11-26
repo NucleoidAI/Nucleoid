@@ -431,6 +431,55 @@ qty = 5
   `Nucleoid keeps nullish assignment guards isolated`; see the
   [root contract](../nucleoid.spec.md#nullish-value-assignment).
 
+### Truthy value assignment
+
+- [NUC 151](nuc-0151.md) adds only `target &&:= expression`: take one
+  ordinary `:=` action when the target's current value is truthy. Null,
+  Undefined, false, both zero signs, NaN and empty text skip; empty
+  containers and every other truthy value take.
+- A skip evaluates no RHS and changes no assignment, declaration, identity,
+  history or dependency. A take retains `:=`'s effects, RHS null settlement,
+  receiver, target timing, constructor naming, scopes and transactions.
+- A top-level take files a literal and replaces the target law. In a
+  standing `if` or other imperative body it is carried out without replacing
+  that law. In this example `gate.source = 8` recomputes the original law,
+  giving `9`, not `12`.
+- Isolate target lookup, guard, RHS and called code from dependency tracking;
+  restore guard null/undefined-read flags even on errors. Target validation,
+  read-only versions, forbidden properties, class boundaries and resource
+  limits still apply even when a value would skip.
+- Use existing `&&` then `:=` tokens only at an expression-statement head's
+  own level. Grouping, ordinary spacing and comments are permitted; nested
+  expressions, public expression parsing and ignored interpolation suffixes
+  retain their readings. `&&=`, `||=`, `:=`, `??:=` and `??=` errors do not
+  change; no `||:=` is introduced.
+
+```
+class Gate
+gate = Gate()
+gate.source = 2
+gate.target = gate.source + 1
+enabled = false
+if enabled:
+    gate.target &&:= 12
+assert(gate.target, 3)
+gate.source = 4
+assert(gate.target, 5)
+enabled = true
+assert(gate.target, 12)
+gate.source = 8
+assert(gate.target, 9)
+gate.target &&:= 0
+assert(gate.target, 0)
+gate.target &&:= missing
+assert(gate.target, 0)
+1
+```
+
+- The complete executable reference case is
+  `Nucleoid keeps truthy assignment guards isolated`; see the
+  [root contract](../nucleoid.spec.md#truthy-value-assignment).
+
 ### Is assignments
 
 - `target is value` is a spelling of `target = value` for variables and
@@ -1553,7 +1602,7 @@ order.label
 
 - This is the complete `Nucleoid reads properties of the assigned object with a leading dot` program in `tests/reference.md`, without its title and expected-return metadata; it returns `"6 for 30"`.
 - [NUC 102](nuc-0102.md) reads a `.` that begins an operand, directly followed by a name, in the value of an assignment to a property path as that property of the path's object, the receiver. `$Order.total = .price * .qty` is `$Order.total = $Order.price * $Order.qty`, `order.customer.label = .first` reads `order.customer.first`, and `this.area = .w * .h` reads `this.w` and `this.h`.
-- The forms are `=`, `:=`, `??:=` and every compound assignment. The target is a plain path whose last link is a property, rooted in a name, `$Class`, `every Class`, `all Class` or `any Class`, `this` or `self`; a variable, a destructuring pattern or a computed target such as `xs[0].p` has no receiver.
+- The forms are `=`, `:=`, `??:=`, `&&:=` and every compound assignment. The target is a plain path whose last link is a property, rooted in a name, `$Class`, `every Class`, `all Class` or `any Class`, `this` or `self`; a variable, a destructuring pattern or a computed target such as `xs[0].p` has no receiver.
 - The read continues as member access does, so `.a.b`, `.a[0]`, `.a()` and `.a@first` work, in every operand of the value: operators, `?:` and Python-style conditionals with their conditions, lists, objects, subscripts, lambda and function bodies and template interpolations. The innermost assignment decides, so in `o.p = (q.r = .a)` the dot reads `q.a`.
 - The parser builds the written-out member path, so evaluation, dependencies, `why`, `affects`, graph keys, rendering and rollback are those of that path, and `why` reports `$Order.total = $Order.price*$Order.qty`.
 - These keep their accepted readings and errors: a call argument that starts with `.`, which is a selector or its error; `is` assignments; a statement or target that starts with `.`; a dot after a name, such as `x .a`; the values of variables and destructuring declarations; and every position without a property target.
@@ -6025,6 +6074,8 @@ name := expression                     value assignment: once, no dependency (NU
 name.property := expression            value assignment to a property (NUC 66)
 name ??:= expression                   one-shot value assignment only for Null/Undefined (NUC 144)
 name.property ??:= expression          nullish value assignment to a property (NUC 144)
+name &&:= expression                   one-shot value assignment only for truthy values (NUC 151)
+name.property &&:= expression          truthy value assignment to a property (NUC 151)
 name is expression                     is assignment: name = expression (NUC 93)
 name.property is word                  a bare word reads its name, else its text "word" (NUC 93)
 name is A if c else B                  bare-word branches are words too (NUC 94)

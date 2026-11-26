@@ -23332,6 +23332,32 @@ fn separates_list_elements_on_new_lines() {
 # return: 1"#);
 }
 
+/// Nucleoid writes truthy values with one-shot assignments
+#[rustfmt::skip]
+#[test]
+fn writes_truthy_values_with_one_shot_assignments() {
+    let mut run = runner();
+    run("input = 3");
+    run("slot = input + 1");
+    run("slot &&:= 9");
+    assert_eq!(run("slot"), 9);
+    run("input = 7");
+    assert_eq!(run("slot"), 9);
+    run("empty = 0");
+    run("empty &&:= missing");
+    assert_eq!(run("empty"), 0);
+    run("active = true");
+    run("active &&:= 5");
+    assert_eq!(run("active"), 5);
+    run(r#"text = """#);
+    run("text &&:= missing");
+    assert_eq!(run("text"), "");
+    assert_eq!(run("input"), 7);
+    run(r#"1
+
+# return: 1"#);
+}
+
 /// The committed tests must not drift from their generated JSONL export.
 #[rustfmt::skip]
 #[test]
