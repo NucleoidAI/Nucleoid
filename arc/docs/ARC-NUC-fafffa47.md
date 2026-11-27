@@ -6,7 +6,7 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Item | Status |
 | --- | --- |
 | Puzzle | [`data/training/fafffa47.json`](../data/training/fafffa47.json) |
-| Instruction dataset | [`dataset.fafffa47.json`](../src/dataset/dataset.fafffa47.json): 5 original training pairs followed by 1 test pair, 12 whole panel-figure instances, written on 9-Nov-2026; `volume` added as the sixth standard entry on 17-Nov-2026; since 27-Nov-2026 every rule is guarded by kind, and one synthesized use case of kind `unknown` follows the last pair |
+| Instruction dataset | [`dataset.fafffa47.json`](../src/dataset/dataset.fafffa47.json): 5 original training pairs followed by 1 test pair, 12 whole panel-figure instances, written on 9-Nov-2026; `volume` added as the sixth standard entry on 17-Nov-2026; since 27-Nov-2026 every rule is guarded by kind, and one synthesized use case of kind `unknown` follows the last pair; since 27-Nov-2026 no rule changes `kind`, so every output keeps its input kind |
 | Output canvas | `FIT` |
 | Nucleoid enhancements | None requested; accepted Nucleoid expresses the model. A quote-free NUC for other datasets' quotes was drafted and then withdrawn before evaluation, once the accepted [NUC 95](../../docs/nuc-0095.md) made those quotes expressible |
 | Solver changes | Suggested, not applied: an output canvas mode that frames one panel, and class declarations that stay in `declarations[0]`; since 17-Nov-2026 `Matrix.locate` measures each object's `volume`, which `object.implementation` receives as `input_volume` |
@@ -299,6 +299,33 @@ first, as in
 `oe25bf2e9e53d is Object(kind=l9100, x=0, y=0, width=3, height=3, orientation=0, volume=7, holes=[[0, 0], [0, 1]])`.
 Every snapshot replays unchanged, because the runtime orders a state's keys by
 name and every implementation names its arguments.
+
+### Kinds never change
+
+On 27-Nov-2026, at the user's request, no rule changes `kind` any more. The
+statement `$Object.kind is l8372` left the `if $Object.kind is l9100:` block, so
+each figure keeps its input kind, `l9100`, in its output state, and the guard
+reads the live kind, which never changes. Its guard and the filter of its
+`points` rule read the live kind instead of `@first`, as
+`if $Object.kind is l9100:` and `Object.filter(other => other.kind is l9100)`,
+because no figure turns `l8372` any more. The rules now read:
+
+```nuc
+if $Object.kind is l9100:
+    $Object.points is $Object.holes.filter(hole => all figure in Object.filter(other => other.kind is l9100): figure.holes.includes(hole))
+    $Object.fill_color is 2
+    $Object.x is $Object.points.min(point => point[0])
+    $Object.y is $Object.points.min(point => point[1])
+    $Object.width is $Object.points.max(point => point[0]) - $Object.x + 1
+    $Object.height is $Object.points.max(point => point[1]) - $Object.y + 1
+    $Object.volume is $Object.points.length
+```
+
+An offline replay on the accepted runtime reproduces every stored state except
+`kind`: each instance's `output_value.kind` now equals its `input_value.kind`,
+and no other value changed. No NUC was requested, so no proposal strategy was
+selected, and no solver run has measured this version, so its difference is
+unknown, not zero.
 
 ## Runs
 

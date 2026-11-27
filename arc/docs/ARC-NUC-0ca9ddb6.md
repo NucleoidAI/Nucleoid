@@ -6,7 +6,7 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Item | Status |
 | --- | --- |
 | Puzzle | [`data/training/0ca9ddb6.json`](../data/training/0ca9ddb6.json) |
-| Instruction dataset | [`dataset.0ca9ddb6.json`](../src/dataset/dataset.0ca9ddb6.json): the puzzle's 3 training pairs and its test pair, 15 point instances; conditions respelled with `is` on 6-Nov-2026; shared orientation comment added on 6-Nov-2026; descriptive `implementation` comments added on 7-Nov-2026; colors written as letters on 8-Nov-2026; respelled on 8-Nov-2026 with the `is` assignments of NUC 93 and bare words, every snapshot unchanged; colors written as numbers again on 8-Nov-2026; `volume` added as the sixth standard entry on 17-Nov-2026; since 27-Nov-2026 every rule is guarded by kind, and one synthesized use case of kind `unknown` follows the last pair |
+| Instruction dataset | [`dataset.0ca9ddb6.json`](../src/dataset/dataset.0ca9ddb6.json): the puzzle's 3 training pairs and its test pair, 15 point instances; conditions respelled with `is` on 6-Nov-2026; shared orientation comment added on 6-Nov-2026; descriptive `implementation` comments added on 7-Nov-2026; colors written as letters on 8-Nov-2026; respelled on 8-Nov-2026 with the `is` assignments of NUC 93 and bare words, every snapshot unchanged; colors written as numbers again on 8-Nov-2026; `volume` added as the sixth standard entry on 17-Nov-2026; since 27-Nov-2026 every rule is guarded by kind, and one synthesized use case of kind `unknown` follows the last pair; since 27-Nov-2026 no rule changes `kind`, so every output keeps its input kind |
 | Output canvas | `EXACT` |
 | Nucleoid enhancements | [NUC 53](../../docs/nuc-0053.md) and [NUC 55](../../docs/nuc-0055.md), both Accepted; the conditions also use the accepted `is` of [NUC 86](../../docs/nuc-0086.md), which this puzzle did not request |
 | Solver changes | None specific to this puzzle; since 8-Nov-2026 every respelled dataset needs `is` assignments, which `src/lib/nucleoid.ts` enabled with `--is-assignment` until `d945213` made them the default; since 17-Nov-2026 `Matrix.locate` measures each object's `volume`, which `object.implementation` receives as `input_volume` |
@@ -532,6 +532,40 @@ first, as in
 `o08c8feaa60ea is Object(kind=l7544, x=2, y=3, width=1, height=1, orientation=0, volume=1, vertex_color=2)`.
 Every snapshot replays unchanged, because the runtime orders a state's keys by
 name and every implementation names its arguments.
+
+### Kinds never change
+
+On 27-Nov-2026, at the user's request, no rule changes `kind` any more. The
+statements `$Object.kind is l1707` under
+`if $Object.kind is l7544 and $Object.vertex_color is 1:` and
+`$Object.kind is l2404` under
+`if $Object.kind is l7544 and $Object.vertex_color is 2:` left their blocks, so
+each point keeps its input kind, `l7544`, in its output state, and each guard
+reads the live kind, which never changes. The rules now read:
+
+```nuc
+if $Object.kind is l7544 and $Object.vertex_color is 1:
+    $Object.marker_color is 7
+    $Object.x is $Object.x@first - 1
+    $Object.y is $Object.y@first - 1
+    $Object.width is $Object.width@first + 2
+    $Object.height is $Object.height@first + 2
+    $Object.volume is $Object.volume@first + 4
+
+if $Object.kind is l7544 and $Object.vertex_color is 2:
+    $Object.marker_color is 4
+    $Object.x is $Object.x@first - 1
+    $Object.y is $Object.y@first - 1
+    $Object.width is $Object.width@first + 2
+    $Object.height is $Object.height@first + 2
+    $Object.volume is $Object.volume@first + 4
+```
+
+An offline replay on the accepted runtime reproduces every stored state except
+`kind`: each instance's `output_value.kind` now equals its `input_value.kind`,
+and no other value changed. No NUC was requested, so no proposal strategy was
+selected, and no solver run has measured this version, so its difference is
+unknown, not zero.
 
 ## Runs
 

@@ -1,8 +1,8 @@
 {
   "class_declaration": "class Object(kind: str = 'default', x: int, y: int, width: int, height: int, orientation: int, volume: int, vertex_color: int):\n    this.kind is kind\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.vertex_color is vertex_color",
   "declarations": [
-    "if $Object.kind is l7544 and $Object.vertex_color is 4:\n    $Object.kind is l6840\n    $Object.rim_color is 8\n    $Object.x is $Object.x@first - 1\n    $Object.y is $Object.y@first - 1\n    $Object.width is $Object.width@first + 2\n    $Object.height is $Object.height@first + 1\n    $Object.orientation is 180\n    $Object.volume is $Object.volume@first + 2",
-    "if $Object.kind is l7544 and $Object.vertex_color is 9:\n    $Object.kind is l9906\n    $Object.rim_color is 2\n    $Object.x is $Object.x@first - 1\n    $Object.width is $Object.width@first + 2\n    $Object.height is $Object.height@first + 1\n    $Object.volume is $Object.volume@first + 2"
+    "if $Object.kind is l7544 and $Object.vertex_color is 4:\n    $Object.rim_color is 8\n    $Object.x is $Object.x@first - 1\n    $Object.y is $Object.y@first - 1\n    $Object.width is $Object.width@first + 2\n    $Object.height is $Object.height@first + 1\n    $Object.orientation is 180\n    $Object.volume is $Object.volume@first + 2",
+    "if $Object.kind is l7544 and $Object.vertex_color is 9:\n    $Object.rim_color is 2\n    $Object.x is $Object.x@first - 1\n    $Object.width is $Object.width@first + 2\n    $Object.height is $Object.height@first + 1\n    $Object.volume is $Object.volume@first + 2"
   ],
   "output_canvas": "EXACT",
   "dataset": [
@@ -44,7 +44,7 @@
           ],
           "implementation": "of742ec5620c9 is Object(kind=l7544, x=3, y=2, width=1, height=1, orientation=0, volume=1, vertex_color=4)",
           "input_value": {"height":1,"id":"of742ec5620c9","kind":"l7544","orientation":0,"vertex_color":4,"volume":1,"width":1,"x":3,"y":2},
-          "output_value": {"height":2,"id":"of742ec5620c9","kind":"l6840","orientation":180,"rim_color":8,"vertex_color":4,"volume":3,"width":3,"x":2,"y":1}
+          "output_value": {"height":2,"id":"of742ec5620c9","kind":"l7544","orientation":180,"rim_color":8,"vertex_color":4,"volume":3,"width":3,"x":2,"y":1}
         },
         {
           "instance_name": "o866f45cb5433",
@@ -66,7 +66,7 @@
           ],
           "implementation": "o866f45cb5433 is Object(kind=l7544, x=1, y=4, width=1, height=1, orientation=0, volume=1, vertex_color=4)",
           "input_value": {"height":1,"id":"o866f45cb5433","kind":"l7544","orientation":0,"vertex_color":4,"volume":1,"width":1,"x":1,"y":4},
-          "output_value": {"height":2,"id":"o866f45cb5433","kind":"l6840","orientation":180,"rim_color":8,"vertex_color":4,"volume":3,"width":3,"x":0,"y":3}
+          "output_value": {"height":2,"id":"o866f45cb5433","kind":"l7544","orientation":180,"rim_color":8,"vertex_color":4,"volume":3,"width":3,"x":0,"y":3}
         }
       ]
     },
@@ -108,7 +108,7 @@
           ],
           "implementation": "oaf6df8ed9e79 is Object(kind=l7544, x=4, y=1, width=1, height=1, orientation=0, volume=1, vertex_color=4)",
           "input_value": {"height":1,"id":"oaf6df8ed9e79","kind":"l7544","orientation":0,"vertex_color":4,"volume":1,"width":1,"x":4,"y":1},
-          "output_value": {"height":2,"id":"oaf6df8ed9e79","kind":"l6840","orientation":180,"rim_color":8,"vertex_color":4,"volume":3,"width":3,"x":3,"y":0}
+          "output_value": {"height":2,"id":"oaf6df8ed9e79","kind":"l7544","orientation":180,"rim_color":8,"vertex_color":4,"volume":3,"width":3,"x":3,"y":0}
         },
         {
           "instance_name": "o1394309b01df",
@@ -130,7 +130,7 @@
           ],
           "implementation": "o1394309b01df is Object(kind=l7544, x=1, y=3, width=1, height=1, orientation=0, volume=1, vertex_color=9)",
           "input_value": {"height":1,"id":"o1394309b01df","kind":"l7544","orientation":0,"vertex_color":9,"volume":1,"width":1,"x":1,"y":3},
-          "output_value": {"height":2,"id":"o1394309b01df","kind":"l9906","orientation":0,"rim_color":2,"vertex_color":9,"volume":3,"width":3,"x":0,"y":3}
+          "output_value": {"height":2,"id":"o1394309b01df","kind":"l7544","orientation":0,"rim_color":2,"vertex_color":9,"volume":3,"width":3,"x":0,"y":3}
         }
       ]
     },
@@ -172,7 +172,7 @@
           ],
           "implementation": "o55882ea787c6 is Object(kind=l7544, x=2, y=1, width=1, height=1, orientation=0, volume=1, vertex_color=4)",
           "input_value": {"height":1,"id":"o55882ea787c6","kind":"l7544","orientation":0,"vertex_color":4,"volume":1,"width":1,"x":2,"y":1},
-          "output_value": {"height":2,"id":"o55882ea787c6","kind":"l6840","orientation":180,"rim_color":8,"vertex_color":4,"volume":3,"width":3,"x":1,"y":0}
+          "output_value": {"height":2,"id":"o55882ea787c6","kind":"l7544","orientation":180,"rim_color":8,"vertex_color":4,"volume":3,"width":3,"x":1,"y":0}
         },
         {
           "instance_name": "o98ba2cb040e8",
@@ -194,7 +194,7 @@
           ],
           "implementation": "o98ba2cb040e8 is Object(kind=l7544, x=4, y=1, width=1, height=1, orientation=0, volume=1, vertex_color=9)",
           "input_value": {"height":1,"id":"o98ba2cb040e8","kind":"l7544","orientation":0,"vertex_color":9,"volume":1,"width":1,"x":4,"y":1},
-          "output_value": {"height":2,"id":"o98ba2cb040e8","kind":"l9906","orientation":0,"rim_color":2,"vertex_color":9,"volume":3,"width":3,"x":3,"y":1}
+          "output_value": {"height":2,"id":"o98ba2cb040e8","kind":"l7544","orientation":0,"rim_color":2,"vertex_color":9,"volume":3,"width":3,"x":3,"y":1}
         },
         {
           "instance_name": "o1c4ff1a88360",
@@ -216,7 +216,7 @@
           ],
           "implementation": "o1c4ff1a88360 is Object(kind=l7544, x=2, y=3, width=1, height=1, orientation=0, volume=1, vertex_color=9)",
           "input_value": {"height":1,"id":"o1c4ff1a88360","kind":"l7544","orientation":0,"vertex_color":9,"volume":1,"width":1,"x":2,"y":3},
-          "output_value": {"height":2,"id":"o1c4ff1a88360","kind":"l9906","orientation":0,"rim_color":2,"vertex_color":9,"volume":3,"width":3,"x":1,"y":3}
+          "output_value": {"height":2,"id":"o1c4ff1a88360","kind":"l7544","orientation":0,"rim_color":2,"vertex_color":9,"volume":3,"width":3,"x":1,"y":3}
         }
       ]
     },
@@ -262,7 +262,7 @@
           ],
           "implementation": "o3d302d758b50 is Object(kind=l7544, x=4, y=2, width=1, height=1, orientation=0, volume=1, vertex_color=9)",
           "input_value": {"height":1,"id":"o3d302d758b50","kind":"l7544","orientation":0,"vertex_color":9,"volume":1,"width":1,"x":4,"y":2},
-          "output_value": {"height":2,"id":"o3d302d758b50","kind":"l9906","orientation":0,"rim_color":2,"vertex_color":9,"volume":3,"width":3,"x":3,"y":2}
+          "output_value": {"height":2,"id":"o3d302d758b50","kind":"l7544","orientation":0,"rim_color":2,"vertex_color":9,"volume":3,"width":3,"x":3,"y":2}
         }
       ]
     },
@@ -308,7 +308,7 @@
           ],
           "implementation": "oa1b9ca3ab601 is Object(kind=l7544, x=4, y=1, width=1, height=1, orientation=0, volume=1, vertex_color=9)",
           "input_value": {"height":1,"id":"oa1b9ca3ab601","kind":"l7544","orientation":0,"vertex_color":9,"volume":1,"width":1,"x":4,"y":1},
-          "output_value": {"height":2,"id":"oa1b9ca3ab601","kind":"l9906","orientation":0,"rim_color":2,"vertex_color":9,"volume":3,"width":3,"x":3,"y":1}
+          "output_value": {"height":2,"id":"oa1b9ca3ab601","kind":"l7544","orientation":0,"rim_color":2,"vertex_color":9,"volume":3,"width":3,"x":3,"y":1}
         },
         {
           "instance_name": "o5fb3f33a329f",
@@ -332,7 +332,7 @@
           ],
           "implementation": "o5fb3f33a329f is Object(kind=l7544, x=2, y=5, width=1, height=1, orientation=0, volume=1, vertex_color=4)",
           "input_value": {"height":1,"id":"o5fb3f33a329f","kind":"l7544","orientation":0,"vertex_color":4,"volume":1,"width":1,"x":2,"y":5},
-          "output_value": {"height":2,"id":"o5fb3f33a329f","kind":"l6840","orientation":180,"rim_color":8,"vertex_color":4,"volume":3,"width":3,"x":1,"y":4}
+          "output_value": {"height":2,"id":"o5fb3f33a329f","kind":"l7544","orientation":180,"rim_color":8,"vertex_color":4,"volume":3,"width":3,"x":1,"y":4}
         }
       ]
     },

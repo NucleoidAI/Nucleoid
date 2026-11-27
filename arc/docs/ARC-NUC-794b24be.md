@@ -6,7 +6,7 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Item | Status |
 | --- | --- |
 | Puzzle | [`data/training/794b24be.json`](../data/training/794b24be.json) |
-| Instruction dataset | [`dataset.794b24be.json`](../src/dataset/dataset.794b24be.json): the puzzle's 10 original training pairs and its 2 test pairs, 12 pattern instances, one per pair; committed with this record; orientation labelled by shape and the shared orientation comment added on 6-Nov-2026; descriptive `implementation` comments added on 7-Nov-2026; colors written as letters on 8-Nov-2026; respelled on 8-Nov-2026 with the `is` assignments of NUC 93 and bare words, every snapshot unchanged; colors written as numbers again on 8-Nov-2026; `volume` added as the sixth standard entry on 17-Nov-2026, replacing `cell_count`; since 27-Nov-2026 every rule is guarded by kind, and one synthesized use case of kind `unknown` follows the last pair |
+| Instruction dataset | [`dataset.794b24be.json`](../src/dataset/dataset.794b24be.json): the puzzle's 10 original training pairs and its 2 test pairs, 12 pattern instances, one per pair; committed with this record; orientation labelled by shape and the shared orientation comment added on 6-Nov-2026; descriptive `implementation` comments added on 7-Nov-2026; colors written as letters on 8-Nov-2026; respelled on 8-Nov-2026 with the `is` assignments of NUC 93 and bare words, every snapshot unchanged; colors written as numbers again on 8-Nov-2026; `volume` added as the sixth standard entry on 17-Nov-2026, replacing `cell_count`; since 27-Nov-2026 every rule is guarded by kind, and one synthesized use case of kind `unknown` follows the last pair; since 27-Nov-2026 no rule changes `kind`, so every output keeps its input kind |
 | Output canvas | `EXACT` |
 | Nucleoid enhancements | None requested; the dataset uses accepted features only |
 | Solver changes | None; one suggested change awaits review, not applied; since 8-Nov-2026 every respelled dataset needs `is` assignments, which `src/lib/nucleoid.ts` enabled with `--is-assignment` until `d945213` made them the default; since 17-Nov-2026 `Matrix.locate` measures each object's `volume`, which `object.implementation` receives as `input_volume` |
@@ -378,6 +378,29 @@ first, as in
 `ob1da83745473 is Object(kind=l9100, x=0, y=1, width=1, height=1, orientation=0, volume=1)`.
 Every snapshot replays unchanged, because the runtime orders a state's keys by
 name and every implementation names its arguments.
+
+### Kinds never change
+
+On 27-Nov-2026, at the user's request, no rule changes `kind` any more. The
+statement `$Object.kind is l5714` left the `if $Object.kind is l9100:` block, so
+each pattern keeps its input kind, `l9100`, in its output state, and the guard
+reads the live kind, which never changes. The rules now read:
+
+```nuc
+if $Object.kind is l9100:
+    $Object.fill_color is 2
+    $Object.width is min of [$Object.volume, canvas_width]
+    $Object.height is 1 + $Object.volume - $Object.width
+    $Object.orientation is 90 if $Object.height is 1 and $Object.width > 1 else 0
+    $Object.x is 0
+    $Object.y is 0
+```
+
+An offline replay on the accepted runtime reproduces every stored state except
+`kind`: each instance's `output_value.kind` now equals its `input_value.kind`,
+and no other value changed. No NUC was requested, so no proposal strategy was
+selected, and no solver run has measured this version, so its difference is
+unknown, not zero.
 
 ## Runs
 

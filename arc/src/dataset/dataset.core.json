@@ -1,7 +1,7 @@
 {
   "class_declaration": "class Object(kind: str = 'default', x: int, y: int, width: int, height: int, orientation: int, volume: int, vertex_color: int, vertical_segment_color: int, horizontal_segment_color: int):\n    this.kind is kind\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.vertex_color is vertex_color\n    this.vertical_segment_color is vertical_segment_color\n    this.horizontal_segment_color is horizontal_segment_color",
   "declarations": [
-    "if $Object.kind is l6747 and $Object.vertex_color is 9 and $Object.vertical_segment_color is 9 and $Object.horizontal_segment_color is 9:\n    $Object.kind is l6624\n    $Object.marker_color is 4\n    $Object.x is $Object.x@first - 1 if $Object.orientation > 180 else $Object.x@first\n    $Object.y is $Object.y@first - 1 if $Object.orientation < 90 or $Object.orientation > 270 else $Object.y@first\n    $Object.width is $Object.width@first + 1\n    $Object.height is $Object.height@first + 1\n    $Object.volume is $Object.volume@first + 1"
+    "if $Object.kind is l6747 and $Object.vertex_color is 9 and $Object.vertical_segment_color is 9 and $Object.horizontal_segment_color is 9:\n    $Object.marker_color is 4\n    $Object.x is $Object.x@first - 1 if $Object.orientation > 180 else $Object.x@first\n    $Object.y is $Object.y@first - 1 if $Object.orientation < 90 or $Object.orientation > 270 else $Object.y@first\n    $Object.width is $Object.width@first + 1\n    $Object.height is $Object.height@first + 1\n    $Object.volume is $Object.volume@first + 1"
   ],
   "output_canvas": "EXACT",
   "dataset": [
@@ -51,7 +51,7 @@
           ],
           "implementation": "o7e96305711c2 is Object(kind=l6747, x=5, y=1, width=2, height=2, orientation=135, volume=3, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)",
           "input_value": {"height":2,"horizontal_segment_color":9,"id":"o7e96305711c2","kind":"l6747","orientation":135,"vertex_color":9,"vertical_segment_color":9,"volume":3,"width":2,"x":5,"y":1},
-          "output_value": {"height":3,"horizontal_segment_color":9,"id":"o7e96305711c2","kind":"l6624","marker_color":4,"orientation":135,"vertex_color":9,"vertical_segment_color":9,"volume":4,"width":3,"x":5,"y":1}
+          "output_value": {"height":3,"horizontal_segment_color":9,"id":"o7e96305711c2","kind":"l6747","marker_color":4,"orientation":135,"vertex_color":9,"vertical_segment_color":9,"volume":4,"width":3,"x":5,"y":1}
         },
         {
           "instance_name": "o4a5e1d49d8a8",
@@ -77,7 +77,7 @@
           ],
           "implementation": "o4a5e1d49d8a8 is Object(kind=l6747, x=2, y=5, width=2, height=2, orientation=225, volume=3, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)",
           "input_value": {"height":2,"horizontal_segment_color":9,"id":"o4a5e1d49d8a8","kind":"l6747","orientation":225,"vertex_color":9,"vertical_segment_color":9,"volume":3,"width":2,"x":2,"y":5},
-          "output_value": {"height":3,"horizontal_segment_color":9,"id":"o4a5e1d49d8a8","kind":"l6624","marker_color":4,"orientation":225,"vertex_color":9,"vertical_segment_color":9,"volume":4,"width":3,"x":1,"y":5}
+          "output_value": {"height":3,"horizontal_segment_color":9,"id":"o4a5e1d49d8a8","kind":"l6747","marker_color":4,"orientation":225,"vertex_color":9,"vertical_segment_color":9,"volume":4,"width":3,"x":1,"y":5}
         }
       ]
     },
@@ -127,7 +127,7 @@
           ],
           "implementation": "o4837a1872f63 is Object(kind=l6747, x=2, y=1, width=2, height=2, orientation=135, volume=3, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)",
           "input_value": {"height":2,"horizontal_segment_color":9,"id":"o4837a1872f63","kind":"l6747","orientation":135,"vertex_color":9,"vertical_segment_color":9,"volume":3,"width":2,"x":2,"y":1},
-          "output_value": {"height":3,"horizontal_segment_color":9,"id":"o4837a1872f63","kind":"l6624","marker_color":4,"orientation":135,"vertex_color":9,"vertical_segment_color":9,"volume":4,"width":3,"x":2,"y":1}
+          "output_value": {"height":3,"horizontal_segment_color":9,"id":"o4837a1872f63","kind":"l6747","marker_color":4,"orientation":135,"vertex_color":9,"vertical_segment_color":9,"volume":4,"width":3,"x":2,"y":1}
         },
         {
           "instance_name": "o09c863f4a1f2",
@@ -153,7 +153,7 @@
           ],
           "implementation": "o09c863f4a1f2 is Object(kind=l6747, x=5, y=2, width=2, height=2, orientation=45, volume=3, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)",
           "input_value": {"height":2,"horizontal_segment_color":9,"id":"o09c863f4a1f2","kind":"l6747","orientation":45,"vertex_color":9,"vertical_segment_color":9,"volume":3,"width":2,"x":5,"y":2},
-          "output_value": {"height":3,"horizontal_segment_color":9,"id":"o09c863f4a1f2","kind":"l6624","marker_color":4,"orientation":45,"vertex_color":9,"vertical_segment_color":9,"volume":4,"width":3,"x":5,"y":1}
+          "output_value": {"height":3,"horizontal_segment_color":9,"id":"o09c863f4a1f2","kind":"l6747","marker_color":4,"orientation":45,"vertex_color":9,"vertical_segment_color":9,"volume":4,"width":3,"x":5,"y":1}
         },
         {
           "instance_name": "o2d9a28fe473f",
@@ -179,7 +179,7 @@
           ],
           "implementation": "o2d9a28fe473f is Object(kind=l6747, x=1, y=5, width=2, height=2, orientation=225, volume=3, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)",
           "input_value": {"height":2,"horizontal_segment_color":9,"id":"o2d9a28fe473f","kind":"l6747","orientation":225,"vertex_color":9,"vertical_segment_color":9,"volume":3,"width":2,"x":1,"y":5},
-          "output_value": {"height":3,"horizontal_segment_color":9,"id":"o2d9a28fe473f","kind":"l6624","marker_color":4,"orientation":225,"vertex_color":9,"vertical_segment_color":9,"volume":4,"width":3,"x":0,"y":5}
+          "output_value": {"height":3,"horizontal_segment_color":9,"id":"o2d9a28fe473f","kind":"l6747","marker_color":4,"orientation":225,"vertex_color":9,"vertical_segment_color":9,"volume":4,"width":3,"x":0,"y":5}
         }
       ]
     },
@@ -229,7 +229,7 @@
           ],
           "implementation": "oe642e90734f5 is Object(kind=l6747, x=1, y=0, width=2, height=2, orientation=225, volume=3, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)",
           "input_value": {"height":2,"horizontal_segment_color":9,"id":"oe642e90734f5","kind":"l6747","orientation":225,"vertex_color":9,"vertical_segment_color":9,"volume":3,"width":2,"x":1,"y":0},
-          "output_value": {"height":3,"horizontal_segment_color":9,"id":"oe642e90734f5","kind":"l6624","marker_color":4,"orientation":225,"vertex_color":9,"vertical_segment_color":9,"volume":4,"width":3,"x":0,"y":0}
+          "output_value": {"height":3,"horizontal_segment_color":9,"id":"oe642e90734f5","kind":"l6747","marker_color":4,"orientation":225,"vertex_color":9,"vertical_segment_color":9,"volume":4,"width":3,"x":0,"y":0}
         },
         {
           "instance_name": "o2712ba28a6ea",
@@ -255,7 +255,7 @@
           ],
           "implementation": "o2712ba28a6ea is Object(kind=l6747, x=5, y=1, width=2, height=2, orientation=45, volume=3, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)",
           "input_value": {"height":2,"horizontal_segment_color":9,"id":"o2712ba28a6ea","kind":"l6747","orientation":45,"vertex_color":9,"vertical_segment_color":9,"volume":3,"width":2,"x":5,"y":1},
-          "output_value": {"height":3,"horizontal_segment_color":9,"id":"o2712ba28a6ea","kind":"l6624","marker_color":4,"orientation":45,"vertex_color":9,"vertical_segment_color":9,"volume":4,"width":3,"x":5,"y":0}
+          "output_value": {"height":3,"horizontal_segment_color":9,"id":"o2712ba28a6ea","kind":"l6747","marker_color":4,"orientation":45,"vertex_color":9,"vertical_segment_color":9,"volume":4,"width":3,"x":5,"y":0}
         },
         {
           "instance_name": "occce8d81e316",
@@ -281,7 +281,7 @@
           ],
           "implementation": "occce8d81e316 is Object(kind=l6747, x=1, y=5, width=2, height=2, orientation=315, volume=3, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)",
           "input_value": {"height":2,"horizontal_segment_color":9,"id":"occce8d81e316","kind":"l6747","orientation":315,"vertex_color":9,"vertical_segment_color":9,"volume":3,"width":2,"x":1,"y":5},
-          "output_value": {"height":3,"horizontal_segment_color":9,"id":"occce8d81e316","kind":"l6624","marker_color":4,"orientation":315,"vertex_color":9,"vertical_segment_color":9,"volume":4,"width":3,"x":0,"y":4}
+          "output_value": {"height":3,"horizontal_segment_color":9,"id":"occce8d81e316","kind":"l6747","marker_color":4,"orientation":315,"vertex_color":9,"vertical_segment_color":9,"volume":4,"width":3,"x":0,"y":4}
         },
         {
           "instance_name": "o328ea79cc351",
@@ -307,7 +307,7 @@
           ],
           "implementation": "o328ea79cc351 is Object(kind=l6747, x=5, y=4, width=2, height=2, orientation=135, volume=3, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)",
           "input_value": {"height":2,"horizontal_segment_color":9,"id":"o328ea79cc351","kind":"l6747","orientation":135,"vertex_color":9,"vertical_segment_color":9,"volume":3,"width":2,"x":5,"y":4},
-          "output_value": {"height":3,"horizontal_segment_color":9,"id":"o328ea79cc351","kind":"l6624","marker_color":4,"orientation":135,"vertex_color":9,"vertical_segment_color":9,"volume":4,"width":3,"x":5,"y":4}
+          "output_value": {"height":3,"horizontal_segment_color":9,"id":"o328ea79cc351","kind":"l6747","marker_color":4,"orientation":135,"vertex_color":9,"vertical_segment_color":9,"volume":4,"width":3,"x":5,"y":4}
         }
       ]
     },
@@ -353,7 +353,7 @@
           ],
           "implementation": "ob10dd4029d3e is Object(kind=l6747, x=3, y=1, width=2, height=2, orientation=135, volume=3, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)",
           "input_value": {"height":2,"horizontal_segment_color":9,"id":"ob10dd4029d3e","kind":"l6747","orientation":135,"vertex_color":9,"vertical_segment_color":9,"volume":3,"width":2,"x":3,"y":1},
-          "output_value": {"height":3,"horizontal_segment_color":9,"id":"ob10dd4029d3e","kind":"l6624","marker_color":4,"orientation":135,"vertex_color":9,"vertical_segment_color":9,"volume":4,"width":3,"x":3,"y":1}
+          "output_value": {"height":3,"horizontal_segment_color":9,"id":"ob10dd4029d3e","kind":"l6747","marker_color":4,"orientation":135,"vertex_color":9,"vertical_segment_color":9,"volume":4,"width":3,"x":3,"y":1}
         }
       ]
     },
@@ -399,7 +399,7 @@
           ],
           "implementation": "o1d3e297e70a8 is Object(kind=l6747, x=3, y=1, width=2, height=2, orientation=45, volume=3, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)",
           "input_value": {"height":2,"horizontal_segment_color":9,"id":"o1d3e297e70a8","kind":"l6747","orientation":45,"vertex_color":9,"vertical_segment_color":9,"volume":3,"width":2,"x":3,"y":1},
-          "output_value": {"height":3,"horizontal_segment_color":9,"id":"o1d3e297e70a8","kind":"l6624","marker_color":4,"orientation":45,"vertex_color":9,"vertical_segment_color":9,"volume":4,"width":3,"x":3,"y":0}
+          "output_value": {"height":3,"horizontal_segment_color":9,"id":"o1d3e297e70a8","kind":"l6747","marker_color":4,"orientation":45,"vertex_color":9,"vertical_segment_color":9,"volume":4,"width":3,"x":3,"y":0}
         },
         {
           "instance_name": "o20499ff135c0",
@@ -423,7 +423,7 @@
           ],
           "implementation": "o20499ff135c0 is Object(kind=l6747, x=1, y=4, width=2, height=2, orientation=315, volume=3, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)",
           "input_value": {"height":2,"horizontal_segment_color":9,"id":"o20499ff135c0","kind":"l6747","orientation":315,"vertex_color":9,"vertical_segment_color":9,"volume":3,"width":2,"x":1,"y":4},
-          "output_value": {"height":3,"horizontal_segment_color":9,"id":"o20499ff135c0","kind":"l6624","marker_color":4,"orientation":315,"vertex_color":9,"vertical_segment_color":9,"volume":4,"width":3,"x":0,"y":3}
+          "output_value": {"height":3,"horizontal_segment_color":9,"id":"o20499ff135c0","kind":"l6747","marker_color":4,"orientation":315,"vertex_color":9,"vertical_segment_color":9,"volume":4,"width":3,"x":0,"y":3}
         }
       ]
     },

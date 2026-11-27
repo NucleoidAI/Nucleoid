@@ -6,7 +6,7 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Item | Status |
 | --- | --- |
 | Puzzle | [`data/training/5582e5ca.json`](../data/training/5582e5ca.json) |
-| Instruction dataset | [`dataset.5582e5ca.json`](../src/dataset/dataset.5582e5ca.json): the puzzle's 3 original training pairs and its test pair, one whole-block instance each (4 instances); the sixth version, which `3703f13` committed and `521aa3c` moved to the standard entries, replacing the fifth, which `99d8621` committed; shared orientation comment added on 6-Nov-2026; descriptive `implementation` comments added on 7-Nov-2026; colors written as letters on 8-Nov-2026; respelled on 8-Nov-2026 with the `is` assignments of NUC 93 and bare words, every snapshot unchanged; colors written as numbers again on 8-Nov-2026; `volume` added as the sixth standard entry on 17-Nov-2026; since 27-Nov-2026 every rule is guarded by kind, and one synthesized use case of kind `unknown` follows the last pair |
+| Instruction dataset | [`dataset.5582e5ca.json`](../src/dataset/dataset.5582e5ca.json): the puzzle's 3 original training pairs and its test pair, one whole-block instance each (4 instances); the sixth version, which `3703f13` committed and `521aa3c` moved to the standard entries, replacing the fifth, which `99d8621` committed; shared orientation comment added on 6-Nov-2026; descriptive `implementation` comments added on 7-Nov-2026; colors written as letters on 8-Nov-2026; respelled on 8-Nov-2026 with the `is` assignments of NUC 93 and bare words, every snapshot unchanged; colors written as numbers again on 8-Nov-2026; `volume` added as the sixth standard entry on 17-Nov-2026; since 27-Nov-2026 every rule is guarded by kind, and one synthesized use case of kind `unknown` follows the last pair; since 27-Nov-2026 no rule changes `kind`, so every output keeps its input kind |
 | Output canvas | `EXACT` |
 | Nucleoid enhancements | None requested by `/arc-purposal`. The fifth version uses `mode()` from [NUC 75](../../docs/nuc-0075.md), which the user requested directly through `/nuc-proposal` after the fourth version; it was Accepted on the user-requested basis in `4c57af8`. The sixth version writes it `mode of $Obj.parts`, with the `of` operator that NUC 75 revision 2 added at the user's direct request, Accepted on the same basis in `4ad55da`. The fourth version used `max` from [NUC 69](../../docs/nuc-0069.md) |
 | Solver changes | None; one suggested change awaits review, not applied; since 8-Nov-2026 every respelled dataset needs `is` assignments, which `src/lib/nucleoid.ts` enabled with `--is-assignment` until `d945213` made them the default; since 17-Nov-2026 `Matrix.locate` measures each object's `volume`, which `object.implementation` receives as `input_volume` |
@@ -382,6 +382,25 @@ first, as in
 `oa1b60a6c90dc is Object(kind=l9100, x=0, y=0, width=3, height=3, orientation=0, volume=8, parts=[4, 4, 8, 6, 4, 3, 6, 3])`.
 Every snapshot replays unchanged, because the runtime orders a state's keys by
 name and every implementation names its arguments.
+
+### Kinds never change
+
+On 27-Nov-2026, at the user's request, no rule changes `kind` any more. The
+statement `$Object.kind is l5236` left the `if $Object.kind is l9100:` block, so
+each block keeps its input kind, `l9100`, in its output state, and the guard
+reads the live kind, which never changes. The rules now read:
+
+```nuc
+if $Object.kind is l9100:
+    $Object.fill_color is mode of $Object.parts
+    $Object.volume is $Object.width * $Object.height
+```
+
+An offline replay on the accepted runtime reproduces every stored state except
+`kind`: each instance's `output_value.kind` now equals its `input_value.kind`,
+and no other value changed. No NUC was requested, so no proposal strategy was
+selected, and no solver run has measured this version, so its difference is
+unknown, not zero.
 
 ## Runs
 

@@ -1,7 +1,7 @@
 {
   "class_declaration": "class Object(kind: str = 'default', x: int, y: int, width: int, height: int, orientation: int, volume: int):\n    this.kind is kind\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume",
   "declarations": [
-    "if $Object.kind is l3058:\n    $Object.kind is l5973\n    $Object.orientation is 0\n    $Object.parity is $Object.y@first % 2\n    $Object.height is canvas_height\n    $Object.y is 0"
+    "if $Object.kind is l3058:\n    $Object.orientation is 0\n    $Object.parity is $Object.y@first % 2\n    $Object.height is canvas_height\n    $Object.y is 0"
   ],
   "output_canvas": "EXACT",
   "dataset": [
@@ -27,7 +27,7 @@
           ],
           "implementation": "of75bfec5b742 is Object(kind=l3058, x=0, y=0, width=6, height=1, orientation=90, volume=6)",
           "input_value": {"height":1,"id":"of75bfec5b742","kind":"l3058","orientation":90,"volume":6,"width":6,"x":0,"y":0},
-          "output_value": {"height":2,"id":"of75bfec5b742","kind":"l5973","orientation":0,"parity":0,"volume":6,"width":6,"x":0,"y":0}
+          "output_value": {"height":2,"id":"of75bfec5b742","kind":"l3058","orientation":0,"parity":0,"volume":6,"width":6,"x":0,"y":0}
         },
         {
           "instance_name": "o3d85d507495c",
@@ -41,7 +41,7 @@
           ],
           "implementation": "o3d85d507495c is Object(kind=l3058, x=0, y=1, width=6, height=1, orientation=90, volume=6)",
           "input_value": {"height":1,"id":"o3d85d507495c","kind":"l3058","orientation":90,"volume":6,"width":6,"x":0,"y":1},
-          "output_value": {"height":2,"id":"o3d85d507495c","kind":"l5973","orientation":0,"parity":1,"volume":6,"width":6,"x":0,"y":0}
+          "output_value": {"height":2,"id":"o3d85d507495c","kind":"l3058","orientation":0,"parity":1,"volume":6,"width":6,"x":0,"y":0}
         }
       ]
     },
@@ -67,7 +67,7 @@
           ],
           "implementation": "od1bdb9496f7f is Object(kind=l3058, x=0, y=0, width=6, height=1, orientation=90, volume=6)",
           "input_value": {"height":1,"id":"od1bdb9496f7f","kind":"l3058","orientation":90,"volume":6,"width":6,"x":0,"y":0},
-          "output_value": {"height":2,"id":"od1bdb9496f7f","kind":"l5973","orientation":0,"parity":0,"volume":6,"width":6,"x":0,"y":0}
+          "output_value": {"height":2,"id":"od1bdb9496f7f","kind":"l3058","orientation":0,"parity":0,"volume":6,"width":6,"x":0,"y":0}
         },
         {
           "instance_name": "ofd7c9fde835c",
@@ -81,7 +81,7 @@
           ],
           "implementation": "ofd7c9fde835c is Object(kind=l3058, x=0, y=1, width=6, height=1, orientation=90, volume=6)",
           "input_value": {"height":1,"id":"ofd7c9fde835c","kind":"l3058","orientation":90,"volume":6,"width":6,"x":0,"y":1},
-          "output_value": {"height":2,"id":"ofd7c9fde835c","kind":"l5973","orientation":0,"parity":1,"volume":6,"width":6,"x":0,"y":0}
+          "output_value": {"height":2,"id":"ofd7c9fde835c","kind":"l3058","orientation":0,"parity":1,"volume":6,"width":6,"x":0,"y":0}
         }
       ]
     },
@@ -107,7 +107,7 @@
           ],
           "implementation": "oad6bf1b1995c is Object(kind=l3058, x=0, y=0, width=6, height=1, orientation=90, volume=6)",
           "input_value": {"height":1,"id":"oad6bf1b1995c","kind":"l3058","orientation":90,"volume":6,"width":6,"x":0,"y":0},
-          "output_value": {"height":2,"id":"oad6bf1b1995c","kind":"l5973","orientation":0,"parity":0,"volume":6,"width":6,"x":0,"y":0}
+          "output_value": {"height":2,"id":"oad6bf1b1995c","kind":"l3058","orientation":0,"parity":0,"volume":6,"width":6,"x":0,"y":0}
         },
         {
           "instance_name": "o595ac3a028ef",
@@ -121,7 +121,7 @@
           ],
           "implementation": "o595ac3a028ef is Object(kind=l3058, x=0, y=1, width=6, height=1, orientation=90, volume=6)",
           "input_value": {"height":1,"id":"o595ac3a028ef","kind":"l3058","orientation":90,"volume":6,"width":6,"x":0,"y":1},
-          "output_value": {"height":2,"id":"o595ac3a028ef","kind":"l5973","orientation":0,"parity":1,"volume":6,"width":6,"x":0,"y":0}
+          "output_value": {"height":2,"id":"o595ac3a028ef","kind":"l3058","orientation":0,"parity":1,"volume":6,"width":6,"x":0,"y":0}
         }
       ]
     },

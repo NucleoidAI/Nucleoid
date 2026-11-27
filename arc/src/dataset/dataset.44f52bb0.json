@@ -1,7 +1,7 @@
 {
   "class_declaration": "class Object(kind: str = 'default', x: int, y: int, width: int, height: int, orientation: int, volume: int, points: list):\n    this.kind is kind\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.points is points",
   "declarations": [
-    "if $Object.kind is l9100:\n    $Object.kind is l7544\n    $Object.width is 1\n    $Object.height is 1\n    $Object.orientation is 0\n    $Object.symmetric is all point in $Object.points: $Object.points.includes([canvas_width - 1 - point[0], point[1]])\n    $Object.fill_color is 1 if $Object.symmetric else 7\n    $Object.x is 0\n    $Object.y is 0\n    $Object.volume is $Object.width * $Object.height"
+    "if $Object.kind is l9100:\n    $Object.width is 1\n    $Object.height is 1\n    $Object.orientation is 0\n    $Object.symmetric is all point in $Object.points: $Object.points.includes([canvas_width - 1 - point[0], point[1]])\n    $Object.fill_color is 1 if $Object.symmetric else 7\n    $Object.x is 0\n    $Object.y is 0\n    $Object.volume is $Object.width * $Object.height"
   ],
   "output_canvas": "FIT",
   "dataset": [
@@ -27,7 +27,7 @@
           ],
           "implementation": "oaefa2ef1a32f is Object(kind=l9100, x=0, y=0, width=3, height=3, orientation=0, volume=5, points=[[0, 0], [2, 0], [1, 1], [0, 2], [2, 2]])",
           "input_value": {"height":3,"id":"oaefa2ef1a32f","kind":"l9100","orientation":0,"points":[[0,0],[2,0],[1,1],[0,2],[2,2]],"volume":5,"width":3,"x":0,"y":0},
-          "output_value": {"fill_color":1,"height":1,"id":"oaefa2ef1a32f","kind":"l7544","orientation":0,"points":[[0,0],[2,0],[1,1],[0,2],[2,2]],"symmetric":true,"volume":1,"width":1,"x":0,"y":0}
+          "output_value": {"fill_color":1,"height":1,"id":"oaefa2ef1a32f","kind":"l9100","orientation":0,"points":[[0,0],[2,0],[1,1],[0,2],[2,2]],"symmetric":true,"volume":1,"width":1,"x":0,"y":0}
         }
       ]
     },
@@ -53,7 +53,7 @@
           ],
           "implementation": "o3914f7995d3e is Object(kind=l9100, x=0, y=0, width=2, height=3, orientation=0, volume=3, points=[[0, 0], [0, 1], [1, 2]])",
           "input_value": {"height":3,"id":"o3914f7995d3e","kind":"l9100","orientation":0,"points":[[0,0],[0,1],[1,2]],"volume":3,"width":2,"x":0,"y":0},
-          "output_value": {"fill_color":7,"height":1,"id":"o3914f7995d3e","kind":"l7544","orientation":0,"points":[[0,0],[0,1],[1,2]],"symmetric":false,"volume":1,"width":1,"x":0,"y":0}
+          "output_value": {"fill_color":7,"height":1,"id":"o3914f7995d3e","kind":"l9100","orientation":0,"points":[[0,0],[0,1],[1,2]],"symmetric":false,"volume":1,"width":1,"x":0,"y":0}
         }
       ]
     },
@@ -79,7 +79,7 @@
           ],
           "implementation": "oeb5c0167d445 is Object(kind=l9100, x=0, y=0, width=3, height=3, orientation=0, volume=6, points=[[0, 0], [2, 0], [0, 1], [2, 1], [0, 2], [2, 2]])",
           "input_value": {"height":3,"id":"oeb5c0167d445","kind":"l9100","orientation":0,"points":[[0,0],[2,0],[0,1],[2,1],[0,2],[2,2]],"volume":6,"width":3,"x":0,"y":0},
-          "output_value": {"fill_color":1,"height":1,"id":"oeb5c0167d445","kind":"l7544","orientation":0,"points":[[0,0],[2,0],[0,1],[2,1],[0,2],[2,2]],"symmetric":true,"volume":1,"width":1,"x":0,"y":0}
+          "output_value": {"fill_color":1,"height":1,"id":"oeb5c0167d445","kind":"l9100","orientation":0,"points":[[0,0],[2,0],[0,1],[2,1],[0,2],[2,2]],"symmetric":true,"volume":1,"width":1,"x":0,"y":0}
         }
       ]
     },
@@ -105,7 +105,7 @@
           ],
           "implementation": "ocef2c78836a4 is Object(kind=l9100, x=0, y=1, width=3, height=1, orientation=0, volume=2, points=[[0, 1], [2, 1]])",
           "input_value": {"height":1,"id":"ocef2c78836a4","kind":"l9100","orientation":0,"points":[[0,1],[2,1]],"volume":2,"width":3,"x":0,"y":1},
-          "output_value": {"fill_color":1,"height":1,"id":"ocef2c78836a4","kind":"l7544","orientation":0,"points":[[0,1],[2,1]],"symmetric":true,"volume":1,"width":1,"x":0,"y":0}
+          "output_value": {"fill_color":1,"height":1,"id":"ocef2c78836a4","kind":"l9100","orientation":0,"points":[[0,1],[2,1]],"symmetric":true,"volume":1,"width":1,"x":0,"y":0}
         }
       ]
     },
@@ -131,7 +131,7 @@
           ],
           "implementation": "oe0d187e059c6 is Object(kind=l9100, x=0, y=0, width=3, height=2, orientation=0, volume=4, points=[[0, 0], [1, 0], [1, 1], [2, 1]])",
           "input_value": {"height":2,"id":"oe0d187e059c6","kind":"l9100","orientation":0,"points":[[0,0],[1,0],[1,1],[2,1]],"volume":4,"width":3,"x":0,"y":0},
-          "output_value": {"fill_color":7,"height":1,"id":"oe0d187e059c6","kind":"l7544","orientation":0,"points":[[0,0],[1,0],[1,1],[2,1]],"symmetric":false,"volume":1,"width":1,"x":0,"y":0}
+          "output_value": {"fill_color":7,"height":1,"id":"oe0d187e059c6","kind":"l9100","orientation":0,"points":[[0,0],[1,0],[1,1],[2,1]],"symmetric":false,"volume":1,"width":1,"x":0,"y":0}
         }
       ]
     },
@@ -157,7 +157,7 @@
           ],
           "implementation": "o656ae86cdc80 is Object(kind=l9100, x=0, y=0, width=2, height=2, orientation=45, volume=3, points=[[0, 0], [1, 0], [1, 1]])",
           "input_value": {"height":2,"id":"o656ae86cdc80","kind":"l9100","orientation":45,"points":[[0,0],[1,0],[1,1]],"volume":3,"width":2,"x":0,"y":0},
-          "output_value": {"fill_color":7,"height":1,"id":"o656ae86cdc80","kind":"l7544","orientation":0,"points":[[0,0],[1,0],[1,1]],"symmetric":false,"volume":1,"width":1,"x":0,"y":0}
+          "output_value": {"fill_color":7,"height":1,"id":"o656ae86cdc80","kind":"l9100","orientation":0,"points":[[0,0],[1,0],[1,1]],"symmetric":false,"volume":1,"width":1,"x":0,"y":0}
         }
       ]
     },
@@ -183,7 +183,7 @@
           ],
           "implementation": "oe4210d7a3726 is Object(kind=l9100, x=0, y=0, width=3, height=3, orientation=0, volume=7, points=[[0, 0], [2, 0], [0, 1], [1, 1], [2, 1], [0, 2], [2, 2]])",
           "input_value": {"height":3,"id":"oe4210d7a3726","kind":"l9100","orientation":0,"points":[[0,0],[2,0],[0,1],[1,1],[2,1],[0,2],[2,2]],"volume":7,"width":3,"x":0,"y":0},
-          "output_value": {"fill_color":1,"height":1,"id":"oe4210d7a3726","kind":"l7544","orientation":0,"points":[[0,0],[2,0],[0,1],[1,1],[2,1],[0,2],[2,2]],"symmetric":true,"volume":1,"width":1,"x":0,"y":0}
+          "output_value": {"fill_color":1,"height":1,"id":"oe4210d7a3726","kind":"l9100","orientation":0,"points":[[0,0],[2,0],[0,1],[1,1],[2,1],[0,2],[2,2]],"symmetric":true,"volume":1,"width":1,"x":0,"y":0}
         }
       ]
     },
@@ -209,7 +209,7 @@
           ],
           "implementation": "o7170e5f9a58a is Object(kind=l9100, x=0, y=1, width=1, height=2, orientation=0, volume=2, points=[[0, 1], [0, 2]])",
           "input_value": {"height":2,"id":"o7170e5f9a58a","kind":"l9100","orientation":0,"points":[[0,1],[0,2]],"volume":2,"width":1,"x":0,"y":1},
-          "output_value": {"fill_color":7,"height":1,"id":"o7170e5f9a58a","kind":"l7544","orientation":0,"points":[[0,1],[0,2]],"symmetric":false,"volume":1,"width":1,"x":0,"y":0}
+          "output_value": {"fill_color":7,"height":1,"id":"o7170e5f9a58a","kind":"l9100","orientation":0,"points":[[0,1],[0,2]],"symmetric":false,"volume":1,"width":1,"x":0,"y":0}
         }
       ]
     },

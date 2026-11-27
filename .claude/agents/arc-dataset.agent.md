@@ -183,8 +183,12 @@ formatting exactly:
   `find`, and reasoning selections, where they express the rule. Avoid `for`
   loops, imperative steps, and manual bookkeeping.
 - A kind is `l` followed by four digits and names a geometry. It acts as a
-  child class that the rules assign declaratively: an instance never changes
-  its class, so a rule such as `$Object.kind is l1707` moves it to another kind.
+  child class that the implementation assigns once and the rules only read.
+  Each rule transforms only the kinds it is written for, in an `if` that opens
+  with the live kind, such as `if $Object.kind is l9100:`. Never assign `kind`
+  in a rule, and never put a statement such as `$Object.kind is l1707` in an
+  `if` body: every object keeps its input kind in its output, so a guard or a
+  filter reads the live kind, never `$Object.kind@first`.
   Reuse the kind an existing dataset uses for the same geometry; otherwise
   mint one unused elsewhere.
 - Orientation is degrees clockwise from north (N = 0, E = 90, S = 180,
