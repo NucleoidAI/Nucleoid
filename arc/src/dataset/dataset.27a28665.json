@@ -4,9 +4,8 @@
     "$Obj.kind is l7544",
     "$Obj.width is 1",
     "$Obj.height is 1",
-    "$Obj.fill_color is {l4262: 1, l2404: 2, l3743: 3, l1707: 6}[$Obj.kind@first]",
-    "if $Obj.fill_color is null:\n    throw $Obj.kind@first",
-    "$Obj.volume is $Obj.width * $Obj.height"
+    "$Obj.fill_color is {l4262: 1, l2404: 2, l3743: 3, l1707: 6}[$Obj.kind@first] ?? 0",
+    "$Obj.volume is 0 if $Obj.fill_color is 0 else $Obj.width * $Obj.height"
   ],
   "output_canvas": "FIT",
   "dataset": [

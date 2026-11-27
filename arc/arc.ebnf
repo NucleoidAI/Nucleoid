@@ -11,13 +11,14 @@ classBody            ::= ( NEWLINE INDENT fieldAssignment )+
 fieldAssignment      ::= 'this' '.' NAME assign NAME
 
 ifStmt               ::= 'if' expression ':' ruleBody
-ruleBody             ::= ( NEWLINE INDENT ( classRule | 'throw' expression ) )+
+ruleBody             ::= ( NEWLINE INDENT classRule )+
 classRule            ::= CLASS_REF '.' NAME assign expression
 
 labeledArgument      ::= NAME '=' literal
 literal              ::= INTEGER | NAME | '[' literal ( ',' literal )+ ']'
 
-expression           ::= logicalOr ( 'if' logicalOr 'else' logicalOr )?
+expression           ::= coalesce ( 'if' logicalOr 'else' logicalOr )?
+coalesce             ::= logicalOr ( '??' logicalOr )?
 logicalOr            ::= logicalAnd ( 'or' logicalAnd )?
 logicalAnd           ::= equality ( 'and' equality )*
 equality             ::= relational ( 'is' 'not'? relational )?
@@ -36,7 +37,6 @@ primary              ::= quantified
                        | INTEGER
                        | NAME
                        | CLASS_REF
-                       | 'null'
                        | '(' expression ')'
                        | listDisplay
                        | objectDisplay
@@ -47,8 +47,7 @@ objectDisplay        ::= '{' objectEntry ( ',' objectEntry )+ '}'
 objectEntry          ::= ( NAME | INTEGER ) ':' expression
 
 NAME                 ::= ( [A-Za-z_] [A-Za-z0-9_]* ) - RESERVED
-RESERVED             ::= 'and' | 'class' | 'else' | 'if' | 'in' | 'not' | 'null' | 'of' | 'or' | 'this'
-                       | 'throw'
+RESERVED             ::= 'and' | 'class' | 'else' | 'if' | 'in' | 'not' | 'of' | 'or' | 'this'
 CLASS_REF            ::= '$' NAME
 INTEGER              ::= [0-9]+
 STRING               ::= "'" [^']* "'"

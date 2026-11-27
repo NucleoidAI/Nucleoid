@@ -831,23 +831,32 @@ Unconditional class-level rules set the output kind `l7544`, a single point, as
 in `dataset.44f52bb0.json`, shrink the block to that point's size, `width` 1
 and `height` 1, and introduce one property, `fill_color`, which is absent
 before the rules run, as
-`{l4262: 1, l2404: 2, l3743: 3, l1707: 6}[$Obj.kind@first]`: the object
+`{l4262: 1, l2404: 2, l3743: 3, l1707: 6}[$Obj.kind@first] ?? 0`: the object
 literal states each shape's code once, keyed by the name of its kind, and
 object bracket access reads the code of the block's input kind, anchored with
 `@first` because the kind rule turns the kind into `l7544`. A kind that is not
-a key of the table reads `null` there, as an absent key does, so a class-level
-validation rule, `if $Obj.fill_color is null:` with the body
-`throw $Obj.kind@first`, throws that input kind. An implementation that leaves
-out `kind`, so that its object takes the default `l9100`, or that names a kind
-the table lacks, therefore fails visibly instead of giving the point no color:
-the runtime exits with status 1 and an error that names the kind and the
-implementation's line, such as `l9100 (line 27, column 1)`. The input state,
-built from the class and the implementation alone, still carries the kind; the
-failure comes when the rules run on the pair's world. The rule never fires on
-the ten pairs, and it is Nucleoid's class-level validation, a `throw` in a
-class-level `if`, as the specification's rules that reject an invalid
-instance write it. `$Obj.volume is $Obj.width * $Obj.height` counts
-the filled point's single cell. The rules create no other properties, so each
+a key of the table reads `null` there, as an absent key does, and the nullish
+coalescing `?? 0` of [NUC 60](../docs/nuc-0060.md) turns that `null` into the
+background color 0 while it keeps every code the table holds. An
+implementation that leaves out `kind`, so that its object takes the default
+`l9100`, or that names a kind the table lacks, such as `l5555`, therefore gives
+its point color 0, which is no cell, and the rules raise no error, so the run
+goes on; the input state, built from the class and the implementation alone,
+still carries that kind. The default never applies to the ten pairs, whose
+blocks all take one of the table's four kinds.
+`$Obj.volume is 0 if $Obj.fill_color is 0 else $Obj.width * $Obj.height`, a
+conditional expression of [NUC 59](../docs/nuc-0059.md) whose condition uses
+the comparison `is` of [NUC 86](../docs/nuc-0086.md), counts a colored point's
+single cell and gives a point of color 0 none, as `dataset.25d8a9c8.json`
+empties a cleared row: such a point has the `volume` 0 that `Matrix.measure`
+counts in its all-zero output mask, and it keeps its `x`, `y`, and 1 by 1
+`width` and `height`, as an erased output object keeps its explicit position
+in [composition](#8-visualize-output-instance).
+No mask measures 1 by 1 without a cell, so the solver's synthesis, which keeps
+a synthesized instance only when its drawn output mask measures the state's
+`x`, `y`, `width`, `height`, and `volume`, rejects every turned block whose
+kind the table lacks, whatever the model draws for it.
+The rules create no other properties, so each
 output state adds only `fill_color` to its input state's keys, and they leave
 `x` and `y` unchanged because the point sits at the block's origin, 0 and 0 in
 every training pair. The training pairs show each shape in one orientation
