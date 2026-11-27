@@ -1,5 +1,5 @@
 {
-  "class_declaration": "class Object(x: int, y: int, width: int, height: int, orientation: int, volume: int, kind: str = 'default'):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.kind is kind",
+  "class_declaration": "class Object(kind: str = 'default', x: int, y: int, width: int, height: int, orientation: int, volume: int):\n    this.kind is kind\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume",
   "declarations": [
     "if $Object.kind is l9100:\n    $Object.orientation is ($Object.orientation@first + 180) % 360"
   ],
@@ -29,7 +29,7 @@
             [2, 1, 2],
             [1, 2, 2]
           ],
-          "implementation": "oad2abfd1734f is Object(x=0, y=0, width=3, height=3, orientation=0, volume=9, kind=l9100)",
+          "implementation": "oad2abfd1734f is Object(kind=l9100, x=0, y=0, width=3, height=3, orientation=0, volume=9)",
           "input_value": {"height":3,"id":"oad2abfd1734f","kind":"l9100","orientation":0,"volume":9,"width":3,"x":0,"y":0},
           "output_value": {"height":3,"id":"oad2abfd1734f","kind":"l9100","orientation":180,"volume":9,"width":3,"x":0,"y":0}
         }
@@ -59,7 +59,7 @@
             [4, 4, 2],
             [4, 2, 9]
           ],
-          "implementation": "o67fe33c11cd0 is Object(x=0, y=0, width=3, height=3, orientation=0, volume=9, kind=l9100)",
+          "implementation": "o67fe33c11cd0 is Object(kind=l9100, x=0, y=0, width=3, height=3, orientation=0, volume=9)",
           "input_value": {"height":3,"id":"o67fe33c11cd0","kind":"l9100","orientation":0,"volume":9,"width":3,"x":0,"y":0},
           "output_value": {"height":3,"id":"o67fe33c11cd0","kind":"l9100","orientation":180,"volume":9,"width":3,"x":0,"y":0}
         }
@@ -89,7 +89,7 @@
             [8, 5, 5],
             [8, 8, 8]
           ],
-          "implementation": "o6862d9b15c0c is Object(x=0, y=0, width=3, height=3, orientation=0, volume=9, kind=l9100)",
+          "implementation": "o6862d9b15c0c is Object(kind=l9100, x=0, y=0, width=3, height=3, orientation=0, volume=9)",
           "input_value": {"height":3,"id":"o6862d9b15c0c","kind":"l9100","orientation":0,"volume":9,"width":3,"x":0,"y":0},
           "output_value": {"height":3,"id":"o6862d9b15c0c","kind":"l9100","orientation":180,"volume":9,"width":3,"x":0,"y":0}
         }
@@ -119,7 +119,7 @@
             [9, 9, 9],
             [9, 2, 3]
           ],
-          "implementation": "o176130d1ca05 is Object(x=0, y=0, width=3, height=3, orientation=0, volume=9, kind=l9100)",
+          "implementation": "o176130d1ca05 is Object(kind=l9100, x=0, y=0, width=3, height=3, orientation=0, volume=9)",
           "input_value": {"height":3,"id":"o176130d1ca05","kind":"l9100","orientation":0,"volume":9,"width":3,"x":0,"y":0},
           "output_value": {"height":3,"id":"o176130d1ca05","kind":"l9100","orientation":180,"volume":9,"width":3,"x":0,"y":0}
         }
@@ -149,7 +149,7 @@
             [4, 6, 6],
             [4, 4, 6]
           ],
-          "implementation": "o661d3fe38fde is Object(x=0, y=0, width=3, height=3, orientation=0, volume=9, kind=l9100)",
+          "implementation": "o661d3fe38fde is Object(kind=l9100, x=0, y=0, width=3, height=3, orientation=0, volume=9)",
           "input_value": {"height":3,"id":"o661d3fe38fde","kind":"l9100","orientation":0,"volume":9,"width":3,"x":0,"y":0},
           "output_value": {"height":3,"id":"o661d3fe38fde","kind":"l9100","orientation":180,"volume":9,"width":3,"x":0,"y":0}
         }
@@ -179,7 +179,7 @@
             [1, 8, 0],
             [0, 0, 0]
           ],
-          "implementation": "o551a87cab7fc is Object(x=0, y=0, width=2, height=2, orientation=0, volume=4, kind=unknown)",
+          "implementation": "o551a87cab7fc is Object(kind=unknown, x=0, y=0, width=2, height=2, orientation=0, volume=4)",
           "input_value": {"height":2,"id":"o551a87cab7fc","kind":"unknown","orientation":0,"volume":4,"width":2,"x":0,"y":0},
           "output_value": {"height":2,"id":"o551a87cab7fc","kind":"unknown","orientation":0,"volume":4,"width":2,"x":0,"y":0}
         }

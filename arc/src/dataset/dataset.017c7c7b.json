@@ -1,5 +1,5 @@
 {
-  "class_declaration": "class Object(x: int, y: int, width: int, height: int, orientation: int, volume: int, kind: str = 'default', color: int, period: int):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.kind is kind\n    this.color is color\n    this.period is period",
+  "class_declaration": "class Object(kind: str = 'default', x: int, y: int, width: int, height: int, orientation: int, volume: int, color: int, period: int):\n    this.kind is kind\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.color is color\n    this.period is period",
   "declarations": [
     "if $Object.kind is l9100:\n    $Object.kind is l8384\n    $Object.extension_direction is down\n    $Object.height is $Object.height@first * 3 / 2\n    $Object.color is 2"
   ],
@@ -47,7 +47,7 @@
             [0, 2, 2],
             [0, 2, 0]
           ],
-          "implementation": "o7868bfbcdc17 is Object(x=0, y=0, width=3, height=6, orientation=0, volume=9, kind=l9100, color=1, period=4)",
+          "implementation": "o7868bfbcdc17 is Object(kind=l9100, x=0, y=0, width=3, height=6, orientation=0, volume=9, color=1, period=4)",
           "input_value": {"color":1,"height":6,"id":"o7868bfbcdc17","kind":"l9100","orientation":0,"period":4,"volume":9,"width":3,"x":0,"y":0},
           "output_value": {"color":2,"extension_direction":"down","height":9,"id":"o7868bfbcdc17","kind":"l8384","orientation":0,"period":4,"volume":9,"width":3,"x":0,"y":0}
         }
@@ -95,7 +95,7 @@
             [2, 0, 2],
             [0, 2, 0]
           ],
-          "implementation": "o251f7bd03919 is Object(x=0, y=0, width=3, height=6, orientation=0, volume=9, kind=l9100, color=1, period=2)",
+          "implementation": "o251f7bd03919 is Object(kind=l9100, x=0, y=0, width=3, height=6, orientation=0, volume=9, color=1, period=2)",
           "input_value": {"color":1,"height":6,"id":"o251f7bd03919","kind":"l9100","orientation":0,"period":2,"volume":9,"width":3,"x":0,"y":0},
           "output_value": {"color":2,"extension_direction":"down","height":9,"id":"o251f7bd03919","kind":"l8384","orientation":0,"period":2,"volume":9,"width":3,"x":0,"y":0}
         }
@@ -143,7 +143,7 @@
             [2, 2, 0],
             [0, 2, 0]
           ],
-          "implementation": "o69f9506dfd32 is Object(x=0, y=0, width=2, height=6, orientation=0, volume=8, kind=l9100, color=1, period=3)",
+          "implementation": "o69f9506dfd32 is Object(kind=l9100, x=0, y=0, width=2, height=6, orientation=0, volume=8, color=1, period=3)",
           "input_value": {"color":1,"height":6,"id":"o69f9506dfd32","kind":"l9100","orientation":0,"period":3,"volume":8,"width":2,"x":0,"y":0},
           "output_value": {"color":2,"extension_direction":"down","height":9,"id":"o69f9506dfd32","kind":"l8384","orientation":0,"period":3,"volume":8,"width":2,"x":0,"y":0}
         }
@@ -191,7 +191,7 @@
             [0, 2, 0],
             [0, 2, 0]
           ],
-          "implementation": "o93fb566cfca3 is Object(x=0, y=0, width=3, height=6, orientation=0, volume=10, kind=l9100, color=1, period=3)",
+          "implementation": "o93fb566cfca3 is Object(kind=l9100, x=0, y=0, width=3, height=6, orientation=0, volume=10, color=1, period=3)",
           "input_value": {"color":1,"height":6,"id":"o93fb566cfca3","kind":"l9100","orientation":0,"period":3,"volume":10,"width":3,"x":0,"y":0},
           "output_value": {"color":2,"extension_direction":"down","height":9,"id":"o93fb566cfca3","kind":"l8384","orientation":0,"period":3,"volume":10,"width":3,"x":0,"y":0}
         }
@@ -233,7 +233,7 @@
             [0, 0, 0],
             [0, 0, 0]
           ],
-          "implementation": "oc86db86eda32 is Object(x=0, y=0, width=3, height=3, orientation=135, volume=3, kind=unknown, color=1, period=3)",
+          "implementation": "oc86db86eda32 is Object(kind=unknown, x=0, y=0, width=3, height=3, orientation=135, volume=3, color=1, period=3)",
           "input_value": {"color":1,"height":3,"id":"oc86db86eda32","kind":"unknown","orientation":135,"period":3,"volume":3,"width":3,"x":0,"y":0},
           "output_value": {"color":1,"height":3,"id":"oc86db86eda32","kind":"unknown","orientation":135,"period":3,"volume":3,"width":3,"x":0,"y":0}
         }

@@ -148,7 +148,7 @@ wherever the run's runtime, run as `arc/src/lib/nucleoid.ts` runs it, reads
 that word as the same value, as NUC 86, NUC 93 and NUC 94 read `right` in
 `if $Object.repeat_direction is right:`, `$Object.repeat_direction is right` and
 `$Object.repeat_direction is right if $Object.wide else down`. The arc-dataset
-profile's quoted default, `kind: str = 'lNNNN'`, is a quote that accepted
+profile's quoted default, `kind: str = 'default'`, is a quote that accepted
 Nucleoid cannot do without, because it rejects a bare parameter default
 with `SyntaxError`. Have the
 handoff list every quote it keeps, with the actual result of its bare

@@ -127,20 +127,20 @@ formatting exactly:
   allowed, but the big picture is always the starting point, and the handoff
   names the big-picture formulation you started from and why it fell short.
 - `declarations[0]` holds every class declaration of the world model, because
-  the solver runs it alone to build input states. Existing datasets declare
-  one class, `Object(x: int, y: int, width: int, height: int, orientation: int,
-  volume: int, kind: str = 'lNNNN', ...)`; add another class only for a
-  distinct sort of object the transformation needs. Each class whose
-  instances are annotated objects takes the standard entries `x: int, y: int,
-  width: int, height: int, orientation: int, volume: int` first, in that
-  order, then the optional `kind: str = 'lNNNN'`, whose default is the class's
-  initial kind, and its body assigns every parameter to `this`, the kind with
-  `this.kind is kind` right after `this.volume is volume`. An implementation
-  passes `kind` only when its object needs a kind other than the default, as
-  every implementation in `dataset.27a28665.json` names its block's shape
-  with `kind='l4262'` and the like; otherwise it leaves `kind` out. The default
-  keeps its quotes, because accepted Nucleoid takes only a literal as a
-  parameter default. Add only the descriptive properties the transformation
+  the solver runs it alone to build input states. Existing datasets declare one
+  class,
+  `Object(kind: str = 'default', x: int, y: int, width: int, height: int, orientation: int, volume: int, ...)`;
+  add another class only for a distinct sort of object the transformation needs.
+  Each class whose instances are annotated objects takes the optional
+  `kind: str = 'default'` first, which names no geometry, then the standard
+  entries
+  `x: int, y: int, width: int, height: int, orientation: int, volume: int`, in
+  that order, and its body assigns every parameter to `this` in that order,
+  starting with `this.kind is kind`. Every implementation passes its object's
+  kind first, as a bare word, such as `kind=l9100`, or `kind=unknown` for an
+  object of a shape that the pairs never show, so no instance takes the default.
+  The default keeps its quotes, because accepted Nucleoid takes only a literal
+  as a parameter default. Add only the descriptive properties the transformation
   needs, such as categorical colors.
 - `width` and `height` are the column and row counts of the object's own
   shape, the nonzero bounding box of its input mask. They do not change when
@@ -253,12 +253,12 @@ The caller decides whether to propose the feature; you never start a NUC.
 - `instance_name` is `o` plus 12 random lowercase hexadecimal characters,
   unique across all datasets
   (`node -e "console.log(require('crypto').randomBytes(6).toString('hex'))"`).
-- `implementation` is `<instance_name> = <Class>(x=<input_x>, y=<input_y>,
-  width=<width>, height=<height>, orientation=<input_orientation>,
-  volume=<volume>, ...)`, constructing the instance's class (`Object` in existing
-  datasets) with named arguments matching its parameters, where `width` and
-  `height` are the input mask's nonzero bounding-box column and row counts and
-  `volume` is its number of nonzero cells, below its comment line.
+- `implementation` is
+  `<instance_name> is <Class>(kind=<kind>, x=<input_x>, y=<input_y>, width=<width>, height=<height>, orientation=<input_orientation>, volume=<volume>, ...)`,
+  constructing the instance's class (`Object` in existing datasets) with named
+  arguments matching its parameters, where `width` and `height` are the input
+  mask's nonzero bounding-box column and row counts and `volume` is its number
+  of nonzero cells, below its comment line.
 - Never hand-write `input_value` or `output_value`. As `arc/src/analyzer.ts`
   does, run the Nucleoid executable (`NUCLEOID_EXECUTABLE`, else the debug
   build in `target/debug/`; build it with `cargo build` if missing) as

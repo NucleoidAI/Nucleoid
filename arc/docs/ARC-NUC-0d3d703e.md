@@ -394,6 +394,17 @@ spelling of their time. Every snapshot replays with the new names, with no other
 change, and the [dataset grammar](../arc.ebnf) names no class, so it is
 unchanged.
 
+### Kind first
+
+On 27-Nov-2026, at the user's request, `kind` moved to the front. The class
+takes `kind: str = 'default'` as its first parameter, before the standard
+entries `x`, `y`, `width`, `height`, `orientation`, and `volume`, and its body
+sets `this.kind is kind` first, while every implementation passes its kind
+first, as in
+`o4d683f973e7d is Object(kind=l6953, x=0, y=0, width=1, height=3, orientation=0, volume=3, color=3)`.
+Every snapshot replays unchanged, because the runtime orders a state's keys by
+name and every implementation names its arguments.
+
 ## Runs
 
 | Date | Dataset version | Runtime | Exit status | Difference | Elapsed |

@@ -1,5 +1,5 @@
 {
-  "class_declaration": "class Object(x: int, y: int, width: int, height: int, orientation: int, volume: int, kind: str = 'default'):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.kind is kind",
+  "class_declaration": "class Object(kind: str = 'default', x: int, y: int, width: int, height: int, orientation: int, volume: int):\n    this.kind is kind\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume",
   "declarations": [
     "if $Object.kind is l9100:\n    $Object.orientation is ($Object.orientation@first + 270) % 360\n    $Object.x is $Object.y@first\n    $Object.y is canvas_width - $Object.x@first - $Object.width@first"
   ],
@@ -29,7 +29,7 @@
             [0, 9, 9],
             [9, 9, 9]
           ],
-          "implementation": "oe9d9d1e44f0a is Object(x=0, y=0, width=3, height=3, orientation=0, volume=7, kind=l9100)",
+          "implementation": "oe9d9d1e44f0a is Object(kind=l9100, x=0, y=0, width=3, height=3, orientation=0, volume=7)",
           "input_value": {"height":3,"id":"oe9d9d1e44f0a","kind":"l9100","orientation":0,"volume":7,"width":3,"x":0,"y":0},
           "output_value": {"height":3,"id":"oe9d9d1e44f0a","kind":"l9100","orientation":270,"volume":7,"width":3,"x":0,"y":0}
         }
@@ -59,7 +59,7 @@
             [6, 0, 6],
             [6, 0, 6]
           ],
-          "implementation": "o2ce0294da665 is Object(x=0, y=0, width=3, height=3, orientation=0, volume=5, kind=l9100)",
+          "implementation": "o2ce0294da665 is Object(kind=l9100, x=0, y=0, width=3, height=3, orientation=0, volume=5)",
           "input_value": {"height":3,"id":"o2ce0294da665","kind":"l9100","orientation":0,"volume":5,"width":3,"x":0,"y":0},
           "output_value": {"height":3,"id":"o2ce0294da665","kind":"l9100","orientation":270,"volume":5,"width":3,"x":0,"y":0}
         }
@@ -89,7 +89,7 @@
             [0, 0, 9],
             [0, 0, 9]
           ],
-          "implementation": "o25523b4dda3d is Object(x=0, y=0, width=3, height=3, orientation=135, volume=5, kind=l9100)",
+          "implementation": "o25523b4dda3d is Object(kind=l9100, x=0, y=0, width=3, height=3, orientation=135, volume=5)",
           "input_value": {"height":3,"id":"o25523b4dda3d","kind":"l9100","orientation":135,"volume":5,"width":3,"x":0,"y":0},
           "output_value": {"height":3,"id":"o25523b4dda3d","kind":"l9100","orientation":45,"volume":5,"width":3,"x":0,"y":0}
         }
@@ -119,7 +119,7 @@
             [0, 0, 2],
             [2, 0, 0]
           ],
-          "implementation": "oded558586cc9 is Object(x=0, y=0, width=3, height=3, orientation=0, volume=5, kind=l9100)",
+          "implementation": "oded558586cc9 is Object(kind=l9100, x=0, y=0, width=3, height=3, orientation=0, volume=5)",
           "input_value": {"height":3,"id":"oded558586cc9","kind":"l9100","orientation":0,"volume":5,"width":3,"x":0,"y":0},
           "output_value": {"height":3,"id":"oded558586cc9","kind":"l9100","orientation":270,"volume":5,"width":3,"x":0,"y":0}
         }
@@ -149,7 +149,7 @@
             [0, 0, 5],
             [0, 5, 0]
           ],
-          "implementation": "oa49c69b886ff is Object(x=0, y=1, width=3, height=2, orientation=0, volume=3, kind=l9100)",
+          "implementation": "oa49c69b886ff is Object(kind=l9100, x=0, y=1, width=3, height=2, orientation=0, volume=3)",
           "input_value": {"height":2,"id":"oa49c69b886ff","kind":"l9100","orientation":0,"volume":3,"width":3,"x":0,"y":1},
           "output_value": {"height":2,"id":"oa49c69b886ff","kind":"l9100","orientation":270,"volume":3,"width":3,"x":1,"y":0}
         }
@@ -179,7 +179,7 @@
             [0, 9, 0],
             [0, 9, 9]
           ],
-          "implementation": "o000d5e66bfbf is Object(x=0, y=0, width=3, height=3, orientation=0, volume=5, kind=unknown)",
+          "implementation": "o000d5e66bfbf is Object(kind=unknown, x=0, y=0, width=3, height=3, orientation=0, volume=5)",
           "input_value": {"height":3,"id":"o000d5e66bfbf","kind":"unknown","orientation":0,"volume":5,"width":3,"x":0,"y":0},
           "output_value": {"height":3,"id":"o000d5e66bfbf","kind":"unknown","orientation":0,"volume":5,"width":3,"x":0,"y":0}
         }

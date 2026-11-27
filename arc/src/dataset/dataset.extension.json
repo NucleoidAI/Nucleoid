@@ -1,5 +1,5 @@
 {
-  "class_declaration": "class Object(x: int, y: int, width: int, height: int, orientation: int, volume: int, kind: str = 'default', vertex_color: int, vertical_segment_color: int, horizontal_segment_color: int):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.kind is kind\n    this.vertex_color is vertex_color\n    this.vertical_segment_color is vertical_segment_color\n    this.horizontal_segment_color is horizontal_segment_color",
+  "class_declaration": "class Object(kind: str = 'default', x: int, y: int, width: int, height: int, orientation: int, volume: int, vertex_color: int, vertical_segment_color: int, horizontal_segment_color: int):\n    this.kind is kind\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.vertex_color is vertex_color\n    this.vertical_segment_color is vertical_segment_color\n    this.horizontal_segment_color is horizontal_segment_color",
   "declarations": [
     "if $Object.kind is l6747 and $Object.vertex_color is 4 and $Object.vertical_segment_color is 4 and $Object.horizontal_segment_color is 4:\n    $Object.kind is l3337\n    $Object.marker_color is 7\n    $Object.volume is $Object.volume@first + 1"
   ],
@@ -41,7 +41,7 @@
             [0, 0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "o88b04aaa49a1 is Object(x=2, y=1, width=3, height=3, orientation=315, volume=5, kind=l6747, vertex_color=4, vertical_segment_color=4, horizontal_segment_color=4)",
+          "implementation": "o88b04aaa49a1 is Object(kind=l6747, x=2, y=1, width=3, height=3, orientation=315, volume=5, vertex_color=4, vertical_segment_color=4, horizontal_segment_color=4)",
           "input_value": {"height":3,"horizontal_segment_color":4,"id":"o88b04aaa49a1","kind":"l6747","orientation":315,"vertex_color":4,"vertical_segment_color":4,"volume":5,"width":3,"x":2,"y":1},
           "output_value": {"height":3,"horizontal_segment_color":4,"id":"o88b04aaa49a1","kind":"l3337","marker_color":7,"orientation":315,"vertex_color":4,"vertical_segment_color":4,"volume":6,"width":3,"x":2,"y":1}
         },
@@ -63,7 +63,7 @@
             [0, 0, 0, 0, 0, 4, 4, 4, 0],
             [0, 0, 0, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "o494ba697beea is Object(x=5, y=2, width=3, height=3, orientation=135, volume=5, kind=l6747, vertex_color=4, vertical_segment_color=4, horizontal_segment_color=4)",
+          "implementation": "o494ba697beea is Object(kind=l6747, x=5, y=2, width=3, height=3, orientation=135, volume=5, vertex_color=4, vertical_segment_color=4, horizontal_segment_color=4)",
           "input_value": {"height":3,"horizontal_segment_color":4,"id":"o494ba697beea","kind":"l6747","orientation":135,"vertex_color":4,"vertical_segment_color":4,"volume":5,"width":3,"x":5,"y":2},
           "output_value": {"height":3,"horizontal_segment_color":4,"id":"o494ba697beea","kind":"l3337","marker_color":7,"orientation":135,"vertex_color":4,"vertical_segment_color":4,"volume":6,"width":3,"x":5,"y":2}
         }
@@ -121,7 +121,7 @@
             [0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "o266950517753 is Object(x=0, y=1, width=3, height=3, orientation=45, volume=5, kind=l6747, vertex_color=4, vertical_segment_color=4, horizontal_segment_color=4)",
+          "implementation": "o266950517753 is Object(kind=l6747, x=0, y=1, width=3, height=3, orientation=45, volume=5, vertex_color=4, vertical_segment_color=4, horizontal_segment_color=4)",
           "input_value": {"height":3,"horizontal_segment_color":4,"id":"o266950517753","kind":"l6747","orientation":45,"vertex_color":4,"vertical_segment_color":4,"volume":5,"width":3,"x":0,"y":1},
           "output_value": {"height":3,"horizontal_segment_color":4,"id":"o266950517753","kind":"l3337","marker_color":7,"orientation":45,"vertex_color":4,"vertical_segment_color":4,"volume":6,"width":3,"x":0,"y":1}
         },
@@ -151,7 +151,7 @@
             [0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "o7e804548c273 is Object(x=4, y=3, width=3, height=3, orientation=225, volume=5, kind=l6747, vertex_color=4, vertical_segment_color=4, horizontal_segment_color=4)",
+          "implementation": "o7e804548c273 is Object(kind=l6747, x=4, y=3, width=3, height=3, orientation=225, volume=5, vertex_color=4, vertical_segment_color=4, horizontal_segment_color=4)",
           "input_value": {"height":3,"horizontal_segment_color":4,"id":"o7e804548c273","kind":"l6747","orientation":225,"vertex_color":4,"vertical_segment_color":4,"volume":5,"width":3,"x":4,"y":3},
           "output_value": {"height":3,"horizontal_segment_color":4,"id":"o7e804548c273","kind":"l3337","marker_color":7,"orientation":225,"vertex_color":4,"vertical_segment_color":4,"volume":6,"width":3,"x":4,"y":3}
         },
@@ -181,7 +181,7 @@
             [0, 4, 7, 0, 0, 0, 0],
             [0, 4, 0, 0, 0, 0, 0]
           ],
-          "implementation": "o5c8f11c3b786 is Object(x=1, y=7, width=3, height=3, orientation=315, volume=5, kind=l6747, vertex_color=4, vertical_segment_color=4, horizontal_segment_color=4)",
+          "implementation": "o5c8f11c3b786 is Object(kind=l6747, x=1, y=7, width=3, height=3, orientation=315, volume=5, vertex_color=4, vertical_segment_color=4, horizontal_segment_color=4)",
           "input_value": {"height":3,"horizontal_segment_color":4,"id":"o5c8f11c3b786","kind":"l6747","orientation":315,"vertex_color":4,"vertical_segment_color":4,"volume":5,"width":3,"x":1,"y":7},
           "output_value": {"height":3,"horizontal_segment_color":4,"id":"o5c8f11c3b786","kind":"l3337","marker_color":7,"orientation":315,"vertex_color":4,"vertical_segment_color":4,"volume":6,"width":3,"x":1,"y":7}
         }
@@ -235,7 +235,7 @@
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "odcc115ed24ad is Object(x=2, y=0, width=3, height=3, orientation=225, volume=5, kind=l6747, vertex_color=4, vertical_segment_color=4, horizontal_segment_color=4)",
+          "implementation": "odcc115ed24ad is Object(kind=l6747, x=2, y=0, width=3, height=3, orientation=225, volume=5, vertex_color=4, vertical_segment_color=4, horizontal_segment_color=4)",
           "input_value": {"height":3,"horizontal_segment_color":4,"id":"odcc115ed24ad","kind":"l6747","orientation":225,"vertex_color":4,"vertical_segment_color":4,"volume":5,"width":3,"x":2,"y":0},
           "output_value": {"height":3,"horizontal_segment_color":4,"id":"odcc115ed24ad","kind":"l3337","marker_color":7,"orientation":225,"vertex_color":4,"vertical_segment_color":4,"volume":6,"width":3,"x":2,"y":0}
         },
@@ -263,7 +263,7 @@
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "oa350b11c0bf1 is Object(x=6, y=3, width=3, height=3, orientation=45, volume=5, kind=l6747, vertex_color=4, vertical_segment_color=4, horizontal_segment_color=4)",
+          "implementation": "oa350b11c0bf1 is Object(kind=l6747, x=6, y=3, width=3, height=3, orientation=45, volume=5, vertex_color=4, vertical_segment_color=4, horizontal_segment_color=4)",
           "input_value": {"height":3,"horizontal_segment_color":4,"id":"oa350b11c0bf1","kind":"l6747","orientation":45,"vertex_color":4,"vertical_segment_color":4,"volume":5,"width":3,"x":6,"y":3},
           "output_value": {"height":3,"horizontal_segment_color":4,"id":"oa350b11c0bf1","kind":"l3337","marker_color":7,"orientation":45,"vertex_color":4,"vertical_segment_color":4,"volume":6,"width":3,"x":6,"y":3}
         },
@@ -291,7 +291,7 @@
             [4, 4, 4, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "o8c442783caa1 is Object(x=0, y=5, width=3, height=3, orientation=135, volume=5, kind=l6747, vertex_color=4, vertical_segment_color=4, horizontal_segment_color=4)",
+          "implementation": "o8c442783caa1 is Object(kind=l6747, x=0, y=5, width=3, height=3, orientation=135, volume=5, vertex_color=4, vertical_segment_color=4, horizontal_segment_color=4)",
           "input_value": {"height":3,"horizontal_segment_color":4,"id":"o8c442783caa1","kind":"l6747","orientation":135,"vertex_color":4,"vertical_segment_color":4,"volume":5,"width":3,"x":0,"y":5},
           "output_value": {"height":3,"horizontal_segment_color":4,"id":"o8c442783caa1","kind":"l3337","marker_color":7,"orientation":135,"vertex_color":4,"vertical_segment_color":4,"volume":6,"width":3,"x":0,"y":5}
         },
@@ -319,7 +319,7 @@
             [0, 0, 0, 0, 0, 0, 4, 7, 0, 0],
             [0, 0, 0, 0, 0, 0, 4, 0, 0, 0]
           ],
-          "implementation": "o8f13856cc3f4 is Object(x=6, y=6, width=3, height=3, orientation=315, volume=5, kind=l6747, vertex_color=4, vertical_segment_color=4, horizontal_segment_color=4)",
+          "implementation": "o8f13856cc3f4 is Object(kind=l6747, x=6, y=6, width=3, height=3, orientation=315, volume=5, vertex_color=4, vertical_segment_color=4, horizontal_segment_color=4)",
           "input_value": {"height":3,"horizontal_segment_color":4,"id":"o8f13856cc3f4","kind":"l6747","orientation":315,"vertex_color":4,"vertical_segment_color":4,"volume":5,"width":3,"x":6,"y":6},
           "output_value": {"height":3,"horizontal_segment_color":4,"id":"o8f13856cc3f4","kind":"l3337","marker_color":7,"orientation":315,"vertex_color":4,"vertical_segment_color":4,"volume":6,"width":3,"x":6,"y":6}
         }
@@ -365,7 +365,7 @@
             [0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "oc28d52f4b589 is Object(x=3, y=2, width=3, height=3, orientation=45, volume=5, kind=l6747, vertex_color=4, vertical_segment_color=4, horizontal_segment_color=4)",
+          "implementation": "oc28d52f4b589 is Object(kind=l6747, x=3, y=2, width=3, height=3, orientation=45, volume=5, vertex_color=4, vertical_segment_color=4, horizontal_segment_color=4)",
           "input_value": {"height":3,"horizontal_segment_color":4,"id":"oc28d52f4b589","kind":"l6747","orientation":45,"vertex_color":4,"vertical_segment_color":4,"volume":5,"width":3,"x":3,"y":2},
           "output_value": {"height":3,"horizontal_segment_color":4,"id":"oc28d52f4b589","kind":"l3337","marker_color":7,"orientation":45,"vertex_color":4,"vertical_segment_color":4,"volume":6,"width":3,"x":3,"y":2}
         }
@@ -411,7 +411,7 @@
             [0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "od50f6f521f67 is Object(x=1, y=1, width=3, height=3, orientation=225, volume=5, kind=l6747, vertex_color=4, vertical_segment_color=4, horizontal_segment_color=4)",
+          "implementation": "od50f6f521f67 is Object(kind=l6747, x=1, y=1, width=3, height=3, orientation=225, volume=5, vertex_color=4, vertical_segment_color=4, horizontal_segment_color=4)",
           "input_value": {"height":3,"horizontal_segment_color":4,"id":"od50f6f521f67","kind":"l6747","orientation":225,"vertex_color":4,"vertical_segment_color":4,"volume":5,"width":3,"x":1,"y":1},
           "output_value": {"height":3,"horizontal_segment_color":4,"id":"od50f6f521f67","kind":"l3337","marker_color":7,"orientation":225,"vertex_color":4,"vertical_segment_color":4,"volume":6,"width":3,"x":1,"y":1}
         },
@@ -435,7 +435,7 @@
             [0, 0, 0, 0, 4, 4, 4],
             [0, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "o6977f002d257 is Object(x=4, y=3, width=3, height=3, orientation=135, volume=5, kind=l6747, vertex_color=4, vertical_segment_color=4, horizontal_segment_color=4)",
+          "implementation": "o6977f002d257 is Object(kind=l6747, x=4, y=3, width=3, height=3, orientation=135, volume=5, vertex_color=4, vertical_segment_color=4, horizontal_segment_color=4)",
           "input_value": {"height":3,"horizontal_segment_color":4,"id":"o6977f002d257","kind":"l6747","orientation":135,"vertex_color":4,"vertical_segment_color":4,"volume":5,"width":3,"x":4,"y":3},
           "output_value": {"height":3,"horizontal_segment_color":4,"id":"o6977f002d257","kind":"l3337","marker_color":7,"orientation":135,"vertex_color":4,"vertical_segment_color":4,"volume":6,"width":3,"x":4,"y":3}
         }
@@ -481,7 +481,7 @@
             [0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "o48fc7a1eab07 is Object(x=2, y=2, width=3, height=3, orientation=0, volume=5, kind=unknown, vertex_color=4, vertical_segment_color=4, horizontal_segment_color=4)",
+          "implementation": "o48fc7a1eab07 is Object(kind=unknown, x=2, y=2, width=3, height=3, orientation=0, volume=5, vertex_color=4, vertical_segment_color=4, horizontal_segment_color=4)",
           "input_value": {"height":3,"horizontal_segment_color":4,"id":"o48fc7a1eab07","kind":"unknown","orientation":0,"vertex_color":4,"vertical_segment_color":4,"volume":5,"width":3,"x":2,"y":2},
           "output_value": {"height":3,"horizontal_segment_color":4,"id":"o48fc7a1eab07","kind":"unknown","orientation":0,"vertex_color":4,"vertical_segment_color":4,"volume":5,"width":3,"x":2,"y":2}
         }

@@ -1,5 +1,5 @@
 {
-  "class_declaration": "class Object(x: int, y: int, width: int, height: int, orientation: int, volume: int, kind: str = 'default', color: int):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.kind is kind\n    this.color is color",
+  "class_declaration": "class Object(kind: str = 'default', x: int, y: int, width: int, height: int, orientation: int, volume: int, color: int):\n    this.kind is kind\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.color is color",
   "declarations": [
     "if $Object.kind is l9100 and any other in Object: other.volume > $Object.volume:\n    $Object.color is 5"
   ],
@@ -29,7 +29,7 @@
             [2, 0, 0],
             [2, 0, 0]
           ],
-          "implementation": "ofd8da1fb82d2 is Object(x=0, y=0, width=3, height=3, orientation=315, volume=5, kind=l9100, color=2)",
+          "implementation": "ofd8da1fb82d2 is Object(kind=l9100, x=0, y=0, width=3, height=3, orientation=315, volume=5, color=2)",
           "input_value": {"color":2,"height":3,"id":"ofd8da1fb82d2","kind":"l9100","orientation":315,"volume":5,"width":3,"x":0,"y":0},
           "output_value": {"color":2,"height":3,"id":"ofd8da1fb82d2","kind":"l9100","orientation":315,"volume":5,"width":3,"x":0,"y":0}
         },
@@ -45,7 +45,7 @@
             [0, 5, 0],
             [0, 0, 0]
           ],
-          "implementation": "o18a2b2379cda is Object(x=1, y=1, width=1, height=1, orientation=0, volume=1, kind=l9100, color=1)",
+          "implementation": "o18a2b2379cda is Object(kind=l9100, x=1, y=1, width=1, height=1, orientation=0, volume=1, color=1)",
           "input_value": {"color":1,"height":1,"id":"o18a2b2379cda","kind":"l9100","orientation":0,"volume":1,"width":1,"x":1,"y":1},
           "output_value": {"color":5,"height":1,"id":"o18a2b2379cda","kind":"l9100","orientation":0,"volume":1,"width":1,"x":1,"y":1}
         },
@@ -61,7 +61,7 @@
             [0, 0, 5],
             [0, 5, 5]
           ],
-          "implementation": "oaabb8a63326c is Object(x=1, y=1, width=2, height=2, orientation=135, volume=3, kind=l9100, color=8)",
+          "implementation": "oaabb8a63326c is Object(kind=l9100, x=1, y=1, width=2, height=2, orientation=135, volume=3, color=8)",
           "input_value": {"color":8,"height":2,"id":"oaabb8a63326c","kind":"l9100","orientation":135,"volume":3,"width":2,"x":1,"y":1},
           "output_value": {"color":5,"height":2,"id":"oaabb8a63326c","kind":"l9100","orientation":135,"volume":3,"width":2,"x":1,"y":1}
         }
@@ -91,7 +91,7 @@
             [0, 1, 0],
             [0, 0, 0]
           ],
-          "implementation": "ob4c2bdc31cbd is Object(x=0, y=0, width=3, height=2, orientation=0, volume=4, kind=l9100, color=1)",
+          "implementation": "ob4c2bdc31cbd is Object(kind=l9100, x=0, y=0, width=3, height=2, orientation=0, volume=4, color=1)",
           "input_value": {"color":1,"height":2,"id":"ob4c2bdc31cbd","kind":"l9100","orientation":0,"volume":4,"width":3,"x":0,"y":0},
           "output_value": {"color":1,"height":2,"id":"ob4c2bdc31cbd","kind":"l9100","orientation":0,"volume":4,"width":3,"x":0,"y":0}
         },
@@ -107,7 +107,7 @@
             [5, 0, 0],
             [5, 0, 0]
           ],
-          "implementation": "ofbe4a4224d14 is Object(x=0, y=1, width=1, height=2, orientation=0, volume=2, kind=l9100, color=8)",
+          "implementation": "ofbe4a4224d14 is Object(kind=l9100, x=0, y=1, width=1, height=2, orientation=0, volume=2, color=8)",
           "input_value": {"color":8,"height":2,"id":"ofbe4a4224d14","kind":"l9100","orientation":0,"volume":2,"width":1,"x":0,"y":1},
           "output_value": {"color":5,"height":2,"id":"ofbe4a4224d14","kind":"l9100","orientation":0,"volume":2,"width":1,"x":0,"y":1}
         },
@@ -123,7 +123,7 @@
             [0, 0, 5],
             [0, 0, 0]
           ],
-          "implementation": "o9b51b0fdc01c is Object(x=2, y=1, width=1, height=1, orientation=0, volume=1, kind=l9100, color=3)",
+          "implementation": "o9b51b0fdc01c is Object(kind=l9100, x=2, y=1, width=1, height=1, orientation=0, volume=1, color=3)",
           "input_value": {"color":3,"height":1,"id":"o9b51b0fdc01c","kind":"l9100","orientation":0,"volume":1,"width":1,"x":2,"y":1},
           "output_value": {"color":5,"height":1,"id":"o9b51b0fdc01c","kind":"l9100","orientation":0,"volume":1,"width":1,"x":2,"y":1}
         },
@@ -139,7 +139,7 @@
             [0, 0, 0],
             [0, 5, 5]
           ],
-          "implementation": "o91b67e1827b1 is Object(x=1, y=2, width=2, height=1, orientation=90, volume=2, kind=l9100, color=2)",
+          "implementation": "o91b67e1827b1 is Object(kind=l9100, x=1, y=2, width=2, height=1, orientation=90, volume=2, color=2)",
           "input_value": {"color":2,"height":1,"id":"o91b67e1827b1","kind":"l9100","orientation":90,"volume":2,"width":2,"x":1,"y":2},
           "output_value": {"color":5,"height":1,"id":"o91b67e1827b1","kind":"l9100","orientation":90,"volume":2,"width":2,"x":1,"y":2}
         }
@@ -169,7 +169,7 @@
             [0, 0, 2],
             [2, 2, 2]
           ],
-          "implementation": "o3710037e184f is Object(x=0, y=0, width=3, height=3, orientation=0, volume=7, kind=l9100, color=2)",
+          "implementation": "o3710037e184f is Object(kind=l9100, x=0, y=0, width=3, height=3, orientation=0, volume=7, color=2)",
           "input_value": {"color":2,"height":3,"id":"o3710037e184f","kind":"l9100","orientation":0,"volume":7,"width":3,"x":0,"y":0},
           "output_value": {"color":2,"height":3,"id":"o3710037e184f","kind":"l9100","orientation":0,"volume":7,"width":3,"x":0,"y":0}
         },
@@ -185,7 +185,7 @@
             [5, 5, 0],
             [0, 0, 0]
           ],
-          "implementation": "ocfb87667abdf is Object(x=0, y=1, width=2, height=1, orientation=90, volume=2, kind=l9100, color=8)",
+          "implementation": "ocfb87667abdf is Object(kind=l9100, x=0, y=1, width=2, height=1, orientation=90, volume=2, color=8)",
           "input_value": {"color":8,"height":1,"id":"ocfb87667abdf","kind":"l9100","orientation":90,"volume":2,"width":2,"x":0,"y":1},
           "output_value": {"color":5,"height":1,"id":"ocfb87667abdf","kind":"l9100","orientation":90,"volume":2,"width":2,"x":0,"y":1}
         }
@@ -215,7 +215,7 @@
             [0, 0, 0],
             [0, 0, 0]
           ],
-          "implementation": "o501aae1fff6a is Object(x=0, y=0, width=2, height=1, orientation=90, volume=2, kind=l9100, color=3)",
+          "implementation": "o501aae1fff6a is Object(kind=l9100, x=0, y=0, width=2, height=1, orientation=90, volume=2, color=3)",
           "input_value": {"color":3,"height":1,"id":"o501aae1fff6a","kind":"l9100","orientation":90,"volume":2,"width":2,"x":0,"y":0},
           "output_value": {"color":5,"height":1,"id":"o501aae1fff6a","kind":"l9100","orientation":90,"volume":2,"width":2,"x":0,"y":0}
         },
@@ -231,7 +231,7 @@
             [0, 0, 0],
             [5, 0, 0]
           ],
-          "implementation": "o5f62becffc78 is Object(x=0, y=0, width=3, height=3, orientation=0, volume=2, kind=l9100, color=8)",
+          "implementation": "o5f62becffc78 is Object(kind=l9100, x=0, y=0, width=3, height=3, orientation=0, volume=2, color=8)",
           "input_value": {"color":8,"height":3,"id":"o5f62becffc78","kind":"l9100","orientation":0,"volume":2,"width":3,"x":0,"y":0},
           "output_value": {"color":5,"height":3,"id":"o5f62becffc78","kind":"l9100","orientation":0,"volume":2,"width":3,"x":0,"y":0}
         },
@@ -247,7 +247,7 @@
             [4, 4, 4],
             [0, 0, 0]
           ],
-          "implementation": "o50d280d9fceb is Object(x=0, y=1, width=3, height=1, orientation=90, volume=3, kind=l9100, color=4)",
+          "implementation": "o50d280d9fceb is Object(kind=l9100, x=0, y=1, width=3, height=1, orientation=90, volume=3, color=4)",
           "input_value": {"color":4,"height":1,"id":"o50d280d9fceb","kind":"l9100","orientation":90,"volume":3,"width":3,"x":0,"y":1},
           "output_value": {"color":4,"height":1,"id":"o50d280d9fceb","kind":"l9100","orientation":90,"volume":3,"width":3,"x":0,"y":1}
         },
@@ -263,7 +263,7 @@
             [0, 0, 0],
             [0, 5, 5]
           ],
-          "implementation": "of2cf87623f42 is Object(x=1, y=2, width=2, height=1, orientation=90, volume=2, kind=l9100, color=1)",
+          "implementation": "of2cf87623f42 is Object(kind=l9100, x=1, y=2, width=2, height=1, orientation=90, volume=2, color=1)",
           "input_value": {"color":1,"height":1,"id":"of2cf87623f42","kind":"l9100","orientation":90,"volume":2,"width":2,"x":1,"y":2},
           "output_value": {"color":5,"height":1,"id":"of2cf87623f42","kind":"l9100","orientation":90,"volume":2,"width":2,"x":1,"y":2}
         }
@@ -293,7 +293,7 @@
             [0, 0, 0],
             [5, 0, 0]
           ],
-          "implementation": "oa0f8bb24bef9 is Object(x=0, y=0, width=1, height=3, orientation=0, volume=2, kind=l9100, color=1)",
+          "implementation": "oa0f8bb24bef9 is Object(kind=l9100, x=0, y=0, width=1, height=3, orientation=0, volume=2, color=1)",
           "input_value": {"color":1,"height":3,"id":"oa0f8bb24bef9","kind":"l9100","orientation":0,"volume":2,"width":1,"x":0,"y":0},
           "output_value": {"color":5,"height":3,"id":"oa0f8bb24bef9","kind":"l9100","orientation":0,"volume":2,"width":1,"x":0,"y":0}
         },
@@ -309,7 +309,7 @@
             [3, 3, 0],
             [0, 3, 0]
           ],
-          "implementation": "o6c6428c31841 is Object(x=0, y=0, width=2, height=3, orientation=0, volume=4, kind=l9100, color=3)",
+          "implementation": "o6c6428c31841 is Object(kind=l9100, x=0, y=0, width=2, height=3, orientation=0, volume=4, color=3)",
           "input_value": {"color":3,"height":3,"id":"o6c6428c31841","kind":"l9100","orientation":0,"volume":4,"width":2,"x":0,"y":0},
           "output_value": {"color":3,"height":3,"id":"o6c6428c31841","kind":"l9100","orientation":0,"volume":4,"width":2,"x":0,"y":0}
         },
@@ -325,7 +325,7 @@
             [0, 0, 5],
             [0, 0, 5]
           ],
-          "implementation": "oa8f0a8586df4 is Object(x=2, y=0, width=1, height=3, orientation=0, volume=3, kind=l9100, color=2)",
+          "implementation": "oa8f0a8586df4 is Object(kind=l9100, x=2, y=0, width=1, height=3, orientation=0, volume=3, color=2)",
           "input_value": {"color":2,"height":3,"id":"oa8f0a8586df4","kind":"l9100","orientation":0,"volume":3,"width":1,"x":2,"y":0},
           "output_value": {"color":5,"height":3,"id":"oa8f0a8586df4","kind":"l9100","orientation":0,"volume":3,"width":1,"x":2,"y":0}
         }
@@ -355,7 +355,7 @@
             [2, 2, 2],
             [2, 2, 2]
           ],
-          "implementation": "o75f18a68e44b is Object(x=0, y=0, width=3, height=3, orientation=0, volume=9, kind=unknown, color=2)",
+          "implementation": "o75f18a68e44b is Object(kind=unknown, x=0, y=0, width=3, height=3, orientation=0, volume=9, color=2)",
           "input_value": {"color":2,"height":3,"id":"o75f18a68e44b","kind":"unknown","orientation":0,"volume":9,"width":3,"x":0,"y":0},
           "output_value": {"color":2,"height":3,"id":"o75f18a68e44b","kind":"unknown","orientation":0,"volume":9,"width":3,"x":0,"y":0}
         }

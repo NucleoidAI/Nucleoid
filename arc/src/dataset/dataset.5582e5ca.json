@@ -1,5 +1,5 @@
 {
-  "class_declaration": "class Object(x: int, y: int, width: int, height: int, orientation: int, volume: int, kind: str = 'default', parts: list):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.kind is kind\n    this.parts is parts",
+  "class_declaration": "class Object(kind: str = 'default', x: int, y: int, width: int, height: int, orientation: int, volume: int, parts: list):\n    this.kind is kind\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.parts is parts",
   "declarations": [
     "if $Object.kind is l9100:\n    $Object.kind is l5236\n    $Object.fill_color is mode of $Object.parts\n    $Object.volume is $Object.width * $Object.height"
   ],
@@ -29,7 +29,7 @@
             [4, 4, 4],
             [4, 4, 4]
           ],
-          "implementation": "oa1b60a6c90dc is Object(x=0, y=0, width=3, height=3, orientation=0, volume=8, kind=l9100, parts=[4, 4, 8, 6, 4, 3, 6, 3])",
+          "implementation": "oa1b60a6c90dc is Object(kind=l9100, x=0, y=0, width=3, height=3, orientation=0, volume=8, parts=[4, 4, 8, 6, 4, 3, 6, 3])",
           "input_value": {"height":3,"id":"oa1b60a6c90dc","kind":"l9100","orientation":0,"parts":[4,4,8,6,4,3,6,3],"volume":8,"width":3,"x":0,"y":0},
           "output_value": {"fill_color":4,"height":3,"id":"oa1b60a6c90dc","kind":"l5236","orientation":0,"parts":[4,4,8,6,4,3,6,3],"volume":9,"width":3,"x":0,"y":0}
         }
@@ -59,7 +59,7 @@
             [9, 9, 9],
             [9, 9, 9]
           ],
-          "implementation": "o2f95578125dc is Object(x=0, y=0, width=3, height=3, orientation=0, volume=9, kind=l9100, parts=[6, 8, 9, 1, 8, 1, 9, 4, 9])",
+          "implementation": "o2f95578125dc is Object(kind=l9100, x=0, y=0, width=3, height=3, orientation=0, volume=9, parts=[6, 8, 9, 1, 8, 1, 9, 4, 9])",
           "input_value": {"height":3,"id":"o2f95578125dc","kind":"l9100","orientation":0,"parts":[6,8,9,1,8,1,9,4,9],"volume":9,"width":3,"x":0,"y":0},
           "output_value": {"fill_color":9,"height":3,"id":"o2f95578125dc","kind":"l5236","orientation":0,"parts":[6,8,9,1,8,1,9,4,9],"volume":9,"width":3,"x":0,"y":0}
         }
@@ -89,7 +89,7 @@
             [6, 6, 6],
             [6, 6, 6]
           ],
-          "implementation": "o0a1a67aea6eb is Object(x=0, y=0, width=3, height=3, orientation=0, volume=9, kind=l9100, parts=[4, 6, 9, 6, 4, 1, 8, 8, 6])",
+          "implementation": "o0a1a67aea6eb is Object(kind=l9100, x=0, y=0, width=3, height=3, orientation=0, volume=9, parts=[4, 6, 9, 6, 4, 1, 8, 8, 6])",
           "input_value": {"height":3,"id":"o0a1a67aea6eb","kind":"l9100","orientation":0,"parts":[4,6,9,6,4,1,8,8,6],"volume":9,"width":3,"x":0,"y":0},
           "output_value": {"fill_color":6,"height":3,"id":"o0a1a67aea6eb","kind":"l5236","orientation":0,"parts":[4,6,9,6,4,1,8,8,6],"volume":9,"width":3,"x":0,"y":0}
         }
@@ -119,7 +119,7 @@
             [8, 8, 8],
             [8, 8, 8]
           ],
-          "implementation": "oea33ebd2f6a8 is Object(x=0, y=0, width=3, height=3, orientation=0, volume=8, kind=l9100, parts=[8, 8, 6, 4, 6, 9, 8, 3])",
+          "implementation": "oea33ebd2f6a8 is Object(kind=l9100, x=0, y=0, width=3, height=3, orientation=0, volume=8, parts=[8, 8, 6, 4, 6, 9, 8, 3])",
           "input_value": {"height":3,"id":"oea33ebd2f6a8","kind":"l9100","orientation":0,"parts":[8,8,6,4,6,9,8,3],"volume":8,"width":3,"x":0,"y":0},
           "output_value": {"fill_color":8,"height":3,"id":"oea33ebd2f6a8","kind":"l5236","orientation":0,"parts":[8,8,6,4,6,9,8,3],"volume":9,"width":3,"x":0,"y":0}
         }
@@ -149,7 +149,7 @@
             [6, 8, 6],
             [0, 3, 0]
           ],
-          "implementation": "oe40312ecead9 is Object(x=0, y=0, width=3, height=3, orientation=0, volume=5, kind=unknown, parts=[4, 6, 8, 6, 3])",
+          "implementation": "oe40312ecead9 is Object(kind=unknown, x=0, y=0, width=3, height=3, orientation=0, volume=5, parts=[4, 6, 8, 6, 3])",
           "input_value": {"height":3,"id":"oe40312ecead9","kind":"unknown","orientation":0,"parts":[4,6,8,6,3],"volume":5,"width":3,"x":0,"y":0},
           "output_value": {"height":3,"id":"oe40312ecead9","kind":"unknown","orientation":0,"parts":[4,6,8,6,3],"volume":5,"width":3,"x":0,"y":0}
         }
