@@ -1,7 +1,7 @@
 {
   "class_declaration": "class Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, kind: str = 'default', color: int):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.kind is kind\n    this.color is color",
   "declarations": [
-    "if $Obj.kind@first is l9100:\n    $Obj.kind is l3058\n    $Obj.width is $Obj.volume\n    $Obj.height is 1\n    $Obj.orientation is 90 if $Obj.width > 1 else 0\n    $Obj.x is 0\n    $Obj.y is 0"
+    "if $Obj.kind is l9100:\n    $Obj.kind is l3058\n    $Obj.width is $Obj.volume\n    $Obj.height is 1\n    $Obj.orientation is 90 if $Obj.width > 1 else 0\n    $Obj.x is 0\n    $Obj.y is 0"
   ],
   "output_canvas": "FIT",
   "dataset": [

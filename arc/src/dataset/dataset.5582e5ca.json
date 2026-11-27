@@ -1,7 +1,7 @@
 {
   "class_declaration": "class Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, kind: str = 'default', parts: list):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.kind is kind\n    this.parts is parts",
   "declarations": [
-    "if $Obj.kind@first is l9100:\n    $Obj.kind is l5236\n    $Obj.fill_color is mode of $Obj.parts\n    $Obj.volume is $Obj.width * $Obj.height"
+    "if $Obj.kind is l9100:\n    $Obj.kind is l5236\n    $Obj.fill_color is mode of $Obj.parts\n    $Obj.volume is $Obj.width * $Obj.height"
   ],
   "output_canvas": "EXACT",
   "dataset": [

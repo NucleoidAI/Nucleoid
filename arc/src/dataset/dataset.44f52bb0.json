@@ -1,7 +1,7 @@
 {
   "class_declaration": "class Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, kind: str = 'default', points: list):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.kind is kind\n    this.points is points",
   "declarations": [
-    "if $Obj.kind@first is l9100:\n    $Obj.kind is l7544\n    $Obj.width is 1\n    $Obj.height is 1\n    $Obj.orientation is 0\n    $Obj.symmetric is all point in $Obj.points: $Obj.points.includes([canvas_width - 1 - point[0], point[1]])\n    $Obj.fill_color is 1 if $Obj.symmetric else 7\n    $Obj.x is 0\n    $Obj.y is 0\n    $Obj.volume is $Obj.width * $Obj.height"
+    "if $Obj.kind is l9100:\n    $Obj.kind is l7544\n    $Obj.width is 1\n    $Obj.height is 1\n    $Obj.orientation is 0\n    $Obj.symmetric is all point in $Obj.points: $Obj.points.includes([canvas_width - 1 - point[0], point[1]])\n    $Obj.fill_color is 1 if $Obj.symmetric else 7\n    $Obj.x is 0\n    $Obj.y is 0\n    $Obj.volume is $Obj.width * $Obj.height"
   ],
   "output_canvas": "FIT",
   "dataset": [

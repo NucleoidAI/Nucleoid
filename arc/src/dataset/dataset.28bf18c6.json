@@ -1,7 +1,7 @@
 {
   "class_declaration": "class Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, kind: str = 'default', color: int):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.kind is kind\n    this.color is color",
   "declarations": [
-    "if $Obj.kind@first is l9100:\n    $Obj.kind is l4305\n    $Obj.repeat_count is 2\n    $Obj.repeat_direction is right\n    $Obj.width is $Obj.width@first * $Obj.repeat_count\n    $Obj.x is 0\n    $Obj.y is 0\n    $Obj.volume is $Obj.volume@first * $Obj.repeat_count"
+    "if $Obj.kind is l9100:\n    $Obj.kind is l4305\n    $Obj.repeat_count is 2\n    $Obj.repeat_direction is right\n    $Obj.width is $Obj.width@first * $Obj.repeat_count\n    $Obj.x is 0\n    $Obj.y is 0\n    $Obj.volume is $Obj.volume@first * $Obj.repeat_count"
   ],
   "output_canvas": "FIT",
   "dataset": [

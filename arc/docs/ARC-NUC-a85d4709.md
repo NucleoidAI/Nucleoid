@@ -368,7 +368,7 @@ passes its object's kind, here `kind=l7544`, the old default. Every rule now
 transforms only that kind:
 
 ```nuc
-if $Obj.kind@first is l7544:
+if $Obj.kind is l7544:
     $Obj.kind is l3058
     $Obj.orientation is 90
     $Obj.fill_color is [2, 4, 3][$Obj.x@first]
@@ -377,8 +377,8 @@ if $Obj.kind@first is l7544:
     $Obj.volume is $Obj.width * $Obj.height
 ```
 
-The guards read the input kind with `@first`, because the rules change the kind,
-so a guard still holds after the change. Rules that share a guard sit in one
+At the user's request the guard reads the live kind, which gives the same states
+although the rules change the kind. Rules that share a guard sit in one
 `if` block, because a class-level `if` replaces an earlier one with the same
 condition text. An object of any other kind, `unknown`, `default`, or an
 invented one, matches no rule and keeps its input state, so the dataset needs no

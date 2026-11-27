@@ -418,14 +418,14 @@ mask's `volume`, its number of nonzero cells, and then its object's kind as a
 bare word: `kind=l6747` for a corner, `kind=l7544` for a point, `kind=l8001`
 for a line, and `kind=unknown` for the object of the use case. The class
 default `kind: str = 'default'` names no geometry and applies to no pair.
-Every rule transforms only the objects of its dataset's input kind: each `if`
-opens with `$Obj.kind@first is` and that kind, joined to its other
-conditions with `and`, as in
-`if $Obj.kind@first is l7544 and $Obj.vertex_color is 4:`, and the line's
-volume rule sits under `if $Obj.kind@first is l8001:`. The guards read the
-input kind with `@first` because the rules rewrite the kind: on the live
-kind, the line's volume guard turns false once an orientation rule sets
-`l4102` or `l6012`, and each grown line would keep its input `volume`. No
+Every rule transforms only the objects of its dataset's kind: each `if` opens
+with `$Obj.kind is` and that kind, joined to its other conditions with `and`, as
+in `if $Obj.kind is l7544 and $Obj.vertex_color is 4:`, and the line's volume
+rule sits under `if $Obj.kind@first is l8001:`. The guards read the live kind,
+which gives the same states although the rules rewrite the kind, except the
+line's volume guard, which reads the input kind with `@first`: on the live kind
+it turns false once an orientation rule sets `l4102` or `l6012`, and each grown
+line would keep its input `volume`. No
 rule reads other objects, and an object of any other kind, `unknown`, the
 default `default`, or an invented one, matches no rule and keeps its input
 state, so it needs no rule of its own. A rule
@@ -440,15 +440,15 @@ one column wider when horizontal and one row taller when vertical.
 cells in one row, the tromino that is no corner, at orientation 90 as a
 horizontal line without a head. Its implementation passes `kind=unknown` and
 colors 9, which meet the corner rule's color condition, but the rule's guard
-`$Obj.kind@first is l6747` leaves the bar out, so it gains no marker and its
+`$Obj.kind is l6747` leaves the bar out, so it gains no marker and its
 output repeats its input. An
 extension corner keeps its 3 by 3 size, because its inside marker fills a
 cell of its own box. `dataset.extension.json` ends with its use case, a
 color-4 T of five cells in a 3 by 3 box, its full top row and the two cells
 below its middle, which has a full edge row but no full edge column, so it is
 no corner and takes orientation 0. Its implementation passes `kind=unknown`
-and colors 4, which meet the corner rule's color condition, but the rule's
-guard `$Obj.kind@first is l6747` leaves the T out: it gains no marker, and its
+and colors 4, which meet the corner rule's color condition, but the rule's guard
+`$Obj.kind is l6747` leaves the T out: it gains no marker, and its
 output repeats its input. The core and extension markers each add one cell with
 `$Obj.volume is $Obj.volume@first + 1`, and the curve rim adds two with
 `$Obj.volume is $Obj.volume@first + 2`, in the same branches; a line, a box
@@ -464,7 +464,8 @@ away from the endpoint. `dataset.line.json` ends with its use case, a line
 that bends: a color-8 cell and two color-6 cells along a row, with one more
 color-6 cell below the last, a corner at orientation 45, where its top row and
 right column meet. Its implementation passes `kind=unknown`, so every rule's
-guard `$Obj.kind@first is l8001` leaves it out: no rule extends it or sets
+guard, `$Obj.kind is l8001` or the volume rule's `$Obj.kind@first is l8001`,
+leaves it out: no rule extends it or sets
 its `volume`, 4, to the 6 cells of its box, and its output repeats its
 input. A curve point, a single cell, is at orientation 0, and
 its rim makes a V that points toward the point, its vertex: the color-4 rule
@@ -473,13 +474,12 @@ down, while a color-9 point keeps 0, because its color-2 arms go down and the
 V points up. `dataset.curve.json` ends with its use case, a vertical domino of
 two color-9 cells, which is no single point and takes orientation 0 as a
 vertical line without a head. Its implementation passes `kind=unknown` and
-`vertex_color=9`, which meets the color-9 rule's condition, but the rule's
-guard `$Obj.kind@first is l7544` leaves the domino out: it gains no rim, and
+`vertex_color=9`, which meets the color-9 rule's condition, but the rule's guard
+`$Obj.kind is l7544` leaves the domino out: it gains no rim, and
 its output repeats its
 input. The genesis rules match kinds, categorical colors, and orientations with
 `is`, the spelling of `==` that [NUC 86](../docs/nuc-0086.md) adds, as in the
-line header
-`if $Obj.kind@first is l8001 and $Obj.orientation is 270:`, and the line
+line header `if $Obj.kind is l8001 and $Obj.orientation is 270:`, and the line
 rules assign bare
 words with `is`, as in `$Obj.extension_direction is right`.
 
@@ -500,9 +500,12 @@ case, so no pair's object takes the default. In every dataset but
 `dataset.27a28665.json`, whose size rules shrink every block to its output
 point, each rule transforms only the kinds it is written for: it sits in an
 `if` that opens with the kind, as in `if $Obj.kind is l9100:`, joined to the
-rule's own conditions with `and`, and it reads the input kind,
-`$Obj.kind@first`, where the rules change the kind, so that the guard still
-holds after the change. Rules that share a guard sit in one `if` block,
+rule's own conditions with `and`, and it reads the live kind, which gives the
+same states although a block's own statements change the kind. A guard reads the
+input kind, `$Obj.kind@first`, only where a later rule must still select an
+object after an earlier rule changed its kind, as in `dataset.6e02f1e3.json`,
+`dataset.fafffa47.json`, and `dataset.line.json`. Rules that share a guard sit
+in one `if` block,
 because a class-level `if` replaces an earlier one with the same condition
 text, and the statements of a block run in order. An object of any other
 kind, `unknown`, `default`, or an invented one, matches no rule and keeps
@@ -643,9 +646,10 @@ but every implementation passes its object's kind there: `kind=l9100` for
 each pattern, as in `volume=9, kind=l9100` for the first training input, and
 `kind=unknown` for the use case's line, so no instance takes the default.
 One class-level `if` block holds every rule and selects the patterns by their
-input kind, `if $Obj.kind@first is l9100:`, with the comparison `is` of
-[NUC 86](../docs/nuc-0086.md); the condition reads the kind with an `@first`
-anchor because the block's first rule rewrites it. The block sets the output
+kind, `if $Obj.kind is l9100:`, with the comparison `is` of
+[NUC 86](../docs/nuc-0086.md); the condition reads the live kind, which gives
+the same states although the block's first rule rewrites it. The block sets the
+output
 kind `l8384` and introduces one
 property, `extension_direction`, which is absent before the rules run and is
 `down`, as in `dataset.line.json`.
@@ -656,7 +660,7 @@ input's, 3, 3, 2, and 3 columns, and they leave `x` and `y` unchanged because
 the pattern keeps its top-left origin. The training pairs alone also fit a
 fixed 9-row output; the rules scale the pattern's height instead. The four
 rules share one block because separate `if` rules with the same condition
-text replace each other, so four blocks headed `if $Obj.kind@first is l9100:`
+text replace each other, so four blocks headed `if $Obj.kind is l9100:`
 would keep only the last rule. An object of any other kind, such as the use
 case's `unknown`, the default `default`, or an invented kind such as `l5555`,
 matches no guard, so no rule changes it, and its output state equals its
@@ -713,11 +717,11 @@ to 3 by 3 with `$Obj.width is $Obj.width@first + 2` and
 `$Obj.height is $Obj.height@first + 2`, and count its point and four markers
 with `$Obj.volume is $Obj.volume@first + 4`; color-6 and color-8 points keep
 their 1 by 1 size and volume 1. The two branches are guarded by
-`if $Obj.kind@first is l7544 and $Obj.vertex_color is 1:` and
-`if $Obj.kind@first is l7544 and $Obj.vertex_color is 2:`, with `is`, the
+`if $Obj.kind is l7544 and $Obj.vertex_color is 1:` and
+`if $Obj.kind is l7544 and $Obj.vertex_color is 2:`, with `is`, the
 spelling of `==` that [NUC 86](../docs/nuc-0086.md) adds: each selects the
-points of one color, and its kind test reads the input kind with an `@first`
-anchor because the branch rewrites the kind. Their conditions differ in the
+points of one color, and its kind test reads the live kind, which gives the same
+states although the branch rewrites the kind. Their conditions differ in the
 color, so both branches stand, while separate `if` rules with the same
 condition text would replace each other. An object of any other kind, such
 as the use case's `unknown`, the default `default`, or an invented kind,
@@ -1135,10 +1139,11 @@ Like every class, it takes `kind` right after `volume`, here with the default
 shape's kind there: `kind=l9100` for the four original shapes, as in
 `volume=6, kind=l9100, color=8` for the first training input, and
 `kind=unknown` for the use case's shape, so no instance takes the default. One
-class-level `if` block holds every rule and selects the shapes by their input
-kind, `if $Obj.kind@first is l9100:`, with the comparison `is` of
-[NUC 86](../docs/nuc-0086.md); the condition reads the kind with an `@first`
-anchor because the block's first rule, `$Obj.kind is l4305`, rewrites it. The
+class-level `if` block holds every rule and selects the shapes by their kind,
+`if $Obj.kind is l9100:`, with the comparison `is` of
+[NUC 86](../docs/nuc-0086.md); the condition reads the live kind, which gives
+the same states although the block's first rule, `$Obj.kind is l4305`, rewrites
+it. The
 block holds for every selected shape, whatever its `color`: it introduces
 `repeat_count` (2, the total number of copies) and `repeat_direction`
 (`right`), which are absent before the rules run, rewrites `width` as
@@ -1150,7 +1155,7 @@ to the output origin 0. Each output state's `width` and `height` are therefore
 the repeated shape's bounding box, the whole 3 by 6 output, and its `volume`
 the output's number of nonzero cells. The seven rules share one block because
 separate `if` rules with the same condition text replace each other, so seven
-blocks headed `if $Obj.kind@first is l9100:` would keep only the last rule. An
+blocks headed `if $Obj.kind is l9100:` would keep only the last rule. An
 object of any other kind, such as the use case's `unknown`, the default
 `default`, or an invented kind such as `l5555`, matches no guard, so no rule
 changes it, its output state equals its input state, and the rules raise no
@@ -1202,17 +1207,17 @@ default `default`, which names no geometry, but every implementation passes
 its object's kind there: `kind=l6747` for the nine corners, as in
 `volume=3, kind=l6747, color=8` for the first training corner, and
 `kind=unknown` for the use case's bar, so no instance takes the default. One
-class-level `if` block holds every rule and selects the objects by their input
-kind, `if $Obj.kind@first is l6747:`, with the comparison `is` of
+class-level `if` block holds every rule and selects the objects by their kind,
+`if $Obj.kind is l6747:`, with the comparison `is` of
 [NUC 86](../docs/nuc-0086.md), with no color condition and no population
 query, because every corner changes alike and independently of the others; the
-condition reads the kind with an `@first` anchor because the block's first
-rule rewrites it. In the block, `$Obj.kind is l3337` sets the output kind,
+condition reads the live kind, which gives the same states although the block's
+first rule rewrites it. In the block, `$Obj.kind is l3337` sets the output kind,
 `$Obj.marker_color is 1` introduces `marker_color`, which is absent before the
 rules run, and `$Obj.volume is $Obj.volume@first + 1` counts the marker's
 cell, 4 in all. The three rules share one block because separate `if` rules
 with the same condition text replace each other, so three blocks headed
-`if $Obj.kind@first is l6747:` would keep only the last rule. The marker fills
+`if $Obj.kind is l6747:` would keep only the last rule. The marker fills
 a cell of the corner's own box, so the rules leave `x`, `y`, `width`,
 `height`, `orientation`, and `color` unchanged; each corner's output state
 changes only the kind and `volume` and adds `marker_color` to its input
@@ -1379,8 +1384,8 @@ color-2 cells, the full top row and the two cells below its middle, whose
 3 by 3 box spans the canvas from its origin. Its implementation is
 `obj69fa9a05ccce is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=5, kind=unknown, points=[[0, 0], [1, 0], [2, 0], [1, 1], [1, 2]])`,
 and its output is the T itself. One class-level `if` case,
-`if $Obj.kind@first is l9100:`, selects the patterns whose input kind is
-`l9100`, and the rules of its body set the output kind, shrink the pattern to
+`if $Obj.kind is l9100:`, selects the patterns of kind `l9100`, and the rules of
+its body set the output kind, shrink the pattern to
 the output point's size, `width` 1 and `height` 1, and introduce two
 properties, absent before the rules run.
 `symmetric` is
@@ -1394,9 +1399,9 @@ list against the points with the deep equality of
 [NUC 61](../docs/nuc-0061.md). `fill_color` is `1 if $Obj.symmetric else 7`,
 and `$Obj.volume is $Obj.width * $Obj.height` counts the point's single cell.
 The rules also move `x` and `y` to the output origin 0, which changes `y` in
-the fourth training pair and the second test pair. The condition reads the
-input kind with an `@first` anchor, because the body rewrites `kind` to
-`l7544`: the anchored condition keeps reading `l9100`. All nine rules share
+the fourth training pair and the second test pair. The condition reads the live
+kind, which gives the same states although the body rewrites `kind` to `l7544`.
+All nine rules share
 the one case because separate `if` rules with the same condition text replace
 each other, as [Control Flow](../docs/README.md#8-control-flow) in the
 language reference states, so a case per rule would keep only the last. A
@@ -1468,8 +1473,8 @@ and right of it in color 6, and the cells above and below it in colors 4 and
 3, whose 3 by 3 box spans the canvas from its origin. Its implementation is
 `obje40312ecead9 is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=5, kind=unknown, parts=[4, 6, 8, 6, 3])`,
 and its output is its input, unchanged. One class-level `if` case,
-`if $Obj.kind@first is l9100:`, selects the blocks whose input kind is
-`l9100`, and the rules of its body set the output kind and introduce one
+`if $Obj.kind is l9100:`, selects the blocks of kind `l9100`, and the rules of
+its body set the output kind and introduce one
 property, `fill_color`, which is absent before the rules run, as
 `mode of $Obj.parts`.
 That is the noun form of `$Obj.parts.mode()`: the accepted list query `mode`
@@ -1478,9 +1483,9 @@ the color with the most cells, matching items as `distinct` does. On a tie,
 which no pair has, `mode` returns the tied color that occurs first in `parts`,
 the one whose first cell comes first in reading order.
 `$Obj.volume is $Obj.width * $Obj.height` counts the fill's 9 cells, also for
-a block with a zero cell. The condition reads the input kind with an `@first`
-anchor, because the body rewrites `kind` to `l5236`: the anchored condition
-keeps reading `l9100`. The three rules share the one case because separate
+a block with a zero cell. The condition reads the live kind, which gives the
+same states although the body rewrites `kind` to `l5236`. The three rules share
+the one case because separate
 `if` rules with the same condition text replace each other, as
 [Control Flow](../docs/README.md#8-control-flow) in the language reference
 states, so a case per rule would keep only the last. A block
@@ -1623,15 +1628,15 @@ above, below, and right of it in color 6, and the cell left of it in color 8,
 whose 3 by 3 box spans the canvas from its origin. Its implementation is
 `obj1a9bda272b62 is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=5, kind=unknown)`,
 and its output is its input, unchanged. One class-level `if` case,
-`if $Obj.kind@first is l9100:`, selects the blocks whose input kind is
-`l9100`, and the three rules of its body turn each such block into the figure
+`if $Obj.kind is l9100:`, selects the blocks of kind `l9100`, and the three
+rules of its body turn each such block into the figure
 it forms with its mirror image: `$Obj.kind is l6919` names that geometry,
 `$Obj.width is $Obj.width@first * 2` makes the figure twice as wide as the
 block, 6 columns, as `dataset.28bf18c6.json` multiplies its shape's width by
 its copies, and `$Obj.volume is $Obj.volume@first * 2` counts the block's
-cells with their mirror images. The condition reads the input kind with an
-`@first` anchor, because the body rewrites `kind` to `l6919`: the anchored
-condition keeps reading `l9100`. The three rules share the one case because
+cells with their mirror images. The condition reads the live kind, which gives
+the same states although the body rewrites `kind` to `l6919`. The three rules
+share the one case because
 separate `if` rules with the same condition text replace each other, as
 [Control Flow](../docs/README.md#8-control-flow) in the language reference
 states, so a case per rule would keep only the last. A block of any other
@@ -1721,13 +1726,14 @@ passes `width=3, height=3` right after `y` and `kind=l9100` right after
 `volume=9`, as in
 `objf30b9a69fe75 is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=9, kind=l9100, parts=[2, 2, 2, 3, 2, 3, 3, 3, 3])`
 for the first training input. Two `if` cases turn a mosaic of kind `l9100`,
-and no other object, into the line: the first, `if $Obj.kind@first is l9100:`,
-holds four rules, and the second,
+and no other object, into the line: the first, `if $Obj.kind is l9100:`, holds
+four rules, and the second,
 `if $Obj.kind@first is l9100 and $Obj.orientation is 90:`, holds one. The
 four rules share one case because separate `if` cases with the same condition
-text replace each other. Both conditions read the input kind with an `@first`
-anchor because the first case rewrites `kind`: the second condition holds only
-once the lookup has turned the orientation to 90, after the kind has turned
+text replace each other. The first condition reads the live kind, which gives
+the same states although its case rewrites `kind`, and the second reads the
+input kind with an `@first` anchor: it holds only once the lookup has turned the
+orientation to 90, after the kind has turned
 `l6074`, so a condition on the live kind would leave the top-row line 3 rows
 tall. In the first case, `$Obj.kind is l6074` names the line, and
 `$Obj.fill_color is 5` introduces `fill_color`, which is absent before the
@@ -1840,12 +1846,12 @@ which names no geometry, but every implementation passes its object's kind,
 so no instance takes the default. Its declaration is that of
 `dataset.6d0aefbc.json`, and each original implementation passes
 `x=0, y=0, width=3, height=3, orientation=0, volume=9, kind=l9100`. One `if`
-case, `if $Obj.kind@first is l9100:`, turns every block of kind `l9100`, and
+case, `if $Obj.kind is l9100:`, turns every block of kind `l9100`, and
 no other object, into the figure it forms with its mirror image, with three
 rules that share the case because separate `if` cases with the same condition
-text replace each other. The condition reads the input kind with an `@first`
-anchor because the case rewrites `kind`, so it keeps holding once the kind
-turns `l7511`. `$Obj.kind is l7511` names that geometry,
+text replace each other. The condition reads the live kind, which gives the same
+states although the case rewrites `kind` to `l7511`. `$Obj.kind is l7511` names
+that geometry,
 `$Obj.height is $Obj.height@first * 2` makes the figure twice as tall as the
 block, 6 rows, anchored with `@first` because the rule rewrites `height`
 itself, and `$Obj.volume is $Obj.volume@first * 2` counts the block's cells
@@ -2037,12 +2043,12 @@ names no geometry, but every implementation passes its pattern's kind, so no
 instance takes the default. Each implementation passes `width` and `height`
 right after `y` and the kind right after `volume`, such as
 `x=0, y=1, width=1, height=1, orientation=0, volume=1, kind=l9100` for the
-first training input. One `if` case, `if $Obj.kind@first is l9100:`, turns a
-pattern of kind `l9100`, and no other object, into the tally with seven rules,
+first training input. One `if` case, `if $Obj.kind is l9100:`, turns a pattern
+of kind `l9100`, and no other object, into the tally with seven rules,
 which share the case because separate `if` cases with the same condition text
-replace each other. The condition reads the input kind with an `@first`
-anchor because the case rewrites `kind`, so it still holds once the kind turns
-`l5714`. `$Obj.kind is l5714` names the tally, and `$Obj.fill_color is 2`
+replace each other. The condition reads the live kind, which gives the same
+states although the case rewrites `kind` to `l5714`. `$Obj.kind is l5714` names
+the tally, and `$Obj.fill_color is 2`
 introduces `fill_color`, which is absent before the rules run, because the
 tally is red whatever the pattern. `width` is
 `min of [$Obj.volume, canvas_width]`, the noun form of the list query
@@ -2159,8 +2165,8 @@ first training input. The class defaults `kind` to `default`, which names no
 geometry, but every implementation passes its pattern's kind, `l9100` in the
 original pairs and `unknown` in the use case, so no instance takes the
 default.
-One class-level conditional, `if $Obj.kind@first is l9100:`, selects every
-pattern whose input kind is `l9100`, a single shape, and the three rules of
+One class-level conditional, `if $Obj.kind is l9100:`, selects every pattern of
+kind `l9100`, a single shape, and the three rules of
 its body turn each of them into the figure it forms with its mirror image.
 `$Obj.kind is l7511` names that geometry, and
 `$Obj.height is 2 * (canvas_height - $Obj.y@first)` grows the box down to the
@@ -2171,8 +2177,8 @@ gives 6 rows for the first training pattern, which starts on the top row, and
 as `dataset.d037b0a7.json` grows its bars with `canvas_height - $Obj.y@first`,
 anchored with `@first` to read the pattern's input row, as there, although no
 rule moves `y`. `$Obj.volume is 2 * $Obj.volume@first` counts the pattern's
-cells with their mirror images. The condition reads the kind with `@first`,
-the input kind, because the body turns it into `l7511`. The three rules share
+cells with their mirror images. The condition reads the live kind, which gives
+the same states although the body turns it into `l7511`. The three rules share
 one conditional because separate `if` rules with the same condition text
 replace each other, as the [language reference](../docs/README.md#conditionals)
 states, so a conditional per rule would keep only the last rule. The rules
@@ -2350,8 +2356,8 @@ matrix of cells. The class defaults `kind` to `default`, which names no
 geometry, but every implementation passes its region's kind right after
 `volume`, `kind=l9100` in the original pairs and `kind=unknown` in the use
 case, so no instance takes the default.
-One class-level conditional, `if $Obj.kind@first is l9100:`, selects every
-region whose input kind is `l9100`, a single shape, and the six rules of its
+One class-level conditional, `if $Obj.kind is l9100:`, selects every region of
+kind `l9100`, a single shape, and the six rules of its
 body resize each of them into its bar: `$Obj.kind is l6953` names the bar,
 `width` becomes 1 and `height` the cell count, as `$Obj.height is $Obj.volume`
 sets it, `y` moves to the output origin 0, and `x`,
@@ -2362,7 +2368,7 @@ whenever an instance is added. The filter counts only objects of the bar kind
 `l6953`, because a region of another kind turns into no bar and keeps its
 input `height`, its box's row count rather than its cell count, so counting
 it could push a bar into a column that no bar fills. The condition reads the
-kind with `@first`, the input kind, because the body turns it into `l6953`.
+live kind, which gives the same states although the body turns it into `l6953`.
 The six rules share one conditional because separate `if` rules with the same
 condition text replace each other, as the
 [language reference](../docs/README.md#conditionals) states, so a conditional
@@ -2458,12 +2464,13 @@ pairs holds a single gray cell, so the use case, the dataset's last pair,
 shows one: two gray cells side by side in the left two columns of the middle
 row, a horizontal domino, with the other rows empty, which
 `obj35a9e700bb1d is Obj(x=0, y=1, width=2, height=1, orientation=90, volume=2, kind=unknown)`
-constructs. One class-level `if`, `if $Obj.kind@first is l7544:`, selects
-the markers and holds all six rules, which set the output kind and
+constructs. One class-level `if`, `if $Obj.kind is l7544:`, selects the markers
+and holds all six rules, which set the output kind and
 orientation, introduce one property, `fill_color`, absent before the rules
 run, widen the marker into its bar, and move `x` to the left edge, 0, while
-`y` keeps the marker's row. Its condition reads the input kind with `@first`
-because its first rule, `$Obj.kind is l3058`, rewrites the kind. The rules
+`y` keeps the marker's row. Its condition reads the live kind, which gives the
+same states although its first rule, `$Obj.kind is l3058`, rewrites the kind.
+The rules
 share one `if` because separate `if` rules with the same condition text
 replace each other, so separate guards would give every instance, which the
 solver creates after the rules, only the last rule. `fill_color` is
@@ -2558,9 +2565,9 @@ holds a single point, so the use case, the dataset's last pair, shows one:
 two color-2 cells side by side in the second and third columns of the middle
 row, a horizontal domino, which
 `obje0e432fab7e5 is Obj(x=1, y=1, width=2, height=1, orientation=90, volume=2, kind=unknown)`
-constructs. One class-level `if`, `if $Obj.kind@first is l7544:`, selects the
-points and holds seven rules that turn every point into its figure. Its
-condition reads the input kind with `@first` because its first rule,
+constructs. One class-level `if`, `if $Obj.kind is l7544:`, selects the points
+and holds seven rules that turn every point into its figure. Its condition reads
+the live kind, which gives the same states although its first rule,
 `$Obj.kind is l2898`, which names the figure, rewrites the kind, and the rules
 share one `if` because separate `if` rules with the same condition text
 replace each other, so separate guards would give every instance, which the
@@ -2781,11 +2788,12 @@ and the rules read the canvas's width from the solver's `canvas_width`. Each
 implementation passes `width` and `height` right after `y`, such as
 `x=1, y=0, width=2, height=3, orientation=0, volume=4, kind=l9100` for the
 first training input.
-One class-level `if`, `if $Obj.kind@first is l9100:`, selects the patterns
-whose input kind is `l9100`, a single shape, and its three statements turn
-each of them into the figure it forms with its mirror image. The condition
-reads the input kind with `@first` because the first statement rewrites the
-kind, and the statements share one block because separate `if` rules with the
+One class-level `if`, `if $Obj.kind is l9100:`, selects the patterns of kind
+`l9100`, a single shape, and its three statements turn
+each of them into the figure it forms with its mirror image. The condition reads
+the live kind, which gives the same states although the first statement rewrites
+the kind, and the statements share one block because separate `if` rules with
+the
 same condition text replace each other, as
 [Control Flow](../docs/README.md#8-control-flow) states, so separate guards
 would keep only the last statement. `$Obj.kind is l6919` names that geometry,
@@ -2885,13 +2893,14 @@ but every implementation passes its object's kind, `kind=l7544` for the
 eleven points, as in
 `obj7ed0b8b9b5eb is Obj(x=2, y=0, width=1, height=1, orientation=0, volume=1, kind=l7544, color=6)`,
 and `kind=unknown` for the use case's shape, so no instance takes the default.
-One class-level `if`, `if $Obj.kind@first is l7544:`, selects the points,
-whose input kind is `l7544`, and its statements set the output kind `l6953`,
+One class-level `if`, `if $Obj.kind is l7544:`, selects the points, of kind
+`l7544`, and its statements set the output kind `l6953`,
 grow the point's `height` into the bar's, `canvas_height - $Obj.y@first`,
 reading the canvas's height from the solver's `canvas_height`, and count the
-bar's cells with `$Obj.volume is $Obj.width * $Obj.height`. The condition
-reads the input kind with `@first` because the first statement rewrites the
-kind, and the statements share one block because separate `if` rules with the
+bar's cells with `$Obj.volume is $Obj.width * $Obj.height`. The condition reads
+the live kind, which gives the same states although the first statement rewrites
+the kind, and the statements share one block because separate `if` rules with
+the
 same condition text replace each other, as
 [Control Flow](../docs/README.md#8-control-flow) states, so separate guards
 would keep only the last statement. The body runs its statements in order, so
@@ -2955,12 +2964,13 @@ with the default `default`, which names no geometry, but every implementation
 passes its region's kind, `kind=l9100` for the five original regions, as in
 `obje6495176f8fb is Obj(x=0, y=1, width=2, height=2, orientation=135, volume=2, kind=l9100, color=1)`,
 and `kind=unknown` for the use case's, so no instance takes the default.
-One class-level `if`, `if $Obj.kind@first is l9100:`, selects the regions
-whose input kind is `l9100`, and its statements set the output kind `l3058`,
+One class-level `if`, `if $Obj.kind is l9100:`, selects the regions of kind
+`l9100`, and its statements set the output kind `l3058`,
 resize each region into its bar, with `width`
 the cell count, as `$Obj.width is $Obj.volume` sets it, and `height` 1, and
-move `x` and `y` to the output origin 0. The condition reads the input kind
-with `@first` because the first statement rewrites the kind, and the
+move `x` and `y` to the output origin 0. The condition reads the live kind,
+which gives the same states although the first statement rewrites the kind, and
+the
 statements share one block because separate `if` rules with the same
 condition text replace each other, as
 [Control Flow](../docs/README.md#8-control-flow) states, so separate guards
@@ -3127,11 +3137,12 @@ a bare word, so no instance takes the default. Each bar's implementation passes
 `width=6, height=1` right after `y` and `kind=l3058` right after `volume`, such
 as `x=0, y=1, width=6, height=1, orientation=90, volume=6, kind=l3058` for the
 bottom bar of the first training input. One class-level conditional,
-`if $Obj.kind@first is l3058:`, selects the bars by their input kind with the
+`if $Obj.kind is l3058:`, selects the bars by their kind with the
 comparison `is` of [NUC 86](../docs/nuc-0086.md), so an object of any other
 kind is left alone, and its body holds five rules that turn every bar into its
-share of the checkerboard. The condition reads the kind with an `@first`
-anchor, because the body rewrites `kind`. The five rules share one body because
+share of the checkerboard. The condition reads the live kind, which gives the
+same states although the body rewrites `kind`. The five rules share one body
+because
 separate `if` rules with the same condition replace each other: five of them
 would leave only the last, which moves `y` alone. `$Obj.kind is l5973` names
 that geometry,

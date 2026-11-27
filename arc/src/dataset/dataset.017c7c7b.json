@@ -1,7 +1,7 @@
 {
   "class_declaration": "class Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, kind: str = 'default', color: int, period: int):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.kind is kind\n    this.color is color\n    this.period is period",
   "declarations": [
-    "if $Obj.kind@first is l9100:\n    $Obj.kind is l8384\n    $Obj.extension_direction is down\n    $Obj.height is $Obj.height@first * 3 / 2\n    $Obj.color is 2"
+    "if $Obj.kind is l9100:\n    $Obj.kind is l8384\n    $Obj.extension_direction is down\n    $Obj.height is $Obj.height@first * 3 / 2\n    $Obj.color is 2"
   ],
   "output_canvas": "EXACT",
   "dataset": [

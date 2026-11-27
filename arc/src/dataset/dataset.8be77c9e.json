@@ -1,7 +1,7 @@
 {
   "class_declaration": "class Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, kind: str = 'default'):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.kind is kind",
   "declarations": [
-    "if $Obj.kind@first is l9100:\n    $Obj.kind is l7511\n    $Obj.height is 2 * (canvas_height - $Obj.y@first)\n    $Obj.volume is 2 * $Obj.volume@first"
+    "if $Obj.kind is l9100:\n    $Obj.kind is l7511\n    $Obj.height is 2 * (canvas_height - $Obj.y@first)\n    $Obj.volume is 2 * $Obj.volume@first"
   ],
   "output_canvas": "EXACT",
   "dataset": [

@@ -1,7 +1,7 @@
 {
   "class_declaration": "class Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, kind: str = 'default', color: int):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.kind is kind\n    this.color is color",
   "declarations": [
-    "if $Obj.kind@first is l6747:\n    $Obj.kind is l3337\n    $Obj.marker_color is 1\n    $Obj.volume is $Obj.volume@first + 1"
+    "if $Obj.kind is l6747:\n    $Obj.kind is l3337\n    $Obj.marker_color is 1\n    $Obj.volume is $Obj.volume@first + 1"
   ],
   "output_canvas": "EXACT",
   "dataset": [

@@ -428,7 +428,7 @@ passes its object's kind, here `kind=l9100`, the old default. Every rule now
 transforms only that kind:
 
 ```nuc
-if $Obj.kind@first is l9100:
+if $Obj.kind is l9100:
     $Obj.kind is l6074
     $Obj.orientation is {1: 90, 2: 135, 3: 45}[$Obj.parts.distinct().length]
     $Obj.fill_color is 5
@@ -438,15 +438,15 @@ if $Obj.kind@first is l9100 and $Obj.orientation is 90:
     $Obj.height is 1
 ```
 
-The guards read the input kind with `@first`, because the rules change the kind,
-so a guard still holds after the change. Rules that share a guard sit in one
+At the user's request the first guard reads the live kind, which gives the same
+states although its block changes the kind. Rules that share a guard sit in one
 `if` block, because a class-level `if` replaces an earlier one with the same
 condition text. An object of any other kind, `unknown`, `default`, or an
 invented one, matches no rule and keeps its input state, so the dataset needs no
 rule of its own for it.
 
-Its second guard needs `@first` too: on the live kind it would never fire,
-because the kind is already `l6074` when the orientation turns 90.
+Its second guard keeps `@first`, because on the live kind it would never fire:
+the kind is already `l6074` when the orientation turns 90.
 
 The dataset also ends with one synthesized use case, a new pair after its last
 pair: a 3 by 3 object of 7 cells in colors 2, 3 and 4 at x 0, y 0 on a 3 by 3
