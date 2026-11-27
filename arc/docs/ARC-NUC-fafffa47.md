@@ -6,12 +6,12 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Item | Status |
 | --- | --- |
 | Puzzle | [`data/training/fafffa47.json`](../data/training/fafffa47.json) |
-| Instruction dataset | [`dataset.fafffa47.json`](../src/dataset/dataset.fafffa47.json): 5 original training pairs followed by 1 test pair, 12 whole panel-figure instances, written on 9-Nov-2026; `volume` added as the sixth standard entry on 17-Nov-2026 |
+| Instruction dataset | [`dataset.fafffa47.json`](../src/dataset/dataset.fafffa47.json): 5 original training pairs followed by 1 test pair, 12 whole panel-figure instances, written on 9-Nov-2026; `volume` added as the sixth standard entry on 17-Nov-2026; since 27-Nov-2026 every rule is guarded by kind, and one synthesized use case of kind `unknown` follows the last pair |
 | Output canvas | `FIT` |
 | Nucleoid enhancements | None requested; accepted Nucleoid expresses the model. A quote-free NUC for other datasets' quotes was drafted and then withdrawn before evaluation, once the accepted [NUC 95](../../docs/nuc-0095.md) made those quotes expressible |
 | Solver changes | Suggested, not applied: an output canvas mode that frames one panel, and class declarations that stay in `declarations[0]`; since 17-Nov-2026 `Matrix.locate` measures each object's `volume`, which `object.implementation` receives as `input_volume` |
 | Solver runs | 1 local run on 9-Nov-2026: exit 1, a failed run, `ReferenceError: Obj is not defined` in the analysis stage; difference unknown |
-| Updated | 17-Nov-2026 |
+| Updated | 27-Nov-2026 |
 
 ## Puzzle
 
@@ -231,6 +231,54 @@ and its number belongs to Item Words. Its strategy trial was never
 evaluated, so learning was unscored: no reward and no checkpoint, and the
 genesis remains the retained head.
 
+### Kind guards and unknown use case
+
+On 27-Nov-2026, at the user's request, every instruction dataset took the
+pattern of `dataset.27a28665.json`. The class default is now
+`kind: str = 'default'`, which names no geometry, and every implementation
+passes its object's kind, here `kind=l9100`, the old default. Every rule now
+transforms only that kind:
+
+```nuc
+if $Obj.kind@first is l9100:
+    $Obj.kind is l8372
+    $Obj.points is $Obj.holes.filter(hole => all figure in Obj.filter(other => other.kind@first is l9100): figure.holes.includes(hole))
+    $Obj.fill_color is 2
+    $Obj.x is $Obj.points.min(point => point[0])
+    $Obj.y is $Obj.points.min(point => point[1])
+    $Obj.width is $Obj.points.max(point => point[0]) - $Obj.x + 1
+    $Obj.height is $Obj.points.max(point => point[1]) - $Obj.y + 1
+    $Obj.volume is $Obj.points.length
+```
+
+The guards read the input kind with `@first`, because the rules change the kind,
+so a guard still holds after the change. Rules that share a guard sit in one
+`if` block, because a class-level `if` replaces an earlier one with the same
+condition text. An object of any other kind, `unknown`, `default`, or an
+invented one, matches no rule and keeps its input state, so the dataset needs no
+rule of its own for it.
+
+Its `points` rule now intersects only the figures whose input kind is `l9100`,
+so an `unknown` object in the same grid leaves the known figures' points alone,
+and the statements of its block run in order. Its existing instances keep the
+six older keys from `input_x` to `output_orientation`, while the use case has
+the six standard keys.
+
+The dataset also ends with one synthesized use case, a new pair after its last
+pair: a 3 by 3 object of 7 cells in color 9 at x 0, y 0 on a 3 by 6 canvas, at
+orientation 0, constructed as `obj19bf1ed26969 is Obj(x=0, y=0, width=3,
+height=3, orientation=0, volume=7, kind=unknown, holes=[[1, 0], [1, 2]])`. Its
+output state equals its input state.
+
+Every existing snapshot keeps its value. The arc-dataset worker regenerated them
+with the accepted runtime that `a880e06d` carries, which writes `kind` right
+after `id`, where the rename from `tag` on 24-Nov-2026 had left it in `tag`'s
+place; the caller replayed every snapshot offline on the same runtime. The
+[dataset grammar](../arc.ebnf) lost the `=` assignment and the nullish
+coalescing, which no dataset uses any more. No NUC was requested, so no proposal
+strategy was selected, and no solver run has measured this version, so its
+difference is unknown, not zero.
+
 ## Runs
 
 | Date | Command | Runtime | Exit status | Difference | Elapsed |
@@ -294,3 +342,6 @@ run. The invocation authorizes one run, so none was repeated.
   `dataset.27a28665.json` the four `fill_color` keys, such as `'l4262': 1`
   as `l4262: 1`, and the ten keyword arguments, such as `tag='l4262'` as
   `tag=l4262`.
+- **The kind-guard version is unmeasured.** No solver run has measured the
+  27-Nov-2026 version with kind guards and its unknown use case, so its effect
+  on this puzzle's result is unknown.

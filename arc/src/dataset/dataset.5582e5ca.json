@@ -1,9 +1,7 @@
 {
-  "class_declaration": "class Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, kind: str = 'l9100', parts: list):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.kind is kind\n    this.parts is parts",
+  "class_declaration": "class Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, kind: str = 'default', parts: list):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.kind is kind\n    this.parts is parts",
   "declarations": [
-    "$Obj.kind is l5236",
-    "$Obj.fill_color is mode of $Obj.parts",
-    "$Obj.volume is $Obj.width * $Obj.height"
+    "if $Obj.kind@first is l9100:\n    $Obj.kind is l5236\n    $Obj.fill_color is mode of $Obj.parts\n    $Obj.volume is $Obj.width * $Obj.height"
   ],
   "output_canvas": "EXACT",
   "dataset": [
@@ -31,9 +29,9 @@
             [4, 4, 4],
             [4, 4, 4]
           ],
-          "implementation": "obja1b60a6c90dc is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=8, parts=[4, 4, 8, 6, 4, 3, 6, 3])",
-          "input_value": {"height":3,"id":"obja1b60a6c90dc","orientation":0,"parts":[4,4,8,6,4,3,6,3],"kind":"l9100","volume":8,"width":3,"x":0,"y":0},
-          "output_value": {"fill_color":4,"height":3,"id":"obja1b60a6c90dc","orientation":0,"parts":[4,4,8,6,4,3,6,3],"kind":"l5236","volume":9,"width":3,"x":0,"y":0}
+          "implementation": "obja1b60a6c90dc is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=8, kind=l9100, parts=[4, 4, 8, 6, 4, 3, 6, 3])",
+          "input_value": {"height":3,"id":"obja1b60a6c90dc","kind":"l9100","orientation":0,"parts":[4,4,8,6,4,3,6,3],"volume":8,"width":3,"x":0,"y":0},
+          "output_value": {"fill_color":4,"height":3,"id":"obja1b60a6c90dc","kind":"l5236","orientation":0,"parts":[4,4,8,6,4,3,6,3],"volume":9,"width":3,"x":0,"y":0}
         }
       ]
     },
@@ -61,9 +59,9 @@
             [9, 9, 9],
             [9, 9, 9]
           ],
-          "implementation": "obj2f95578125dc is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=9, parts=[6, 8, 9, 1, 8, 1, 9, 4, 9])",
-          "input_value": {"height":3,"id":"obj2f95578125dc","orientation":0,"parts":[6,8,9,1,8,1,9,4,9],"kind":"l9100","volume":9,"width":3,"x":0,"y":0},
-          "output_value": {"fill_color":9,"height":3,"id":"obj2f95578125dc","orientation":0,"parts":[6,8,9,1,8,1,9,4,9],"kind":"l5236","volume":9,"width":3,"x":0,"y":0}
+          "implementation": "obj2f95578125dc is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=9, kind=l9100, parts=[6, 8, 9, 1, 8, 1, 9, 4, 9])",
+          "input_value": {"height":3,"id":"obj2f95578125dc","kind":"l9100","orientation":0,"parts":[6,8,9,1,8,1,9,4,9],"volume":9,"width":3,"x":0,"y":0},
+          "output_value": {"fill_color":9,"height":3,"id":"obj2f95578125dc","kind":"l5236","orientation":0,"parts":[6,8,9,1,8,1,9,4,9],"volume":9,"width":3,"x":0,"y":0}
         }
       ]
     },
@@ -91,9 +89,9 @@
             [6, 6, 6],
             [6, 6, 6]
           ],
-          "implementation": "obj0a1a67aea6eb is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=9, parts=[4, 6, 9, 6, 4, 1, 8, 8, 6])",
-          "input_value": {"height":3,"id":"obj0a1a67aea6eb","orientation":0,"parts":[4,6,9,6,4,1,8,8,6],"kind":"l9100","volume":9,"width":3,"x":0,"y":0},
-          "output_value": {"fill_color":6,"height":3,"id":"obj0a1a67aea6eb","orientation":0,"parts":[4,6,9,6,4,1,8,8,6],"kind":"l5236","volume":9,"width":3,"x":0,"y":0}
+          "implementation": "obj0a1a67aea6eb is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=9, kind=l9100, parts=[4, 6, 9, 6, 4, 1, 8, 8, 6])",
+          "input_value": {"height":3,"id":"obj0a1a67aea6eb","kind":"l9100","orientation":0,"parts":[4,6,9,6,4,1,8,8,6],"volume":9,"width":3,"x":0,"y":0},
+          "output_value": {"fill_color":6,"height":3,"id":"obj0a1a67aea6eb","kind":"l5236","orientation":0,"parts":[4,6,9,6,4,1,8,8,6],"volume":9,"width":3,"x":0,"y":0}
         }
       ]
     },
@@ -121,9 +119,39 @@
             [8, 8, 8],
             [8, 8, 8]
           ],
-          "implementation": "objea33ebd2f6a8 is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=8, parts=[8, 8, 6, 4, 6, 9, 8, 3])",
-          "input_value": {"height":3,"id":"objea33ebd2f6a8","orientation":0,"parts":[8,8,6,4,6,9,8,3],"kind":"l9100","volume":8,"width":3,"x":0,"y":0},
-          "output_value": {"fill_color":8,"height":3,"id":"objea33ebd2f6a8","orientation":0,"parts":[8,8,6,4,6,9,8,3],"kind":"l5236","volume":9,"width":3,"x":0,"y":0}
+          "implementation": "objea33ebd2f6a8 is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=8, kind=l9100, parts=[8, 8, 6, 4, 6, 9, 8, 3])",
+          "input_value": {"height":3,"id":"objea33ebd2f6a8","kind":"l9100","orientation":0,"parts":[8,8,6,4,6,9,8,3],"volume":8,"width":3,"x":0,"y":0},
+          "output_value": {"fill_color":8,"height":3,"id":"objea33ebd2f6a8","kind":"l5236","orientation":0,"parts":[8,8,6,4,6,9,8,3],"volume":9,"width":3,"x":0,"y":0}
+        }
+      ]
+    },
+    {
+      "input_matrix": [
+        [0, 4, 0],
+        [6, 8, 6],
+        [0, 3, 0]
+      ],
+      "output_matrix": [
+        [0, 4, 0],
+        [6, 8, 6],
+        [0, 3, 0]
+      ],
+      "instances": [
+        {
+          "instance_name": "obje40312ecead9",
+          "input_instance_matrix": [
+            [0, 4, 0],
+            [6, 8, 6],
+            [0, 3, 0]
+          ],
+          "output_instance_matrix": [
+            [0, 4, 0],
+            [6, 8, 6],
+            [0, 3, 0]
+          ],
+          "implementation": "obje40312ecead9 is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=5, kind=unknown, parts=[4, 6, 8, 6, 3])",
+          "input_value": {"height":3,"id":"obje40312ecead9","kind":"unknown","orientation":0,"parts":[4,6,8,6,3],"volume":5,"width":3,"x":0,"y":0},
+          "output_value": {"height":3,"id":"obje40312ecead9","kind":"unknown","orientation":0,"parts":[4,6,8,6,3],"volume":5,"width":3,"x":0,"y":0}
         }
       ]
     }

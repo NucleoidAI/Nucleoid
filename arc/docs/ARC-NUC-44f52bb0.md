@@ -6,12 +6,12 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Item | Status |
 | --- | --- |
 | Puzzle | [`data/training/44f52bb0.json`](../data/training/44f52bb0.json) |
-| Instruction dataset | [`dataset.44f52bb0.json`](../src/dataset/dataset.44f52bb0.json): the puzzle's 6 original training pairs and its 2 test pairs, one whole-pattern instance each (8 instances); version 4, which reads the canvas width from the solver's `canvas_width`, committed in `f771c15` and moved to the standard entries in `521aa3c`, replacing version 3, which derives `symmetric` by a rule and which `6d3acec` committed, version 2's input `symmetric`, and version 1's 32 point instances; orientation labelled by shape and the shared orientation comment added on 6-Nov-2026; descriptive `implementation` comments added on 7-Nov-2026; colors written as letters on 8-Nov-2026; respelled on 8-Nov-2026 with the `is` assignments of NUC 93 and bare words, every snapshot unchanged; colors written as numbers again on 8-Nov-2026; `volume` added as the sixth standard entry on 17-Nov-2026 |
+| Instruction dataset | [`dataset.44f52bb0.json`](../src/dataset/dataset.44f52bb0.json): the puzzle's 6 original training pairs and its 2 test pairs, one whole-pattern instance each (8 instances); version 4, which reads the canvas width from the solver's `canvas_width`, committed in `f771c15` and moved to the standard entries in `521aa3c`, replacing version 3, which derives `symmetric` by a rule and which `6d3acec` committed, version 2's input `symmetric`, and version 1's 32 point instances; orientation labelled by shape and the shared orientation comment added on 6-Nov-2026; descriptive `implementation` comments added on 7-Nov-2026; colors written as letters on 8-Nov-2026; respelled on 8-Nov-2026 with the `is` assignments of NUC 93 and bare words, every snapshot unchanged; colors written as numbers again on 8-Nov-2026; `volume` added as the sixth standard entry on 17-Nov-2026; since 27-Nov-2026 every rule is guarded by kind, and one synthesized use case of kind `unknown` follows the last pair |
 | Output canvas | `FIT` |
 | Nucleoid enhancements | None requested for any version, so no proposal strategy was selected; the `symmetric` rule of versions 3 and 4 uses the quantifiers of [NUC 62](../../docs/nuc-0062.md) and the deep-equality `includes` of [NUC 61](../../docs/nuc-0061.md) |
 | Solver changes | On 4-Nov-2026, at the user's request, every `nucleoid.run` call in `src/analyzer.ts` and `src/visualizer.ts` declares `canvas_width` and `canvas_height` at the start of its program; one suggested change awaits review, not applied; since 8-Nov-2026 every respelled dataset needs `is` assignments, which `src/lib/nucleoid.ts` enabled with `--is-assignment` until `d945213` made them the default; since 17-Nov-2026 `Matrix.locate` measures each object's `volume`, which `object.implementation` receives as `input_volume` |
 | Solver runs | 3 local runs on 4-Nov-2026: version 1 exit 1 before any model call (`OPENROUTER_API_KEY is required`); version 2 exit 0; version 3 exit 0; version 4 not run; none of the current version; none of the 8-Nov-2026 `is` version |
-| Updated | 17-Nov-2026 |
+| Updated | 27-Nov-2026 |
 
 ## Puzzle
 
@@ -426,6 +426,49 @@ No NUC was requested, so no proposal strategy was selected and strategy
 learning did not apply. No solver run has measured this version, so its
 difference is unknown, not zero.
 
+### Kind guards and unknown use case
+
+On 27-Nov-2026, at the user's request, every instruction dataset took the
+pattern of `dataset.27a28665.json`. The class default is now
+`kind: str = 'default'`, which names no geometry, and every implementation
+passes its object's kind, here `kind=l9100`, the old default. Every rule now
+transforms only that kind:
+
+```nuc
+if $Obj.kind@first is l9100:
+    $Obj.kind is l7544
+    $Obj.width is 1
+    $Obj.height is 1
+    $Obj.orientation is 0
+    $Obj.symmetric is all point in $Obj.points: $Obj.points.includes([canvas_width - 1 - point[0], point[1]])
+    $Obj.fill_color is 1 if $Obj.symmetric else 7
+    $Obj.x is 0
+    $Obj.y is 0
+    $Obj.volume is $Obj.width * $Obj.height
+```
+
+The guards read the input kind with `@first`, because the rules change the kind,
+so a guard still holds after the change. Rules that share a guard sit in one
+`if` block, because a class-level `if` replaces an earlier one with the same
+condition text. An object of any other kind, `unknown`, `default`, or an
+invented one, matches no rule and keeps its input state, so the dataset needs no
+rule of its own for it.
+
+The dataset also ends with one synthesized use case, a new pair after its last
+pair: a 3 by 3 object of 5 cells in color 2 at x 0, y 0 on a 3 by 3 canvas, at
+orientation 0, constructed as `obj69fa9a05ccce is Obj(x=0, y=0, width=3,
+height=3, orientation=0, volume=5, kind=unknown, points=[[0, 0], [1, 0], [2, 0],
+[1, 1], [1, 2]])`. Its output state equals its input state.
+
+Every existing snapshot keeps its value. The arc-dataset worker regenerated them
+with the accepted runtime that `a880e06d` carries, which writes `kind` right
+after `id`, where the rename from `tag` on 24-Nov-2026 had left it in `tag`'s
+place; the caller replayed every snapshot offline on the same runtime. The
+[dataset grammar](../arc.ebnf) lost the `=` assignment and the nullish
+coalescing, which no dataset uses any more. No NUC was requested, so no proposal
+strategy was selected, and no solver run has measured this version, so its
+difference is unknown, not zero.
+
 ## Runs
 
 | Date | Dataset version | Runtime | Exit status | Difference | Elapsed |
@@ -535,3 +578,6 @@ zero.
   words beside quoted strings, and a word reads as its text only as a whole
   value: a model that writes one inside a larger value, such as
   `$Obj.fill_color is A if $Obj.symmetric else C`, gets a `ReferenceError`.
+- **The kind-guard version is unmeasured.** No solver run has measured the
+  27-Nov-2026 version with kind guards and its unknown use case, so its effect
+  on this puzzle's result is unknown.

@@ -1,7 +1,7 @@
 declaration          ::= classStmt | ifStmt | classRule
 implementation       ::= NAME assign NAME
                          '(' labeledArgument ( ',' labeledArgument )+ ')'
-assign               ::= 'is' | '='
+assign               ::= 'is'
 
 classStmt            ::= 'class' NAME '(' constructorParameter ( ',' constructorParameter )+ ')'
                          ':' classBody
@@ -17,8 +17,7 @@ classRule            ::= CLASS_REF '.' NAME assign expression
 labeledArgument      ::= NAME '=' literal
 literal              ::= INTEGER | NAME | '[' literal ( ',' literal )+ ']'
 
-expression           ::= coalesce ( 'if' logicalOr 'else' logicalOr )?
-coalesce             ::= logicalOr ( '??' logicalOr )?
+expression           ::= logicalOr ( 'if' logicalOr 'else' logicalOr )?
 logicalOr            ::= logicalAnd ( 'or' logicalAnd )?
 logicalAnd           ::= equality ( 'and' equality )*
 equality             ::= relational ( 'is' 'not'? relational )?

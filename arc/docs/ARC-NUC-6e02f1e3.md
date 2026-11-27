@@ -6,12 +6,12 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Item | Status |
 | --- | --- |
 | Puzzle | [`data/training/6e02f1e3.json`](../data/training/6e02f1e3.json) |
-| Instruction dataset | [`dataset.6e02f1e3.json`](../src/dataset/dataset.6e02f1e3.json): the puzzle's 5 original training pairs and its test pair, 6 mosaic instances, one per pair; committed with this record. An earlier invocation the same day verified a different model offline and did not publish it. On 6-Nov-2026 its orientation guard was respelled with `is`; shared orientation comment added on 6-Nov-2026; descriptive `implementation` comments added on 7-Nov-2026; colors written as letters on 8-Nov-2026; respelled on 8-Nov-2026 with the `is` assignments of NUC 93 and bare words, every snapshot unchanged; colors written as numbers again on 8-Nov-2026; `volume` added as the sixth standard entry on 17-Nov-2026 |
+| Instruction dataset | [`dataset.6e02f1e3.json`](../src/dataset/dataset.6e02f1e3.json): the puzzle's 5 original training pairs and its test pair, 6 mosaic instances, one per pair; committed with this record. An earlier invocation the same day verified a different model offline and did not publish it. On 6-Nov-2026 its orientation guard was respelled with `is`; shared orientation comment added on 6-Nov-2026; descriptive `implementation` comments added on 7-Nov-2026; colors written as letters on 8-Nov-2026; respelled on 8-Nov-2026 with the `is` assignments of NUC 93 and bare words, every snapshot unchanged; colors written as numbers again on 8-Nov-2026; `volume` added as the sixth standard entry on 17-Nov-2026; since 27-Nov-2026 every rule is guarded by kind, and one synthesized use case of kind `unknown` follows the last pair |
 | Output canvas | `EXACT`, inferred from the training pairs |
 | Nucleoid enhancements | None requested, so no proposal strategy was selected and strategy learning did not apply; the rules use the accepted `distinct` list query of [NUC 71](../../docs/nuc-0071.md) and the accepted `is` of [NUC 86](../../docs/nuc-0086.md) |
 | Solver changes | None; suggested changes await review, not applied; since 8-Nov-2026 every respelled dataset needs `is` assignments, which `src/lib/nucleoid.ts` enabled with `--is-assignment` until `d945213` made them the default; since 17-Nov-2026 `Matrix.locate` measures each object's `volume`, which `object.implementation` receives as `input_volume` |
 | Solver runs | 1 local run on 5-Nov-2026, exit 1 before any model call (`OPENROUTER_API_KEY is required`); difference unknown; none of the current version; none of the 8-Nov-2026 `is` version |
-| Updated | 17-Nov-2026 |
+| Updated | 27-Nov-2026 |
 
 ## Puzzle
 
@@ -419,6 +419,50 @@ No NUC was requested, so no proposal strategy was selected and strategy
 learning did not apply. No solver run has measured this version, so its
 difference is unknown, not zero.
 
+### Kind guards and unknown use case
+
+On 27-Nov-2026, at the user's request, every instruction dataset took the
+pattern of `dataset.27a28665.json`. The class default is now
+`kind: str = 'default'`, which names no geometry, and every implementation
+passes its object's kind, here `kind=l9100`, the old default. Every rule now
+transforms only that kind:
+
+```nuc
+if $Obj.kind@first is l9100:
+    $Obj.kind is l6074
+    $Obj.orientation is {1: 90, 2: 135, 3: 45}[$Obj.parts.distinct().length]
+    $Obj.fill_color is 5
+    $Obj.volume is max of [$Obj.width, $Obj.height]
+
+if $Obj.kind@first is l9100 and $Obj.orientation is 90:
+    $Obj.height is 1
+```
+
+The guards read the input kind with `@first`, because the rules change the kind,
+so a guard still holds after the change. Rules that share a guard sit in one
+`if` block, because a class-level `if` replaces an earlier one with the same
+condition text. An object of any other kind, `unknown`, `default`, or an
+invented one, matches no rule and keeps its input state, so the dataset needs no
+rule of its own for it.
+
+Its second guard needs `@first` too: on the live kind it would never fire,
+because the kind is already `l6074` when the orientation turns 90.
+
+The dataset also ends with one synthesized use case, a new pair after its last
+pair: a 3 by 3 object of 7 cells in colors 2, 3 and 4 at x 0, y 0 on a 3 by 3
+canvas, at orientation 0, constructed as `obj75c19d1f341f is Obj(x=0, y=0,
+width=3, height=3, orientation=0, volume=7, kind=unknown, parts=[2, 2, 2, 3, 4,
+4, 4])`. Its output state equals its input state.
+
+Every existing snapshot keeps its value. The arc-dataset worker regenerated them
+with the accepted runtime that `a880e06d` carries, which writes `kind` right
+after `id`, where the rename from `tag` on 24-Nov-2026 had left it in `tag`'s
+place; the caller replayed every snapshot offline on the same runtime. The
+[dataset grammar](../arc.ebnf) lost the `=` assignment and the nullish
+coalescing, which no dataset uses any more. No NUC was requested, so no proposal
+strategy was selected, and no solver run has measured this version, so its
+difference is unknown, not zero.
+
 ## Runs
 
 | Date | Dataset version | Runtime | Exit status | Difference | Elapsed |
@@ -510,3 +554,6 @@ zero.
   words beside quoted strings, and a word reads as its text only as a whole
   value: a model that writes one inside a larger value, such as
   `$Obj.fill_color is A if $Obj.symmetric else C`, gets a `ReferenceError`.
+- **The kind-guard version is unmeasured.** No solver run has measured the
+  27-Nov-2026 version with kind guards and its unknown use case, so its effect
+  on this puzzle's result is unknown.
