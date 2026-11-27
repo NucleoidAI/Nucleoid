@@ -1,7 +1,7 @@
 {
-  "class_declaration": "class Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, kind: str = 'default', color: int):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.kind is kind\n    this.color is color",
+  "class_declaration": "class Object(x: int, y: int, width: int, height: int, orientation: int, volume: int, kind: str = 'default', color: int):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.kind is kind\n    this.color is color",
   "declarations": [
-    "if $Obj.kind is l9100 and any other in Obj: other.volume > $Obj.volume:\n    $Obj.color is 5"
+    "if $Object.kind is l9100 and any other in Object: other.volume > $Object.volume:\n    $Object.color is 5"
   ],
   "output_canvas": "EXACT",
   "dataset": [
@@ -18,7 +18,7 @@
       ],
       "instances": [
         {
-          "instance_name": "objfd8da1fb82d2",
+          "instance_name": "ofd8da1fb82d2",
           "input_instance_matrix": [
             [2, 2, 2],
             [2, 0, 0],
@@ -29,12 +29,12 @@
             [2, 0, 0],
             [2, 0, 0]
           ],
-          "implementation": "objfd8da1fb82d2 is Obj(x=0, y=0, width=3, height=3, orientation=315, volume=5, kind=l9100, color=2)",
-          "input_value": {"color":2,"height":3,"id":"objfd8da1fb82d2","kind":"l9100","orientation":315,"volume":5,"width":3,"x":0,"y":0},
-          "output_value": {"color":2,"height":3,"id":"objfd8da1fb82d2","kind":"l9100","orientation":315,"volume":5,"width":3,"x":0,"y":0}
+          "implementation": "ofd8da1fb82d2 is Object(x=0, y=0, width=3, height=3, orientation=315, volume=5, kind=l9100, color=2)",
+          "input_value": {"color":2,"height":3,"id":"ofd8da1fb82d2","kind":"l9100","orientation":315,"volume":5,"width":3,"x":0,"y":0},
+          "output_value": {"color":2,"height":3,"id":"ofd8da1fb82d2","kind":"l9100","orientation":315,"volume":5,"width":3,"x":0,"y":0}
         },
         {
-          "instance_name": "obj18a2b2379cda",
+          "instance_name": "o18a2b2379cda",
           "input_instance_matrix": [
             [0, 0, 0],
             [0, 1, 0],
@@ -45,12 +45,12 @@
             [0, 5, 0],
             [0, 0, 0]
           ],
-          "implementation": "obj18a2b2379cda is Obj(x=1, y=1, width=1, height=1, orientation=0, volume=1, kind=l9100, color=1)",
-          "input_value": {"color":1,"height":1,"id":"obj18a2b2379cda","kind":"l9100","orientation":0,"volume":1,"width":1,"x":1,"y":1},
-          "output_value": {"color":5,"height":1,"id":"obj18a2b2379cda","kind":"l9100","orientation":0,"volume":1,"width":1,"x":1,"y":1}
+          "implementation": "o18a2b2379cda is Object(x=1, y=1, width=1, height=1, orientation=0, volume=1, kind=l9100, color=1)",
+          "input_value": {"color":1,"height":1,"id":"o18a2b2379cda","kind":"l9100","orientation":0,"volume":1,"width":1,"x":1,"y":1},
+          "output_value": {"color":5,"height":1,"id":"o18a2b2379cda","kind":"l9100","orientation":0,"volume":1,"width":1,"x":1,"y":1}
         },
         {
-          "instance_name": "objaabb8a63326c",
+          "instance_name": "oaabb8a63326c",
           "input_instance_matrix": [
             [0, 0, 0],
             [0, 0, 8],
@@ -61,9 +61,9 @@
             [0, 0, 5],
             [0, 5, 5]
           ],
-          "implementation": "objaabb8a63326c is Obj(x=1, y=1, width=2, height=2, orientation=135, volume=3, kind=l9100, color=8)",
-          "input_value": {"color":8,"height":2,"id":"objaabb8a63326c","kind":"l9100","orientation":135,"volume":3,"width":2,"x":1,"y":1},
-          "output_value": {"color":5,"height":2,"id":"objaabb8a63326c","kind":"l9100","orientation":135,"volume":3,"width":2,"x":1,"y":1}
+          "implementation": "oaabb8a63326c is Object(x=1, y=1, width=2, height=2, orientation=135, volume=3, kind=l9100, color=8)",
+          "input_value": {"color":8,"height":2,"id":"oaabb8a63326c","kind":"l9100","orientation":135,"volume":3,"width":2,"x":1,"y":1},
+          "output_value": {"color":5,"height":2,"id":"oaabb8a63326c","kind":"l9100","orientation":135,"volume":3,"width":2,"x":1,"y":1}
         }
       ]
     },
@@ -80,7 +80,7 @@
       ],
       "instances": [
         {
-          "instance_name": "objb4c2bdc31cbd",
+          "instance_name": "ob4c2bdc31cbd",
           "input_instance_matrix": [
             [1, 1, 1],
             [0, 1, 0],
@@ -91,12 +91,12 @@
             [0, 1, 0],
             [0, 0, 0]
           ],
-          "implementation": "objb4c2bdc31cbd is Obj(x=0, y=0, width=3, height=2, orientation=0, volume=4, kind=l9100, color=1)",
-          "input_value": {"color":1,"height":2,"id":"objb4c2bdc31cbd","kind":"l9100","orientation":0,"volume":4,"width":3,"x":0,"y":0},
-          "output_value": {"color":1,"height":2,"id":"objb4c2bdc31cbd","kind":"l9100","orientation":0,"volume":4,"width":3,"x":0,"y":0}
+          "implementation": "ob4c2bdc31cbd is Object(x=0, y=0, width=3, height=2, orientation=0, volume=4, kind=l9100, color=1)",
+          "input_value": {"color":1,"height":2,"id":"ob4c2bdc31cbd","kind":"l9100","orientation":0,"volume":4,"width":3,"x":0,"y":0},
+          "output_value": {"color":1,"height":2,"id":"ob4c2bdc31cbd","kind":"l9100","orientation":0,"volume":4,"width":3,"x":0,"y":0}
         },
         {
-          "instance_name": "objfbe4a4224d14",
+          "instance_name": "ofbe4a4224d14",
           "input_instance_matrix": [
             [0, 0, 0],
             [8, 0, 0],
@@ -107,12 +107,12 @@
             [5, 0, 0],
             [5, 0, 0]
           ],
-          "implementation": "objfbe4a4224d14 is Obj(x=0, y=1, width=1, height=2, orientation=0, volume=2, kind=l9100, color=8)",
-          "input_value": {"color":8,"height":2,"id":"objfbe4a4224d14","kind":"l9100","orientation":0,"volume":2,"width":1,"x":0,"y":1},
-          "output_value": {"color":5,"height":2,"id":"objfbe4a4224d14","kind":"l9100","orientation":0,"volume":2,"width":1,"x":0,"y":1}
+          "implementation": "ofbe4a4224d14 is Object(x=0, y=1, width=1, height=2, orientation=0, volume=2, kind=l9100, color=8)",
+          "input_value": {"color":8,"height":2,"id":"ofbe4a4224d14","kind":"l9100","orientation":0,"volume":2,"width":1,"x":0,"y":1},
+          "output_value": {"color":5,"height":2,"id":"ofbe4a4224d14","kind":"l9100","orientation":0,"volume":2,"width":1,"x":0,"y":1}
         },
         {
-          "instance_name": "obj9b51b0fdc01c",
+          "instance_name": "o9b51b0fdc01c",
           "input_instance_matrix": [
             [0, 0, 0],
             [0, 0, 3],
@@ -123,12 +123,12 @@
             [0, 0, 5],
             [0, 0, 0]
           ],
-          "implementation": "obj9b51b0fdc01c is Obj(x=2, y=1, width=1, height=1, orientation=0, volume=1, kind=l9100, color=3)",
-          "input_value": {"color":3,"height":1,"id":"obj9b51b0fdc01c","kind":"l9100","orientation":0,"volume":1,"width":1,"x":2,"y":1},
-          "output_value": {"color":5,"height":1,"id":"obj9b51b0fdc01c","kind":"l9100","orientation":0,"volume":1,"width":1,"x":2,"y":1}
+          "implementation": "o9b51b0fdc01c is Object(x=2, y=1, width=1, height=1, orientation=0, volume=1, kind=l9100, color=3)",
+          "input_value": {"color":3,"height":1,"id":"o9b51b0fdc01c","kind":"l9100","orientation":0,"volume":1,"width":1,"x":2,"y":1},
+          "output_value": {"color":5,"height":1,"id":"o9b51b0fdc01c","kind":"l9100","orientation":0,"volume":1,"width":1,"x":2,"y":1}
         },
         {
-          "instance_name": "obj91b67e1827b1",
+          "instance_name": "o91b67e1827b1",
           "input_instance_matrix": [
             [0, 0, 0],
             [0, 0, 0],
@@ -139,9 +139,9 @@
             [0, 0, 0],
             [0, 5, 5]
           ],
-          "implementation": "obj91b67e1827b1 is Obj(x=1, y=2, width=2, height=1, orientation=90, volume=2, kind=l9100, color=2)",
-          "input_value": {"color":2,"height":1,"id":"obj91b67e1827b1","kind":"l9100","orientation":90,"volume":2,"width":2,"x":1,"y":2},
-          "output_value": {"color":5,"height":1,"id":"obj91b67e1827b1","kind":"l9100","orientation":90,"volume":2,"width":2,"x":1,"y":2}
+          "implementation": "o91b67e1827b1 is Object(x=1, y=2, width=2, height=1, orientation=90, volume=2, kind=l9100, color=2)",
+          "input_value": {"color":2,"height":1,"id":"o91b67e1827b1","kind":"l9100","orientation":90,"volume":2,"width":2,"x":1,"y":2},
+          "output_value": {"color":5,"height":1,"id":"o91b67e1827b1","kind":"l9100","orientation":90,"volume":2,"width":2,"x":1,"y":2}
         }
       ]
     },
@@ -158,7 +158,7 @@
       ],
       "instances": [
         {
-          "instance_name": "obj3710037e184f",
+          "instance_name": "o3710037e184f",
           "input_instance_matrix": [
             [2, 2, 2],
             [0, 0, 2],
@@ -169,12 +169,12 @@
             [0, 0, 2],
             [2, 2, 2]
           ],
-          "implementation": "obj3710037e184f is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=7, kind=l9100, color=2)",
-          "input_value": {"color":2,"height":3,"id":"obj3710037e184f","kind":"l9100","orientation":0,"volume":7,"width":3,"x":0,"y":0},
-          "output_value": {"color":2,"height":3,"id":"obj3710037e184f","kind":"l9100","orientation":0,"volume":7,"width":3,"x":0,"y":0}
+          "implementation": "o3710037e184f is Object(x=0, y=0, width=3, height=3, orientation=0, volume=7, kind=l9100, color=2)",
+          "input_value": {"color":2,"height":3,"id":"o3710037e184f","kind":"l9100","orientation":0,"volume":7,"width":3,"x":0,"y":0},
+          "output_value": {"color":2,"height":3,"id":"o3710037e184f","kind":"l9100","orientation":0,"volume":7,"width":3,"x":0,"y":0}
         },
         {
-          "instance_name": "objcfb87667abdf",
+          "instance_name": "ocfb87667abdf",
           "input_instance_matrix": [
             [0, 0, 0],
             [8, 8, 0],
@@ -185,9 +185,9 @@
             [5, 5, 0],
             [0, 0, 0]
           ],
-          "implementation": "objcfb87667abdf is Obj(x=0, y=1, width=2, height=1, orientation=90, volume=2, kind=l9100, color=8)",
-          "input_value": {"color":8,"height":1,"id":"objcfb87667abdf","kind":"l9100","orientation":90,"volume":2,"width":2,"x":0,"y":1},
-          "output_value": {"color":5,"height":1,"id":"objcfb87667abdf","kind":"l9100","orientation":90,"volume":2,"width":2,"x":0,"y":1}
+          "implementation": "ocfb87667abdf is Object(x=0, y=1, width=2, height=1, orientation=90, volume=2, kind=l9100, color=8)",
+          "input_value": {"color":8,"height":1,"id":"ocfb87667abdf","kind":"l9100","orientation":90,"volume":2,"width":2,"x":0,"y":1},
+          "output_value": {"color":5,"height":1,"id":"ocfb87667abdf","kind":"l9100","orientation":90,"volume":2,"width":2,"x":0,"y":1}
         }
       ]
     },
@@ -204,7 +204,7 @@
       ],
       "instances": [
         {
-          "instance_name": "obj501aae1fff6a",
+          "instance_name": "o501aae1fff6a",
           "input_instance_matrix": [
             [3, 3, 0],
             [0, 0, 0],
@@ -215,12 +215,12 @@
             [0, 0, 0],
             [0, 0, 0]
           ],
-          "implementation": "obj501aae1fff6a is Obj(x=0, y=0, width=2, height=1, orientation=90, volume=2, kind=l9100, color=3)",
-          "input_value": {"color":3,"height":1,"id":"obj501aae1fff6a","kind":"l9100","orientation":90,"volume":2,"width":2,"x":0,"y":0},
-          "output_value": {"color":5,"height":1,"id":"obj501aae1fff6a","kind":"l9100","orientation":90,"volume":2,"width":2,"x":0,"y":0}
+          "implementation": "o501aae1fff6a is Object(x=0, y=0, width=2, height=1, orientation=90, volume=2, kind=l9100, color=3)",
+          "input_value": {"color":3,"height":1,"id":"o501aae1fff6a","kind":"l9100","orientation":90,"volume":2,"width":2,"x":0,"y":0},
+          "output_value": {"color":5,"height":1,"id":"o501aae1fff6a","kind":"l9100","orientation":90,"volume":2,"width":2,"x":0,"y":0}
         },
         {
-          "instance_name": "obj5f62becffc78",
+          "instance_name": "o5f62becffc78",
           "input_instance_matrix": [
             [0, 0, 8],
             [0, 0, 0],
@@ -231,12 +231,12 @@
             [0, 0, 0],
             [5, 0, 0]
           ],
-          "implementation": "obj5f62becffc78 is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=2, kind=l9100, color=8)",
-          "input_value": {"color":8,"height":3,"id":"obj5f62becffc78","kind":"l9100","orientation":0,"volume":2,"width":3,"x":0,"y":0},
-          "output_value": {"color":5,"height":3,"id":"obj5f62becffc78","kind":"l9100","orientation":0,"volume":2,"width":3,"x":0,"y":0}
+          "implementation": "o5f62becffc78 is Object(x=0, y=0, width=3, height=3, orientation=0, volume=2, kind=l9100, color=8)",
+          "input_value": {"color":8,"height":3,"id":"o5f62becffc78","kind":"l9100","orientation":0,"volume":2,"width":3,"x":0,"y":0},
+          "output_value": {"color":5,"height":3,"id":"o5f62becffc78","kind":"l9100","orientation":0,"volume":2,"width":3,"x":0,"y":0}
         },
         {
-          "instance_name": "obj50d280d9fceb",
+          "instance_name": "o50d280d9fceb",
           "input_instance_matrix": [
             [0, 0, 0],
             [4, 4, 4],
@@ -247,12 +247,12 @@
             [4, 4, 4],
             [0, 0, 0]
           ],
-          "implementation": "obj50d280d9fceb is Obj(x=0, y=1, width=3, height=1, orientation=90, volume=3, kind=l9100, color=4)",
-          "input_value": {"color":4,"height":1,"id":"obj50d280d9fceb","kind":"l9100","orientation":90,"volume":3,"width":3,"x":0,"y":1},
-          "output_value": {"color":4,"height":1,"id":"obj50d280d9fceb","kind":"l9100","orientation":90,"volume":3,"width":3,"x":0,"y":1}
+          "implementation": "o50d280d9fceb is Object(x=0, y=1, width=3, height=1, orientation=90, volume=3, kind=l9100, color=4)",
+          "input_value": {"color":4,"height":1,"id":"o50d280d9fceb","kind":"l9100","orientation":90,"volume":3,"width":3,"x":0,"y":1},
+          "output_value": {"color":4,"height":1,"id":"o50d280d9fceb","kind":"l9100","orientation":90,"volume":3,"width":3,"x":0,"y":1}
         },
         {
-          "instance_name": "objf2cf87623f42",
+          "instance_name": "of2cf87623f42",
           "input_instance_matrix": [
             [0, 0, 0],
             [0, 0, 0],
@@ -263,9 +263,9 @@
             [0, 0, 0],
             [0, 5, 5]
           ],
-          "implementation": "objf2cf87623f42 is Obj(x=1, y=2, width=2, height=1, orientation=90, volume=2, kind=l9100, color=1)",
-          "input_value": {"color":1,"height":1,"id":"objf2cf87623f42","kind":"l9100","orientation":90,"volume":2,"width":2,"x":1,"y":2},
-          "output_value": {"color":5,"height":1,"id":"objf2cf87623f42","kind":"l9100","orientation":90,"volume":2,"width":2,"x":1,"y":2}
+          "implementation": "of2cf87623f42 is Object(x=1, y=2, width=2, height=1, orientation=90, volume=2, kind=l9100, color=1)",
+          "input_value": {"color":1,"height":1,"id":"of2cf87623f42","kind":"l9100","orientation":90,"volume":2,"width":2,"x":1,"y":2},
+          "output_value": {"color":5,"height":1,"id":"of2cf87623f42","kind":"l9100","orientation":90,"volume":2,"width":2,"x":1,"y":2}
         }
       ]
     },
@@ -282,7 +282,7 @@
       ],
       "instances": [
         {
-          "instance_name": "obja0f8bb24bef9",
+          "instance_name": "oa0f8bb24bef9",
           "input_instance_matrix": [
             [1, 0, 0],
             [0, 0, 0],
@@ -293,12 +293,12 @@
             [0, 0, 0],
             [5, 0, 0]
           ],
-          "implementation": "obja0f8bb24bef9 is Obj(x=0, y=0, width=1, height=3, orientation=0, volume=2, kind=l9100, color=1)",
-          "input_value": {"color":1,"height":3,"id":"obja0f8bb24bef9","kind":"l9100","orientation":0,"volume":2,"width":1,"x":0,"y":0},
-          "output_value": {"color":5,"height":3,"id":"obja0f8bb24bef9","kind":"l9100","orientation":0,"volume":2,"width":1,"x":0,"y":0}
+          "implementation": "oa0f8bb24bef9 is Object(x=0, y=0, width=1, height=3, orientation=0, volume=2, kind=l9100, color=1)",
+          "input_value": {"color":1,"height":3,"id":"oa0f8bb24bef9","kind":"l9100","orientation":0,"volume":2,"width":1,"x":0,"y":0},
+          "output_value": {"color":5,"height":3,"id":"oa0f8bb24bef9","kind":"l9100","orientation":0,"volume":2,"width":1,"x":0,"y":0}
         },
         {
-          "instance_name": "obj6c6428c31841",
+          "instance_name": "o6c6428c31841",
           "input_instance_matrix": [
             [0, 3, 0],
             [3, 3, 0],
@@ -309,12 +309,12 @@
             [3, 3, 0],
             [0, 3, 0]
           ],
-          "implementation": "obj6c6428c31841 is Obj(x=0, y=0, width=2, height=3, orientation=0, volume=4, kind=l9100, color=3)",
-          "input_value": {"color":3,"height":3,"id":"obj6c6428c31841","kind":"l9100","orientation":0,"volume":4,"width":2,"x":0,"y":0},
-          "output_value": {"color":3,"height":3,"id":"obj6c6428c31841","kind":"l9100","orientation":0,"volume":4,"width":2,"x":0,"y":0}
+          "implementation": "o6c6428c31841 is Object(x=0, y=0, width=2, height=3, orientation=0, volume=4, kind=l9100, color=3)",
+          "input_value": {"color":3,"height":3,"id":"o6c6428c31841","kind":"l9100","orientation":0,"volume":4,"width":2,"x":0,"y":0},
+          "output_value": {"color":3,"height":3,"id":"o6c6428c31841","kind":"l9100","orientation":0,"volume":4,"width":2,"x":0,"y":0}
         },
         {
-          "instance_name": "obja8f0a8586df4",
+          "instance_name": "oa8f0a8586df4",
           "input_instance_matrix": [
             [0, 0, 2],
             [0, 0, 2],
@@ -325,9 +325,9 @@
             [0, 0, 5],
             [0, 0, 5]
           ],
-          "implementation": "obja8f0a8586df4 is Obj(x=2, y=0, width=1, height=3, orientation=0, volume=3, kind=l9100, color=2)",
-          "input_value": {"color":2,"height":3,"id":"obja8f0a8586df4","kind":"l9100","orientation":0,"volume":3,"width":1,"x":2,"y":0},
-          "output_value": {"color":5,"height":3,"id":"obja8f0a8586df4","kind":"l9100","orientation":0,"volume":3,"width":1,"x":2,"y":0}
+          "implementation": "oa8f0a8586df4 is Object(x=2, y=0, width=1, height=3, orientation=0, volume=3, kind=l9100, color=2)",
+          "input_value": {"color":2,"height":3,"id":"oa8f0a8586df4","kind":"l9100","orientation":0,"volume":3,"width":1,"x":2,"y":0},
+          "output_value": {"color":5,"height":3,"id":"oa8f0a8586df4","kind":"l9100","orientation":0,"volume":3,"width":1,"x":2,"y":0}
         }
       ]
     },
@@ -344,7 +344,7 @@
       ],
       "instances": [
         {
-          "instance_name": "obj75f18a68e44b",
+          "instance_name": "o75f18a68e44b",
           "input_instance_matrix": [
             [2, 2, 2],
             [2, 2, 2],
@@ -355,9 +355,9 @@
             [2, 2, 2],
             [2, 2, 2]
           ],
-          "implementation": "obj75f18a68e44b is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=9, kind=unknown, color=2)",
-          "input_value": {"color":2,"height":3,"id":"obj75f18a68e44b","kind":"unknown","orientation":0,"volume":9,"width":3,"x":0,"y":0},
-          "output_value": {"color":2,"height":3,"id":"obj75f18a68e44b","kind":"unknown","orientation":0,"volume":9,"width":3,"x":0,"y":0}
+          "implementation": "o75f18a68e44b is Object(x=0, y=0, width=3, height=3, orientation=0, volume=9, kind=unknown, color=2)",
+          "input_value": {"color":2,"height":3,"id":"o75f18a68e44b","kind":"unknown","orientation":0,"volume":9,"width":3,"x":0,"y":0},
+          "output_value": {"color":2,"height":3,"id":"o75f18a68e44b","kind":"unknown","orientation":0,"volume":9,"width":3,"x":0,"y":0}
         }
       ]
     }

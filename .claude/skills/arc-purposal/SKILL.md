@@ -146,8 +146,8 @@ double-quoted string literal that the runtime lexer reads in a code field,
 and `#` comments are not quotes. The dataset writes a literal as a bare word
 wherever the run's runtime, run as `arc/src/lib/nucleoid.ts` runs it, reads
 that word as the same value, as NUC 86, NUC 93 and NUC 94 read `right` in
-`if $Obj.repeat_direction is right:`, `$Obj.repeat_direction is right` and
-`$Obj.repeat_direction is right if $Obj.wide else down`. The arc-dataset
+`if $Object.repeat_direction is right:`, `$Object.repeat_direction is right` and
+`$Object.repeat_direction is right if $Object.wide else down`. The arc-dataset
 profile's quoted default, `kind: str = 'lNNNN'`, is a quote that accepted
 Nucleoid cannot do without, because it rejects a bare parameter default
 with `SyntaxError`. Have the

@@ -128,7 +128,7 @@ formatting exactly:
   names the big-picture formulation you started from and why it fell short.
 - `declarations[0]` holds every class declaration of the world model, because
   the solver runs it alone to build input states. Existing datasets declare
-  one class, `Obj(x: int, y: int, width: int, height: int, orientation: int,
+  one class, `Object(x: int, y: int, width: int, height: int, orientation: int,
   volume: int, kind: str = 'lNNNN', ...)`; add another class only for a
   distinct sort of object the transformation needs. Each class whose
   instances are annotated objects takes the standard entries `x: int, y: int,
@@ -148,7 +148,7 @@ formatting exactly:
   A rule changes them only when the shape itself changes size, such as a point
   that grows into a bar or a pattern that repeats, and then computes the new
   size from the input value with `@first`, as in
-  `$Obj.width = $Obj.width@first + 1`. Use them for an object's size instead
+  `$Object.width = $Object.width@first + 1`. Use them for an object's size instead
   of separate size properties such as `bar_height` or `bar_width`.
 - `volume` is the number of nonzero cells in the object's input mask, not the
   area of its bounding box; the solver measures it with `Matrix.measure` and
@@ -157,20 +157,20 @@ formatting exactly:
   transformation adds or removes cells, a rule recomputes it, so that every
   output state's `volume` is the number of nonzero cells in its output mask:
   from the input value with `@first`, as in
-  `$Obj.volume is $Obj.volume@first * 2` for a mirror image
+  `$Object.volume is $Object.volume@first * 2` for a mirror image
   (`dataset.6d0aefbc.json`), or from other properties, as in
-  `$Obj.volume is $Obj.width * $Obj.height` for a filled box
+  `$Object.volume is $Object.width * $Object.height` for a filled box
   (`dataset.5582e5ca.json`). Use it for an object's cell count instead of a
   separate property such as `cell_count`.
 - The solver starts every Nucleoid program with `canvas_width` and
   `canvas_height`, the column and row counts of the pair's `input_matrix`
   (every `nucleoid.run` call in `arc/src/analyzer.ts` and
   `arc/src/visualizer.ts`). Rules that need the canvas size read these
-  variables, as `$Obj.height = canvas_height - $Obj.y@first` in
+  variables, as `$Object.height = canvas_height - $Object.y@first` in
   `dataset.d037b0a7.json` does. No class takes the canvas size as a parameter
   or stores it as a property, and no implementation passes it.
 - The remaining declarations are declarative class-level rules, written with
-  the class reference `$Class` (for example `$Obj`), using `if` for
+  the class reference `$Class` (for example `$Object`), using `if` for
   conditions and `$Class.x@first` for a property's value before the rules
   ran. One rule set must explain every original train and test pair: no
   per-pair or per-instance cases, puzzle IDs, or hard-coded grids. Properties
@@ -179,12 +179,12 @@ formatting exactly:
 - Always prefer declarative, higher-order logic. State each relationship once
   over every instance of a class, derive properties from other rules or from
   relations between objects, and use higher-order operations on class
-  populations, such as `Obj.filter`, `map`, `reduce`, `some`, `every`,
+  populations, such as `Object.filter`, `map`, `reduce`, `some`, `every`,
   `find`, and reasoning selections, where they express the rule. Avoid `for`
   loops, imperative steps, and manual bookkeeping.
 - A kind is `l` followed by four digits and names a geometry. It acts as a
   child class that the rules assign declaratively: an instance never changes
-  its class, so a rule such as `$Obj.kind is l1707` moves it to another kind.
+  its class, so a rule such as `$Object.kind is l1707` moves it to another kind.
   Reuse the kind an existing dataset uses for the same geometry; otherwise
   mint one unused elsewhere.
 - Orientation is degrees clockwise from north (N = 0, E = 90, S = 180,
@@ -250,12 +250,12 @@ The caller decides whether to propose the feature; you never start a NUC.
   may differ.
 - `input_x`/`input_y` and `output_x`/`output_y` are the zero-based column and
   row of each mask's nonzero bounding-box origin.
-- `instance_name` is `obj` plus 12 random lowercase hexadecimal characters,
+- `instance_name` is `o` plus 12 random lowercase hexadecimal characters,
   unique across all datasets
   (`node -e "console.log(require('crypto').randomBytes(6).toString('hex'))"`).
 - `implementation` is `<instance_name> = <Class>(x=<input_x>, y=<input_y>,
   width=<width>, height=<height>, orientation=<input_orientation>,
-  volume=<volume>, ...)`, constructing the instance's class (`Obj` in existing
+  volume=<volume>, ...)`, constructing the instance's class (`Object` in existing
   datasets) with named arguments matching its parameters, where `width` and
   `height` are the input mask's nonzero bounding-box column and row counts and
   `volume` is its number of nonzero cells, below its comment line.
@@ -267,7 +267,7 @@ The caller decides whether to propose the feature; you never start a NUC.
   the pair's `input_matrix`, each followed by a blank line. For
   `input_value` the file then holds `declarations[0]` and the
   implementation. For output states, run all declarations and all of the
-  same pair's implementations together, followed by `Obj[:]`, and copy each
+  same pair's implementations together, followed by `Object[:]`, and copy each
   object's result by its ID.
   Population-dependent rules must see the entire world, not an isolated
   instance. Keep program files in a temporary directory outside the

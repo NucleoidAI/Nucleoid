@@ -97,7 +97,7 @@ async function synthesize({ train }) {
           train.class_declaration,
           ...train.declarations,
           ...implementations,
-          "Obj[:]",
+          "Object[:]",
         ].join("\n\n")
       );
 

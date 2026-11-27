@@ -236,6 +236,16 @@ coalescing, which no dataset uses any more. No NUC was requested, so no proposal
 strategy was selected, and no solver run has measured this version, so its
 difference is unknown, not zero.
 
+### Object and o names
+
+On 27-Nov-2026, at the user's request, the class is called `Object` instead of
+`Obj`, and every instance name starts with `o` instead of `obj`, so
+`obj9794a3111594` is now `o9794a3111594`. Class references read `$Object`, and
+the solver's state queries read `Object[:]`; the sections above keep the
+spelling of their time. Every snapshot replays with the new names, with no other
+change, and the [dataset grammar](../arc.ebnf) names no class, so it is
+unchanged.
+
 ## Runs
 
 ### 8-Nov-2026 -- Run not started

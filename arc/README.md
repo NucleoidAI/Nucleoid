@@ -301,7 +301,7 @@ them.
 objects from all training pairs, in pair order, after the analysis state passes
 finish, so the synthesized pairs' objects follow the extracted ones. One
 `Visualization · State` table shows the test objects before their
-outputs are composed. Each row is an object that `Obj[:]` returns after the
+outputs are composed. Each row is an object that `Object[:]` returns after the
 declarative rules run, with `id` first and then one column per property in the
 order first reported by the runtime. Strings stay quoted, and a property that
 an object lacks shows a grey `—`. Numeric `orientation` values include the same
@@ -419,9 +419,9 @@ bare word: `kind=l6747` for a corner, `kind=l7544` for a point, `kind=l8001`
 for a line, and `kind=unknown` for the object of the use case. The class
 default `kind: str = 'default'` names no geometry and applies to no pair.
 Every rule transforms only the objects of its dataset's kind: each `if` opens
-with `$Obj.kind is` and that kind, joined to its other conditions with `and`, as
-in `if $Obj.kind is l7544 and $Obj.vertex_color is 4:`, and the line's volume
-rule sits under `if $Obj.kind@first is l8001:`. The guards read the live kind,
+with `$Object.kind is` and that kind, joined to its other conditions with `and`, as
+in `if $Object.kind is l7544 and $Object.vertex_color is 4:`, and the line's volume
+rule sits under `if $Object.kind@first is l8001:`. The guards read the live kind,
 which gives the same states although the rules rewrite the kind, except the
 line's volume guard, which reads the input kind with `@first`: on the live kind
 it turns false once an orientation rule sets `l4102` or `l6012`, and each grown
@@ -440,7 +440,7 @@ one column wider when horizontal and one row taller when vertical.
 cells in one row, the tromino that is no corner, at orientation 90 as a
 horizontal line without a head. Its implementation passes `kind=unknown` and
 colors 9, which meet the corner rule's color condition, but the rule's guard
-`$Obj.kind is l6747` leaves the bar out, so it gains no marker and its
+`$Object.kind is l6747` leaves the bar out, so it gains no marker and its
 output repeats its input. An
 extension corner keeps its 3 by 3 size, because its inside marker fills a
 cell of its own box. `dataset.extension.json` ends with its use case, a
@@ -448,13 +448,13 @@ color-4 T of five cells in a 3 by 3 box, its full top row and the two cells
 below its middle, which has a full edge row but no full edge column, so it is
 no corner and takes orientation 0. Its implementation passes `kind=unknown`
 and colors 4, which meet the corner rule's color condition, but the rule's guard
-`$Obj.kind is l6747` leaves the T out: it gains no marker, and its
+`$Object.kind is l6747` leaves the T out: it gains no marker, and its
 output repeats its input. The core and extension markers each add one cell with
-`$Obj.volume is $Obj.volume@first + 1`, and the curve rim adds two with
-`$Obj.volume is $Obj.volume@first + 2`, in the same branches; a line, a box
+`$Object.volume is $Object.volume@first + 1`, and the curve rim adds two with
+`$Object.volume is $Object.volume@first + 2`, in the same branches; a line, a box
 one cell thick that its cells fill, takes
-`$Obj.volume is $Obj.width * $Obj.height` in one rule of its own, under
-`if $Obj.kind@first is l8001:`. Every
+`$Object.volume is $Object.width * $Object.height` in one rule of its own, under
+`if $Object.kind@first is l8001:`. Every
 native output snapshot therefore carries its shape's output bounding box and
 number of nonzero cells, so `output_value.x` and `output_value.y` equal
 `output_x` and `output_y`. A line points toward its color-8 endpoint: its
@@ -464,24 +464,24 @@ away from the endpoint. `dataset.line.json` ends with its use case, a line
 that bends: a color-8 cell and two color-6 cells along a row, with one more
 color-6 cell below the last, a corner at orientation 45, where its top row and
 right column meet. Its implementation passes `kind=unknown`, so every rule's
-guard, `$Obj.kind is l8001` or the volume rule's `$Obj.kind@first is l8001`,
+guard, `$Object.kind is l8001` or the volume rule's `$Object.kind@first is l8001`,
 leaves it out: no rule extends it or sets
 its `volume`, 4, to the 6 cells of its box, and its output repeats its
 input. A curve point, a single cell, is at orientation 0, and
 its rim makes a V that points toward the point, its vertex: the color-4 rule
-sets `$Obj.orientation is 180`, because its color-8 arms go up and the V points
+sets `$Object.orientation is 180`, because its color-8 arms go up and the V points
 down, while a color-9 point keeps 0, because its color-2 arms go down and the
 V points up. `dataset.curve.json` ends with its use case, a vertical domino of
 two color-9 cells, which is no single point and takes orientation 0 as a
 vertical line without a head. Its implementation passes `kind=unknown` and
 `vertex_color=9`, which meets the color-9 rule's condition, but the rule's guard
-`$Obj.kind is l7544` leaves the domino out: it gains no rim, and
+`$Object.kind is l7544` leaves the domino out: it gains no rim, and
 its output repeats its
 input. The genesis rules match kinds, categorical colors, and orientations with
 `is`, the spelling of `==` that [NUC 86](../docs/nuc-0086.md) adds, as in the
-line header `if $Obj.kind is l8001 and $Obj.orientation is 270:`, and the line
+line header `if $Object.kind is l8001 and $Object.orientation is 270:`, and the line
 rules assign bare
-words with `is`, as in `$Obj.extension_direction is right`.
+words with `is`, as in `$Object.extension_direction is right`.
 
 Instance `implementation` snippets use named constructor arguments whose names
 match the parameters in their class declarations. The canvas size is not one
@@ -499,10 +499,10 @@ kind, such as `kind=l9100`, `kind=l4262` for a block shape of
 case, so no pair's object takes the default. In every dataset but
 `dataset.27a28665.json`, whose size rules shrink every block to its output
 point, each rule transforms only the kinds it is written for: it sits in an
-`if` that opens with the kind, as in `if $Obj.kind is l9100:`, joined to the
+`if` that opens with the kind, as in `if $Object.kind is l9100:`, joined to the
 rule's own conditions with `and`, and it reads the live kind, which gives the
 same states although a block's own statements change the kind. A guard reads the
-input kind, `$Obj.kind@first`, only where a later rule must still select an
+input kind, `$Object.kind@first`, only where a later rule must still select an
 object after an earlier rule changed its kind, as in `dataset.6e02f1e3.json`,
 `dataset.fafffa47.json`, and `dataset.line.json`. Rules that share a guard sit
 in one `if` block,
@@ -514,34 +514,34 @@ descriptive parameters, in the order of the constructor's assignments:
 Nucleoid lets a default occupy any parameter slot, and every implementation
 names its arguments. A kind acts as a child class that the rules assign
 declaratively: Nucleoid never converts an instance to another class, so a
-class-level rule such as `$Obj.kind is l1707` moves the instance to another
+class-level rule such as `$Object.kind is l1707` moves the instance to another
 kind instead. The property was called `tag` until 24-Nov-2026.
 
 Every dataset writes its assignments with `is`, the opt-in assignment of
 [NUC 93](../docs/nuc-0093.md), and its equality tests with `is` and `is not`,
 the comparisons of [NUC 86](../docs/nuc-0086.md). Constructors set
-`this.x is x`, class-level rules set `$Obj.height is $Obj.height@first * 2`,
+`this.x is x`, class-level rules set `$Object.height is $Object.height@first * 2`,
 and implementations construct
-`obj0c2414cf33eb is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=6, kind=l9100)`;
+`o0c2414cf33eb is Object(x=0, y=0, width=3, height=3, orientation=0, volume=6, kind=l9100)`;
 each `target is value` builds exactly the syntax tree of `target = value`. When
 a whole value, or the whole right operand of an `is` comparison, is one bare
 word, it reads the name of that spelling if one exists and otherwise its own
 text, so kinds and directions drop their quotes there, as in
-`$Obj.kind is l3337` and `$Obj.extension_direction is right`, while
+`$Object.kind is l3337` and `$Object.extension_direction is right`, while
 `this.kind is kind` reads the constructor's `kind` parameter. No dataset
 program defines a name with those spellings, and the solver adds only
 `canvas_width` and `canvas_height`. Inside the value of an `is` assignment,
 the item words of [NUC 95](../docs/nuc-0095.md) read the same way, so every
 implementation passes its kind as a bare word, as in `kind=l1707` or
 `kind=unknown`, which the kind guards compare as whole right operands, as in
-`if $Obj.kind is l1707:`. Only the default of the `kind` parameter keeps its
+`if $Object.kind is l1707:`. Only the default of the `kind` parameter keeps its
 quotes, `kind: str = 'default'`: accepted Nucleoid takes only a literal as a
 parameter default and rejects the bare `kind: str = default` with
 `SyntaxError: Expected a scalar literal parameter default`.
 `src\lib\nucleoid.ts` passes no syntax flag: the runtime reads `is`
 assignments without one since `d945213`, which removed the opt-in syntax
 options, so the solver needs that runtime or later. An older runtime reads
-`obj0c2414cf33eb is Obj(...)` as
+`o0c2414cf33eb is Object(...)` as
 three juxtaposed statements and raises `ReferenceError`. The solver's own
 `canvas_width = 3` and `canvas_height = 3` lines keep `=`, which reads the
 same. Every snapshot is the state that the same rules give when spelled with
@@ -577,7 +577,7 @@ derives them as `COMMENT`:
 
 ```nuc
 # Each object is all the cells of one color, touching or not. Every color except the one with the most cells turns 5
-class Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, kind: str = 'l9100', color: int):
+class Object(x: int, y: int, width: int, height: int, orientation: int, volume: int, kind: str = 'l9100', color: int):
     this.x is x
     this.y is y
     this.width is width
@@ -588,11 +588,11 @@ class Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int
     this.color is color
 
 # A color group that some other group outnumbers turns color 5; only the group with the most cells keeps its color
-if any other in Obj: other.volume > $Obj.volume:
-    $Obj.color is 5
+if any other in Object: other.volume > $Object.volume:
+    $Object.color is 5
 
 # The 5 color-2 cells, forming a corner with its vertex at the top left, the most of any color
-objfd8da1fb82d2 is Obj(x=0, y=0, width=3, height=3, orientation=315, volume=5, color=2)
+ofd8da1fb82d2 is Object(x=0, y=0, width=3, height=3, orientation=315, volume=5, color=2)
 ```
 
 Every `input_instance_matrix` has exactly its pair's `input_matrix` row and
@@ -646,21 +646,21 @@ but every implementation passes its object's kind there: `kind=l9100` for
 each pattern, as in `volume=9, kind=l9100` for the first training input, and
 `kind=unknown` for the use case's line, so no instance takes the default.
 One class-level `if` block holds every rule and selects the patterns by their
-kind, `if $Obj.kind is l9100:`, with the comparison `is` of
+kind, `if $Object.kind is l9100:`, with the comparison `is` of
 [NUC 86](../docs/nuc-0086.md); the condition reads the live kind, which gives
 the same states although the block's first rule rewrites it. The block sets the
 output
 kind `l8384` and introduces one
 property, `extension_direction`, which is absent before the rules run and is
 `down`, as in `dataset.line.json`.
-The rules also rewrite `height` to `$Obj.height@first * 3 / 2`, 9 rows, the
+The rules also rewrite `height` to `$Object.height@first * 3 / 2`, 9 rows, the
 pattern's one change in size, and `color` to 2. They leave `width` unchanged,
 because the pattern grows down only and each output's box is as wide as its
 input's, 3, 3, 2, and 3 columns, and they leave `x` and `y` unchanged because
 the pattern keeps its top-left origin. The training pairs alone also fit a
 fixed 9-row output; the rules scale the pattern's height instead. The four
 rules share one block because separate `if` rules with the same condition
-text replace each other, so four blocks headed `if $Obj.kind is l9100:`
+text replace each other, so four blocks headed `if $Object.kind is l9100:`
 would keep only the last rule. An object of any other kind, such as the use
 case's `unknown`, the default `default`, or an invented kind such as `l5555`,
 matches no guard, so no rule changes it, and its output state equals its
@@ -669,11 +669,11 @@ pair shows: a diagonal line of three color-1 cells from the canvas's top-left
 corner down to the right, which touch only through corners. Its rows never
 repeat, so its `period` is its height, 3, and as a straight line without a
 head that falls to the right, it takes orientation 135. Its implementation is
-`objc86db86eda32 is Obj(x=0, y=0, width=3, height=3, orientation=135, volume=3, kind=unknown, color=1, period=3)`,
+`oc86db86eda32 is Object(x=0, y=0, width=3, height=3, orientation=135, volume=3, kind=unknown, color=1, period=3)`,
 and its output is its input grid unchanged: the line keeps color 1, its 3
 rows, and its 3 cells. Native
 output snapshots are captured with the pair's implementation followed by
-`Obj[:]`. Kinds identify the geometry: `l9100` is a single shape, as in
+`Object[:]`. Kinds identify the geometry: `l9100` is a single shape, as in
 `dataset.28bf18c6.json` and `dataset.6150a2bd.json`, and `l8384` is a pattern
 whose rows repeat every `period` rows down to its height, while `unknown`
 names a shape that the rules do not know. Input masks retain
@@ -713,12 +713,12 @@ each point, as in `volume=1, kind=l7544`, and `kind=unknown` for the use case's
 block, so no instance takes the default.
 The declarative rules introduce `marker_color`, which is absent before the
 rules run, and, in the same branches that shift the origin, grow each cross
-to 3 by 3 with `$Obj.width is $Obj.width@first + 2` and
-`$Obj.height is $Obj.height@first + 2`, and count its point and four markers
-with `$Obj.volume is $Obj.volume@first + 4`; color-6 and color-8 points keep
+to 3 by 3 with `$Object.width is $Object.width@first + 2` and
+`$Object.height is $Object.height@first + 2`, and count its point and four markers
+with `$Object.volume is $Object.volume@first + 4`; color-6 and color-8 points keep
 their 1 by 1 size and volume 1. The two branches are guarded by
-`if $Obj.kind is l7544 and $Obj.vertex_color is 1:` and
-`if $Obj.kind is l7544 and $Obj.vertex_color is 2:`, with `is`, the
+`if $Object.kind is l7544 and $Object.vertex_color is 1:` and
+`if $Object.kind is l7544 and $Object.vertex_color is 2:`, with `is`, the
 spelling of `==` that [NUC 86](../docs/nuc-0086.md) adds: each selects the
 points of one color, and its kind test reads the live kind, which gives the same
 states although the branch rewrites the kind. Their conditions differ in the
@@ -729,7 +729,7 @@ matches neither branch, whatever its color, so no rule changes it, and its
 output state equals its input state. The use case, the dataset's last pair,
 shows a shape that no pair shows: a 2 by 2 block of four color-1 cells whose
 top-left cell is at column 3 and row 3 of the 9 by 9 canvas, constructed as
-`obj52f7ad44890b is Obj(x=3, y=3, width=2, height=2, orientation=0, volume=4, kind=unknown, vertex_color=1)`.
+`o52f7ad44890b is Object(x=3, y=3, width=2, height=2, orientation=0, volume=4, kind=unknown, vertex_color=1)`.
 Its color would give a point color-7 neighbors, but the block gains none, so
 its output is its input grid unchanged.
 Kinds identify the geometry: `l1707` is an
@@ -778,9 +778,9 @@ here with the default `default`, which names no geometry, but every
 implementation passes its object's kind there: `kind=l6953` for each stripe,
 as in `volume=3, kind=l6953`, and `kind=unknown` for the use case's corner,
 so no instance takes the default. One class-level `if` block,
-`if $Obj.kind is l6953:`, selects the stripes with the comparison `is` and
+`if $Object.kind is l6953:`, selects the stripes with the comparison `is` and
 holds the one rule, which rewrites `color` as
-`[[1, 5], [2, 6], [3, 4], [8, 9]].find(pair => pair.includes($Obj.color@first)).find(partner => partner is not $Obj.color@first)`:
+`[[1, 5], [2, 6], [3, 4], [8, 9]].find(pair => pair.includes($Object.color@first)).find(partner => partner is not $Object.color@first)`:
 the list states each pair once, the first `find` selects the pair that
 includes the stripe's input color, and the second `find` takes the other color
 of that pair: the comparison `is not` of [NUC 86](../docs/nuc-0086.md), the
@@ -799,10 +799,10 @@ and output states share the same keys. The use case, the dataset's last pair,
 shows a shape that no pair shows, under any turn or mirror: a corner of three
 color-3 cells, the top row and the left column of a 2 by 2 box at the canvas's
 top-left corner, as many cells as a stripe but bent, constructed as
-`obj35566b551391 is Obj(x=0, y=0, width=2, height=2, orientation=315, volume=3, kind=unknown, color=3)`.
+`o35566b551391 is Object(x=0, y=0, width=2, height=2, orientation=315, volume=3, kind=unknown, color=3)`.
 It keeps color 3, which a stripe would swap for 4, so its output is its input
 grid unchanged. Native output snapshots are captured
-with all of the same pair's implementations together, followed by `Obj[:]`.
+with all of the same pair's implementations together, followed by `Object[:]`.
 The kind `l6953` is a vertical bar, as in `dataset.d037b0a7.json` and
 `dataset.9af7a82c.json`, in both states, while `unknown` names a shape that
 the rules do not know. Input masks retain each pair's
@@ -856,20 +856,20 @@ an optional parameter, here with the default `default`, which names no
 geometry, but every implementation passes its object's kind there:
 `kind=l3058` for each row, as in `volume=3, kind=l3058`, and `kind=unknown`
 for the use case's corner, so no instance takes the default. One class-level
-`if` block, `if $Obj.kind is l3058:`, selects the rows with the comparison
+`if` block, `if $Object.kind is l3058:`, selects the rows with the comparison
 `is` and holds both rules. Its first rule introduces `fill_color`, which is
 absent before the rules run, as
-`5 if $Obj.parts.distinct().length is 1 else 0`, whose condition uses the
+`5 if $Object.parts.distinct().length is 1 else 0`, whose condition uses the
 comparison `is` of [NUC 86](../docs/nuc-0086.md), the spelling of `==`: the
 list query `distinct` of
 [NUC 71](../docs/nuc-0071.md) keeps each of the row's colors once, so exactly
 one kept color means the row is a single color, and the conditional
 expression of [NUC 59](../docs/nuc-0059.md) gives such a row color 5 and
 every other row the background color 0. Its second rule,
-`$Obj.volume is 0 if $Obj.fill_color is 0 else $Obj.volume@first`, empties a
+`$Object.volume is 0 if $Object.fill_color is 0 else $Object.volume@first`, empties a
 cleared row and keeps a bar's 3 cells. The two rules share one block because
 separate `if` rules with the same condition text replace each other, so a
-second block headed `if $Obj.kind is l3058:` would drop the first rule, and
+second block headed `if $Object.kind is l3058:` would drop the first rule, and
 no row would get `fill_color`. The guard reads the kind without an `@first`
 anchor because no rule rewrites it. An object of any other kind, such as the
 use case's `unknown`, the default `default`, or an invented kind, matches no
@@ -882,13 +882,13 @@ the dataset's last pair, shows a shape that no pair shows, under any turn or
 mirror: a corner of three color-4 cells, the bottom row and the right column
 of a 2 by 2 box at the canvas's bottom-right corner, as many cells as a row
 but bent, constructed as
-`obj5cf3c6a27d12 is Obj(x=1, y=1, width=2, height=2, orientation=135, volume=3, kind=unknown, parts=[4, 4, 4])`,
+`o5cf3c6a27d12 is Object(x=1, y=1, width=2, height=2, orientation=135, volume=3, kind=unknown, parts=[4, 4, 4])`,
 where `parts` lists the colors of its cells row by row, each from left to
 right. Its single color would turn a row into a color-5 bar, but the corner
 keeps color 4, so its output is its input grid unchanged. Native
 snapshots start with the pair's `canvas_width` and `canvas_height`, and
 output snapshots are captured with all of the same pair's implementations
-together, followed by `Obj[:]`. The kind `l3058` is a horizontal bar, as in
+together, followed by `Object[:]`. The kind `l3058` is a horizontal bar, as in
 `dataset.d631b094.json`, in both states, while `unknown` names a shape that
 the rules do not know. Input masks retain each pair's
 full-size 3 by 3 input canvas and output masks the complete 3 by 3 output,
@@ -949,9 +949,9 @@ the default `default`, which names no geometry, but every implementation
 passes its figure's kind there: `kind=l9100`, a single shape, for the figures
 of the six original pairs, as in `volume=3, kind=l9100` for the first training
 bar, and `kind=unknown` for the use case's figure, so no instance takes the
-default. One class-level rule, `if $Obj.kind is l9100:`, selects the figures
+default. One class-level rule, `if $Object.kind is l9100:`, selects the figures
 of kind `l9100` with the comparison `is` of [NUC 86](../docs/nuc-0086.md) and
-rewrites `y` in its body as `$Obj.y@first + 1`, the row below the figure's
+rewrites `y` in its body as `$Object.y@first + 1`, the row below the figure's
 input origin, anchored with `@first` because the rule rewrites `y` itself. The
 condition reads the kind without an `@first` anchor, because no rule rewrites
 it. An object of any other kind, such as the use case's `unknown`, the default
@@ -963,7 +963,7 @@ pair, shows a shape that no pair shows: a 2 by 2 square of four color-1 cells
 in the canvas's top-left corner, with more cells than any figure of the six
 original pairs, whose figures are bars, trominoes, and the test pairs'
 vertical 2-cell bar and single cell. Its implementation is
-`objcc66431f8c5b is Obj(x=0, y=0, width=2, height=2, orientation=0, volume=4, kind=unknown)`,
+`occ66431f8c5b is Object(x=0, y=0, width=2, height=2, orientation=0, volume=4, kind=unknown)`,
 and its output is its input grid unchanged: the square stays on the top two
 rows, where a figure of kind `l9100` would move down one row. Each training
 grid holds a single figure and shows no relation between objects, so no
@@ -973,7 +973,7 @@ population operation appears; the class-level rule moves every figure of kind
 moves without changing its size, so input and output states share the same
 keys and differ only in `y`, and the use case's states not at all. Native
 snapshots start with the pair's `canvas_width` and `canvas_height`, and output
-snapshots are captured with the pair's implementation followed by `Obj[:]`.
+snapshots are captured with the pair's implementation followed by `Object[:]`.
 Kinds identify the geometry: `l9100` is a single shape, as in
 `dataset.28bf18c6.json` and `dataset.6150a2bd.json`, in both states, while
 `unknown` marks a shape that no pair shows. Input masks retain each pair's
@@ -1032,7 +1032,7 @@ right after `volume` as an optional parameter, here with the default
 block's kind, so no instance takes the default, the input state names the
 shape, or its lack of a known one, and no input property names the code. One
 class serves every shape because the solver reads output states with
-`Obj[:]`, which lists no instance of a subclass. Kinds identify the geometry:
+`Object[:]`, which lists no instance of a subclass. Kinds identify the geometry:
 `l4262` is the hollow diamond with a filled corner and `l3743` the square with
 a diagonal tail, while `l2404` is a diagonal cross and `l1707` an orthogonal
 cross, as in `dataset.0ca9ddb6.json`.
@@ -1043,7 +1043,7 @@ dataset's last pair, shows one: a T of five color-5 cells, the full top row
 and the two cells below its middle, which has its center filled, no 2 by 2
 square, and only two corners, so it is none of the four shapes. Its
 implementation is
-`objcea1436b7283 is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=5, kind=unknown)`,
+`ocea1436b7283 is Object(x=0, y=0, width=3, height=3, orientation=0, volume=5, kind=unknown)`,
 and its output is the single background cell `[[0]]`.
 Two unconditional class-level rules shrink the block to the output point's
 size, `width` 1 and `height` 1, and no rule changes `kind`: at the user's
@@ -1053,9 +1053,9 @@ and `height` give the point's own 1 by 1 size. Five `if` cases then introduce
 one property, `fill_color`, which is absent before the rules run. Each case
 selects the blocks of one kind with the comparison `is` of
 [NUC 86](../docs/nuc-0086.md) and gives their point that kind's code, so each
-code is stated once: `if $Obj.kind is l4262:` sets `$Obj.fill_color is 1`,
+code is stated once: `if $Object.kind is l4262:` sets `$Object.fill_color is 1`,
 and the cases for `l2404`, `l3743`, and `l1707` set 2, 3, and 6. The fifth
-case, `if $Obj.kind is unknown:`, gives a block of unknown shape the
+case, `if $Object.kind is unknown:`, gives a block of unknown shape the
 background color 0, which the use case's point takes. The conditions read the
 kind without an `@first` anchor, because no rule rewrites it; conditions
 anchored with `@first` give the same states, whatever the order of the rules
@@ -1064,7 +1064,7 @@ of an implementation that leaves out `kind`, or an invented kind such as
 `l5555`, gets no `fill_color` at all, and the rules raise no error, so the run
 goes on; its input and output states both carry that kind.
 The default applies to no pair, and `unknown` only to the use case.
-`$Obj.volume is 0 if $Obj.fill_color is 0 else $Obj.width * $Obj.height`, a
+`$Object.volume is 0 if $Object.fill_color is 0 else $Object.width * $Object.height`, a
 conditional expression of [NUC 59](../docs/nuc-0059.md) whose condition uses
 the comparison `is`, counts a colored point's single cell and gives a point of
 color 0 none, as `dataset.25d8a9c8.json` empties a cleared row: such a point
@@ -1097,7 +1097,7 @@ any quarter turn, so they keep `l2404` and `l1707` at orientation 0. The four
 shape cases thus hold one code per shape, the four that the training pairs
 show, and none per turn. Native snapshots start with the pair's
 `canvas_width` and `canvas_height`, and output snapshots are captured with the
-pair's implementation followed by `Obj[:]`. Input masks retain each pair's
+pair's implementation followed by `Object[:]`. Input masks retain each pair's
 full-size input canvas, and output masks the complete output; merging them
 reproduces each pair's input and output. In each original pair, the output
 mask's nonzero bounding box, the single cell at 0 and 0, equals the output
@@ -1140,22 +1140,22 @@ shape's kind there: `kind=l9100` for the four original shapes, as in
 `volume=6, kind=l9100, color=8` for the first training input, and
 `kind=unknown` for the use case's shape, so no instance takes the default. One
 class-level `if` block holds every rule and selects the shapes by their kind,
-`if $Obj.kind is l9100:`, with the comparison `is` of
+`if $Object.kind is l9100:`, with the comparison `is` of
 [NUC 86](../docs/nuc-0086.md); the condition reads the live kind, which gives
-the same states although the block's first rule, `$Obj.kind is l4305`, rewrites
+the same states although the block's first rule, `$Object.kind is l4305`, rewrites
 it. The
 block holds for every selected shape, whatever its `color`: it introduces
 `repeat_count` (2, the total number of copies) and `repeat_direction`
 (`right`), which are absent before the rules run, rewrites `width` as
-`$Obj.width@first * $Obj.repeat_count`, 6 columns, because the copies side by
+`$Object.width@first * $Object.repeat_count`, 6 columns, because the copies side by
 side make the repeated shape that many times as wide as the input shape while
 its `height` stays 3, multiplies its cells the same way with
-`$Obj.volume is $Obj.volume@first * $Obj.repeat_count`, and moves `x` and `y`
+`$Object.volume is $Object.volume@first * $Object.repeat_count`, and moves `x` and `y`
 to the output origin 0. Each output state's `width` and `height` are therefore
 the repeated shape's bounding box, the whole 3 by 6 output, and its `volume`
 the output's number of nonzero cells. The seven rules share one block because
 separate `if` rules with the same condition text replace each other, so seven
-blocks headed `if $Obj.kind is l9100:` would keep only the last rule. An
+blocks headed `if $Object.kind is l9100:` would keep only the last rule. An
 object of any other kind, such as the use case's `unknown`, the default
 `default`, or an invented kind such as `l5555`, matches no guard, so no rule
 changes it, its output state equals its input state, and the rules raise no
@@ -1164,7 +1164,7 @@ pair, and `unknown` only to the use case. The use case, the dataset's last
 pair, shows a shape that no pair shows: a horizontal bar of four color-8 cells
 along the top row from the canvas's top-left corner, 4 columns wide and 1 row
 tall, where every original shape fills a 3 by 3 box. Its implementation is
-`objcff6149c664f is Obj(x=0, y=0, width=4, height=1, orientation=90, volume=4, kind=unknown, color=8)`,
+`ocff6149c664f is Object(x=0, y=0, width=4, height=1, orientation=90, volume=4, kind=unknown, color=8)`,
 and its output is the bar alone, `[[8, 8, 8, 8]]`, neither repeated nor moved:
 the bar sits at the canvas origin, so the `FIT` crop to its 1 by 4 box keeps
 its position, 0 and 0, which its unchanged output state records. Kinds
@@ -1208,16 +1208,16 @@ its object's kind there: `kind=l6747` for the nine corners, as in
 `volume=3, kind=l6747, color=8` for the first training corner, and
 `kind=unknown` for the use case's bar, so no instance takes the default. One
 class-level `if` block holds every rule and selects the objects by their kind,
-`if $Obj.kind is l6747:`, with the comparison `is` of
+`if $Object.kind is l6747:`, with the comparison `is` of
 [NUC 86](../docs/nuc-0086.md), with no color condition and no population
 query, because every corner changes alike and independently of the others; the
 condition reads the live kind, which gives the same states although the block's
-first rule rewrites it. In the block, `$Obj.kind is l3337` sets the output kind,
-`$Obj.marker_color is 1` introduces `marker_color`, which is absent before the
-rules run, and `$Obj.volume is $Obj.volume@first + 1` counts the marker's
+first rule rewrites it. In the block, `$Object.kind is l3337` sets the output kind,
+`$Object.marker_color is 1` introduces `marker_color`, which is absent before the
+rules run, and `$Object.volume is $Object.volume@first + 1` counts the marker's
 cell, 4 in all. The three rules share one block because separate `if` rules
 with the same condition text replace each other, so three blocks headed
-`if $Obj.kind is l6747:` would keep only the last rule. The marker fills
+`if $Object.kind is l6747:` would keep only the last rule. The marker fills
 a cell of the corner's own box, so the rules leave `x`, `y`, `width`,
 `height`, `orientation`, and `color` unchanged; each corner's output state
 changes only the kind and `volume` and adds `marker_color` to its input
@@ -1230,11 +1230,11 @@ last pair, shows a shape that no pair shows: a vertical bar of three color-8
 cells in the canvas's middle column, rows 2 to 4, as many cells as a corner
 but in a straight line, with no open cell in a 2 by 2 box to mark. Its
 implementation is
-`obj18d3a786f518 is Obj(x=3, y=2, width=1, height=3, orientation=0, volume=3, kind=unknown, color=8)`,
+`o18d3a786f518 is Object(x=3, y=2, width=1, height=3, orientation=0, volume=3, kind=unknown, color=8)`,
 and its output is its input grid unchanged, with no color-1 marker. Native
 snapshots start with the pair's `canvas_width` and `canvas_height`; input
 states run the class alone, and output states run each pair's implementations
-together with all declarations, followed by `Obj[:]`. Kinds identify the
+together with all declarations, followed by `Object[:]`. Kinds identify the
 geometry: `l6747` is a corner, as in `dataset.core.json` and
 `dataset.extension.json`, and `l3337` is a corner with its inside marker, as
 in `dataset.extension.json`, while `unknown` marks a shape that no pair shows.
@@ -1287,10 +1287,10 @@ mosaic of the original pairs. Like every class, it takes `kind` right after
 implementation passes its mosaic's kind there: `kind=l9100`, a single shape,
 for the five original mosaics, as in `volume=9, kind=l9100` for the first
 training input, and `kind=unknown` for the use case's mosaic, so no instance
-takes the default. One class-level rule, `if $Obj.kind is l9100:`, selects the
+takes the default. One class-level rule, `if $Object.kind is l9100:`, selects the
 mosaics of kind `l9100` with the comparison `is` of
 [NUC 86](../docs/nuc-0086.md) and rewrites `orientation` in its body as
-`($Obj.orientation@first + 180) % 360`, the half-turn rule of
+`($Object.orientation@first + 180) % 360`, the half-turn rule of
 `dataset.6150a2bd.json`, anchored with `@first` because the rule rewrites
 `orientation` itself. The condition reads the kind without an `@first` anchor,
 because no rule rewrites it. An object of any other kind, such as the use
@@ -1302,13 +1302,13 @@ case, the dataset's last pair, shows a shape that no pair shows: a 2 by 2
 mosaic in the canvas's top-left corner, two color-2 cells over a color-1 and a
 color-8 cell, with zero cells around it, where every original mosaic fills its
 canvas. Its implementation is
-`obj551a87cab7fc is Obj(x=0, y=0, width=2, height=2, orientation=0, volume=4, kind=unknown)`,
+`o551a87cab7fc is Object(x=0, y=0, width=2, height=2, orientation=0, volume=4, kind=unknown)`,
 and its output is its input grid unchanged, not turned. The rules leave `x`
 and `y` unchanged: a mosaic that fills its canvas keeps its box in place under
 a half turn, whether about its own center or the canvas's. The two further
 rules of `dataset.6150a2bd.json`, which move the box about the canvas center
-as `canvas_width - $Obj.x@first - $Obj.width` and
-`canvas_height - $Obj.y@first - $Obj.height`, would reproduce every training
+as `canvas_width - $Object.x@first - $Object.width` and
+`canvas_height - $Object.y@first - $Object.height`, would reproduce every training
 output as well, but every training mosaic's `width` and `height` equal the
 canvas's, so those rules would only return the input origin; the rules state
 the half turn alone, a choice fixed from the training pairs before the test
@@ -1319,7 +1319,7 @@ unchanged, since a turn changes the orientation alone, not the mosaic's size,
 so input and output states share the same keys and differ only in
 `orientation`, and the use case's states not at all. Native snapshots start
 with the pair's `canvas_width` and `canvas_height`, and output snapshots are
-captured with the pair's implementation followed by `Obj[:]`. The kind `l9100`
+captured with the pair's implementation followed by `Object[:]`. The kind `l9100`
 is a single shape, as in `dataset.28bf18c6.json` and `dataset.6150a2bd.json`,
 in both states, while `unknown` marks a shape that no pair shows. Input masks
 retain each pair's full-size 3 by 3 input canvas and output masks the complete
@@ -1382,22 +1382,22 @@ under any turn or mirror, is constructed with `kind=unknown`, a pattern of
 unknown shape. The use case, the dataset's last pair, shows one: a T of five
 color-2 cells, the full top row and the two cells below its middle, whose
 3 by 3 box spans the canvas from its origin. Its implementation is
-`obj69fa9a05ccce is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=5, kind=unknown, points=[[0, 0], [1, 0], [2, 0], [1, 1], [1, 2]])`,
+`o69fa9a05ccce is Object(x=0, y=0, width=3, height=3, orientation=0, volume=5, kind=unknown, points=[[0, 0], [1, 0], [2, 0], [1, 1], [1, 2]])`,
 and its output is the T itself. One class-level `if` case,
-`if $Obj.kind is l9100:`, selects the patterns of kind `l9100`, and the rules of
+`if $Object.kind is l9100:`, selects the patterns of kind `l9100`, and the rules of
 its body set the output kind, shrink the pattern to
 the output point's size, `width` 1 and `height` 1, and introduce two
 properties, absent before the rules run.
 `symmetric` is
-`all point in $Obj.points: $Obj.points.includes([canvas_width - 1 - point[0], point[1]])`:
+`all point in $Object.points: $Object.points.includes([canvas_width - 1 - point[0], point[1]])`:
 the mirror image of every point, in the same row and as far from the right
 edge as the point is from the left edge, is also one of the points, which
 holds exactly when the pattern equals its mirror image. The rule uses the
 quantifier `all` of [NUC 62](../docs/nuc-0062.md), which states the claim of
 `every` directly, and `includes`, which matches the mirrored `[column, row]`
 list against the points with the deep equality of
-[NUC 61](../docs/nuc-0061.md). `fill_color` is `1 if $Obj.symmetric else 7`,
-and `$Obj.volume is $Obj.width * $Obj.height` counts the point's single cell.
+[NUC 61](../docs/nuc-0061.md). `fill_color` is `1 if $Object.symmetric else 7`,
+and `$Object.volume is $Object.width * $Object.height` counts the point's single cell.
 The rules also move `x` and `y` to the output origin 0, which changes `y` in
 the fourth training pair and the second test pair. The condition reads the live
 kind, which gives the same states although the body rewrites `kind` to `l7544`.
@@ -1411,7 +1411,7 @@ the rules leave it unchanged and create no property on it: the use case's
 output state equals its input state, and no rule names `unknown`. No rule
 reads another object, so the case needs no exclusion of other kinds. Native
 output snapshots are captured with the pair's implementation followed by
-`Obj[:]`. Kinds identify the geometry: `l9100` is a single shape, as in
+`Object[:]`. Kinds identify the geometry: `l9100` is a single shape, as in
 `dataset.28bf18c6.json` and `dataset.017c7c7b.json`, and `l7544` is a single
 point, as in `dataset.0ca9ddb6.json` and `dataset.d037b0a7.json`, while
 `unknown` names no geometry that the dataset knows and stays the use case's
@@ -1471,18 +1471,18 @@ original pair shows, under any turn or mirror, is constructed with
 pair, shows one: a plus of five cells, the center in color 8, the cells left
 and right of it in color 6, and the cells above and below it in colors 4 and
 3, whose 3 by 3 box spans the canvas from its origin. Its implementation is
-`obje40312ecead9 is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=5, kind=unknown, parts=[4, 6, 8, 6, 3])`,
+`oe40312ecead9 is Object(x=0, y=0, width=3, height=3, orientation=0, volume=5, kind=unknown, parts=[4, 6, 8, 6, 3])`,
 and its output is its input, unchanged. One class-level `if` case,
-`if $Obj.kind is l9100:`, selects the blocks of kind `l9100`, and the rules of
+`if $Object.kind is l9100:`, selects the blocks of kind `l9100`, and the rules of
 its body set the output kind and introduce one
 property, `fill_color`, which is absent before the rules run, as
-`mode of $Obj.parts`.
-That is the noun form of `$Obj.parts.mode()`: the accepted list query `mode`
+`mode of $Object.parts`.
+That is the noun form of `$Object.parts.mode()`: the accepted list query `mode`
 from [NUC 75](../docs/nuc-0075.md) returns the most frequent item of `parts`,
 the color with the most cells, matching items as `distinct` does. On a tie,
 which no pair has, `mode` returns the tied color that occurs first in `parts`,
 the one whose first cell comes first in reading order.
-`$Obj.volume is $Obj.width * $Obj.height` counts the fill's 9 cells, also for
+`$Object.volume is $Object.width * $Object.height` counts the fill's 9 cells, also for
 a block with a zero cell. The condition reads the live kind, which gives the
 same states although the body rewrites `kind` to `l5236`. The three rules share
 the one case because separate
@@ -1499,7 +1499,7 @@ state adds only `fill_color` to its input state's keys, and they leave `x` and
 `width` and `height` unchanged because the fill covers the block's 3 by 3
 bounding box.
 Native output snapshots are captured with the pair's implementation followed
-by `Obj[:]`. Kinds identify the geometry: `l9100` is a single shape, as in
+by `Object[:]`. Kinds identify the geometry: `l9100` is a single shape, as in
 `dataset.28bf18c6.json`, and `l5236` is a solid rectangle that fills the whole
 canvas, while `unknown` names no geometry that the dataset knows and stays the
 use case's kind in both states. Input masks retain each pair's full-size
@@ -1546,13 +1546,13 @@ or mirror, is constructed with `kind=unknown`, a block of unknown shape. The
 use case, the dataset's last pair, shows one: a T of five cells, the full top
 row in colors 2, 5, and 5 and the two cells below its middle in colors 7 and
 3, whose 3 by 3 box spans the canvas from its origin. Its implementation is
-`obj637cf3b66051 is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=5, kind=unknown)`,
+`o637cf3b66051 is Object(x=0, y=0, width=3, height=3, orientation=0, volume=5, kind=unknown)`,
 and its output is its input, unchanged. One class-level `if` case,
-`if $Obj.kind is l9100:`, selects the blocks of kind `l9100`, and the rules of
+`if $Object.kind is l9100:`, selects the blocks of kind `l9100`, and the rules of
 its body read the block's input state with `@first` anchors:
-`($Obj.orientation@first + 180) % 360` gives `orientation`,
-`canvas_width - $Obj.x@first - $Obj.width` gives `x`, and
-`canvas_height - $Obj.y@first - $Obj.height` gives `y`. The condition reads
+`($Object.orientation@first + 180) % 360` gives `orientation`,
+`canvas_width - $Object.x@first - $Object.width` gives `x`, and
+`canvas_height - $Object.y@first - $Object.height` gives `y`. The condition reads
 the kind without an `@first` anchor, because no rule rewrites it. The three
 rules share the one case because separate `if` rules with the same condition
 text replace each other, as [Control Flow](../docs/README.md#8-control-flow)
@@ -1565,7 +1565,7 @@ needs no exclusion of other kinds. The rules leave `width` and `height`
 unchanged, because a half turn keeps the box's size while `orientation`
 carries the turn, and create no other properties, so input and output states
 share the same keys. Native output snapshots are captured with the pair's
-implementation followed by `Obj[:]`. The kind `l9100` is a single shape, as in
+implementation followed by `Object[:]`. The kind `l9100` is a single shape, as in
 `dataset.28bf18c6.json` and `dataset.5582e5ca.json`, in both states of the
 original pairs, while `unknown` names no geometry that the dataset knows and
 stays the use case's kind in both states. Input masks retain each pair's
@@ -1605,7 +1605,7 @@ block is left-right symmetric, and neither does setting its half turn or its
 top-bottom mirror image to the right, or its mirror image on its left. Every
 original block fills its canvas, so its own right edge is the canvas's right
 edge: the canvas-edge rule of `dataset.c9e6f938.json`,
-`$Obj.width is 2 * (canvas_width - $Obj.x@first)`, and doubling the block's
+`$Object.width is 2 * (canvas_width - $Object.x@first)`, and doubling the block's
 own width give the same 6 columns in every training pair, and the rules take
 the latter, which reads only the block. These choices were fixed from the
 training pairs before the test pair was read; the test block happens to be
@@ -1626,14 +1626,14 @@ with `kind=unknown`, a block of unknown shape. The use case, the dataset's
 last pair, shows one: a plus of five cells, the center in color 1, the cells
 above, below, and right of it in color 6, and the cell left of it in color 8,
 whose 3 by 3 box spans the canvas from its origin. Its implementation is
-`obj1a9bda272b62 is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=5, kind=unknown)`,
+`o1a9bda272b62 is Object(x=0, y=0, width=3, height=3, orientation=0, volume=5, kind=unknown)`,
 and its output is its input, unchanged. One class-level `if` case,
-`if $Obj.kind is l9100:`, selects the blocks of kind `l9100`, and the three
+`if $Object.kind is l9100:`, selects the blocks of kind `l9100`, and the three
 rules of its body turn each such block into the figure
-it forms with its mirror image: `$Obj.kind is l6919` names that geometry,
-`$Obj.width is $Obj.width@first * 2` makes the figure twice as wide as the
+it forms with its mirror image: `$Object.kind is l6919` names that geometry,
+`$Object.width is $Object.width@first * 2` makes the figure twice as wide as the
 block, 6 columns, as `dataset.28bf18c6.json` multiplies its shape's width by
-its copies, and `$Obj.volume is $Obj.volume@first * 2` counts the block's
+its copies, and `$Object.volume is $Object.volume@first * 2` counts the block's
 cells with their mirror images. The condition reads the live kind, which gives
 the same states although the body rewrites `kind` to `l6919`. The three rules
 share the one case because
@@ -1654,7 +1654,7 @@ differ only in the kind, `width`, and `volume`, and in the use case not at
 all, and the rules give the same states with the case's rules in reverse order
 and with the case declared after the instance. Native snapshots start with the
 pair's `canvas_width` and `canvas_height`, and output snapshots are captured
-with the pair's implementation followed by `Obj[:]`. Kinds identify the
+with the pair's implementation followed by `Object[:]`. Kinds identify the
 geometry: `l9100` is a single shape, as in `dataset.6150a2bd.json`, and
 `l6919` is a shape beside its left-right mirror image, symmetric about the
 vertical center line of its box, as in `dataset.c9e6f938.json`, while
@@ -1724,24 +1724,24 @@ right after `volume` as an optional parameter, here with the default
 mosaic's kind, so no instance takes the default. Each original implementation
 passes `width=3, height=3` right after `y` and `kind=l9100` right after
 `volume=9`, as in
-`objf30b9a69fe75 is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=9, kind=l9100, parts=[2, 2, 2, 3, 2, 3, 3, 3, 3])`
+`of30b9a69fe75 is Object(x=0, y=0, width=3, height=3, orientation=0, volume=9, kind=l9100, parts=[2, 2, 2, 3, 2, 3, 3, 3, 3])`
 for the first training input. Two `if` cases turn a mosaic of kind `l9100`,
-and no other object, into the line: the first, `if $Obj.kind is l9100:`, holds
+and no other object, into the line: the first, `if $Object.kind is l9100:`, holds
 four rules, and the second,
-`if $Obj.kind@first is l9100 and $Obj.orientation is 90:`, holds one. The
+`if $Object.kind@first is l9100 and $Object.orientation is 90:`, holds one. The
 four rules share one case because separate `if` cases with the same condition
 text replace each other. The first condition reads the live kind, which gives
 the same states although its case rewrites `kind`, and the second reads the
 input kind with an `@first` anchor: it holds only once the lookup has turned the
 orientation to 90, after the kind has turned
 `l6074`, so a condition on the live kind would leave the top-row line 3 rows
-tall. In the first case, `$Obj.kind is l6074` names the line, and
-`$Obj.fill_color is 5` introduces `fill_color`, which is absent before the
+tall. In the first case, `$Object.kind is l6074` names the line, and
+`$Object.fill_color is 5` introduces `fill_color`, which is absent before the
 rules run, because the line is gray whatever the mosaic's colors.
-`$Obj.volume is max of [$Obj.width, $Obj.height]` counts the line's cells, one
+`$Object.volume is max of [$Object.width, $Object.height]` counts the line's cells, one
 for each step along the longer side of its box: 3 for the top row and for
 either diagonal.
-`orientation` is `{1: 90, 2: 135, 3: 45}[$Obj.parts.distinct().length]`: the
+`orientation` is `{1: 90, 2: 135, 3: 45}[$Object.parts.distinct().length]`: the
 list query `distinct` of [NUC 71](../docs/nuc-0071.md) keeps each of the
 mosaic's colors once, so its length is the number of colors, and the object
 literal, keyed by that number, states each count's axis once, by the shared
@@ -1751,7 +1751,7 @@ is 135 and the other diagonal 45. No
 arithmetic relates the counts to the axes, so the rule looks the axis up, and
 it reads no orientation, so it rewrites `orientation` without an `@first`
 anchor. The
-second case's `$Obj.orientation is 90` uses `is`, the spelling of `==` that
+second case's `$Object.orientation is 90` uses `is`, the spelling of `==` that
 [NUC 86](../docs/nuc-0086.md) adds, and the case sets `height` to 1, guarding
 on a horizontal line: the line along the top row is
 one row tall, the one change in the shape's size, while a diagonal crosses the
@@ -1774,7 +1774,7 @@ dataset's last pair, shows a shape they never show: an I of seven cells, the
 full top row in color 2, the middle cell in color 3, and the full bottom row
 in color 4, with the two side cells of the middle row zero. Its implementation
 is
-`obj75c19d1f341f is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=7, kind=unknown, parts=[2, 2, 2, 3, 4, 4, 4])`,
+`o75c19d1f341f is Object(x=0, y=0, width=3, height=3, orientation=0, volume=7, kind=unknown, parts=[2, 2, 2, 3, 4, 4, 4])`,
 whose `parts` lists its seven nonzero cells. A mosaic of kind `unknown`
 matches neither case, so no rule touches it: its output state equals its input
 state, and its output is its unchanged input. A mosaic with the default
@@ -1782,7 +1782,7 @@ state, and its output is its unchanged input. A mosaic with the default
 the rules raise no error and need no rule for unknown kinds.
 Native snapshots start with the pair's `canvas_width` and `canvas_height`, and
 output snapshots are captured with the pair's implementation followed by
-`Obj[:]`. Kinds identify the geometry: `l9100` is a single shape, as in
+`Object[:]`. Kinds identify the geometry: `l9100` is a single shape, as in
 `dataset.28bf18c6.json` and `dataset.3c9b0459.json`, and `l6074` is a straight
 line of cells across the whole canvas, along the axis its orientation gives,
 while `unknown` names no geometry: the use case's mosaic has a shape that no
@@ -1827,7 +1827,7 @@ its top-bottom mirror image above it; a half turn of the block placed below
 reproduces only the second training pair, whose rows each read the same from
 right to left. Every block fills its canvas, so its own bottom edge is the
 canvas's bottom edge: the canvas-edge rule of `dataset.8be77c9e.json`,
-`$Obj.height is 2 * (canvas_height - $Obj.y@first)`, and doubling the block's
+`$Object.height is 2 * (canvas_height - $Object.y@first)`, and doubling the block's
 own height give the same 6 rows in every training pair, and the rules take
 the latter, which reads only the block, as `dataset.6d0aefbc.json` doubles
 its block's width. These choices were fixed from the training pairs before
@@ -1846,15 +1846,15 @@ which names no geometry, but every implementation passes its object's kind,
 so no instance takes the default. Its declaration is that of
 `dataset.6d0aefbc.json`, and each original implementation passes
 `x=0, y=0, width=3, height=3, orientation=0, volume=9, kind=l9100`. One `if`
-case, `if $Obj.kind is l9100:`, turns every block of kind `l9100`, and
+case, `if $Object.kind is l9100:`, turns every block of kind `l9100`, and
 no other object, into the figure it forms with its mirror image, with three
 rules that share the case because separate `if` cases with the same condition
 text replace each other. The condition reads the live kind, which gives the same
-states although the case rewrites `kind` to `l7511`. `$Obj.kind is l7511` names
+states although the case rewrites `kind` to `l7511`. `$Object.kind is l7511` names
 that geometry,
-`$Obj.height is $Obj.height@first * 2` makes the figure twice as tall as the
+`$Object.height is $Object.height@first * 2` makes the figure twice as tall as the
 block, 6 rows, anchored with `@first` because the rule rewrites `height`
-itself, and `$Obj.volume is $Obj.volume@first * 2` counts the block's cells
+itself, and `$Object.volume is $Object.volume@first * 2` counts the block's cells
 with their mirror images, anchored the same way. The rules leave `x`, `y`,
 `width`, and `orientation` unchanged, because the figure keeps the block's
 top-left corner and columns, and state no `mirror_axis`, the property of
@@ -1869,7 +1869,7 @@ so the use case, the dataset's last pair, shows a shape they never show: a T
 of five cells, the full top row in color 7 and, below its middle, a color-9
 cell over a color-5 cell, the shape of the use case of `dataset.27a28665.json`.
 Its implementation is
-`objd025b1701492 is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=5, kind=unknown)`.
+`od025b1701492 is Object(x=0, y=0, width=3, height=3, orientation=0, volume=5, kind=unknown)`.
 A figure of kind `unknown` does not match the case, so no rule touches it: its
 output state equals its input state, and its output is its unchanged input on
 the 3 by 3 canvas, with no mirror image below it. A figure with the default
@@ -1877,7 +1877,7 @@ the 3 by 3 canvas, with no mirror image below it. A figure with the default
 the rules raise no error and need no rule for unknown kinds. Native snapshots
 start with the pair's `canvas_width` and `canvas_height`, and output
 snapshots are captured with the pair's
-implementation followed by `Obj[:]`. Kinds identify the geometry: `l9100` is
+implementation followed by `Object[:]`. Kinds identify the geometry: `l9100` is
 a single shape, as in `dataset.6d0aefbc.json` and `dataset.3c9b0459.json`,
 and `l7511` is a shape over its top-bottom mirror image, symmetric about the
 horizontal center line of its box, as in `dataset.8be77c9e.json`, while
@@ -1937,13 +1937,13 @@ passes its mosaic's kind, `kind=l9100` right after `volume=9` in the original
 pairs, so no instance takes the default. It takes no descriptive property,
 with no color, parts list, canvas size, or matrix of cells, because the rule
 needs none: the mosaic's cells travel in its masks, and its box gives its
-mirror axis. One `if` case, `if $Obj.kind is l9100:`, whose condition reads
+mirror axis. One `if` case, `if $Object.kind is l9100:`, whose condition reads
 the kind without an `@first` anchor because no rule rewrites it, gives every
 mosaic of kind `l9100`, and no other object, the property `mirror_axis`,
 which is absent before the rules run: the line the mosaic is mirrored across,
 read from the mosaic's input box with `@first` anchors rather than stated as a
 constant,
-`{start: {x: $Obj.x@first, y: $Obj.y@first}, end: {x: $Obj.x@first + $Obj.width@first - 1, y: $Obj.y@first + $Obj.height@first - 1}}`.
+`{start: {x: $Object.x@first, y: $Object.y@first}, end: {x: $Object.x@first + $Object.width@first - 1, y: $Object.y@first + $Object.height@first - 1}}`.
 `start` is the box's top-left cell and `end` its bottom-right cell, as canvas
 columns and rows, so the axis is the mosaic's own main diagonal wherever its
 box lies, from 0 and 0 to 2 and 2 for every flip, and the cells on it stay in
@@ -1955,8 +1955,8 @@ canvas's diagonal, from 0 and 0 to `canvas_width - 1` and
 `canvas_height - 1`, gives the same ends in every training pair too, because
 every mosaic fills its canvas, but it reads the canvas rather than the figure.
 The rules leave `x` and `y` unchanged: a flip across its own diagonal keeps a
-square box in place. Two further rules, `$Obj.x is $Obj.y@first` and
-`$Obj.y is $Obj.x@first`, which swap the box's origin as a flip across the
+square box in place. Two further rules, `$Object.x is $Object.y@first` and
+`$Object.y is $Object.x@first`, which swap the box's origin as a flip across the
 canvas's diagonal does, would reproduce every training output as well, but
 every mosaic's origin is 0 and 0, so those rules would only return the input
 origin; the rules state the flip alone, a choice fixed from the training pairs
@@ -1973,7 +1973,7 @@ use case, the dataset's last pair, shows a shape they never show: an H of
 seven cells, the full left column in color 2, the middle cell in color 5, and
 the full right column in color 1, with the top and bottom cells of the middle
 column zero. Its implementation is
-`obj1abbe3ea84c5 is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=7, kind=unknown)`.
+`o1abbe3ea84c5 is Object(x=0, y=0, width=3, height=3, orientation=0, volume=7, kind=unknown)`.
 A mosaic of kind `unknown` does not match the case, so no rule touches it: it
 gains no `mirror_axis`, its output state equals its input state, and its
 output is its unchanged input rather than its flip, an I of the same colors. A
@@ -1981,7 +1981,7 @@ mosaic with the default `default` or an invented kind such as `l5555` stays
 unchanged the same way, so the rules raise no error and need no rule for
 unknown kinds. Native snapshots start with the
 pair's `canvas_width` and `canvas_height`, and output snapshots are captured
-with the pair's implementation followed by `Obj[:]`. The kind `l9100` is a
+with the pair's implementation followed by `Object[:]`. The kind `l9100` is a
 single shape, as in `dataset.28bf18c6.json` and `dataset.3c9b0459.json`, in
 both states of the original pairs, while `unknown` names no geometry. Input
 masks retain each pair's full-size 3 by 3 input canvas and output masks the
@@ -2043,22 +2043,22 @@ names no geometry, but every implementation passes its pattern's kind, so no
 instance takes the default. Each implementation passes `width` and `height`
 right after `y` and the kind right after `volume`, such as
 `x=0, y=1, width=1, height=1, orientation=0, volume=1, kind=l9100` for the
-first training input. One `if` case, `if $Obj.kind is l9100:`, turns a pattern
+first training input. One `if` case, `if $Object.kind is l9100:`, turns a pattern
 of kind `l9100`, and no other object, into the tally with seven rules,
 which share the case because separate `if` cases with the same condition text
 replace each other. The condition reads the live kind, which gives the same
-states although the case rewrites `kind` to `l5714`. `$Obj.kind is l5714` names
-the tally, and `$Obj.fill_color is 2`
+states although the case rewrites `kind` to `l5714`. `$Object.kind is l5714` names
+the tally, and `$Object.fill_color is 2`
 introduces `fill_color`, which is absent before the rules run, because the
 tally is red whatever the pattern. `width` is
-`min of [$Obj.volume, canvas_width]`, the noun form of the list query
+`min of [$Object.volume, canvas_width]`, the noun form of the list query
 `min` from [NUC 75](../docs/nuc-0075.md): the bar holds the first cells, up to
-the canvas's width. `height` is `1 + $Obj.volume - $Obj.width`: the bar's
+the canvas's width. `height` is `1 + $Object.volume - $Object.width`: the bar's
 one row and one row for each cell beyond the bar, which the stem holds. That
 rule reads the bar's `width` as the width rule sets it, not the pattern's
 input width, so it takes no `@first` anchor, and no rule rewrites
 `volume`. `orientation` is
-`90 if $Obj.height is 1 and $Obj.width > 1 else 0`, the conditional
+`90 if $Object.height is 1 and $Object.width > 1 else 0`, the conditional
 expression of [NUC 59](../docs/nuc-0059.md) with the comparison `is` of
 [NUC 86](../docs/nuc-0086.md), the spelling of `==`: a tally one row high
 and more than one cell wide is a bar, which lies along its row at 90, and
@@ -2070,7 +2070,7 @@ Nucleoid runs an `if` body from top to bottom, so the `height` rule reads the
 `width` that the rule before it sets, and the `orientation` rule the `width`
 and `height` set before it. In reverse order they would read the pattern's
 input box instead, and seven of the twelve original output states would
-change. `$Obj.x is 0` and `$Obj.y is 0` move the
+change. `$Object.x is 0` and `$Object.y is 0` move the
 tally to the canvas's top-left corner, wherever the pattern lies, which
 changes `x` in the fourth and fifth training pairs and the first test pair,
 and `y` in the first training pair. Each grid holds a single pattern and
@@ -2082,7 +2082,7 @@ its kind turns `l5714`, and its `width` and `height` are the tally's box:
 in a straight line, so the use case, the dataset's last pair, shows one: a
 vertical line of three color-1 cells down the canvas's right column. Its
 implementation is
-`obj2c3b0e7ee1bf is Obj(x=2, y=0, width=1, height=3, orientation=0, volume=3, kind=unknown)`.
+`o2c3b0e7ee1bf is Object(x=2, y=0, width=1, height=3, orientation=0, volume=3, kind=unknown)`.
 A pattern of kind `unknown` does not match the case, so no rule touches it: it
 gains no `fill_color` and keeps its place and size, so its output state equals
 its input state, and its output is its unchanged input, still color 1, rather
@@ -2090,7 +2090,7 @@ than a tally. A pattern with the default `default` or an invented kind such as
 `l5555` stays unchanged the same way, so the rules raise no error and need no
 rule for unknown kinds. Native snapshots start with the pair's
 `canvas_width` and `canvas_height`, and output snapshots are captured with the
-pair's implementation followed by `Obj[:]`. Kinds identify the geometry:
+pair's implementation followed by `Object[:]`. Kinds identify the geometry:
 `l9100` is a single shape, as in `dataset.28bf18c6.json` and
 `dataset.d631b094.json`, and `l5714` is a tally, a bar along the top row
 filled from the left up to the canvas's width, with the remaining cells as a
@@ -2165,18 +2165,18 @@ first training input. The class defaults `kind` to `default`, which names no
 geometry, but every implementation passes its pattern's kind, `l9100` in the
 original pairs and `unknown` in the use case, so no instance takes the
 default.
-One class-level conditional, `if $Obj.kind is l9100:`, selects every pattern of
+One class-level conditional, `if $Object.kind is l9100:`, selects every pattern of
 kind `l9100`, a single shape, and the three rules of
 its body turn each of them into the figure it forms with its mirror image.
-`$Obj.kind is l7511` names that geometry, and
-`$Obj.height is 2 * (canvas_height - $Obj.y@first)` grows the box down to the
+`$Object.kind is l7511` names that geometry, and
+`$Object.height is 2 * (canvas_height - $Object.y@first)` grows the box down to the
 mirror image of its top row: twice the distance from the pattern's top row to
 the canvas's bottom edge, so the mirror line lies at the box's center. That
 gives 6 rows for the first training pattern, which starts on the top row, and
 4 for the others, which start one row down. The rule reads the canvas's height
-as `dataset.d037b0a7.json` grows its bars with `canvas_height - $Obj.y@first`,
+as `dataset.d037b0a7.json` grows its bars with `canvas_height - $Object.y@first`,
 anchored with `@first` to read the pattern's input row, as there, although no
-rule moves `y`. `$Obj.volume is 2 * $Obj.volume@first` counts the pattern's
+rule moves `y`. `$Object.volume is 2 * $Object.volume@first` counts the pattern's
 cells with their mirror images. The condition reads the live kind, which gives
 the same states although the body turns it into `l7511`. The three rules share
 one conditional because separate `if` rules with the same condition text
@@ -2198,7 +2198,7 @@ or mirror, is constructed with `kind=unknown`, a pattern of unknown shape.
 Every pattern of the four original pairs takes `l9100`, so the use case, the
 dataset's last pair, shows one: a plus of five color-1 cells, the middle row
 and the middle column of the 3 by 3 canvas. Its implementation is
-`objbe03859f875d is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=5, kind=unknown)`,
+`obe03859f875d is Object(x=0, y=0, width=3, height=3, orientation=0, volume=5, kind=unknown)`,
 and its output is its input grid: the conditional selects no pattern of kind
 `unknown`, so no rule touches the plus, and its output state equals its input
 state. A pattern of a kind that the conditional does not name, such as the
@@ -2207,7 +2207,7 @@ kind such as `l5555`, likewise keeps its input state, and the rules raise no
 error.
 Native snapshots start with the pair's `canvas_width` and `canvas_height`, and
 output snapshots are captured with the pair's implementation followed by
-`Obj[:]`. Kinds identify the geometry: `l9100` is a single shape, as in
+`Object[:]`. Kinds identify the geometry: `l9100` is a single shape, as in
 `dataset.28bf18c6.json` and `dataset.25ff71a9.json`, `l7511` is a shape over
 its top-bottom mirror image, symmetric about the horizontal center line of its
 box, and `unknown` is a pattern whose shape no original pair shows. Input
@@ -2284,13 +2284,13 @@ replace `volume`, because a region's box does not count its cells: the fourth
 training pair's two color-8 corner cells span a 3 by 3 box, yet that region
 turns gray, while the 3 cells of color 4, a single row, keep their color. One
 conditional class-level rule,
-`if $Obj.kind is l9100 and any other in Obj: other.volume > $Obj.volume:`
-with the body `$Obj.color is 5`, turns gray every region of kind `l9100` that
+`if $Object.kind is l9100 and any other in Object: other.volume > $Object.volume:`
+with the body `$Object.color is 5`, turns gray every region of kind `l9100` that
 another region of its pair outnumbers: its first operand, the comparison `is`
 of [NUC 86](../docs/nuc-0086.md), selects the regions of that kind, so no
 region of another kind turns gray, and the quantifier `any` of
-[NUC 62](../docs/nuc-0062.md) states the claim of `Obj.some(...)` directly,
-its binder ranges over the pair's whole population, and `$Obj.volume` reads
+[NUC 62](../docs/nuc-0062.md) states the claim of `Object.some(...)` directly,
+its binder ranges over the pair's whole population, and `$Object.volume` reads
 the region the rule is evaluated for. The binder reads every region whatever
 its kind, because a region's `volume` counts its cells whatever its kind, so a
 larger region of another kind turns an `l9100` region gray as a larger `l9100`
@@ -2303,7 +2303,7 @@ its cells when it turns gray, so input and output states share the same
 keys, and a gray region's output state differs from its input state only
 in `color`. Native snapshots start with the pair's `canvas_width` and
 `canvas_height`, and output snapshots are captured with all of the same pair's
-implementations together, followed by `Obj[:]`, so every region is compared
+implementations together, followed by `Object[:]`, so every region is compared
 with its whole pair. The kind `l9100` is a single shape, as in
 `dataset.9af7a82c.json` and `dataset.d631b094.json`, in both states of every
 original region, and `unknown` is a region whose shape no original pair shows.
@@ -2312,7 +2312,7 @@ or mirror, is constructed with `kind=unknown`. Every region of the five
 original pairs takes `l9100`, so the use case, the dataset's last pair, shows
 one: the whole canvas in color 2, a 3 by 3 block of 9 cells, more than any
 original region has. Its implementation is
-`obj75f18a68e44b is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=9, kind=unknown, color=2)`,
+`o75f18a68e44b is Object(x=0, y=0, width=3, height=3, orientation=0, volume=9, kind=unknown, color=2)`,
 and its output is its input grid: the rule selects no region of kind
 `unknown`, so the block's output state equals its input state. Alone in its
 pair, the block would keep its color as an `l9100` region too, because no
@@ -2356,13 +2356,13 @@ matrix of cells. The class defaults `kind` to `default`, which names no
 geometry, but every implementation passes its region's kind right after
 `volume`, `kind=l9100` in the original pairs and `kind=unknown` in the use
 case, so no instance takes the default.
-One class-level conditional, `if $Obj.kind is l9100:`, selects every region of
+One class-level conditional, `if $Object.kind is l9100:`, selects every region of
 kind `l9100`, a single shape, and the six rules of its
-body resize each of them into its bar: `$Obj.kind is l6953` names the bar,
-`width` becomes 1 and `height` the cell count, as `$Obj.height is $Obj.volume`
+body resize each of them into its bar: `$Object.kind is l6953` names the bar,
+`width` becomes 1 and `height` the cell count, as `$Object.height is $Object.volume`
 sets it, `y` moves to the output origin 0, and `x`,
 the bar's column, comes from the pair's population:
-`Obj.filter(other => other.kind is l6953 and other.height > $Obj.height).length`
+`Object.filter(other => other.kind is l6953 and other.height > $Object.height).length`
 counts the taller bars, those of the larger regions, and re-evaluates
 whenever an instance is added. The filter counts only objects of the bar kind
 `l6953`, because a region of another kind turns into no bar and keeps its
@@ -2376,13 +2376,13 @@ per rule would keep only the last rule. The bar's size is the object's own
 `width` and `height`, so the rules create no property, and input and output
 states share the same keys. Each pair lists its instances largest first.
 Native output snapshots are captured with all of the same pair's
-implementations together, followed by `Obj[:]`, so every recorded `x` counts
+implementations together, followed by `Object[:]`, so every recorded `x` counts
 all larger regions of its pair. A region that shows none of the shapes of the
 original pairs, under any turn or mirror, is constructed with `kind=unknown`.
 Every region of the five original pairs takes `l9100`, so the use case, the
 dataset's last pair, shows one: the whole 3 by 4 canvas in color 4, a block
 of 12 cells, more than any original region has. Its implementation is
-`objc65079c49656 is Obj(x=0, y=0, width=4, height=3, orientation=0, volume=12, kind=unknown, color=4)`,
+`oc65079c49656 is Object(x=0, y=0, width=4, height=3, orientation=0, volume=12, kind=unknown, color=4)`,
 and its output is its input grid: the conditional selects no region of kind
 `unknown`, so the block turns into no bar, and its output state equals its
 input state. A region of a kind that the conditional does not name, such as
@@ -2409,7 +2409,7 @@ two vertical bars and the four single cells are at 0, and so are the three
 remaining original regions, a notched block and two zigzags, which have no
 direction, as is the use case's block in both of its states. Every original
 output state is a vertical bar, at 0 by its vertical axis, or a single cell,
-also 0, so the rule `$Obj.orientation is 0` in the conditional's body stands
+also 0, so the rule `$Object.orientation is 0` in the conditional's body stands
 every bar upright, whatever its region's orientation. The test pair follows
 the training pairs at the same level, and the use case follows the test pair,
 all annotated by the same rules.
@@ -2456,31 +2456,31 @@ marker's column is its `x`. Like every class, it takes `kind` right after
 `volume` as an optional parameter, here with the default `default`, which
 names no geometry, but every implementation passes its object's kind,
 `kind=l7544` for each marker, as in
-`obja98bf6900c1c is Obj(x=2, y=0, width=1, height=1, orientation=0, volume=1, kind=l7544)`
+`oa98bf6900c1c is Object(x=2, y=0, width=1, height=1, orientation=0, volume=1, kind=l7544)`
 for the top marker of the first training input, so no instance takes the
 default. A row whose gray cells form any other shape holds no marker, and its
 object is constructed with `kind=unknown`. Every row of the five original
 pairs holds a single gray cell, so the use case, the dataset's last pair,
 shows one: two gray cells side by side in the left two columns of the middle
 row, a horizontal domino, with the other rows empty, which
-`obj35a9e700bb1d is Obj(x=0, y=1, width=2, height=1, orientation=90, volume=2, kind=unknown)`
-constructs. One class-level `if`, `if $Obj.kind is l7544:`, selects the markers
+`o35a9e700bb1d is Object(x=0, y=1, width=2, height=1, orientation=90, volume=2, kind=unknown)`
+constructs. One class-level `if`, `if $Object.kind is l7544:`, selects the markers
 and holds all six rules, which set the output kind and
 orientation, introduce one property, `fill_color`, absent before the rules
 run, widen the marker into its bar, and move `x` to the left edge, 0, while
 `y` keeps the marker's row. Its condition reads the live kind, which gives the
-same states although its first rule, `$Obj.kind is l3058`, rewrites the kind.
+same states although its first rule, `$Object.kind is l3058`, rewrites the kind.
 The rules
 share one `if` because separate `if` rules with the same condition text
 replace each other, so separate guards would give every instance, which the
 solver creates after the rules, only the last rule. `fill_color` is
-`[2, 4, 3][$Obj.x@first]`: the list holds one color per column of the
+`[2, 4, 3][$Object.x@first]`: the list holds one color per column of the
 3-column canvases, from left to right, and indexing it with the marker's input
 column picks its row's color, anchored with `@first` because another rule
 moves `x`. `width` becomes `canvas_width`, reading the canvas's width from the
 solver's `canvas_width`, as `dataset.d037b0a7.json` reads `canvas_height`,
 while `height` stays the marker's 1 because the bar is one row tall, and
-`$Obj.volume is $Obj.width * $Obj.height` counts the bar's 3 cells. The `if`
+`$Object.volume is $Object.width * $Object.height` counts the bar's 3 cells. The `if`
 body runs its rules in order for each marker, so this count follows the rule
 that widens the bar; in reverse order it would count the marker's single
 cell. The bar's ends come from the canvas, not the population: in the second
@@ -2498,7 +2498,7 @@ its input state's keys, its kind turns `l3058`, its `width` and `volume` turn
 snapshots
 start with the pair's `canvas_width` and `canvas_height`, and output snapshots
 are captured with all of the same pair's implementations together, followed by
-`Obj[:]`. Kinds
+`Object[:]`. Kinds
 identify the geometry: `l7544` is a single point, as in
 `dataset.0ca9ddb6.json` and `dataset.d037b0a7.json`, and `l3058` is a
 horizontal bar, as in `dataset.d631b094.json` and `dataset.25d8a9c8.json`,
@@ -2514,7 +2514,7 @@ left end of its marker's row, equal to `output_value.x`/`output_value.y`, and
 canvas; with no zero cell in any original output, `FIT` would frame the same
 original grids, but it would crop the use case's output to its domino.
 Orientation is 0 in a marker's input state because the marker is a single
-point, and 90 in its output state, where `$Obj.orientation is 90` sets it,
+point, and 90 in its output state, where `$Object.orientation is 90` sets it,
 because the bar is a horizontal line without a head, which points along its
 horizontal axis. The use case's domino, a horizontal line of two cells
 without a head, is 90 in both states. The test pair follows the training
@@ -2564,19 +2564,19 @@ any other shape is constructed with `kind=unknown`. Every original input
 holds a single point, so the use case, the dataset's last pair, shows one:
 two color-2 cells side by side in the second and third columns of the middle
 row, a horizontal domino, which
-`obje0e432fab7e5 is Obj(x=1, y=1, width=2, height=1, orientation=90, volume=2, kind=unknown)`
-constructs. One class-level `if`, `if $Obj.kind is l7544:`, selects the points
+`oe0e432fab7e5 is Object(x=1, y=1, width=2, height=1, orientation=90, volume=2, kind=unknown)`
+constructs. One class-level `if`, `if $Object.kind is l7544:`, selects the points
 and holds seven rules that turn every point into its figure. Its condition reads
 the live kind, which gives the same states although its first rule,
-`$Obj.kind is l2898`, which names the figure, rewrites the kind, and the rules
+`$Object.kind is l2898`, which names the figure, rewrites the kind, and the rules
 share one `if` because separate `if` rules with the same condition text
 replace each other, so separate guards would give every instance, which the
 solver creates after the rules, only the last rule.
-`$Obj.corner_colors is [[3, 6], [8, 7]]` introduces `corner_colors`, which is
+`$Object.corner_colors is [[3, 6], [8, 7]]` introduces `corner_colors`, which is
 absent before the rules run: the corners' colors as they lie around the
 point, the top row's left and right corners first and then the bottom row's.
 Four of the other rules move the box onto the remaining corners. `x` becomes
-`min of [$Obj.x@first - 1, $Obj.x@first + 1].filter(column => column >= 0 and column < canvas_width)`,
+`min of [$Object.x@first - 1, $Object.x@first + 1].filter(column => column >= 0 and column < canvas_width)`,
 the leftmost of the two corner columns, one left and one right of the point,
 that lie on the canvas, reading the canvas's width from the solver's
 `canvas_width`, as `dataset.a85d4709.json` does; `y` becomes the topmost of
@@ -2591,10 +2591,10 @@ point's input column and row, because
 the rules move `x` and `y`. The higher-order `filter` keeps the corners'
 columns and rows that lie on the canvas, and `min of` and `max of` take the
 ends of what it keeps. The filtered list is written out in each rule that
-uses it rather than stored, because a property such as `$Obj.columns`, read
-by `$Obj.x is min of $Obj.columns` while it reads `$Obj.x@first`, raises
+uses it rather than stored, because a property such as `$Object.columns`, read
+by `$Object.x is min of $Object.columns` while it reads `$Object.x@first`, raises
 `TypeError("Circular Dependency")` in the accepted runtime. The last rule,
-`$Obj.volume`, multiplies the `length` of the same filtered columns by that of
+`$Object.volume`, multiplies the `length` of the same filtered columns by that of
 the filtered rows, one cell for each corner on the canvas: 4, 1, 2, and 4 in
 the training pairs and 2 in the test pair. Each figure
 depends only on its own point and the canvas, and every pair holds one object,
@@ -2619,7 +2619,7 @@ reverse order, since the `width` and `height` rules read the new `x` and `y`.
 Native
 snapshots start with the pair's `canvas_width` and `canvas_height`, and
 output snapshots are captured with all of the same pair's implementations
-together, followed by `Obj[:]`. Kinds identify the geometry: `l7544` is a
+together, followed by `Object[:]`. Kinds identify the geometry: `l7544` is a
 single point, as in `dataset.0ca9ddb6.json`, `dataset.d037b0a7.json`, and
 `dataset.a85d4709.json`, and `l2898` is the four corners of a 3 by 3 box
 around its empty center, in the colors of `corner_colors`, unlike `l2404`,
@@ -2696,19 +2696,19 @@ default. A region whose shape the rules do not know is constructed with
 `kind=unknown`. The use case, the dataset's last pair, shows one: a solid
 2 by 2 square of four color-7 cells in the top two rows of the second and
 third columns, which no original region or piece of one forms, constructed by
-`obje1767cd89f3c is Obj(x=1, y=0, width=2, height=2, orientation=0, volume=4, kind=unknown, color=7)`.
+`oe1767cd89f3c is Object(x=1, y=0, width=2, height=2, orientation=0, volume=4, kind=unknown, color=7)`.
 One conditional class-level rule,
-`if $Obj.kind is l9100 and $Obj.color@first is 7:` with the body
-`$Obj.color is 5`, turns every color-7 region of kind `l9100` gray. Its
+`if $Object.kind is l9100 and $Object.color@first is 7:` with the body
+`$Object.color is 5`, turns every color-7 region of kind `l9100` gray. Its
 condition joins a kind guard and the color test with `and`, and both use
 `is`, the spelling of `==` from [NUC 86](../docs/nuc-0086.md), which an `if`
 header reads as an operator. The condition reads the region's input color
 with an `@first` anchor because the body rewrites `color` itself, as
-`dataset.0d3d703e.json` reads `$Obj.color@first`, and its kind without one,
+`dataset.0d3d703e.json` reads `$Object.color@first`, and its kind without one,
 because no rule rewrites the kind. A region of any other color or kind keeps
 its color because a false condition leaves its target untouched, so the rule
 states only the change; the conditional expression
-`5 if $Obj.kind is l9100 and $Obj.color@first is 7 else $Obj.color@first`
+`5 if $Object.kind is l9100 and $Object.color@first is 7 else $Object.color@first`
 would give the same states but restate every other region's color. Each
 region's change depends only on its own kind and color, and no relation
 between regions decides it, so no population operation appears. The guard
@@ -2724,7 +2724,7 @@ when it turns gray, so input and output states share the same keys, and a gray
 region's output state differs from its input state only in `color`. Native
 snapshots start with the pair's `canvas_width` and `canvas_height`, and output
 snapshots are captured with all of the same pair's implementations together,
-followed by `Obj[:]`. The kind `l9100` is a single shape, as in
+followed by `Object[:]`. The kind `l9100` is a single shape, as in
 `dataset.28bf18c6.json`, `dataset.9565186b.json`, and `dataset.d631b094.json`,
 in both states, while `unknown` marks a region whose shape the rules do not
 know. Input masks retain each pair's full-size input canvas and
@@ -2788,7 +2788,7 @@ and the rules read the canvas's width from the solver's `canvas_width`. Each
 implementation passes `width` and `height` right after `y`, such as
 `x=1, y=0, width=2, height=3, orientation=0, volume=4, kind=l9100` for the
 first training input.
-One class-level `if`, `if $Obj.kind is l9100:`, selects the patterns of kind
+One class-level `if`, `if $Object.kind is l9100:`, selects the patterns of kind
 `l9100`, a single shape, and its three statements turn
 each of them into the figure it forms with its mirror image. The condition reads
 the live kind, which gives the same states although the first statement rewrites
@@ -2796,8 +2796,8 @@ the kind, and the statements share one block because separate `if` rules with
 the
 same condition text replace each other, as
 [Control Flow](../docs/README.md#8-control-flow) states, so separate guards
-would keep only the last statement. `$Obj.kind is l6919` names that geometry,
-and `$Obj.width is 2 * (canvas_width - $Obj.x@first)` grows the box right to
+would keep only the last statement. `$Object.kind is l6919` names that geometry,
+and `$Object.width is 2 * (canvas_width - $Object.x@first)` grows the box right to
 the mirror image of its left column: twice the distance from the pattern's left
 column to the canvas's right edge, so the mirror line lies at the box's
 center. That gives 4 columns for the first and second training patterns,
@@ -2805,7 +2805,7 @@ which start in the second column, and 6 for the third training pattern and
 the test pattern, which start in the left column. The rule reads the canvas's
 width as `dataset.8be77c9e.json` reads its height, anchored with `@first` to
 read the pattern's input column, as there, although no rule moves `x`.
-`$Obj.volume is 2 * $Obj.volume@first` counts the pattern's cells with their
+`$Object.volume is 2 * $Object.volume@first` counts the pattern's cells with their
 mirror images. The rules leave `x`, `y`, `height`, and `orientation`
 unchanged, because the mirror image keeps the pattern's rows and the figure
 starts at the pattern's left column. They state no `mirror_axis`, the property
@@ -2819,7 +2819,7 @@ dataset's last pair, shows one: a Z of four color-7 cells, the left two cells
 of the top row and the right two cells of the middle row, a shape that no
 original pattern or figure shows under any turn or mirror. Its implementation
 is
-`objd353418bb9f4 is Obj(x=0, y=0, width=3, height=2, orientation=0, volume=4, kind=unknown)`,
+`od353418bb9f4 is Object(x=0, y=0, width=3, height=2, orientation=0, volume=4, kind=unknown)`,
 and its output is its input grid unchanged, with no mirror image. Each grid
 holds a single pattern and shows no relation between objects, so no
 population operation appears, and no rule reads an object of another kind.
@@ -2830,7 +2830,7 @@ only in the kind, `width`, and `volume` of each original pattern, while the
 use case's states are equal. Native snapshots start with the pair's
 `canvas_width`
 and `canvas_height`, and output snapshots are captured with the pair's
-implementation followed by `Obj[:]`. Kinds identify the geometry: `l9100` is a
+implementation followed by `Object[:]`. Kinds identify the geometry: `l9100` is a
 single shape, as in `dataset.28bf18c6.json` and `dataset.8be77c9e.json`, and
 `l6919` is a shape beside its left-right mirror image, symmetric about the
 vertical center line of its box, the left-right counterpart of the `l7511` of
@@ -2891,13 +2891,13 @@ matrix of cells. Like every class, it takes `kind` right after `volume` as an
 optional parameter, here with the default `default`, which names no geometry,
 but every implementation passes its object's kind, `kind=l7544` for the
 eleven points, as in
-`obj7ed0b8b9b5eb is Obj(x=2, y=0, width=1, height=1, orientation=0, volume=1, kind=l7544, color=6)`,
+`o7ed0b8b9b5eb is Object(x=2, y=0, width=1, height=1, orientation=0, volume=1, kind=l7544, color=6)`,
 and `kind=unknown` for the use case's shape, so no instance takes the default.
-One class-level `if`, `if $Obj.kind is l7544:`, selects the points, of kind
+One class-level `if`, `if $Object.kind is l7544:`, selects the points, of kind
 `l7544`, and its statements set the output kind `l6953`,
-grow the point's `height` into the bar's, `canvas_height - $Obj.y@first`,
+grow the point's `height` into the bar's, `canvas_height - $Object.y@first`,
 reading the canvas's height from the solver's `canvas_height`, and count the
-bar's cells with `$Obj.volume is $Obj.width * $Obj.height`. The condition reads
+bar's cells with `$Object.volume is $Object.width * $Object.height`. The condition reads
 the live kind, which gives the same states although the first statement rewrites
 the kind, and the statements share one block because separate `if` rules with
 the
@@ -2922,10 +2922,10 @@ rule for `unknown`. The use case, the dataset's last pair, shows one: an H of
 seven color-4 cells, the full left and right columns joined by the middle
 row, a shape that no original pair shows, whose objects are single points
 and whose bars are vertical. Its implementation is
-`objd85b9ccde050 is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=7, kind=unknown, color=4)`,
+`od85b9ccde050 is Object(x=0, y=0, width=3, height=3, orientation=0, volume=7, kind=unknown, color=4)`,
 and its output is its input grid unchanged, with no bar. Native output
 snapshots are captured with
-all of the same pair's implementations together, followed by `Obj[:]`. Kinds
+all of the same pair's implementations together, followed by `Object[:]`. Kinds
 identify the geometry: `l7544` is a single point, as in
 `dataset.0ca9ddb6.json`, and `l6953` is a vertical bar, as in
 `dataset.9af7a82c.json`, while `unknown` marks a shape of unknown kind. Input
@@ -2962,12 +2962,12 @@ followed by `color` as a scalar rather than a matrix of cells. Like every
 class, it takes `kind` right after `volume` as an optional parameter, here
 with the default `default`, which names no geometry, but every implementation
 passes its region's kind, `kind=l9100` for the five original regions, as in
-`obje6495176f8fb is Obj(x=0, y=1, width=2, height=2, orientation=135, volume=2, kind=l9100, color=1)`,
+`oe6495176f8fb is Object(x=0, y=1, width=2, height=2, orientation=135, volume=2, kind=l9100, color=1)`,
 and `kind=unknown` for the use case's, so no instance takes the default.
-One class-level `if`, `if $Obj.kind is l9100:`, selects the regions of kind
+One class-level `if`, `if $Object.kind is l9100:`, selects the regions of kind
 `l9100`, and its statements set the output kind `l3058`,
 resize each region into its bar, with `width`
-the cell count, as `$Obj.width is $Obj.volume` sets it, and `height` 1, and
+the cell count, as `$Object.width is $Object.volume` sets it, and `height` 1, and
 move `x` and `y` to the output origin 0. The condition reads the live kind,
 which gives the same states although the first statement rewrites the kind, and
 the
@@ -2985,7 +2985,7 @@ dataset needs no rule for `unknown`. The use case, the dataset's last pair,
 shows one: a 2 by 2 block of four color-2 cells at the canvas's top-left
 corner, a shape that no original region or bar shows under any turn or
 mirror. Its implementation is
-`objce4e301bd614 is Obj(x=0, y=0, width=2, height=2, orientation=0, volume=4, kind=unknown, color=2)`,
+`oce4e301bd614 is Object(x=0, y=0, width=2, height=2, orientation=0, volume=4, kind=unknown, color=2)`,
 and its output is the block itself, `[[2, 2], [2, 2]]`, not a bar. Kinds
 identify the geometry:
 `l9100` is a single shape, as in `dataset.28bf18c6.json`, and `l3058` is a
@@ -3007,7 +3007,7 @@ points left, 270; the single cell of the third is a point, 0; and the fourth
 training region and the test region, neither a line, a corner, nor a chevron,
 are 0, as is the use case's block in both states. The guard's orientation
 statement,
-`$Obj.orientation is 90 if $Obj.width > 1 else 0`, a conditional expression of
+`$Object.orientation is 90 if $Object.width > 1 else 0`, a conditional expression of
 [NUC 59](../docs/nuc-0059.md), sets each bar's orientation from the bar's own
 `width`, which the width statement before it makes the cell count: the bars of
 2, 3, 4, and 5 cells are horizontal lines, 90, and the one-cell bar of the
@@ -3050,12 +3050,12 @@ recoloring leave each figure's own `width` and `height` unchanged. Both
 class-level rules select the panel figures by their kind with the comparison
 `is` of [NUC 86](../docs/nuc-0086.md), so an object of any other kind is left
 alone. One conditional rule,
-`if $Obj.kind is l9100 and $Obj.x@first >= canvas_width / 2:`, moves only a
-right-panel figure with `$Obj.x is $Obj.x@first - canvas_width / 2`; `is`
+`if $Object.kind is l9100 and $Object.x@first >= canvas_width / 2:`, moves only a
+right-panel figure with `$Object.x is $Object.x@first - canvas_width / 2`; `is`
 binds more tightly than `and`, and the `@first` anchor reads the figure's input
-origin without cumulative movement. The other rule, `if $Obj.kind is l9100:`,
+origin without cumulative movement. The other rule, `if $Object.kind is l9100:`,
 introduces only `fill_color`, absent from input states, as
-`$Obj.fill_color is 6`, the common color of every occupied output cell. Their
+`$Object.fill_color is 6`, the common color of every occupied output cell. Their
 conditions differ, so both rules stand: separate `if` rules with the same
 condition replace each other, and the move joins the kind test to its own
 condition with `and` rather than a nested `if`. No rule changes `kind`, so the
@@ -3067,14 +3067,14 @@ either instance order, and when they are declared after the instances. Native
 snapshots start with the pair's input `canvas_width` and `canvas_height`;
 input states
 run the class alone, and output states run both implementations together with
-all declarations, followed by `Obj[:]`. The kind `l9100` is a single shape,
+all declarations, followed by `Object[:]`. The kind `l9100` is a single shape,
 as in `dataset.28bf18c6.json`, in both states. A figure whose shape no figure
 of the original pairs shows, under any turn or mirror, is constructed with
 `kind=unknown`, a figure of unknown shape. Every figure of the seven original
 pairs takes `l9100`, so the use case, the dataset's last pair, shows one: a U
 of five color-4 cells at the canvas origin, a full bottom row of three cells
 and one cell above each of its ends. Its implementation is
-`objf927cf52fc5c is Obj(x=0, y=0, width=3, height=2, orientation=0, volume=5, kind=unknown)`.
+`of927cf52fc5c is Object(x=0, y=0, width=3, height=2, orientation=0, volume=5, kind=unknown)`.
 No rule names `unknown`, so the figure's output state equals its input state:
 it keeps color 4, its position, size, and five cells, and gains no
 `fill_color`. Its output is the U itself, `[[4, 0, 4], [4, 4, 4]]`, the `FIT`
@@ -3137,23 +3137,23 @@ a bare word, so no instance takes the default. Each bar's implementation passes
 `width=6, height=1` right after `y` and `kind=l3058` right after `volume`, such
 as `x=0, y=1, width=6, height=1, orientation=90, volume=6, kind=l3058` for the
 bottom bar of the first training input. One class-level conditional,
-`if $Obj.kind is l3058:`, selects the bars by their kind with the
+`if $Object.kind is l3058:`, selects the bars by their kind with the
 comparison `is` of [NUC 86](../docs/nuc-0086.md), so an object of any other
 kind is left alone, and its body holds five rules that turn every bar into its
 share of the checkerboard. The condition reads the live kind, which gives the
 same states although the body rewrites `kind`. The five rules share one body
 because
 separate `if` rules with the same condition replace each other: five of them
-would leave only the last, which moves `y` alone. `$Obj.kind is l5973` names
+would leave only the last, which moves `y` alone. `$Object.kind is l5973` names
 that geometry,
-`$Obj.orientation is 0` marks it as a pattern that points no way, and
-`$Obj.parity is $Obj.y@first % 2` introduces `parity`, which is absent before
+`$Object.orientation is 0` marks it as a pattern that points no way, and
+`$Object.parity is $Object.y@first % 2` introduces `parity`, which is absent before
 the rules run: the parity of the bar's input row, 0 for the top bar and 1 for
 the bottom bar, and so of row plus column on every cell the bar fills,
 anchored with `@first` because another rule moves `y`.
-`$Obj.height is canvas_height` grows the bar from one row to the canvas's two,
+`$Object.height is canvas_height` grows the bar from one row to the canvas's two,
 reading the canvas's height from the solver's `canvas_height`, as
-`dataset.a85d4709.json` reads `canvas_width`, and `$Obj.y is 0` moves its box
+`dataset.a85d4709.json` reads `canvas_width`, and `$Object.y is 0` moves its box
 to the top row, which changes `y` for every bottom bar. The rules leave `x`
 and `width` unchanged, because the checkerboard spans the bars' six columns.
 Each bar's share depends only on its own row and
@@ -3171,7 +3171,7 @@ instances. They create no other property, so each bar's output state adds only
 becomes 0, its `height` turns 2, and its `y` turns 0. Native
 snapshots start with the pair's
 `canvas_width` and `canvas_height`, and output snapshots are captured with all
-of the same pair's implementations together, followed by `Obj[:]`. Kinds
+of the same pair's implementations together, followed by `Object[:]`. Kinds
 identify the geometry: `l3058` is a horizontal bar, as in
 `dataset.d631b094.json`, `dataset.25d8a9c8.json`, and
 `dataset.a85d4709.json`, and `l5973` is one color of a checkerboard, the cells
@@ -3182,7 +3182,7 @@ column. An object that is not a horizontal bar is constructed with
 pairs is a bar, so the use case, the dataset's last pair, shows one: a 2 by 2
 square of four color-3 cells in the canvas's third and fourth columns, whose
 implementation is
-`obj6fbe0ce4857e is Obj(x=2, y=0, width=2, height=2, orientation=0, volume=4, kind=unknown)`.
+`o6fbe0ce4857e is Object(x=2, y=0, width=2, height=2, orientation=0, volume=4, kind=unknown)`.
 No rule names `unknown`, so its output state equals its input state, without
 `parity`, and its output grid equals its input grid. A kind that no rule
 names, such as the default `default` of an implementation that leaves out
@@ -3255,18 +3255,18 @@ training pairs before the test pair was read: unlike the original mosaics of
 and always fill their canvases, these patterns lie on a background, so their
 boxes need not span the canvas, and a turn of the whole grid carries a box
 that does not span it to a new place. One class-level conditional,
-`if $Obj.kind is l9100:`, selects the patterns by their kind with the
+`if $Object.kind is l9100:`, selects the patterns by their kind with the
 comparison `is` of [NUC 86](../docs/nuc-0086.md), so an object of any other
 kind is left alone, and its body holds three rules that read the pattern's
 input state with `@first` anchors; no rule changes `kind`, so the condition
 reads it without one. The three rules share one body because separate `if`
 rules with the same condition replace each other: three of them would leave
 only the last, which moves `y` alone.
-`($Obj.orientation@first + 270) % 360` gives `orientation`, because a
+`($Object.orientation@first + 270) % 360` gives `orientation`, because a
 counterclockwise quarter turn is 270 degrees clockwise, as
-`dataset.6150a2bd.json` adds 180 for its half turn. `$Obj.y@first` gives `x`,
+`dataset.6150a2bd.json` adds 180 for its half turn. `$Object.y@first` gives `x`,
 because the box's top row becomes the turned box's left column.
-`canvas_width - $Obj.x@first - $Obj.width@first` gives `y`, because the box's
+`canvas_width - $Object.x@first - $Object.width@first` gives `y`, because the box's
 right column becomes the turned box's top row, as far below the top edge as
 the box was left of the right edge; the box's height is not needed. The rules
 leave `width` and `height` unchanged, because a quarter turn changes the
@@ -3296,7 +3296,7 @@ and output states share the same keys; they differ only in `orientation` in
 the training pairs, also in `x` and `y` in the test pair, and not at all in the
 use case. Native
 snapshots start with the pair's `canvas_width` and `canvas_height`, and output
-snapshots are captured with the pair's implementation followed by `Obj[:]`.
+snapshots are captured with the pair's implementation followed by `Object[:]`.
 The kind `l9100` is a single shape, as in `dataset.28bf18c6.json`,
 `dataset.3c9b0459.json`, and `dataset.6150a2bd.json`, in both states. A
 pattern whose shape no pattern of the original pairs shows, under any turn or
@@ -3306,7 +3306,7 @@ dataset's last pair, shows one: a Z of five color-9 cells, the top row's left
 two cells, the center, and the bottom row's right two cells, which a quarter
 turn counterclockwise would carry to `[[0, 0, 9], [9, 9, 9], [9, 0, 0]]`. Its
 implementation is
-`obj000d5e66bfbf is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=5, kind=unknown)`.
+`o000d5e66bfbf is Object(x=0, y=0, width=3, height=3, orientation=0, volume=5, kind=unknown)`.
 No rule names `unknown`, so its output state equals its input state, at
 orientation 0, and its output grid equals its input grid, unturned. A kind
 that no rule names, such as the default `default` of an implementation that
@@ -3377,15 +3377,15 @@ if a rule could list a panel's cells, and accepted Nucleoid has no integer
 range: `range`, `Array`, and `Object` are undefined, lists have no `keys` or
 `entries`, and `map` passes its callback no index. The empty cells are
 therefore the input property. One class-level conditional,
-`if $Obj.kind@first is l9100:`, selects the panel figures by their input kind
+`if $Object.kind@first is l9100:`, selects the panel figures by their input kind
 with the comparison `is` of [NUC 86](../docs/nuc-0086.md), so an object of any
 other kind is left alone, and its body holds the eight rules in this order; the
 condition reads the kind with an `@first` anchor because the first rule
 rewrites `kind`. The eight rules share one body because separate `if` rules
 with the same condition replace each other: eight of them would leave only the
-last, `$Obj.volume is $Obj.points.length`, with no `points` to count. One rule
+last, `$Object.volume is $Object.points.length`, with no `points` to count. One rule
 introduces `points`, which is absent before the rules run, as
-`$Obj.holes.filter(hole => all figure in Obj.filter(other => other.kind@first is l9100): figure.holes.includes(hole))`:
+`$Object.holes.filter(hole => all figure in Object.filter(other => other.kind@first is l9100): figure.holes.includes(hole))`:
 the holes of the figure's own panel that every panel figure's panel also has,
 read with the quantifier `all` of [NUC 62](../docs/nuc-0062.md) over the
 class's population filtered to the panel figures, and with `includes`, which
@@ -3396,12 +3396,12 @@ a live read would leave out the figures already rewritten. Others set the
 output kind and
 introduce `fill_color` as 2, and four rewrite the box to the bounding box of
 `points` with the list
-extremes of [NUC 69](../docs/nuc-0069.md): `$Obj.points.min(point => point[0])`
-gives `x` and `$Obj.points.min(point => point[1])` gives `y`, while
-`$Obj.points.max(point => point[0]) - $Obj.x + 1` and
-`$Obj.points.max(point => point[1]) - $Obj.y + 1` give `width` and `height`,
+extremes of [NUC 69](../docs/nuc-0069.md): `$Object.points.min(point => point[0])`
+gives `x` and `$Object.points.min(point => point[1])` gives `y`, while
+`$Object.points.max(point => point[0]) - $Object.x + 1` and
+`$Object.points.max(point => point[1]) - $Object.y + 1` give `width` and `height`,
 the box's column and row counts, and the last rule,
-`$Obj.volume is $Obj.points.length`, counts the shared empty cells. Both
+`$Object.volume is $Object.points.length`, counts the shared empty cells. Both
 figures of a pair thus reach the same output state apart from their `id` and
 `holes`: each becomes the shared empty space, and their identical masks
 compose to the output. The
@@ -3419,7 +3419,7 @@ They leave `orientation` and `holes` unchanged and create no other property, so
 each figure's output state adds `points` and `fill_color` to its input state's
 keys. Native snapshots start with the pair's `canvas_width` and
 `canvas_height`; input states run the class alone, and output states run both
-implementations together with all declarations, followed by `Obj[:]`. Kinds
+implementations together with all declarations, followed by `Object[:]`. Kinds
 identify the geometry: `l9100` is a single shape, as in
 `dataset.28bf18c6.json` and `dataset.dae9d2b5.json`, and `l8372` is the empty
 space that every panel shares, the cells listed in `points`. A figure whose
@@ -3429,7 +3429,7 @@ the six original pairs takes `l9100`, so the use case, the dataset's last
 pair, shows one: an H of seven color-9 cells in the top panel, its full left
 and right columns and its center cell, the only figure of its canvas. Its
 implementation is
-`obj19bf1ed26969 is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=7, kind=unknown, holes=[[1, 0], [1, 2]])`,
+`o19bf1ed26969 is Object(x=0, y=0, width=3, height=3, orientation=0, volume=7, kind=unknown, holes=[[1, 0], [1, 2]])`,
 whose `holes` are the two cells of its panel that the H leaves empty. No rule
 names `unknown`, so its output state equals its input state, without `points`
 or `fill_color`, and its output is the H itself in color 9, the 3 by 3 `FIT`
@@ -3645,9 +3645,9 @@ It also infers the `output_canvas` from the training pairs.
 
 ```json
 {
-  "class_declaration": "class Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, kind: str = 'l6747', vertex_color: int, vertical_segment_color: int, horizontal_segment_color: int):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.kind is kind\n    this.vertex_color is vertex_color\n    this.vertical_segment_color is vertical_segment_color\n    this.horizontal_segment_color is horizontal_segment_color",
+  "class_declaration": "class Object(x: int, y: int, width: int, height: int, orientation: int, volume: int, kind: str = 'l6747', vertex_color: int, vertical_segment_color: int, horizontal_segment_color: int):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.kind is kind\n    this.vertex_color is vertex_color\n    this.vertical_segment_color is vertical_segment_color\n    this.horizontal_segment_color is horizontal_segment_color",
   "declarations": [
-    "if $Obj.vertex_color is 9 and $Obj.vertical_segment_color is 9 and $Obj.horizontal_segment_color is 9:\n    $Obj.kind is l6624\n    $Obj.marker_color is 4\n    $Obj.x is $Obj.x@first - 1 if $Obj.orientation > 180 else $Obj.x@first\n    $Obj.y is $Obj.y@first - 1 if $Obj.orientation < 90 or $Obj.orientation > 270 else $Obj.y@first\n    $Obj.width is $Obj.width@first + 1\n    $Obj.height is $Obj.height@first + 1\n    $Obj.volume is $Obj.volume@first + 1"
+    "if $Object.vertex_color is 9 and $Object.vertical_segment_color is 9 and $Object.horizontal_segment_color is 9:\n    $Object.kind is l6624\n    $Object.marker_color is 4\n    $Object.x is $Object.x@first - 1 if $Object.orientation > 180 else $Object.x@first\n    $Object.y is $Object.y@first - 1 if $Object.orientation < 90 or $Object.orientation > 270 else $Object.y@first\n    $Object.width is $Object.width@first + 1\n    $Object.height is $Object.height@first + 1\n    $Object.volume is $Object.volume@first + 1"
   ],
   "output_canvas": "EXACT"
 }
@@ -3670,9 +3670,9 @@ canvas_height = 3
 Their values are the column and row counts of the training pair's
 `input_matrix`, or of the test input during visualization. Declarations read
 the canvas size from these variables, as
-`$Obj.height is canvas_height - $Obj.y@first` in `dataset.d037b0a7.json` does, so
+`$Object.height is canvas_height - $Object.y@first` in `dataset.d037b0a7.json` does, so
 no class takes it as a parameter and no implementation passes it. They are
-variables, not object properties, so the input and output states and `Obj[:]`
+variables, not object properties, so the input and output states and `Object[:]`
 do not include them. A class parameter of the same name still shadows them
 inside its constructor.
 
@@ -3714,9 +3714,9 @@ first of these rules that applies:
 - A point, a block, a pattern, or a group of scattered cells is 0.
 
 An object that vanishes keeps its orientation, and a rule that turns an
-object adds its clockwise turn, as in `($Obj.orientation@first + 180) % 360`.
+object adds its clockwise turn, as in `($Object.orientation@first + 180) % 360`.
 Wherever an output's shape points another way, a class-level rule sets its
-orientation, as `$Obj.orientation is 90` does for the rows that
+orientation, as `$Object.orientation is 90` does for the rows that
 `dataset.a85d4709.json` paints. A line in `dataset.line.json` points toward its
 color-8 endpoint, so it needs no separate endpoint property. Implementation
 comments name the feature that sets each orientation, such as a corner's
@@ -3869,7 +3869,7 @@ turns vertical and moves one column left and one row down:
         [1, 0, 0, 0, 0]
       ],
       "synthesis": {
-        "source": "obj000000000000",
+        "source": "o000000000000",
         "rotation": 90,
         "offset": { "x": -1, "y": 1 }
       }
@@ -3888,7 +3888,7 @@ turns vertical and moves one column left and one row down:
         [0, 0, 0, 0, 0]
       ],
       "synthesis": {
-        "source": "obj000000000001",
+        "source": "o000000000001",
         "rotation": 90,
         "offset": { "x": -1, "y": 1 }
       }
@@ -3909,7 +3909,7 @@ instances first, and each synthesized pair joins the training dataset when its
 instances are constructed. Every pair is a Nucleoid world of its own, on its
 own canvas, so the objects of one synthesis share a world, and a rule that
 relates objects, such as
-`Obj.filter(other => other.kind is l6953 and other.height > $Obj.height)` in
+`Object.filter(other => other.kind is l6953 and other.height > $Object.height)` in
 `dataset.9af7a82c.json`, compares them with one another and never with objects
 of another pair.
 
@@ -3964,7 +3964,7 @@ The LLM also represents identified instances in `nuc` lang. This step is crucial
         [0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0]
       ],
-      "implementation": "obj0 = Obj(x=5, y=1, width=2, height=2, orientation=135, volume=3, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)",
+      "implementation": "obj0 = Object(x=5, y=1, width=2, height=2, orientation=135, volume=3, vertex_color=9, vertical_segment_color=9, horizontal_segment_color=9)",
       "input_value": {
         "height": 2,
         "horizontal_segment_color": 9,

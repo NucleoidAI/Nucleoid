@@ -37,7 +37,7 @@ export async function start(puzzle_id: string = "27a28665") {
 
   let instance_index: number = 0;
   const next_instance_name = (): string =>
-    `obj${String(instance_index++).padStart(12, "0")}`;
+    `o${String(instance_index++).padStart(12, "0")}`;
 
   const { class_declaration, declarations, output_canvas } =
     await analyzer.declarations({

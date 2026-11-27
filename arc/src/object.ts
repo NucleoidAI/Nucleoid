@@ -147,7 +147,7 @@ async function state({
       class_declaration,
       ...declarations,
       ...implementations,
-      "Obj[:]",
+      "Object[:]",
     ].join("\n\n")
   );
 

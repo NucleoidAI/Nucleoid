@@ -91,7 +91,7 @@ symbolic execution. Avoid unstructured textual reasoning as the world model.
 
 Always prefer declarative, higher-order logic. State each transformation once
 as rules over every object and the relations between objects: class-level
-rules and conditions on each class of the world model (for example `$Obj`),
+rules and conditions on each class of the world model (for example `$Object`),
 properties derived from other rules, and higher-order operations such as
 `filter`, `map`, `reduce`, `some`, `every`, `find`, and reasoning selections. Avoid imperative loops, per-instance or
 per-case steps, and manual bookkeeping. When accepted Nucleoid cannot express

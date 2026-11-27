@@ -110,7 +110,7 @@ between that code and the log. At the time of writing, `start()` writes
    instance's name, with `x`, `y`, `width` and `height` of its located input
    object and `orientation` turned with it, every other argument unchanged.
 5. `analyzer.state` (Nucleoid on all declarations, implementations and
-   `Obj[:]`, once per pair): each training instance's `output_value`. Every
+   `Object[:]`, once per pair): each training instance's `output_value`. Every
    pair, synthesized or not, is one world on its own canvas.
 6. `visualizer.instances` (LLM): the test `input_instances[].input_instance_matrix`.
 7. `visualizer.value` (LLM, then Nucleoid): test `implementation`, `input_value`.
@@ -169,7 +169,7 @@ Run every check that applies and record each result:
   `output_matrix` equals `Matrix.canvas` of the merge of its output instance
   matrices with `output_canvas`. Turned objects may overlap, the later one
   winning in the merge, which is intended; count the pairs where they do.
-- **Instance names.** Every name is unique, has the form `obj` plus twelve
+- **Instance names.** Every name is unique, has the form `o` plus twelve
   digits, and is consecutive from `0` in dataset order, across the training
   pairs, the synthesized pairs and then test.
 - **Values.** Every instance has an `implementation`, an `input_value` whose

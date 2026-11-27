@@ -1,11 +1,11 @@
 {
-  "class_declaration": "class Obj(x: int, y: int, width: int, height: int, orientation: int, volume: int, kind: str = 'default'):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.kind is kind",
+  "class_declaration": "class Object(x: int, y: int, width: int, height: int, orientation: int, volume: int, kind: str = 'default'):\n    this.x is x\n    this.y is y\n    this.width is width\n    this.height is height\n    this.orientation is orientation\n    this.volume is volume\n    this.kind is kind",
   "declarations": [
-    "if $Obj.kind is l8001 and $Obj.orientation is 270:\n    $Obj.kind is l4102\n    $Obj.extension_direction is right\n    $Obj.width is $Obj.width@first + 1",
-    "if $Obj.kind is l8001 and $Obj.orientation is 90:\n    $Obj.kind is l4102\n    $Obj.extension_direction is left\n    $Obj.x is $Obj.x@first - 1\n    $Obj.width is $Obj.width@first + 1",
-    "if $Obj.kind is l8001 and $Obj.orientation is 0:\n    $Obj.kind is l6012\n    $Obj.extension_direction is down\n    $Obj.height is $Obj.height@first + 1",
-    "if $Obj.kind is l8001 and $Obj.orientation is 180:\n    $Obj.kind is l6012\n    $Obj.extension_direction is up\n    $Obj.y is $Obj.y@first - 1\n    $Obj.height is $Obj.height@first + 1",
-    "if $Obj.kind@first is l8001:\n    $Obj.volume is $Obj.width * $Obj.height"
+    "if $Object.kind is l8001 and $Object.orientation is 270:\n    $Object.kind is l4102\n    $Object.extension_direction is right\n    $Object.width is $Object.width@first + 1",
+    "if $Object.kind is l8001 and $Object.orientation is 90:\n    $Object.kind is l4102\n    $Object.extension_direction is left\n    $Object.x is $Object.x@first - 1\n    $Object.width is $Object.width@first + 1",
+    "if $Object.kind is l8001 and $Object.orientation is 0:\n    $Object.kind is l6012\n    $Object.extension_direction is down\n    $Object.height is $Object.height@first + 1",
+    "if $Object.kind is l8001 and $Object.orientation is 180:\n    $Object.kind is l6012\n    $Object.extension_direction is up\n    $Object.y is $Object.y@first - 1\n    $Object.height is $Object.height@first + 1",
+    "if $Object.kind@first is l8001:\n    $Object.volume is $Object.width * $Object.height"
   ],
   "output_canvas": "EXACT",
   "dataset": [
@@ -32,7 +32,7 @@
       ],
       "instances": [
         {
-          "instance_name": "obj31dc1400794e",
+          "instance_name": "o31dc1400794e",
           "input_instance_matrix": [
             [0, 0, 8, 6, 6, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0],
@@ -53,12 +53,12 @@
             [0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "obj31dc1400794e is Obj(x=2, y=0, width=3, height=1, orientation=270, volume=3, kind=l8001)",
-          "input_value": {"height":1,"id":"obj31dc1400794e","kind":"l8001","orientation":270,"volume":3,"width":3,"x":2,"y":0},
-          "output_value": {"extension_direction":"right","height":1,"id":"obj31dc1400794e","kind":"l4102","orientation":270,"volume":4,"width":4,"x":2,"y":0}
+          "implementation": "o31dc1400794e is Object(x=2, y=0, width=3, height=1, orientation=270, volume=3, kind=l8001)",
+          "input_value": {"height":1,"id":"o31dc1400794e","kind":"l8001","orientation":270,"volume":3,"width":3,"x":2,"y":0},
+          "output_value": {"extension_direction":"right","height":1,"id":"o31dc1400794e","kind":"l4102","orientation":270,"volume":4,"width":4,"x":2,"y":0}
         },
         {
-          "instance_name": "obj1383c0d06fda",
+          "instance_name": "o1383c0d06fda",
           "input_instance_matrix": [
             [0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0],
@@ -79,9 +79,9 @@
             [0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "obj1383c0d06fda is Obj(x=4, y=5, width=3, height=1, orientation=90, volume=3, kind=l8001)",
-          "input_value": {"height":1,"id":"obj1383c0d06fda","kind":"l8001","orientation":90,"volume":3,"width":3,"x":4,"y":5},
-          "output_value": {"extension_direction":"left","height":1,"id":"obj1383c0d06fda","kind":"l4102","orientation":90,"volume":4,"width":4,"x":3,"y":5}
+          "implementation": "o1383c0d06fda is Object(x=4, y=5, width=3, height=1, orientation=90, volume=3, kind=l8001)",
+          "input_value": {"height":1,"id":"o1383c0d06fda","kind":"l8001","orientation":90,"volume":3,"width":3,"x":4,"y":5},
+          "output_value": {"extension_direction":"left","height":1,"id":"o1383c0d06fda","kind":"l4102","orientation":90,"volume":4,"width":4,"x":3,"y":5}
         }
       ]
     },
@@ -108,7 +108,7 @@
       ],
       "instances": [
         {
-          "instance_name": "objfef9b8e1a36c",
+          "instance_name": "ofef9b8e1a36c",
           "input_instance_matrix": [
             [0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0],
@@ -129,12 +129,12 @@
             [8, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "objfef9b8e1a36c is Obj(x=0, y=3, width=1, height=4, orientation=180, volume=4, kind=l8001)",
-          "input_value": {"height":4,"id":"objfef9b8e1a36c","kind":"l8001","orientation":180,"volume":4,"width":1,"x":0,"y":3},
-          "output_value": {"extension_direction":"up","height":5,"id":"objfef9b8e1a36c","kind":"l6012","orientation":180,"volume":5,"width":1,"x":0,"y":2}
+          "implementation": "ofef9b8e1a36c is Object(x=0, y=3, width=1, height=4, orientation=180, volume=4, kind=l8001)",
+          "input_value": {"height":4,"id":"ofef9b8e1a36c","kind":"l8001","orientation":180,"volume":4,"width":1,"x":0,"y":3},
+          "output_value": {"extension_direction":"up","height":5,"id":"ofef9b8e1a36c","kind":"l6012","orientation":180,"volume":5,"width":1,"x":0,"y":2}
         },
         {
-          "instance_name": "objb3a27e31f269",
+          "instance_name": "ob3a27e31f269",
           "input_instance_matrix": [
             [0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0],
@@ -155,9 +155,9 @@
             [0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "objb3a27e31f269 is Obj(x=2, y=5, width=4, height=1, orientation=270, volume=4, kind=l8001)",
-          "input_value": {"height":1,"id":"objb3a27e31f269","kind":"l8001","orientation":270,"volume":4,"width":4,"x":2,"y":5},
-          "output_value": {"extension_direction":"right","height":1,"id":"objb3a27e31f269","kind":"l4102","orientation":270,"volume":5,"width":5,"x":2,"y":5}
+          "implementation": "ob3a27e31f269 is Object(x=2, y=5, width=4, height=1, orientation=270, volume=4, kind=l8001)",
+          "input_value": {"height":1,"id":"ob3a27e31f269","kind":"l8001","orientation":270,"volume":4,"width":4,"x":2,"y":5},
+          "output_value": {"extension_direction":"right","height":1,"id":"ob3a27e31f269","kind":"l4102","orientation":270,"volume":5,"width":5,"x":2,"y":5}
         }
       ]
     },
@@ -184,7 +184,7 @@
       ],
       "instances": [
         {
-          "instance_name": "obj3f1a34c478cd",
+          "instance_name": "o3f1a34c478cd",
           "input_instance_matrix": [
             [0, 0, 0, 6, 6, 6, 8, 0],
             [0, 0, 0, 0, 0, 0, 0, 0],
@@ -205,12 +205,12 @@
             [0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "obj3f1a34c478cd is Obj(x=3, y=0, width=4, height=1, orientation=90, volume=4, kind=l8001)",
-          "input_value": {"height":1,"id":"obj3f1a34c478cd","kind":"l8001","orientation":90,"volume":4,"width":4,"x":3,"y":0},
-          "output_value": {"extension_direction":"left","height":1,"id":"obj3f1a34c478cd","kind":"l4102","orientation":90,"volume":5,"width":5,"x":2,"y":0}
+          "implementation": "o3f1a34c478cd is Object(x=3, y=0, width=4, height=1, orientation=90, volume=4, kind=l8001)",
+          "input_value": {"height":1,"id":"o3f1a34c478cd","kind":"l8001","orientation":90,"volume":4,"width":4,"x":3,"y":0},
+          "output_value": {"extension_direction":"left","height":1,"id":"o3f1a34c478cd","kind":"l4102","orientation":90,"volume":5,"width":5,"x":2,"y":0}
         },
         {
-          "instance_name": "obja034f4182e12",
+          "instance_name": "oa034f4182e12",
           "input_instance_matrix": [
             [0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0],
@@ -231,12 +231,12 @@
             [0, 6, 0, 0, 0, 0, 0, 0],
             [0, 8, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "obja034f4182e12 is Obj(x=1, y=4, width=1, height=4, orientation=180, volume=4, kind=l8001)",
-          "input_value": {"height":4,"id":"obja034f4182e12","kind":"l8001","orientation":180,"volume":4,"width":1,"x":1,"y":4},
-          "output_value": {"extension_direction":"up","height":5,"id":"obja034f4182e12","kind":"l6012","orientation":180,"volume":5,"width":1,"x":1,"y":3}
+          "implementation": "oa034f4182e12 is Object(x=1, y=4, width=1, height=4, orientation=180, volume=4, kind=l8001)",
+          "input_value": {"height":4,"id":"oa034f4182e12","kind":"l8001","orientation":180,"volume":4,"width":1,"x":1,"y":4},
+          "output_value": {"extension_direction":"up","height":5,"id":"oa034f4182e12","kind":"l6012","orientation":180,"volume":5,"width":1,"x":1,"y":3}
         },
         {
-          "instance_name": "obj4eba52e160b2",
+          "instance_name": "o4eba52e160b2",
           "input_instance_matrix": [
             [0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0],
@@ -257,9 +257,9 @@
             [0, 0, 0, 0, 0, 0, 6, 0],
             [0, 0, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "obj4eba52e160b2 is Obj(x=6, y=2, width=1, height=4, orientation=0, volume=4, kind=l8001)",
-          "input_value": {"height":4,"id":"obj4eba52e160b2","kind":"l8001","orientation":0,"volume":4,"width":1,"x":6,"y":2},
-          "output_value": {"extension_direction":"down","height":5,"id":"obj4eba52e160b2","kind":"l6012","orientation":0,"volume":5,"width":1,"x":6,"y":2}
+          "implementation": "o4eba52e160b2 is Object(x=6, y=2, width=1, height=4, orientation=0, volume=4, kind=l8001)",
+          "input_value": {"height":4,"id":"o4eba52e160b2","kind":"l8001","orientation":0,"volume":4,"width":1,"x":6,"y":2},
+          "output_value": {"extension_direction":"down","height":5,"id":"o4eba52e160b2","kind":"l6012","orientation":0,"volume":5,"width":1,"x":6,"y":2}
         }
       ]
     },
@@ -284,7 +284,7 @@
       ],
       "instances": [
         {
-          "instance_name": "obj84b61b7cd8f6",
+          "instance_name": "o84b61b7cd8f6",
           "input_instance_matrix": [
             [0, 0, 0, 0, 0, 0, 0],
             [0, 0, 8, 0, 0, 0, 0],
@@ -303,9 +303,9 @@
             [0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "obj84b61b7cd8f6 is Obj(x=2, y=1, width=1, height=3, orientation=0, volume=3, kind=l8001)",
-          "input_value": {"height":3,"id":"obj84b61b7cd8f6","kind":"l8001","orientation":0,"volume":3,"width":1,"x":2,"y":1},
-          "output_value": {"extension_direction":"down","height":4,"id":"obj84b61b7cd8f6","kind":"l6012","orientation":0,"volume":4,"width":1,"x":2,"y":1}
+          "implementation": "o84b61b7cd8f6 is Object(x=2, y=1, width=1, height=3, orientation=0, volume=3, kind=l8001)",
+          "input_value": {"height":3,"id":"o84b61b7cd8f6","kind":"l8001","orientation":0,"volume":3,"width":1,"x":2,"y":1},
+          "output_value": {"extension_direction":"down","height":4,"id":"o84b61b7cd8f6","kind":"l6012","orientation":0,"volume":4,"width":1,"x":2,"y":1}
         }
       ]
     },
@@ -330,7 +330,7 @@
       ],
       "instances": [
         {
-          "instance_name": "obj71a65bf8e5ce",
+          "instance_name": "o71a65bf8e5ce",
           "input_instance_matrix": [
             [0, 0, 0, 0, 0, 0, 0],
             [0, 6, 0, 0, 0, 0, 0],
@@ -349,12 +349,12 @@
             [0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "obj71a65bf8e5ce is Obj(x=1, y=1, width=1, height=4, orientation=180, volume=4, kind=l8001)",
-          "input_value": {"height":4,"id":"obj71a65bf8e5ce","kind":"l8001","orientation":180,"volume":4,"width":1,"x":1,"y":1},
-          "output_value": {"extension_direction":"up","height":5,"id":"obj71a65bf8e5ce","kind":"l6012","orientation":180,"volume":5,"width":1,"x":1,"y":0}
+          "implementation": "o71a65bf8e5ce is Object(x=1, y=1, width=1, height=4, orientation=180, volume=4, kind=l8001)",
+          "input_value": {"height":4,"id":"o71a65bf8e5ce","kind":"l8001","orientation":180,"volume":4,"width":1,"x":1,"y":1},
+          "output_value": {"extension_direction":"up","height":5,"id":"o71a65bf8e5ce","kind":"l6012","orientation":180,"volume":5,"width":1,"x":1,"y":0}
         },
         {
-          "instance_name": "obj400315cd8551",
+          "instance_name": "o400315cd8551",
           "input_instance_matrix": [
             [0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0],
@@ -373,9 +373,9 @@
             [0, 0, 0, 6, 6, 6, 8],
             [0, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "obj400315cd8551 is Obj(x=4, y=5, width=3, height=1, orientation=90, volume=3, kind=l8001)",
-          "input_value": {"height":1,"id":"obj400315cd8551","kind":"l8001","orientation":90,"volume":3,"width":3,"x":4,"y":5},
-          "output_value": {"extension_direction":"left","height":1,"id":"obj400315cd8551","kind":"l4102","orientation":90,"volume":4,"width":4,"x":3,"y":5}
+          "implementation": "o400315cd8551 is Object(x=4, y=5, width=3, height=1, orientation=90, volume=3, kind=l8001)",
+          "input_value": {"height":1,"id":"o400315cd8551","kind":"l8001","orientation":90,"volume":3,"width":3,"x":4,"y":5},
+          "output_value": {"extension_direction":"left","height":1,"id":"o400315cd8551","kind":"l4102","orientation":90,"volume":4,"width":4,"x":3,"y":5}
         }
       ]
     },
@@ -400,7 +400,7 @@
       ],
       "instances": [
         {
-          "instance_name": "obj81ac5a71f824",
+          "instance_name": "o81ac5a71f824",
           "input_instance_matrix": [
             [0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0],
@@ -419,9 +419,9 @@
             [0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0]
           ],
-          "implementation": "obj81ac5a71f824 is Obj(x=1, y=2, width=3, height=2, orientation=45, volume=4, kind=unknown)",
-          "input_value": {"height":2,"id":"obj81ac5a71f824","kind":"unknown","orientation":45,"volume":4,"width":3,"x":1,"y":2},
-          "output_value": {"height":2,"id":"obj81ac5a71f824","kind":"unknown","orientation":45,"volume":4,"width":3,"x":1,"y":2}
+          "implementation": "o81ac5a71f824 is Object(x=1, y=2, width=3, height=2, orientation=45, volume=4, kind=unknown)",
+          "input_value": {"height":2,"id":"o81ac5a71f824","kind":"unknown","orientation":45,"volume":4,"width":3,"x":1,"y":2},
+          "output_value": {"height":2,"id":"o81ac5a71f824","kind":"unknown","orientation":45,"volume":4,"width":3,"x":1,"y":2}
         }
       ]
     }
