@@ -375,7 +375,10 @@ are additional entries at the same level as the training pairs, in the same
 preserve every original cell, color, position, zero border, and canvas
 dimension. `/arc-dataset` infers one rule set from the training pairs and
 annotates every pair with it, rather than synthesizing varieties or creating
-numbered copies. `document()` includes a puzzle's own dataset in that puzzle's
+numbered copies. The one exception is `dataset.27a28665.json`, which, at the
+user's request, ends with one synthesized use case after its test pairs, a
+block of unknown shape annotated by the same rules, as its paragraph below
+describes. `document()` includes a puzzle's own dataset in that puzzle's
 runs, so a run of a puzzle that has a dataset receives its expected test
 output in the few-shot context. That is intended: the datasets are being
 prepared as few-shot examples, and these runs are not yet held-out tests.
@@ -444,8 +447,10 @@ default is the dataset's initial kind, such as `kind: str = 'l9100'`, and its
 constructor stores it with `this.kind is kind`. An implementation passes `kind`
 only when its object needs a kind other than that default: every
 implementation of `dataset.27a28665.json` passes the kind of its block's
-shape, as in `kind=l4262`, and every other implementation leaves it out, so
-its input state carries the default. The parameter comes before the
+shape, as in `kind=l4262`, or `kind=unknown` for its one block of unknown
+shape, and its class defaults to `kind: str = 'default'`, which names no
+geometry, while every other implementation leaves it out, so its input state
+carries the default. The parameter comes before the
 descriptive parameters, in the order of the constructor's assignments:
 Nucleoid lets a default occupy any parameter slot, and every implementation
 names its arguments. A kind acts as a child class that the rules assign
@@ -469,10 +474,10 @@ program defines a name with those spellings, and the solver adds only
 `canvas_width` and `canvas_height`. Inside the value of an `is` assignment,
 the item words of [NUC 95](../docs/nuc-0095.md) read the same way, so the
 named arguments of the implementations in `dataset.27a28665.json` pass bare
-kinds, as in `kind=l1707`, while the object keys of its `fill_color` rule are
-names, as in `{l4262: 1, l2404: 2, l3743: 3, l1707: 6}`, which an object
-literal reads as the same keys. Only the default of the `kind` parameter keeps
-its quotes, such as `kind: str = 'l9100'`: accepted Nucleoid takes only a
+kinds, as in `kind=l1707`, which its `if` cases compare as whole right
+operands, as in `if $Obj.kind is l1707:`. Only the default of the
+`kind` parameter keeps its quotes, such as `kind: str = 'l9100'` or
+`kind: str = 'default'`: accepted Nucleoid takes only a
 literal as a parameter default and rejects the bare `kind: str = l9100` with
 `SyntaxError: Expected a scalar literal parameter default`.
 `src\lib\nucleoid.ts` passes no syntax flag: the runtime reads `is`
@@ -790,11 +795,13 @@ bar and single cell. The test pairs follow the training pairs at the same level
 and are annotated by the same rules.
 
 `dataset.27a28665.json` annotates the seven original training pairs from
-`data\training\27a28665.json`, in order, followed by its three test pairs,
-ten block instances in total, one per pair. Every training input retains its
-original 3 by 3 canvas, colors, positions, and zero cells, and every training
-output its original 1 by 1 grid; the test pairs keep their original grids as
-well. Each training input holds one block of a single color, 5 cells that
+`data\training\27a28665.json`, in order, followed by its three test pairs
+and, at the user's request, one synthesized use case with a block of unknown
+shape, eleven block instances in total, one per pair. Every training input
+retains its original 3 by 3 canvas, colors, positions, and zero cells, and
+every training output its original 1 by 1 grid; the test pairs keep their
+original grids as well, and the use case takes the same 3 by 3 and 1 by 1
+canvases. Each training input holds one block of a single color, 5 cells that
 touch through edges or corners, whose 3 by 3 bounding box spans the canvas;
 each object is that whole block, and zero cells are background. The training
 blocks take four shapes: a hollow diamond, the four edge cells around an empty
@@ -812,54 +819,69 @@ code: every block has 5 cells; both crosses keep every mirror and quarter-turn
 symmetry of the canvas yet give 2 and 6; the hollow diamond and the square
 with a tail each mirror only across one diagonal yet give 1 and 3; and their
 3, 5, 2, and 1 edge-connected pieces do not order the codes. Each block is
-therefore one instance whose kind names its shape, and the rules look the code
-up by that kind. The class takes the standard entries `x`, `y`, `width`,
+therefore one instance whose kind names its shape, and the rules give each
+kind its code. The class takes the standard entries `x`, `y`, `width`,
 `height`, `orientation`, and `volume`, where `width` and `height` are the
 column and row counts of the block's bounding box and `volume` the number of
 its nonzero cells, 3, 3, and 5 in every pair, and `kind` as its only descriptive
 property, such as `kind=l4262` for the first training input, with no color,
 parts list, canvas size, or matrix of cells. Like every class, it takes `kind`
-right after `volume` as an optional parameter, here with the default `l9100`,
-a single shape, but every implementation passes its block's kind, so no
-instance takes the default, the input state names the shape, and no input
-property names the code. One class serves every shape because the
-solver reads output states with `Obj[:]`, which lists no instance of a
-subclass. Kinds identify the geometry: `l4262` is the hollow diamond with a
-filled corner and `l3743` the square with a diagonal tail, while `l2404` is a
-diagonal cross and `l1707` an orthogonal cross, as in `dataset.0ca9ddb6.json`.
-Unconditional class-level rules set the output kind `l7544`, a single point, as
-in `dataset.44f52bb0.json`, shrink the block to that point's size, `width` 1
-and `height` 1, and introduce one property, `fill_color`, which is absent
-before the rules run, as
-`{l4262: 1, l2404: 2, l3743: 3, l1707: 6}[$Obj.kind@first] ?? 0`: the object
-literal states each shape's code once, keyed by the name of its kind, and
-object bracket access reads the code of the block's input kind, anchored with
-`@first` because the kind rule turns the kind into `l7544`. A kind that is not
-a key of the table reads `null` there, as an absent key does, and the nullish
-coalescing `?? 0` of [NUC 60](../docs/nuc-0060.md) turns that `null` into the
-background color 0 while it keeps every code the table holds. An
-implementation that leaves out `kind`, so that its object takes the default
-`l9100`, or that names a kind the table lacks, such as `l5555`, therefore gives
-its point color 0, which is no cell, and the rules raise no error, so the run
-goes on; the input state, built from the class and the implementation alone,
-still carries that kind. The default never applies to the ten pairs, whose
-blocks all take one of the table's four kinds.
+right after `volume` as an optional parameter, here with the default
+`default`, which names no geometry, but every implementation passes its
+block's kind, so no instance takes the default, the input state names the
+shape, or its lack of a known one, and no input property names the code. One
+class serves every shape because the solver reads output states with
+`Obj[:]`, which lists no instance of a subclass. Kinds identify the geometry:
+`l4262` is the hollow diamond with a filled corner and `l3743` the square with
+a diagonal tail, while `l2404` is a diagonal cross and `l1707` an orthogonal
+cross, as in `dataset.0ca9ddb6.json`.
+A block that shows none of these four shapes, under any turn or mirror, is
+constructed with `kind=unknown`, a block of unknown shape. Every block of the
+ten original pairs takes one of the four shapes, so the use case, the
+dataset's last pair, shows one: a T of five color-5 cells, the full top row
+and the two cells below its middle, which has its center filled, no 2 by 2
+square, and only two corners, so it is none of the four shapes. Its
+implementation is
+`objcea1436b7283 is Obj(x=0, y=0, width=3, height=3, orientation=0, volume=5, kind=unknown)`,
+and its output is the single background cell `[[0]]`.
+Two unconditional class-level rules shrink the block to the output point's
+size, `width` 1 and `height` 1, and no rule changes `kind`: at the user's
+request, each output state keeps its block's kind, so the kind names the
+shape whose code the point shows, `unknown` for the use case, while `width`
+and `height` give the point's own 1 by 1 size. Five `if` cases then introduce
+one property, `fill_color`, which is absent before the rules run. Each case
+selects the blocks of one kind with the comparison `is` of
+[NUC 86](../docs/nuc-0086.md) and gives their point that kind's code, so each
+code is stated once: `if $Obj.kind is l4262:` sets `$Obj.fill_color is 1`,
+and the cases for `l2404`, `l3743`, and `l1707` set 2, 3, and 6. The fifth
+case, `if $Obj.kind is unknown:`, gives a block of unknown shape the
+background color 0, which the use case's point takes. The conditions read the
+kind without an `@first` anchor, because no rule rewrites it; conditions
+anchored with `@first` give the same states, whatever the order of the rules
+and the instances. A kind that no case names, such as the default `default`
+of an implementation that leaves out `kind`, or an invented kind such as
+`l5555`, gets no `fill_color` at all, and the rules raise no error, so the run
+goes on; its input and output states both carry that kind.
+The default applies to no pair, and `unknown` only to the use case.
 `$Obj.volume is 0 if $Obj.fill_color is 0 else $Obj.width * $Obj.height`, a
 conditional expression of [NUC 59](../docs/nuc-0059.md) whose condition uses
-the comparison `is` of [NUC 86](../docs/nuc-0086.md), counts a colored point's
-single cell and gives a point of color 0 none, as `dataset.25d8a9c8.json`
-empties a cleared row: such a point has the `volume` 0 that `Matrix.measure`
-counts in its all-zero output mask, and it keeps its `x`, `y`, and 1 by 1
-`width` and `height`, as an erased output object keeps its explicit position
-in [composition](#8-visualize-output-instance).
+the comparison `is`, counts a colored point's single cell and gives a point of
+color 0 none, as `dataset.25d8a9c8.json` empties a cleared row: such a point
+has the `volume` 0 that `Matrix.measure` counts in its all-zero output mask,
+and it keeps its `x`, `y`, and 1 by 1 `width` and `height`, as an erased
+output object keeps its explicit position in
+[composition](#8-visualize-output-instance). A point without `fill_color`,
+whose kind no case names, takes the `else` branch and counts one cell.
 No mask measures 1 by 1 without a cell, so the solver's synthesis, which keeps
 a synthesized instance only when its drawn output mask measures the state's
-`x`, `y`, `width`, `height`, and `volume`, rejects every turned block whose
-kind the table lacks, whatever the model draws for it.
-The rules create no other properties, so each
-output state adds only `fill_color` to its input state's keys, and they leave
-`x` and `y` unchanged because the point sits at the block's origin, 0 and 0 in
-every training pair. The training pairs show each shape in one orientation
+`x`, `y`, `width`, `height`, and `volume`, rejects every turned block of kind
+`unknown`, whatever the model draws for it, while a turned block whose kind no
+case names passes whenever the model draws a single cell, of any color, at its
+origin.
+The rules create no other properties, so each output state of the eleven
+pairs adds only `fill_color` to its input state's keys, and they leave `x` and
+`y` unchanged because the point sits at the block's origin, 0 and 0 in every
+pair. The training pairs show each shape in one orientation
 only, so they leave open whether a turn changes its code, while the solver's
 synthesis turns training blocks a quarter turn clockwise, so turned blocks
 reach the rules in every run. A kind names the block's geometry whatever its
@@ -870,25 +892,31 @@ keep `l6747` at every orientation. A turned hollow diamond therefore stays
 turned square with a tail stays `l3743`, with its square at the bottom right
 and its tail at the top left; each takes the turn as its orientation, 90 after
 a quarter turn, and keeps its shape's code. The crosses look the same after
-any quarter turn, so they keep `l2404` and `l1707` at orientation 0. The table
-thus holds one code per shape, the four that the training pairs show, and
-none per turn. Native snapshots start with the pair's `canvas_width` and
-`canvas_height`, and output snapshots are captured with the pair's
-implementation followed by `Obj[:]`. Input masks retain each pair's full-size
-input canvas, and output masks the complete output; merging them reproduces
-each pair's input and output. Each output mask's nonzero bounding box, the
-single cell at 0 and 0, equals the output state's `x`, `y`, `width`, and
-`height`, and each mask's number of nonzero cells, 5 in the input and 1 in the
-output, equals its state's `volume`. The table's keys are names and the
-implementations' kinds bare words, so the class default `'l9100'` is the
-dataset's only quote.
+any quarter turn, so they keep `l2404` and `l1707` at orientation 0. The four
+shape cases thus hold one code per shape, the four that the training pairs
+show, and none per turn. Native snapshots start with the pair's
+`canvas_width` and `canvas_height`, and output snapshots are captured with the
+pair's implementation followed by `Obj[:]`. Input masks retain each pair's
+full-size input canvas, and output masks the complete output; merging them
+reproduces each pair's input and output. In each original pair, the output
+mask's nonzero bounding box, the single cell at 0 and 0, equals the output
+state's `x`, `y`, `width`, and `height`, and each mask's number of nonzero
+cells, 5 in the input and 1 in the output, equals its state's `volume`. The
+use case's output mask, `[[0]]`, has no nonzero cell, so its state, with
+`fill_color` 0 and `volume` 0, records the point's explicit 1 by 1 box at the
+origin. The kinds of the cases and of the implementations are bare words,
+`unknown` included, so the class default `'default'` is the dataset's only
+quote.
 `output_canvas` is `FIT` because each training output is cropped to its single
-cell instead of keeping the 3 by 3 input canvas. Orientation is 0 in both
-states of every pair, because each block reads 0 by the shape convention,
-being neither a line, a corner, nor a chevron, no block is turned, and the
-rules leave `orientation` unchanged, so each point keeps 0. The test pairs
-follow the training pairs at the same level and are annotated by the same
-rules.
+cell instead of keeping the 3 by 3 input canvas. The solver's `FIT` crop,
+`Matrix.canvas`, turns a composed grid without a nonzero cell into an empty
+grid, so for the use case it would compose `[]`, where the pair records the
+single background cell `[[0]]`. Orientation is 0 in both states of every
+pair, because each block, the use case's T included, reads 0 by the shape
+convention, being neither a line, a corner, nor a chevron, no block is turned,
+and the rules leave `orientation` unchanged, so each point keeps 0. The test
+pairs follow the training pairs at the same level, and the use case follows
+the test pairs, all annotated by the same rules.
 
 `dataset.28bf18c6.json` annotates the three original training pairs from
 `data\training\28bf18c6.json`, followed by its test pair, one shape instance
@@ -1297,9 +1325,9 @@ literal, keyed by that number, states each count's axis once, by the shared
 convention for straight lines without a head, where vertical is 0 and
 horizontal is 90, so the main diagonal, which runs from northwest to southeast,
 is 135 and the other diagonal 45. No
-arithmetic relates the counts to the axes, so the rule looks the axis up, as
-`dataset.27a28665.json` looks up its code by kind, and it reads no
-orientation, so it rewrites `orientation` without an `@first` anchor. The
+arithmetic relates the counts to the axes, so the rule looks the axis up, and
+it reads no orientation, so it rewrites `orientation` without an `@first`
+anchor. The
 conditional rule `if $Obj.orientation is 90:` uses `is`, the spelling of `==`
 that [NUC 86](../docs/nuc-0086.md) adds, and sets `height` to 1, guarding on a
 horizontal line: the line along the top row is
