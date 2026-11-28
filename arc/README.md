@@ -604,6 +604,22 @@ cropped to the nonzero bounding box of their content. `dataset.27a28665.json`,
 `dataset.28bf18c6.json`, `dataset.44f52bb0.json`, `dataset.9af7a82c.json`, and
 `dataset.d631b094.json` are `FIT`; the other datasets are `EXACT`.
 
+[`dataset.pdf`](dataset.pdf) shows every instruction dataset for reading.
+Its contents page lists each dataset's `output_canvas`, pair and instance
+counts, and page, with links and bookmarks. Each dataset follows in filename
+order, on its own pages, with its `class_declaration`, `declarations`, and
+`output_canvas`, then one box per pair: its `input_matrix` and
+`output_matrix` drawn as grids in the terminal's colors, and one row per
+instance with its `input_instance_matrix` and `output_instance_matrix` and its
+`implementation`. Small grids put the instance rows beside the pair's grids;
+larger ones stack them below. `bun run dataset:pdf` regenerates it from the
+dataset files alone, through `src\dataset\catalog.ts` and the dependency-free
+writer `src\lib\pdf.ts`, without model calls. It stops with an error on a
+dataset that is not valid JSON, or when the dataset files differ from what
+`document()` reads. Equal datasets give equal bytes, so an unchanged PDF
+shows no diff. `/arc-dataset` regenerates it whenever it writes or changes a
+dataset; never edit it by hand.
+
 `dataset.017c7c7b.json` annotates the three original training pairs from
 `data\training\017c7c7b.json`, in order, followed by its test pair and, at
 the user's request, one synthesized use case with a diagonal line of unknown
@@ -3479,7 +3495,8 @@ to take one training puzzle through the
 
 1. The [arc-dataset](../.claude/agents/arc-dataset.agent.md) agent writes the
    puzzle's instruction dataset, using any dataset in `src\dataset` as a
-   reference. It designs with gestalt perception: it starts from the big
+   reference, and regenerates [`dataset.pdf`](dataset.pdf). It designs with
+   gestalt perception: it starts from the big
    picture, each grid's figures and their relations, writes declarative
    statements at that level, and goes down to single cells only when the big
    picture cannot express what the training pairs show. It prefers
@@ -3523,9 +3540,10 @@ to take one training puzzle through the
    difference, and the open items. Every invocation brings the gestalt
    overview up to date, and the record keeps earlier runs.
 8. Finally, the workflow commits its own changes in one commit and pushes it:
-   the dataset, its README paragraph, its reporting-list entry, the default
-   `puzzle_id`, and the progress record, as far as it changed and kept them,
-   never another session's changes. A requested NUC's outcome has its own
+   the dataset, its README paragraph, the regenerated `dataset.pdf`, its
+   reporting-list entry, the default `puzzle_id`, and the progress record, as
+   far as it changed and kept them, never another session's changes. A
+   requested NUC's outcome has its own
    `NUC <number> <Title>` commit, pushed when the outcome is decided.
 
 Without a puzzle ID, the workflow chooses one from `data\training`. It skips

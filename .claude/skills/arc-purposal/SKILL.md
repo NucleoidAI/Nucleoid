@@ -33,8 +33,9 @@ such as `server.ts`, `src/app.ts`, or `src/dataset/dataset.ts`, is
 added, edited, or removed, except for the solver's default puzzle in
 `src/app.ts`, which the [run step](#run-the-puzzle) sets. Orchestrate the
 approach between `/arc-dataset` and `/nuc-proposal` alone. In `arc/`, only
-five things change: the puzzle's dataset and its README paragraph, both
-written by arc-dataset, that default, the
+six things change: the puzzle's dataset and its README paragraph, both
+written by arc-dataset, the dataset PDF `arc/dataset.pdf`, which arc-dataset
+regenerates with `bun run dataset:pdf`, that default, the
 [dataset grammar](#keep-the-dataset-grammar) `arc/arc.ebnf`, and the
 puzzle's [progress record](#document-the-progress) in `arc/docs/`. A NUC
 candidate changes nothing there. When the solver would need a change, finish
@@ -111,7 +112,8 @@ Track that path and source puzzle,
 not variants or synthesis seeds. Before an authorized replacement, preserve
 the previous dataset and README paragraph in the session workspace. If the
 handoff used external staging, integrate the verified single file before the
-run and confirm the loader includes it among all JSON instruction datasets.
+run, confirm the loader includes it among all JSON instruction datasets, and
+regenerate `arc/dataset.pdf` with `bun run dataset:pdf` in `arc/`.
 Leave the shared files of the genesis puzzle `3aa6fb7a` unchanged.
 
 Always go with the declarative, higher-order, and most expressive solution,
@@ -397,15 +399,17 @@ push it:
   remove only that entry when withdrawing the dataset. If it set the solver's
   default puzzle, restore the recorded previous value unless a later change
   replaced it. Preserve pre-existing entries, other datasets, genesis files,
-  and unrelated workflow changes. Keep the candidate isolated.
+  and unrelated workflow changes. Then regenerate `arc/dataset.pdf` with
+  `bun run dataset:pdf`, so it no longer shows the withdrawn dataset. Keep the
+  candidate isolated.
 
 Those caller steps push the requested NUC's allocation and outcome commits
 right after each, pulling first, under the
 [git synchronization policy](../../rules/git.instructions.md). Those commits
 hold only the NUC's own records and integration; the dataset, README,
-reporting-list, solver-default, and progress-record changes wait for this
-invocation's [own commit](#commit-and-push) at the end. Never change project
-versions.
+dataset PDF, reporting-list, solver-default, and progress-record changes wait
+for this invocation's [own commit](#commit-and-push) at the end. Never change
+project versions.
 
 ## Propose quote-free spellings
 
@@ -578,13 +582,16 @@ nothing.
    paragraph in `arc/README.md`, its entry in `.github/workflows/arc.yml`,
    the default puzzle in `arc/src/app.ts` while it names this puzzle,
    `arc/arc.ebnf` when the [grammar step](#keep-the-dataset-grammar)
-   changed it, and `arc/docs/ARC-NUC-<puzzle-id>.md`. A withdrawn dataset,
-   and the paragraph and entry withdrawn with it, stay out. When a path also
-   holds changes this invocation did not make, such as the pre-existing
-   changes recorded at the start or another session's, stage only this
-   invocation's hunks, for example by applying its own diff with
-   `git apply --cached`; if they cannot be separated, leave the path out and
-   report it. Never use `git add -A`,
+   changed it, `arc/dataset.pdf`, regenerated with `bun run dataset:pdf`
+   right before staging, and `arc/docs/ARC-NUC-<puzzle-id>.md`. A withdrawn
+   dataset, and the paragraph and entry withdrawn with it, stay out. The PDF
+   shows every dataset, so when `arc/src/dataset/` also holds dataset changes
+   this commit leaves out, such as another session's, leave the PDF out and
+   report it. When a path also holds changes this invocation did not make,
+   such as the pre-existing changes recorded at the start or another
+   session's, stage only this invocation's hunks, for example by applying
+   its own diff with `git apply --cached`; if they cannot be separated, leave
+   the path out and report it. Never use `git add -A`,
    `git add .`, or `git commit -a`, and never stage session artifacts, run
    logs, `arc/logs/`, or anything from a candidate worktree.
 3. Commit with an imperative subject that names the puzzle and what changed,
@@ -610,7 +617,8 @@ how it was chosen (given, or the default with both its measurements), the
 starting revision, and hint (`null` without one); the dataset status,
 `dataset_path` and source puzzle path,
 the reporting-workflow path and whether its new entry was retained or
-withdrawn, and arc-dataset's use of the hint; the NUC path, allocation
+withdrawn, whether `arc/dataset.pdf` was regenerated and committed, and
+arc-dataset's use of the hint; the NUC path, allocation
 commit, blob, category, evaluator decision, and report path; the solver's
 previous and new default puzzle IDs and whether that change was retained or
 restored; the run's

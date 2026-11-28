@@ -127,9 +127,9 @@ Follow `.claude/CLAUDE.md`, the
   invocation's own changes under the skill's
   [commit step](../skills/arc-purposal/SKILL.md#commit-and-push): pull right
   before the commit and before the push, stage by explicit path only the
-  dataset, README paragraph, reporting-list entry, solver default, dataset
-  grammar and progress record that this invocation changed and kept, never
-  another session's changes, and push right after the commit.
+  dataset, README paragraph, dataset PDF, reporting-list entry, solver
+  default, dataset grammar and progress record that this invocation changed
+  and kept, never another session's changes, and push right after the commit.
 - Save the JSON result record that the skill defines in the session workspace,
   report a short summary with its path, the progress record's path, the pushed
   commit, and any suggested solver changes, and stop.

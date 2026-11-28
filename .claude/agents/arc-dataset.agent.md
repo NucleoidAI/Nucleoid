@@ -29,8 +29,8 @@ needs instead. Read and follow the [ARC instructions](../rules/arc.instructions.
   regenerate genesis or edit its files while updating other puzzles.
 - A caller coordinating a batch may supply an external staging directory.
   Prepare and verify the single dataset there, returning staged and canonical
-  paths for caller integration. In this mode the caller owns shared README and
-  reporting-list updates; do not race another worker's files.
+  paths for caller integration. In this mode the caller owns shared README,
+  reporting-list and dataset PDF updates; do not race another worker's files.
 - The caller may supply a candidate Nucleoid executable built from a frozen
   NUC candidate, with the NUC's path and your earlier enhancement request. Use
   it as `NUCLEOID_EXECUTABLE` for every Nucleoid run and check, and regenerate
@@ -331,6 +331,22 @@ reproduce instead of changing them.
 Report other mismatches; never adjust source grids or hand-write values to
 make a check pass.
 
+## Update the dataset PDF
+
+`arc/dataset.pdf` shows every JSON instruction dataset in `arc/src/dataset/`,
+in the filename order in which `document()` reads them: each dataset's
+`class_declaration`, `declarations` and `output_canvas`, then one box per
+pair with its `input_matrix` and `output_matrix` drawn as colored grids and,
+for each instance, its `input_instance_matrix`, `output_instance_matrix` and
+`implementation`. Whenever you write or change a dataset, regenerate the PDF
+once the checks pass: run `bun run dataset:pdf` in `arc/`, which rewrites the
+whole file from the dataset files alone, without model calls. Never edit the
+PDF by hand or change its generator, `arc/src/dataset/catalog.ts`; report a
+failing run's error as a blocker. With external staging, leave the PDF to the
+caller, who regenerates it after integrating the dataset. A `blocked` or
+`nucleoid_enhancement_required` handoff writes no dataset and leaves the PDF
+unchanged.
+
 ## Document and hand off
 
 Add one paragraph about the dataset to the "Instruction datasets" section of
@@ -354,19 +370,21 @@ workflow's triggers, credentials, solver command, provider settings, or
 scoring, and do not dispatch it. A blocked or enhancement-required handoff
 introduces no dataset and does not change the reporting list.
 
-Apart from the single dataset, README paragraph, and reporting-list update,
-change nothing else: no other datasets, puzzle data, or TypeScript in `arc/`,
-including `dataset.ts`, which aggregates all JSON instruction files. Preserve
-all shared genesis files. When
+Apart from the single dataset, README paragraph, reporting-list update, and
+regenerated `arc/dataset.pdf`, change nothing else: no other datasets, puzzle
+data, or TypeScript in `arc/`, including `dataset.ts`, which aggregates all
+JSON instruction files. Preserve all shared genesis files. When
 the solver would need a change to use the dataset, suggest it in the handoff
 instead. Do not run the solver or make LLM calls, read `.env`, change
 versions, spawn agents, start a NUC, commit, or push.
 
 Return the status (`written`, `nucleoid_enhancement_required`, or `blocked`)
-with `dataset_path`, the source puzzle path, any annotation helper's path,
-train and test pair counts, instance counts, the declarations, the
-big-picture formulation you started from and, for a finer model, why it fell
-short, each check with its result, how you used any hint, any NUC request, any
-suggested solver change, and any blockers. A staged handoff also includes
-`staged_dataset_path` and leaves shared documentation/reporting changes to
-the caller. Publish no partial dataset when annotation is blocked.
+with `dataset_path`, whether `arc/dataset.pdf` was regenerated with the
+output line of `bun run dataset:pdf` or why it was not, the source puzzle
+path, any annotation helper's path, train and test pair counts, instance
+counts, the declarations, the big-picture formulation you started from and,
+for a finer model, why it fell short, each check with its result, how you
+used any hint, any NUC request, any suggested solver change, and any
+blockers. A staged handoff also includes `staged_dataset_path` and leaves
+shared documentation/reporting changes and the dataset PDF to the caller.
+Publish no partial dataset when annotation is blocked.

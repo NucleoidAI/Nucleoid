@@ -5,6 +5,7 @@
   "main": "server.ts",
   "scripts": {
     "start": "tsx server.ts",
+    "dataset:pdf": "tsx src/dataset/catalog.ts",
     "build:tools": "tsc --project tools/tsconfig.json",
     "tools": "npm run build:tools && tsx tools/server.ts",
     "typecheck": "tsc --noEmit",

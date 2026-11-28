@@ -76,3 +76,14 @@ request to the caller. Under `/arc-purposal`, the
 may run `/nuc-proposal` with the request as a single-proposal request, decided
 under the automatic acceptance rule, and run `/arc-dataset` again once the
 feature is accepted.
+
+## Dataset PDF
+
+`arc\dataset.pdf` shows every instruction dataset in `arc\src\dataset`: its
+class declaration, declarations and output canvas, and each pair's grids with
+every instance's masks and implementation. Whenever this skill writes or
+changes a dataset, the agent regenerates the PDF with `bun run dataset:pdf` in
+`arc\` once its checks pass, as the profile specifies, and never edits it by
+hand. Under external staging the caller regenerates it after integrating the
+dataset, and a `blocked` or `nucleoid_enhancement_required` handoff leaves it
+unchanged.

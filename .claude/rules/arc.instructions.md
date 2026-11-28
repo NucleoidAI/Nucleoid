@@ -34,6 +34,12 @@ and, when the solver would need a change, suggests that change at the end of
 the process.
 Agent-configuration changes alone do not launch a solver run.
 
+`arc/dataset.pdf` shows every instruction dataset in `arc/src/dataset/` for
+reading: its class declaration, declarations and output canvas, and each
+pair's grids with every instance's masks and implementation. `/arc-dataset`
+regenerates it with `bun run dataset:pdf` whenever it writes or changes a
+dataset, and it is never edited by hand.
+
 Every ARC-requested NUC uses the existing proposal-strategy UCB1 bandit under
 the [arc-purposal skill](../skills/arc-purposal/SKILL.md#learn-the-nuc-proposal-strategy).
 Require a retained policy head or explicit `--strategy-policy <absolute-json-path>`

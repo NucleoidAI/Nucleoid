@@ -2,7 +2,7 @@ import { inspect, stripVTControlCharacters, styleText } from "node:util";
 import stringWidth from "string-width";
 import wrapAnsi from "wrap-ansi";
 
-const palette = [
+export const palette = [
   [0, 0, 0],
   [0, 116, 217],
   [255, 65, 54],
