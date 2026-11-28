@@ -401,7 +401,7 @@ fn only_the_appended_cases_measure_spread_and_they_run_every_assertion() {
     }
     assert_eq!(calls, 13);
     assert_eq!(assertions, 20);
-    assert_eq!(cases, 1347);
+    assert_eq!(cases, 1348);
 }
 
 #[test]

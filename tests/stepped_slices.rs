@@ -348,7 +348,7 @@ fn only_the_appended_cases_write_stepped_slices_and_they_run_every_assertion() {
     }
     assert_eq!(slices, 10);
     assert_eq!(assertions, 20);
-    assert_eq!(cases, 1347);
+    assert_eq!(cases, 1348);
 }
 
 #[test]

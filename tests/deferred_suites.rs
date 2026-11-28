@@ -362,7 +362,8 @@ fn exactly_two_paired_document_cases_preserve_original_assertions_and_expected_r
     ] {
         let cases = common::cases(document);
         assert_eq!(cases.iter().filter(|case| case.title == title).count(), 1);
-        let case = cases.get(cases.len() - 3).unwrap();
+        let tail = 3 + usize::from(title == "Nucleoid runs deferred suites on block exit");
+        let case = cases.get(cases.len() - tail).unwrap();
         assert_eq!(case.title, title);
         assert_eq!(case.expected.as_deref(), Some("1"));
         let protected = common::assertions::protected_assertions(&parse(original).unwrap());

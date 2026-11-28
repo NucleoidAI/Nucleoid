@@ -225,7 +225,15 @@ fn sealed_document_programs_keep_all_assertions_and_returns_and_synth_records_ex
             .collect::<Vec<_>>();
         assert_eq!(matching.len(), 1);
         let case = matching[0];
-        assert_eq!(cases.iter().rev().nth(7).unwrap().title, title);
+        assert_eq!(
+            cases
+                .iter()
+                .rev()
+                .nth(7 + usize::from(title == "Nucleoid keeps sign copying reactive"))
+                .unwrap()
+                .title,
+            title
+        );
         assert_eq!(case.expected.as_deref(), Some("1"));
         assert_eq!(accepted.matches(before).count(), 1);
         let candidate = accepted.replace(before, after);

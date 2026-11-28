@@ -4219,6 +4219,49 @@ statement positions; caught values and transaction recovery are unchanged.
   behavior without requiring identical rule-source strings or immediate
   dependency graphs. Unchanged historical programs retain their complete ASTs.
 
+## Reactive base ten exponentiation
+
+- Accepted [NUC 161](docs/nuc-0161.md) adds only unshadowed static `Math.exp10(value)`,
+  naming accepted `Math.pow(10, value)` without changing that operation.
+- Keep Math's any-supplied-top-level-Undefined gate before intrinsic
+  `Value::to_number` conversion of the first input. Omission supplies numeric
+  NaN; only the first supplied value is numerically converted.
+- Compute exactly `10.0_f64.powf(first)`, preserving the accepted pow kernel.
+  Non-NaN results agree by bits and NaNs by their accepted classification,
+  without a new payload, accuracy or speed guarantee. Do not substitute native
+  decimal exponentiation, exponent/log identities, integer shortcuts,
+  rescaling or another floating-point evaluation order.
+- Both zero exponent signs yield one. Finite and fractional exponents,
+  overflow, subnormal rounding, positive-zero underflow and nonfinite results
+  match accepted powf. Positive infinity yields positive infinity, negative
+  infinity yields positive zero, and NaN yields NaN.
+- Literal null converts to zero. Booleans, strings, empty/singleton lists,
+  dates and nonnumeric values retain intrinsic conversion. Live-null and
+  parameter-null deferral remain unchanged.
+- Every supplied expression evaluates once left to right, before the gate,
+  including ignored extras and expressions after Undefined. Extras retain
+  dependency reads, effects and strict errors without numeric conversion.
+- Standing propagation, independent class rules, wrappers, receivers,
+  scopes, frames, deletion/recovery, subscriptions, savepoints and rollback
+  retain the existing runtime machinery.
+- Conversion and the fixed base consult neither shadowable Number nor Math
+  constants. Local/state Math and ordinary `.Math` members keep their lookup.
+  Native `Math.exp10` value reads remain Undefined, not first-class functions.
+- Add no arity, conversion, numeric or range error. Strict unknown arguments
+  keep `ReferenceError("<name> is not defined")`; unsupported native helpers
+  keep `TypeError("Math.<name> is not a function")`, and `Math.random()` keeps
+  `TypeError("Math.random is not supported")` after the unchanged gate.
+  Numeric `Math = 7` keeps `TypeError("number.exp10 is not a function")`.
+- Only the previously unsupported unshadowed static call gains this utility.
+  Sibling helpers, constants, accepted syntax and inherited scope limitations
+  remain unchanged; add no alias, public Rust type/API, dependency or limit.
+- The appended case `Nucleoid keeps base ten exponentiation reactive` changes
+  only its standing scale RHS from the caller's accepted-pow counterpart,
+  preserving all twelve ordered assertions, explicit return `1000`,
+  fractional pow control and Number/String special-value spellings.
+- `docs/nucleoid.ebnf` remains unchanged: existing member-call syntax already
+  parses `exp10` as an ordinary name; no lexer or parser behavior changes.
+
 ## Reactive base two exponentiation
 
 - Accepted [NUC 56](docs/nuc-0056.md) adds only unshadowed static
@@ -30258,6 +30301,35 @@ assert(text, "")
 assert(input, 7)
 1
 # return: 1
+---
+# Nucleoid keeps base ten exponentiation reactive
+power = 2
+scale = Math.exp10(power)
+assert(scale, 100)
+power = 3
+assert(scale, 1000)
+power = -1
+assert(scale, 0.1)
+power = 0
+assert(scale, 1)
+power = "2"
+assert(scale, 100)
+power = -2
+assert(scale, 0.01)
+power = 1.5
+assert(scale, Math.pow(10, power))
+power = 309
+assert(scale, Number.POSITIVE_INFINITY)
+power = -400
+assert(scale, 0)
+power = Number.NEGATIVE_INFINITY
+assert(scale, 0)
+power = Number.NaN
+assert(String(scale), "NaN")
+power = 3
+assert(scale, 1000)
+scale
+# return: 1000
 ```
 
 ## Floating-point absolute value alias

@@ -206,7 +206,7 @@ fn exactly_two_paired_document_cases_keep_all_six_assertions_and_returns() {
             SPEC_TITLE,
             "counts = total |> why |> indegrees",
             "counts = (total |> why).map(step -> step.from.length)",
-            898,
+            899,
         ),
         (
             include_str!("reference.md"),
@@ -218,9 +218,10 @@ fn exactly_two_paired_document_cases_keep_all_six_assertions_and_returns() {
     ] {
         let cases = common::cases(document);
         assert_eq!(cases.len(), count);
-        assert_eq!(cases.get(cases.len() - 5).unwrap().title, title);
+        let tail = 5 + usize::from(title == SPEC_TITLE);
+        assert_eq!(cases.get(cases.len() - tail).unwrap().title, title);
         assert_eq!(cases.iter().filter(|case| case.title == title).count(), 1);
-        let case = cases.get(cases.len() - 5).unwrap();
+        let case = cases.get(cases.len() - tail).unwrap();
         assert_eq!(case.source.matches(written).count(), 1);
         assert_eq!(case.expected.as_deref(), Some("1"));
         let assertions = common::assertions::protected_assertions(&parse(&case.source).unwrap());

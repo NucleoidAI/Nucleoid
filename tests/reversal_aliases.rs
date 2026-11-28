@@ -428,7 +428,7 @@ fn only_the_appended_cases_call_the_aliases_and_they_run_every_assertion() {
     }
     assert_eq!(calls, 23);
     assert_eq!(assertions, 20);
-    assert_eq!(cases, 1347);
+    assert_eq!(cases, 1348);
 }
 
 #[test]

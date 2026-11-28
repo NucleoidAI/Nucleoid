@@ -299,7 +299,7 @@ fn only_the_appended_cases_repeat_until_and_they_run_every_assertion() {
     }
     assert_eq!(found, 8);
     assert_eq!(assertions, 17);
-    assert_eq!(cases, 1347);
+    assert_eq!(cases, 1348);
 }
 
 #[test]

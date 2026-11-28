@@ -212,7 +212,7 @@ fn only_the_appended_cases_hold_except_clauses_and_they_run_every_assertion() {
     }
     assert_eq!(clauses, 15);
     assert_eq!(assertions, 16);
-    assert_eq!(cases, 1347);
+    assert_eq!(cases, 1348);
 }
 
 #[test]

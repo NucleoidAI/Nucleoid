@@ -3980,6 +3980,41 @@ assert(radians, -Math.PI / 2)
 
 ---
 
+## Reactive base ten exponentiation
+
+- Accepted [NUC 161](nuc-0161.md) and the
+  [root contract](../nucleoid.spec.md#reactive-base-ten-exponentiation)
+  add only unshadowed static `Math.exp10(value)`, exactly the accepted
+  `Math.pow(10, value)` numeric operation. Accepted pow and exp2 stay unchanged.
+- Reuse Math's any-supplied-top-level-Undefined gate, intrinsic first-input
+  conversion and `10.0_f64.powf(first)`. Omission yields numeric NaN.
+  Non-NaN results match accepted pow by bits and NaNs by classification,
+  including fractional powers, overflow, subnormals and positive-zero
+  underflow. Both zero exponent signs yield one.
+- Literal null converts to zero without changing live-null or parameter
+  deferral. Other values retain their intrinsic conversions and NaN results.
+  No native decimal exponentiation, exponent/log identities, integer
+  shortcuts, rescaling, reordered math or accuracy/speed claim is introduced.
+- All supplied expressions evaluate once left to right before gating.
+  Numerically ignored extras retain reads, dependencies, effects and strict
+  errors. Standing rules, independent instances, functions, scopes,
+  deletion/recovery, savepoints and transaction rollback remain unchanged.
+- The fixed base and conversion do not resolve shadowable Number or Math
+  constants. State/local Math and ordinary `.Math` members retain lookup.
+  Native `Math.exp10` value reads remain Undefined, not stored functions.
+- Add no arity, numeric or range error. Strict unknown reads, unknown/random
+  native errors, ordinary receiver errors, positions and rollback remain
+  unchanged; numeric `Math = 7` gives
+  `TypeError("number.exp10 is not a function")`.
+- The single appended specification case
+  `Nucleoid keeps base ten exponentiation reactive` retains the caller's
+  twelve accepted-pow assertions and explicit return `1000`, changing only
+  the standing RHS. No reference executable case or accepted source changes.
+- This is a utility-only extension. The grammar, aliases, public Rust APIs,
+  dependencies, versions and resource limits are unchanged.
+
+---
+
 ## Reactive base two exponentiation
 
 ### Nucleoid names reactive base two powers
@@ -6443,6 +6478,7 @@ items.flat()  items.flat(depth)        exactly items.flatMap(v => v), depth time
 Math.remap(start, end, targetStart, targetEnd, value) unclamped static remapping (Accepted NUC 39)
 Math.toRadians(value)                   static division-first degree conversion (NUC 50 candidate)
 Math.exp2(value)                        static powf-based base-two power (Accepted NUC 56)
+Math.exp10(value)                       static powf-based base-ten power (Accepted NUC 161)
 Math.cot(value)                         static reciprocal of tangent in radians (NUC 100 candidate)
 Math.sec(value)                         static reciprocal of cosine in radians (NUC 138)
 Math.csc(value)                         static reciprocal of sine in radians (NUC 141)

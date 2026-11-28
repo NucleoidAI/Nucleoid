@@ -73,6 +73,7 @@ fn math_unary(name: &str, first: f64) -> Option<f64> {
         }
         "exp" => first.exp(),
         "exp2" => 2.0_f64.powf(first),
+        "exp10" => 10.0_f64.powf(first),
         "log" => first.ln(),
         "log2" => first.log2(),
         "log10" => first.log10(),

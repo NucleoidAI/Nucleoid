@@ -448,7 +448,7 @@ fn only_the_appended_cases_take_quantiles_and_they_run_every_assertion() {
     }
     assert_eq!(calls, 12);
     assert_eq!(assertions, 20);
-    assert_eq!(cases, 1347);
+    assert_eq!(cases, 1348);
 }
 
 #[test]

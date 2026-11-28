@@ -750,8 +750,9 @@ fn exactly_two_paired_document_cases_keep_six_ordered_assertions_and_string_retu
         ),
     ] {
         let cases = common::cases(document);
-        assert_eq!(cases.len(), old_count + 1);
-        let case = cases.last().unwrap();
+        let tail = usize::from(title == "Nucleoid writes truthy values with one-shot assignments");
+        assert_eq!(cases.len(), old_count + 1 + tail);
+        let case = cases.iter().rev().nth(tail).unwrap();
         assert_eq!(case.title, title);
         assert_eq!(cases.iter().filter(|case| case.title == title).count(), 1);
         assert_eq!(case.expected.as_deref(), Some("1"));

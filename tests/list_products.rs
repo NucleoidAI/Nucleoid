@@ -421,7 +421,7 @@ fn only_the_appended_cases_multiply_with_product_and_they_run_every_assertion() 
         assert_eq!(matching, 1, "{title}");
     }
     assert_eq!(assertions, 27);
-    assert_eq!(cases, 1347);
+    assert_eq!(cases, 1348);
 }
 
 #[test]

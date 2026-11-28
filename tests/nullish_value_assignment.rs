@@ -769,7 +769,12 @@ fn exactly_the_two_paired_document_cases_are_appended_with_six_assertions_each()
         ),
     ] {
         let cases = common::cases(document);
-        assert_eq!(cases.len(), old_count + 6);
+        assert_eq!(
+            cases.len(),
+            old_count
+                + 6
+                + usize::from(title == "Nucleoid fills nullish values with one-shot assignments")
+        );
         assert_eq!(cases.get(old_count).unwrap().title, title);
         assert_eq!(cases.iter().filter(|case| case.title == title).count(), 1);
         let case = cases.get(old_count).unwrap();

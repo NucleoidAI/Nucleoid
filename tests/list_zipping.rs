@@ -333,7 +333,7 @@ fn only_the_appended_cases_zip_and_they_run_every_assertion() {
     }
     assert_eq!(calls, 9);
     assert_eq!(assertions, 18);
-    assert_eq!(cases, 1347);
+    assert_eq!(cases, 1348);
 }
 
 #[test]

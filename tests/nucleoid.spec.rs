@@ -23671,6 +23671,49 @@ fn writes_truthy_values_with_one_shot_assignments() {
 # return: 1"#);
 }
 
+/// Nucleoid keeps base ten exponentiation reactive
+#[rustfmt::skip]
+#[test]
+fn keeps_base_ten_exponentiation_reactive() {
+    let mut run = runner();
+    run("power = 2");
+    run("scale = Math.exp10(power)");
+    assert_eq!(run("scale"), 100);
+    run("power = 3");
+    assert_eq!(run("scale"), 1000);
+    run("power = -1");
+    assert_eq!(run("scale"), 0.1);
+    run("power = 0");
+    assert_eq!(run("scale"), 1);
+    run(r#"power = "2""#);
+    assert_eq!(run("scale"), 100);
+    run("power = -2");
+    assert_eq!(run("scale"), 0.01);
+    run("power = 1.5");
+    {
+        let actual = run("scale");
+        let expected = run("(Math.pow(10, power))");
+        assert_eq!(actual, expected);
+    }
+    run("power = 309");
+    {
+        let actual = run("scale");
+        let expected = run("(Number.POSITIVE_INFINITY)");
+        assert_eq!(actual, expected);
+    }
+    run("power = -400");
+    assert_eq!(run("scale"), 0);
+    run("power = Number.NEGATIVE_INFINITY");
+    assert_eq!(run("scale"), 0);
+    run("power = Number.NaN");
+    assert_eq!(run("String(scale)"), "NaN");
+    run("power = 3");
+    assert_eq!(run("scale"), 1000);
+    run(r#"scale
+
+# return: 1000"#);
+}
+
 /// The committed tests must not drift from their generated JSONL export.
 #[rustfmt::skip]
 #[test]
