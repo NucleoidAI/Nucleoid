@@ -3222,7 +3222,7 @@ assert(copied, -3)
 | `Boolean` | `Boolean(value)` |
 | `Number` | `Number.MAX_INTEGER` |
 | `Math` | `pow`, `sqrt`, `floor`, `round`, `max`, `min`, `clamp` ([NUC 21](nuc-0021.md)), `lerp` ([NUC 22](nuc-0022.md)), `saturate` ([NUC 23](nuc-0023.md)), `smoothstep(lower, upper, value)` (accepted [NUC 33](nuc-0033.md)), `smootherstep(lower, upper, value)` (accepted [NUC 35](nuc-0035.md)), `remap(start, end, targetStart, targetEnd, value)` (accepted [NUC 39](nuc-0039.md)), `copySign(value, sign)` ([NUC 142](nuc-0142.md)) |
-| `String` | `String.fromCharCode`; instance `charAt`, `length`, `lower`, `replace`, `replaceAll` (accepted [NUC 42](nuc-0042.md)), `repeat`, `split`, `padStart` and `padEnd` ([NUC 111](nuc-0111.md)), their padding aliases `rjust` and `PadLeft` of `padStart` and `ljust` and `PadRight` of `padEnd` ([NUC 157](nuc-0157.md)), Python's `startswith`, `endswith` and `join(items)`, with the separator as the receiver ([NUC 110](nuc-0110.md)), Rust's `starts_with(prefix)` and `ends_with(suffix)` ([NUC 132](nuc-0132.md)), the size and emptiness methods `length()`, `size()`, `len()`, `isEmpty()`, `is_empty()` and `isNotEmpty()` ([NUC 116](nuc-0116.md)), the case conversion aliases `uppercase()`, `to_uppercase()` and `uppercased()` of `toUpperCase()`, and `lowercase()`, `to_lowercase()` and `lowercased()` of `toLowerCase()` ([NUC 118](nuc-0118.md)), and the reversals `reverse()` and `reversed()`, exactly `text[::-1]` ([NUC 131](nuc-0131.md)) |
+| `String` | `String.fromCharCode`; instance `charAt`, `length`, `lower`, `trim` and `strip`, their C# alias `Trim()` ([NUC 160](nuc-0160.md)), `replace`, `replaceAll` (accepted [NUC 42](nuc-0042.md)), `repeat`, `split`, `padStart` and `padEnd` ([NUC 111](nuc-0111.md)), their padding aliases `rjust` and `PadLeft` of `padStart` and `ljust` and `PadRight` of `padEnd` ([NUC 157](nuc-0157.md)), Python's `startswith`, `endswith` and `join(items)`, with the separator as the receiver ([NUC 110](nuc-0110.md)), Rust's `starts_with(prefix)` and `ends_with(suffix)` ([NUC 132](nuc-0132.md)), the size and emptiness methods `length()`, `size()`, `len()`, `isEmpty()`, `is_empty()` and `isNotEmpty()` ([NUC 116](nuc-0116.md)), the case conversion aliases `uppercase()`, `to_uppercase()` and `uppercased()` of `toUpperCase()`, and `lowercase()`, `to_lowercase()` and `lowercased()` of `toLowerCase()` ([NUC 118](nuc-0118.md)), and the reversals `reverse()` and `reversed()`, exactly `text[::-1]` ([NUC 131](nuc-0131.md)) |
 | `Date` | `Date()`, `Date(string)`, `Date(number)`, `Date.now()`, `Date.parse()`; instance `getTime`, `getYear`, `toDateString` |
 | `List` | `push`, `pop`, `filter`, `map`, their Ruby aliases `select` and `collect` ([NUC 134](nuc-0134.md)), `flatMap` (accepted [NUC 41](nuc-0041.md)), `flat` ([NUC 103](nuc-0103.md)), `reduce`, `find`, `some`, `every`, `slice`, `reverse` (a new list in reverse order), `sort` (in place, [NUC 58](nuc-0058.md)), `join`, `length`, and the queries `at`, `includes`, `indexOf`, `lastIndexOf`, `findIndex`, `findLast`, `findLastIndex` and `concat` ([NUC 61](nuc-0061.md)), `sum` ([NUC 68](nuc-0068.md)), `max` and `min` ([NUC 69](nuc-0069.md)), `distinct` ([NUC 71](nuc-0071.md)), `count(predicate)` ([NUC 73](nuc-0073.md)), `mode` ([NUC 75](nuc-0075.md)), `maxBy` and `minBy` ([NUC 77](nuc-0077.md)), `average` ([NUC 80](nuc-0080.md)), `median` ([NUC 84](nuc-0084.md)), `sortBy` ([NUC 105](nuc-0105.md)), `partition` ([NUC 108](nuc-0108.md)), `product` ([NUC 114](nuc-0114.md)), `variance` and `stdev` ([NUC 123](nuc-0123.md)), `quantile` ([NUC 124](nuc-0124.md)), `zip(other)` and `zip(other, combine)` ([NUC 129](nuc-0129.md)), the size and emptiness aliases `size()`, `len()`, `isEmpty()`, `is_empty()` and `isNotEmpty()` ([NUC 116](nuc-0116.md)), the first and last element aliases `first()`, `last()`, `first(predicate)` and `last(predicate)` ([NUC 117](nuc-0117.md)), and the reversal aliases `reversed()` and `toReversed()` of `reverse()` ([NUC 131](nuc-0131.md)); `sum`, `max`, `min` and `mode` also read as `sum of list` ([NUC 75](nuc-0075.md) revision 2) |
 | `Class` | the global list of declared types; `Class.length` |
@@ -3654,6 +3654,31 @@ tag.length
   `tests/reference.md`. The
   [root section](../nucleoid.spec.md#padding-method-aliases) and its four
   appended entries define the results, liveness and rollback.
+
+### C# string trimming method alias
+
+- [NUC 160](nuc-0160.md) adds `text.Trim()` on strings, exactly
+  `text.trim()` and `text.strip()`: remove Unicode whitespace at both
+  boundaries while preserving internal spaces, tabs and remaining text.
+  Empty or all-whitespace text returns `""`; zero-width space and the
+  byte-order-mark character are not whitespace for this operation.
+- `clean = raw.Trim()` stays live when `raw` changes, and
+  `$Label.display = $Label.raw.Trim()` follows each label's raw text.
+  The receiver and then every argument evaluate once in written order.
+  Arguments are ignored after evaluation, not .NET character sets:
+  `"  xoxo  ".Trim("x")` returns `"xoxo"`. Argument errors, null-read
+  holds, dependencies and rollback are those of the accepted spellings.
+- Explanations and graph rendering keep the written `Trim` name.
+  Nullish receivers skip arguments; object properties, class methods,
+  ordinary names and member reads retain their routes. `text.Trim`
+  remains undefined, and static `String.Trim(text)` still raises
+  `TypeError("String.Trim is not a function")`.
+- The legacy names and accepted padding aliases are unchanged. This is
+  one C# instance spelling, not overloads, character/pattern trimming,
+  `TrimStart`, `TrimEnd` or full C# compatibility. The
+  [root contract](../nucleoid.spec.md#c-string-trimming-method-alias)
+  and `tests/csharp_string_trimming_alias.rs` define and exercise it
+  without rewriting the executable reference programs.
 
 ### Numeric clamping keeps bounds live
 
