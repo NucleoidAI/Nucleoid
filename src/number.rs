@@ -1,3 +1,5 @@
+const MAX_SAFE_INTEGER: f64 = 9_007_199_254_740_991.0;
+
 #[expect(clippy::cast_precision_loss)]
 pub(crate) fn from_usize(value: usize) -> f64 {
     value as f64
@@ -20,6 +22,10 @@ pub(crate) fn to_i64(number: f64) -> i64 {
 
 pub(crate) fn non_negative_integer(number: f64) -> Option<usize> {
     (number >= 0.0 && equal(number.fract(), 0.0)).then(|| to_usize(number))
+}
+
+pub(crate) fn safe_integer(number: f64) -> Option<i64> {
+    (number.abs() <= MAX_SAFE_INTEGER && equal(number.fract(), 0.0)).then(|| to_i64(number))
 }
 
 pub(crate) fn repetitions(number: f64) -> usize {
@@ -67,6 +73,25 @@ mod tests {
         assert_eq!(non_negative_integer(f64::NAN), None);
         assert_eq!(non_negative_integer(f64::INFINITY), None);
         assert_eq!(non_negative_integer(f64::NEG_INFINITY), None);
+    }
+
+    #[test]
+    fn safe_integers_are_whole_numbers_within_two_to_the_fifty_third() {
+        assert_eq!(safe_integer(-0.0), Some(0));
+        assert_eq!(safe_integer(-3.0), Some(-3));
+        assert_eq!(
+            safe_integer(9_007_199_254_740_991.0),
+            Some(9_007_199_254_740_991)
+        );
+        assert_eq!(
+            safe_integer(-9_007_199_254_740_991.0),
+            Some(-9_007_199_254_740_991)
+        );
+        assert_eq!(safe_integer(9_007_199_254_740_992.0), None);
+        assert_eq!(safe_integer(2.5), None);
+        assert_eq!(safe_integer(f64::NAN), None);
+        assert_eq!(safe_integer(f64::INFINITY), None);
+        assert_eq!(safe_integer(f64::NEG_INFINITY), None);
     }
 
     #[test]

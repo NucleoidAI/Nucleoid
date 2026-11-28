@@ -62,8 +62,8 @@ impl<'a> Shown<'a> {
         }
     }
 
-    fn grouped(self, expression: &'a Expr) -> Grouped<'a> {
-        Grouped(self.inner(expression))
+    fn grouped(self, expression: &'a Expr) -> Base<'a> {
+        Base(self.inner(expression))
     }
 
     fn arguments(
@@ -347,6 +347,20 @@ impl fmt::Display for Grouped<'_> {
         match self.0.expression {
             Expr::Of { .. } => write!(f, "({})", self.0),
             _ => write!(f, "{}", self.0),
+        }
+    }
+}
+
+struct Base<'a>(Shown<'a>);
+
+impl fmt::Display for Base<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self.0.expression {
+            Expr::Binary {
+                operator: BinaryOp::Range | BinaryOp::RangeInclusive,
+                ..
+            } => write!(f, "({})", self.0),
+            _ => write!(f, "{}", Grouped(self.0)),
         }
     }
 }

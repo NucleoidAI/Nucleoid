@@ -724,7 +724,7 @@ fn exactly_two_paired_document_cases_keep_six_ordered_assertions_and_string_retu
     for (document, old_count, title, assertions) in [
         (
             include_str!("../nucleoid.spec.md"),
-            885,
+            893,
             "Nucleoid writes truthy values with one-shot assignments",
             [
                 "assert(slot,9)",
@@ -737,7 +737,7 @@ fn exactly_two_paired_document_cases_keep_six_ordered_assertions_and_string_retu
         ),
         (
             include_str!("reference.md"),
-            171,
+            173,
             "Nucleoid keeps truthy assignment guards isolated",
             [
                 "assert(gate.target,3)",

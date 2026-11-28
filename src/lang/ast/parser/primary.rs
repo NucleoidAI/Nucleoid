@@ -83,13 +83,13 @@ impl Parser {
                 Ok(Expr::Super(arguments))
             }
             Token::Keyword(Keyword::Function) => self.function_literal(),
-            Token::LeftParen => {
-                let expression = self.within(true, Self::expression)?;
-                self.expect(&Token::RightParen)?;
+            Token::LeftParen => self.unreserved(|parser| {
+                let expression = parser.within(true, Self::expression)?;
+                parser.expect(&Token::RightParen)?;
                 Ok(expression)
-            }
-            Token::LeftBracket => self.list_literal(),
-            Token::LeftBrace => self.object_literal(),
+            }),
+            Token::LeftBracket => self.unreserved(Self::list_literal),
+            Token::LeftBrace => self.unreserved(Self::object_literal),
             other => Err(self.error(format!("Unexpected {}", other.describe()))),
         }
     }

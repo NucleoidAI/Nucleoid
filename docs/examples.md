@@ -4607,6 +4607,71 @@ heavy
   [root contract](../nucleoid.spec.md#unknown-constructor-arguments-as-properties)
   define. A vehicle built without a `color` label has none.
 
+## Integer range literals
+
+**Ranges keep every elevator's stops live**
+
+```nuc
+class Elevator(name, lowest, highest):
+    this.name = name
+    this.lowest = lowest
+    this.highest = highest
+$Elevator.stops = $Elevator.lowest..=$Elevator.highest
+low = Elevator("low", -1, 6)
+high = Elevator("high", 5, 12)
+call = 3
+serving = Elevator.filter(e -> call in e.stops).map(e -> e.name)
+assert(serving, ["low"])
+call = 5
+assert(serving, ["low", "high"])
+low.highest = 4
+assert([low.stops.length, serving], [6, ["high"]])
+serving
+# return: ["high"]
+```
+
+- Each elevator stops at the floors from its lowest through its highest,
+  `$Elevator.lowest..=$Elevator.highest`, a class-level rule that holds for
+  every elevator and follows a change of either floor, basements included.
+- The stops are an ordinary list, so `call in e.stops` tests them as it tests
+  any list, and the elevators that serve a call follow the call, the
+  elevators and their floors. See [NUC 148](nuc-0148.md) and the
+  [root contract](../nucleoid.spec.md#integer-range-literals).
+
+## Padding method aliases
+
+**Padding aliases keep every order's receipt line aligned**
+
+```nuc
+class Order(number, item, total):
+    this.number = number
+    this.item = item
+    this.total = total
+$Order.line = String($Order.number).PadLeft(5, "0") + " " + $Order.item.PadRight(8, ".") + String($Order.total).PadLeft(6)
+first = Order(17, "tea", 4)
+second = Order(204, "honey", 12)
+assert([first.line, second.line], ["00017 tea.....     4", "00204 honey...    12"])
+first.total = 150
+second.item = "marmalade"
+receipt = Order.map(order -> order.line)
+assert(receipt, ["00017 tea.....   150", "00204 marmalade    12"])
+Order(9, "jam", 3)
+receipt.length
+# return: 3
+```
+
+- Each order's class-level rule writes its receipt line with C#'s padding
+  names: the order number padded at the start with zeros to five digits,
+  the item padded at the end with dots to eight characters, and the total
+  right-aligned in six. `$Order.item.PadRight(8, ".")` is
+  `$Order.item.padEnd(8, ".")`, and `PadLeft` is `padStart`, so every line
+  is what the accepted spelling gives.
+- A new total and a renamed item update the line of the order they touch,
+  and the receipt follows every order, the one created last included. An
+  item that already holds eight characters, such as `"marmalade"`, is not
+  padded. See [NUC 157](nuc-0157.md) and the
+  [root contract](../nucleoid.spec.md#padding-method-aliases).
+
 ## Symmetric difference reasoning selections
 
 **Xor lists what tells two diagnoses apart**

@@ -931,6 +931,9 @@ settings.size
   written `item !in collection` as in Kotlin, for lists, classes and
   strings, at the level of `<`; see [membership tests](#membership-tests)
   and [negated membership with `!in`](#negated-membership-with-in).
+- Ranges: `start..<end` and `start..=end` list consecutive integers, on one
+  level between the comparisons and `+` and `-`; see
+  [integer range literals](#integer-range-literals).
 - Logical: `and` / `&&`, `or` / `||`, `not` / `!`.
 - Conditional: `condition ? consequent : alternate` or
   `consequent if condition else alternate`; see below.
@@ -1233,6 +1236,66 @@ unlisted
 
 Full detail: [NUC 135](nuc-0135.md).
 
+### Integer range literals
+
+```
+first = 2
+last = 5
+exclusive = first..<last
+inclusive = first..=last
+assert([exclusive, inclusive], [[2, 3, 4], [2, 3, 4, 5]])
+last = 3
+assert([exclusive, inclusive], [[2], [2, 3]])
+first = 4
+assert([exclusive, inclusive], [[], []])
+first = -1
+assert([exclusive.sum(), inclusive.length], [2, 5])
+inclusive
+```
+
+- This is the complete `Nucleoid writes consecutive integers as range literals`
+  program in `tests/reference.md`, without its title and expected-return
+  metadata; it returns `[-1, 0, 1, 2, 3]`.
+- `start..<end` lists the integers from `start` up to, but not including,
+  `end`, and `start..=end` lists them through `end`, in ascending order. A
+  range with no integer between its bounds is empty, as `4..<3` and `4..=3`
+  are. A declaration that holds a range stays live: it follows its bounds,
+  and `$Shift.hours = $Shift.start..<$Shift.end` holds for every shift.
+- A range is an ordinary list, so list methods, membership tests,
+  equality, indexing and JSON treat it as they treat a list literal:
+  `(1..=4).sum()` is `10` and `2 in 0..<3` is `true`. Like every list, a
+  range is truthy even when it is empty, so `while a..<b:` runs until the
+  loop limit raises `Loop did not terminate`.
+- Both bounds must be integers within `Number.MAX_SAFE_INTEGER` of zero,
+  or the range raises `TypeError("Range bounds must be integers")`, and a
+  range of more than 100,000 items raises `TypeError("Range is too large")`.
+  An undefined bound, such as a missing property, makes the range
+  undefined, which a declaration stores as `null`.
+- The two dots and the `<` or `=` are written together, with nothing
+  between them; spaces around the operator are free. Ranges bind more
+  loosely than `+` and `-` and more tightly than comparisons and membership
+  tests: `0..<n + 1` is `0..<(n + 1)` and `x in 1..=5` is `x in (1..=5)`.
+  They do not chain, so `a..<b..<c` is a syntax error.
+- Ranges are read only in a run of the parse passes that starts after every
+  accepted pass, the section run and the
+  [newline-separated list](#newline-separated-list-elements) run included,
+  has failed, so every input the accepted grammar reads keeps its reading.
+  That run separates list elements by line breaks too when it needs to, so
+  a list written one element per line can hold ranges.
+- A range is not read at the top level of a subscript's index, slice bound
+  or step, of a `for` statement's source or of a `repeat` statement's
+  count: `xs[0..<2]`, `for i in 0..<3:` and `repeat 0..<3:` keep their
+  syntax errors. Write `xs[0:2]` for positions, and map a range,
+  `(0..<3).map(i -> i * i)`, use a comprehension, `[i * i for i in 0..<3]`,
+  or use `repeat 3:` to run over integers.
+- Bare `..` and `...`, open ranges such as `..<n`, steps and descending
+  ranges are not added. A range renders as `first..<last`. Grammar, errors
+  and edge cases are in the authoritative
+  [integer range literals](../nucleoid.spec.md#integer-range-literals)
+  section.
+
+Full detail: [NUC 148](nuc-0148.md).
+
 ### Indexing, slicing, and length
 
 - Lists and instance lists index with brackets; the index may be a variable.
@@ -1241,6 +1304,7 @@ Full detail: [NUC 135](nuc-0135.md).
 - A range on a class's instance list, such as `Task[-2:]` or `Task[:]`, returns its instances in population order with the same bound rules, and depends on the population ([NUC 61](nuc-0061.md)).
 - Both slice bounds are expressions whose references are checked when a class-level rule is declared.
 - A step after a second colon, `[start:stop:step]`, takes every step-th item, and a negative step walks backward, as in Python: `xs[::2]`, `xs[1::2]` and `s[::-1]` ([Stepped slices](#stepped-slices), [NUC 125](nuc-0125.md)).
+- A range literal is not read at the top level of an index, a slice bound or a step, so `xs[0..<2]` stays a syntax error; `xs[(0..<2)]` indexes by a list, which converts to a number as any index does ([Integer range literals](#integer-range-literals), [NUC 148](nuc-0148.md)).
 - `.length` is a dependency on the collection.
 
 ```
@@ -1973,6 +2037,11 @@ if $Device.profile:
   literal objects in lists are skipped; order and duplicates are retained.
 - Loops may nest, producing the cross product.
 - Explicit sources keep arbitrary expressions and inline/braced/indented suites.
+- A range literal is not read at the top level of a source, so
+  `for i in 0..<3:` stays a syntax error, and `for i in (0..<3):` iterates a
+  list of numbers, whose primitive elements are skipped. Map a range, `(0..<3).map(i -> ...)`, use a
+  comprehension or use `repeat` to run over integers
+  ([Integer range literals](#integer-range-literals)).
 - A String is evaluated once and fully snapshotted before the first body:
   each Unicode scalar becomes one String value, in source order. Empty
   Strings execute no bodies. No byte/UTF-16/grapheme splitting, normalization,
@@ -2155,6 +2224,9 @@ savings.balance
   or braced headers keep their accepted readings as separate statements, and
   names, calls and properties named `repeat` and the string method
   `"ab".repeat(2)` keep working.
+- A range literal is not read at the top level of the count, so
+  `repeat 0..<3:` stays a syntax error rather than converting a list to a
+  count ([Integer range literals](#integer-range-literals)).
 
 Normative detail: [count-controlled repeat loops](../nucleoid.spec.md#count-controlled-repeat-loops).
 
@@ -3150,7 +3222,7 @@ assert(copied, -3)
 | `Boolean` | `Boolean(value)` |
 | `Number` | `Number.MAX_INTEGER` |
 | `Math` | `pow`, `sqrt`, `floor`, `round`, `max`, `min`, `clamp` ([NUC 21](nuc-0021.md)), `lerp` ([NUC 22](nuc-0022.md)), `saturate` ([NUC 23](nuc-0023.md)), `smoothstep(lower, upper, value)` (accepted [NUC 33](nuc-0033.md)), `smootherstep(lower, upper, value)` (accepted [NUC 35](nuc-0035.md)), `remap(start, end, targetStart, targetEnd, value)` (accepted [NUC 39](nuc-0039.md)), `copySign(value, sign)` ([NUC 142](nuc-0142.md)) |
-| `String` | `String.fromCharCode`; instance `charAt`, `length`, `lower`, `replace`, `replaceAll` (accepted [NUC 42](nuc-0042.md)), `repeat`, `split`, `padStart` and `padEnd` ([NUC 111](nuc-0111.md)), Python's `startswith`, `endswith` and `join(items)`, with the separator as the receiver ([NUC 110](nuc-0110.md)), Rust's `starts_with(prefix)` and `ends_with(suffix)` ([NUC 132](nuc-0132.md)), the size and emptiness methods `length()`, `size()`, `len()`, `isEmpty()`, `is_empty()` and `isNotEmpty()` ([NUC 116](nuc-0116.md)), the case conversion aliases `uppercase()`, `to_uppercase()` and `uppercased()` of `toUpperCase()`, and `lowercase()`, `to_lowercase()` and `lowercased()` of `toLowerCase()` ([NUC 118](nuc-0118.md)), and the reversals `reverse()` and `reversed()`, exactly `text[::-1]` ([NUC 131](nuc-0131.md)) |
+| `String` | `String.fromCharCode`; instance `charAt`, `length`, `lower`, `replace`, `replaceAll` (accepted [NUC 42](nuc-0042.md)), `repeat`, `split`, `padStart` and `padEnd` ([NUC 111](nuc-0111.md)), their padding aliases `rjust` and `PadLeft` of `padStart` and `ljust` and `PadRight` of `padEnd` ([NUC 157](nuc-0157.md)), Python's `startswith`, `endswith` and `join(items)`, with the separator as the receiver ([NUC 110](nuc-0110.md)), Rust's `starts_with(prefix)` and `ends_with(suffix)` ([NUC 132](nuc-0132.md)), the size and emptiness methods `length()`, `size()`, `len()`, `isEmpty()`, `is_empty()` and `isNotEmpty()` ([NUC 116](nuc-0116.md)), the case conversion aliases `uppercase()`, `to_uppercase()` and `uppercased()` of `toUpperCase()`, and `lowercase()`, `to_lowercase()` and `lowercased()` of `toLowerCase()` ([NUC 118](nuc-0118.md)), and the reversals `reverse()` and `reversed()`, exactly `text[::-1]` ([NUC 131](nuc-0131.md)) |
 | `Date` | `Date()`, `Date(string)`, `Date(number)`, `Date.now()`, `Date.parse()`; instance `getTime`, `getYear`, `toDateString` |
 | `List` | `push`, `pop`, `filter`, `map`, their Ruby aliases `select` and `collect` ([NUC 134](nuc-0134.md)), `flatMap` (accepted [NUC 41](nuc-0041.md)), `flat` ([NUC 103](nuc-0103.md)), `reduce`, `find`, `some`, `every`, `slice`, `reverse` (a new list in reverse order), `sort` (in place, [NUC 58](nuc-0058.md)), `join`, `length`, and the queries `at`, `includes`, `indexOf`, `lastIndexOf`, `findIndex`, `findLast`, `findLastIndex` and `concat` ([NUC 61](nuc-0061.md)), `sum` ([NUC 68](nuc-0068.md)), `max` and `min` ([NUC 69](nuc-0069.md)), `distinct` ([NUC 71](nuc-0071.md)), `count(predicate)` ([NUC 73](nuc-0073.md)), `mode` ([NUC 75](nuc-0075.md)), `maxBy` and `minBy` ([NUC 77](nuc-0077.md)), `average` ([NUC 80](nuc-0080.md)), `median` ([NUC 84](nuc-0084.md)), `sortBy` ([NUC 105](nuc-0105.md)), `partition` ([NUC 108](nuc-0108.md)), `product` ([NUC 114](nuc-0114.md)), `variance` and `stdev` ([NUC 123](nuc-0123.md)), `quantile` ([NUC 124](nuc-0124.md)), `zip(other)` and `zip(other, combine)` ([NUC 129](nuc-0129.md)), the size and emptiness aliases `size()`, `len()`, `isEmpty()`, `is_empty()` and `isNotEmpty()` ([NUC 116](nuc-0116.md)), the first and last element aliases `first()`, `last()`, `first(predicate)` and `last(predicate)` ([NUC 117](nuc-0117.md)), and the reversal aliases `reversed()` and `toReversed()` of `reverse()` ([NUC 131](nuc-0131.md)); `sum`, `max`, `min` and `mode` also read as `sum of list` ([NUC 75](nuc-0075.md) revision 2) |
 | `Class` | the global list of declared types; `Class.length` |
@@ -3535,6 +3607,53 @@ rows[2]
   `Nucleoid pads strings with padStart and padEnd` in `tests/reference.md`.
   The [root section](../nucleoid.spec.md#reactive-string-padding) and its
   four appended entries define the results, liveness and rollback.
+
+### Padding method aliases
+
+```
+sku = "42"
+name = "Zoë"
+tag = sku.rjust(5, "0") + " " + name.ljust(5, ".")
+legacy = sku.PadLeft(5, "0") + " " + name.PadRight(5, ".")
+assert([tag, legacy], ["00042 Zoë..", "00042 Zoë.."])
+sku = "123"
+name = "Bo"
+assert(tag, "00123 Bo...")
+assert(legacy, tag)
+tag.length
+```
+
+- [NUC 157](nuc-0157.md) adds the padding names of Python and Ruby and of
+  C# as aliases on strings: `text.rjust(n, fill)` and
+  `text.PadLeft(n, fill)` are `text.padStart(n, fill)`, and
+  `text.ljust(n, fill)` and `text.PadRight(n, fill)` are
+  `text.padEnd(n, fill)`, so `tag` and `legacy` hold the same text, which
+  `tag.length` counts as 11 characters.
+- Each alias converts its length and fill, defaults the fill to one space,
+  repeats and cuts a longer fill, counts Unicode scalar values and raises
+  `TypeError("Padded string is too large")` exactly as its spelling does.
+  It reads its receiver and then its arguments, and stays live like its
+  spelling: `tag` follows the writes of `sku` and `name`, and `why` names
+  the same dependencies.
+- An alias equals its spelling only while its receiver is a string. When a
+  later write replaces the receiver of a standing call with another kind
+  of value, the call reads the alias's name on that value: a number raises
+  `TypeError("number.rjust is not a function")` where the spelling raises
+  `TypeError("number.padStart is not a function")`.
+- Only calls on strings change. Numbers, lists and other receivers keep
+  their errors, and reads such as `text.ljust` without a call, functions,
+  properties and methods of the same names, `String.rjust` and the names
+  `center`, `zfill`, `padLeft`, `padRight`, `pad` and `PadStart` keep their
+  behavior.
+- Python's `rjust` and `ljust` take one fill character and C#'s `PadLeft`
+  and `PadRight` one `char`, where the aliases repeat and cut any fill, as
+  Ruby does; C# raises for a negative length and counts UTF-16 code units,
+  so an emoji takes two places there and one here.
+- This is the executable entry
+  `Nucleoid pads strings with rjust, ljust, PadLeft and PadRight` in
+  `tests/reference.md`. The
+  [root section](../nucleoid.spec.md#padding-method-aliases) and its four
+  appended entries define the results, liveness and rollback.
 
 ### Numeric clamping keeps bounds live
 
@@ -6009,9 +6128,12 @@ Messages are exact and are part of the observable behaviour of the language.
 | Explaining something that is not a reference, such as the power in `why x ** 2` | `Cannot explain <expression>`, for example `Cannot explain x**2` |
 | Repeated string output is too large to represent or allocate | `Repeated string is too large` |
 | Padded string output of `padStart` or `padEnd` is too large to represent or allocate | `Padded string is too large` |
+| Padded string output of the aliases `rjust`, `ljust`, `PadLeft` or `PadRight` is too large to represent or allocate | `Padded string is too large` |
 | A `while` loop whose condition still holds after 100,000 iterations of one run | `Loop did not terminate` |
 | A repeat-until loop whose condition is still falsy after 100,000 iterations of one run | `Loop did not terminate` |
 | A `repeat` loop whose count converts to more than 100,000, `Infinity` included, raised before the first iteration | `Repeat count is too large` |
+| A range bound `start..<end` or `start..=end` that is defined but not an integer number from `-9007199254740991` to `9007199254740991`, including `null`, a string, a boolean, a list, NaN, an infinity or a fraction | `Range bounds must be integers` |
+| A range of more than 100,000 integers, raised before any item is built | `Range is too large` |
 | A repeated constructor binding, including positional plus named | `Duplicate constructor argument '<name>' for <class>` |
 | A positional constructor argument following a label | `Positional constructor argument after named arguments for <class>` |
 | A label targeting a rest formal | `Rest parameter '<name>' cannot be a named constructor argument for <class>` |
@@ -6179,6 +6301,8 @@ name **= exponent                      name = name ** (exponent) (NUC 64)
 item in collection                     list, class or string membership at the level of < (NUC 97)
 item not in collection                 its negation; not item in xs is (not item) in xs (NUC 97)
 item !in collection                    Kotlin spelling: exactly item not in collection, ! and in adjacent (NUC 135)
+start..<end                            the list of integers from start up to, not including, end (NUC 148)
+start..=end                            the list of integers from start through end; between comparisons and + (NUC 148)
 
 for name of source:                    class/object-list/scalar-string iteration
 for name in source:                    equivalent explicit iteration
@@ -6286,6 +6410,8 @@ text.startswith(p)  text.endswith(s)  Python spellings: exactly text.startsWith(
 text.starts_with(p)  text.ends_with(s) Rust names: the same string boundary queries (NUC 132)
 ", ".join(items)  ", ".join(Name)      Python spelling: exactly items.join(", "), Name.join(", ") (NUC 110)
 text.padStart(n, fill)  text.padEnd(n)  live text padded before or after to n characters; fill defaults to " " (NUC 111)
+text.rjust(n, fill)  text.ljust(n)     Python and Ruby spellings: exactly text.padStart(n, fill), text.padEnd(n) (NUC 157)
+text.PadLeft(n, fill)  text.PadRight(n) C# spellings: exactly text.padStart(n, fill), text.padEnd(n) (NUC 157)
 items.size()  items.len()  text.length() exactly items.length and text.length; Name.size() counts instances (NUC 116)
 items.isEmpty()  items.is_empty()      exactly items.length == 0, on lists, populations and strings (NUC 116)
 items.isNotEmpty()                     exactly items.length > 0, on lists, populations and strings (NUC 116)

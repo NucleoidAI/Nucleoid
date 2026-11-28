@@ -2,6 +2,7 @@ mod at_variable;
 mod class;
 mod comprehension;
 mod control;
+mod cursor;
 mod destructuring;
 mod enumeration;
 mod expression;
@@ -12,6 +13,7 @@ mod postfix;
 mod precedence;
 mod predicate;
 mod primary;
+mod range;
 mod receiver;
 mod section;
 mod self_parameter;
@@ -27,6 +29,7 @@ use crate::lang::ast::{BinaryOp, Expr, LogicalOp, Parameter, ParameterDefault, S
 use at_variable::Rejection;
 use is_assignment::Items;
 use list::ListSeparators;
+use range::{Ranges, Reservation};
 use receiver::{Dots, Receiver};
 use section::Sections;
 use self_parameter::Selves;
@@ -132,6 +135,8 @@ struct Parser {
     receiver: Receiver,
     selves: Selves,
     sections: Sections,
+    ranges: Ranges,
+    reservation: Reservation,
     operand: Option<Expr>,
     /// Python-style conditional attempts by `if` token position and nesting
     /// depth, which together decide one: the qualified condition and the
@@ -222,6 +227,8 @@ impl Parser {
             receiver: Receiver::Absent,
             selves: Selves::Accepted,
             sections: Sections::Accepted,
+            ranges: Ranges::Accepted,
+            reservation: Reservation::Open,
             operand: None,
             python_conditions: HashMap::new(),
             variable_conditions: HashMap::new(),
@@ -372,112 +379,6 @@ impl Parser {
             Token::Keyword(Keyword::Not) => BinaryOp::IsNot,
             _ => BinaryOp::Is,
         })
-    }
-
-    fn peek(&self) -> &Token {
-        self.tokens
-            .get(self.position)
-            .map_or(&Token::Eof, |spanned| &spanned.token)
-    }
-
-    fn peek_at(&self, offset: usize) -> &Token {
-        self.tokens
-            .get(self.position + offset)
-            .map_or(&Token::Eof, |spanned| &spanned.token)
-    }
-
-    fn advance(&mut self) -> Token {
-        let token = self
-            .tokens
-            .get(self.position)
-            .map_or(Token::Eof, |spanned| spanned.token.clone());
-
-        if self.position < self.tokens.len() {
-            self.position += 1;
-        }
-
-        token
-    }
-
-    /// Where the parser is looking.
-    fn here(&self) -> Position {
-        self.tokens
-            .get(self.position)
-            .or_else(|| self.tokens.last())
-            .map_or_else(|| Position::new(1, 1), |spanned| spanned.position)
-    }
-
-    /// A syntax error placed where the parser is looking.
-    fn error(&self, message: impl Into<String>) -> Error {
-        Error::syntax(message).at(self.here())
-    }
-
-    fn check(&self, token: &Token) -> bool {
-        self.peek() == token
-    }
-
-    fn eat(&mut self, token: &Token) -> bool {
-        if self.check(token) {
-            self.position += 1;
-            true
-        } else {
-            false
-        }
-    }
-
-    fn expect(&mut self, token: &Token) -> Result<()> {
-        if self.eat(token) {
-            Ok(())
-        } else {
-            Err(self.error(format!(
-                "Expected {} but found {}",
-                token.describe(),
-                self.peek().describe()
-            )))
-        }
-    }
-
-    /// Consumes either arrow spelling, `=>` or `->`.
-    fn eat_arrow(&mut self) -> bool {
-        if self.peek().is_arrow() {
-            self.position += 1;
-            true
-        } else {
-            false
-        }
-    }
-
-    /// Requires either arrow spelling, naming the canonical one when absent.
-    fn expect_arrow(&mut self) -> Result<()> {
-        if self.eat_arrow() {
-            Ok(())
-        } else {
-            self.expect(&Token::Arrow)
-        }
-    }
-
-    fn eat_keyword(&mut self, keyword: Keyword) -> bool {
-        if self.peek() == &Token::Keyword(keyword) {
-            self.position += 1;
-            true
-        } else {
-            false
-        }
-    }
-
-    fn skip_separators(&mut self) {
-        while matches!(
-            self.peek(),
-            Token::Newline | Token::Semicolon | Token::Indent | Token::Dedent
-        ) {
-            self.position += 1;
-        }
-    }
-
-    fn skip_newlines(&mut self) {
-        while matches!(self.peek(), Token::Newline | Token::Semicolon) {
-            self.position += 1;
-        }
     }
 }
 

@@ -388,7 +388,7 @@ impl Parser {
 
     fn stage_argument(&mut self) -> Result<Box<Expr>> {
         self.position += 2;
-        let argument = self.within(true, Self::expression)?;
+        let argument = self.unreserved(|parser| parser.within(true, Self::expression))?;
         self.expect(&Token::RightParen)?;
         Ok(Box::new(argument))
     }

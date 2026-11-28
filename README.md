@@ -3116,6 +3116,56 @@ item.total
   labels are unchanged. See the
   [root contract](nucleoid.spec.md#unknown-constructor-arguments-as-properties).
 
+## Integer range literals
+
+**Ranges keep a shift's hours in step with its bounds**
+
+```nuc
+open = 9
+close = 13
+hours = open..<close
+assert(hours, [9, 10, 11, 12])
+close = 15
+assert([hours.length, hours.sum()], [6, 69])
+hours
+# return: [9,10,11,12,13,14]
+```
+
+- [NUC 148](docs/nuc-0148.md) adds two range operators: `START..<END` lists
+  the integers from `START` up to, but not including, `END`, and
+  `START..=END` lists them through `END`. A range is an ordinary list, so
+  `hours.length` and `hours.sum()` read it as they read a list literal.
+- `hours = open..<close` is a standing declaration, so the hours follow the
+  shift's bounds when it is extended. Both bounds must be integers, a range
+  holds at most 100,000 items, and `close..<open` is empty. See the
+  [root contract](nucleoid.spec.md#integer-range-literals).
+
+## Padding method aliases
+
+**Padding aliases keep a help desk's ticket board aligned**
+
+```nuc
+ticket = "7"
+title = "Printer"
+row = ticket.rjust(4, "0") + " " + title.ljust(10, ".") + "|"
+assert(row, "0007 Printer...|")
+ticket = "128"
+title = "Badge reader"
+assert(row, "0128 Badge reader|")
+row
+# return: "0128 Badge reader|"
+```
+
+- [NUC 157](docs/nuc-0157.md) adds the padding names of Python and Ruby,
+  `rjust` and `ljust`, and of C#, `PadLeft` and `PadRight`, as aliases of
+  `padStart` and `padEnd`: `ticket.rjust(4, "0")` is
+  `ticket.padStart(4, "0")` and `title.ljust(10, ".")` is
+  `title.padEnd(10, ".")`, so the row gives exactly what its accepted
+  spelling gives.
+- `row` stays live, so a new ticket and title realign it, and a title that
+  already holds ten characters, such as `"Badge reader"`, is not padded.
+  See the [root contract](nucleoid.spec.md#padding-method-aliases).
+
 ## Symmetric difference reasoning selections
 
 **Xor tells two alarms apart**

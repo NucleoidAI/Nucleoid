@@ -120,7 +120,21 @@ fn write_binary(
         BinaryOp::Is | BinaryOp::IsNot | BinaryOp::In | BinaryOp::NotIn => {
             write!(f, "({left} {} {right})", operator.as_str())
         }
-        _ => write!(f, "{left}{}{right}", operator.as_str()),
+        BinaryOp::Add
+        | BinaryOp::Subtract
+        | BinaryOp::Multiply
+        | BinaryOp::Divide
+        | BinaryOp::Modulo
+        | BinaryOp::Equal
+        | BinaryOp::NotEqual
+        | BinaryOp::StrictEqual
+        | BinaryOp::StrictNotEqual
+        | BinaryOp::Less
+        | BinaryOp::LessEqual
+        | BinaryOp::Greater
+        | BinaryOp::GreaterEqual
+        | BinaryOp::Range
+        | BinaryOp::RangeInclusive => write!(f, "{left}{}{right}", operator.as_str()),
     }
 }
 

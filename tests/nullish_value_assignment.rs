@@ -759,12 +759,12 @@ fn exactly_the_two_paired_document_cases_are_appended_with_six_assertions_each()
     for (document, old_count, title) in [
         (
             include_str!("../nucleoid.spec.md"),
-            880,
+            888,
             "Nucleoid fills nullish values with one-shot assignments",
         ),
         (
             include_str!("reference.md"),
-            166,
+            168,
             "Nucleoid keeps nullish assignment guards isolated",
         ),
     ] {

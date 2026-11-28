@@ -415,6 +415,8 @@ pub enum BinaryOp {
     IsNot,
     In,
     NotIn,
+    Range,
+    RangeInclusive,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

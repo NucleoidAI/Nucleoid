@@ -290,7 +290,7 @@ fn only_the_appended_cases_write_bang_in() {
         }
     }
     assert_eq!(written, 25);
-    assert_eq!(cases, 1326);
+    assert_eq!(cases, 1340);
 }
 
 #[test]
