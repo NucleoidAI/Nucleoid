@@ -107,7 +107,7 @@ impl Runtime {
         self.first_instances(name, usize::MAX)
     }
 
-    fn first_instances(&mut self, name: &str, limit: usize) -> Option<Vec<Value>> {
+    pub(super) fn first_instances(&mut self, name: &str, limit: usize) -> Option<Vec<Value>> {
         let instances = self
             .state
             .class(name)?

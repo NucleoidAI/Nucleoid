@@ -333,7 +333,7 @@ fn only_the_appended_cases_zip_and_they_run_every_assertion() {
     }
     assert_eq!(calls, 9);
     assert_eq!(assertions, 18);
-    assert_eq!(cases, 1348);
+    assert_eq!(cases, 1355);
 }
 
 #[test]
@@ -388,7 +388,7 @@ fn the_appended_cases_stand_after_nuc_126_and_before_nuc_103() {
         let index = cases.iter().position(|case| case.title == title).unwrap();
         assert_eq!(
             index,
-            cases.len() - 14 - 12 * usize::from(title == REFERENCE_TITLE),
+            cases.len() - 15 - 12 * usize::from(title == REFERENCE_TITLE),
             "{title}"
         );
         assert_eq!(cases[index - 2].title, previous);

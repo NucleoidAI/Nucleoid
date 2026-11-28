@@ -309,11 +309,19 @@ impl Runtime {
             }
         }
 
-        let Some(instances) = self.population(name) else {
+        let removal = property == "remove";
+        let limit = if removal { 0 } else { usize::MAX };
+
+        let Some(instances) = self.first_instances(name, limit) else {
             return Err(Error::not_defined(name));
         };
 
         let values = self.evaluate_all(arguments, scope)?;
+
+        if removal {
+            return self.remove_instance(name, values.first());
+        }
+
         self.list_query(instances, property, &values, name, ListSource::Population)
     }
 

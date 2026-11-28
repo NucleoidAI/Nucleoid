@@ -4638,6 +4638,41 @@ serving
   elevators and their floors. See [NUC 148](nuc-0148.md) and the
   [root contract](../nucleoid.spec.md#integer-range-literals).
 
+## Population instance removal
+
+**Removing shipped orders keeps a warehouse's pick list live**
+
+```nuc
+class Order(item, qty, shipped):
+    this.item = item
+    this.qty = qty
+    this.shipped = shipped
+$Order.boxes = $Order.qty / 4
+pick = Order.filter(order -> !order.shipped).map(order -> order.item)
+boxes = Order.map(order -> order.boxes).reduce((total, count) -> total + count, 0)
+Order("tea", 8, true)
+Order("jam", 4, false)
+Order("rye", 12, true)
+assert([pick, boxes], [["jam"], 6])
+for order in Order:
+    if order.shipped:
+        Order.remove(order)
+assert([Order.length, pick, boxes], [1, ["jam"], 1])
+Order("oat", 4, false)
+[pick, boxes]
+# return: [["jam","oat"],2]
+```
+
+- A loop over the orders removes every shipped one with
+  `Order.remove(order)`: its properties first, the box count that the
+  class-level rule derived among them, and then the order. Inside the loop
+  `delete order` would only unbind the loop variable, so the accepted
+  spelling names each property and then deletes `Order[order.id]`.
+- The orders are created without a name, so no variable is unbound, and
+  the pick list and the box count follow every removal and the order
+  created last. See [NUC 162](nuc-0162.md) and the
+  [root contract](../nucleoid.spec.md#population-instance-removal).
+
 ## Padding method aliases
 
 **Padding aliases keep every order's receipt line aligned**

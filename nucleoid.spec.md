@@ -29780,6 +29780,112 @@ last = 7
 days.sum()
 # return: 28
 ---
+# Nucleoid removes orders and every property they hold from their population
+
+class Order(item, qty, price):
+    this.item = item
+    this.qty = qty
+    this.price = price
+$Order.total = $Order.qty * $Order.price
+tea = Order("tea", 2, 4)
+jam = Order("jam", 1, 6)
+rye = Order("rye", 3, 5)
+pending = Order.length
+items = Order.map(order -> order.item)
+large = Order.filter(order -> order.total > 7).map(order -> order.item)
+assert([pending, items, large], [3, ["tea", "jam", "rye"], ["tea", "rye"]])
+failure = ""
+try:
+    delete tea
+catch error:
+    failure = error
+assert(failure, TypeError("Cannot delete object 'tea'"))
+Order.remove(tea)
+assert([pending, items, large], [2, ["jam", "rye"], ["rye"]])
+Order.remove(rye)
+assert([pending, items, large], [1, ["jam"], []])
+Order("oat", 4, 2)
+assert([pending, items, large], [2, ["jam", "oat"], ["oat"]])
+items
+# return: ["jam","oat"]
+---
+# Nucleoid removes departing cars with the properties class level rules derive
+
+class Car(plate, hours):
+    this.plate = plate
+    this.hours = hours
+rate = 3
+$Car.fee = $Car.hours * rate
+$Car.ticket = $Car.plate + " " + $Car.fee
+van = Car("VAN-1", 2)
+bus = Car("BUS-2", 5)
+board = Car.map(car -> car.ticket)
+takings = Car.map(car -> car.fee).reduce((total, fee) -> total + fee, 0)
+receipt = bus.ticket
+assert([board, takings, receipt], [["VAN-1 6", "BUS-2 15"], 21, "BUS-2 15"])
+Car.remove(bus)
+assert([board, takings, receipt], [["VAN-1 6"], 6, null])
+rate = 4
+assert([board, takings, receipt], [["VAN-1 8"], 8, null])
+Car("CAB-3", 1)
+assert([board, takings], [["VAN-1 8", "CAB-3 4"], 12])
+takings
+# return: 12
+---
+# Nucleoid removes subclass instances with the properties their parent's rules derive
+
+class Vehicle(plate, axles):
+    this.plate = plate
+    this.axles = axles
+$Vehicle.toll = $Vehicle.axles * 2
+class Truck extends Vehicle
+class Van extends Vehicle
+rig = Truck("RIG-1", 5)
+hauler = Truck("HAUL-2", 3)
+camper = Van("CAMP-3", 2)
+trucks = Truck.map(truck -> truck.plate)
+tolls = Truck.map(truck -> truck.toll)
+assert([trucks, tolls, Van.length], [["RIG-1", "HAUL-2"], [10, 6], 1])
+Truck.remove(rig)
+assert([trucks, tolls, Van.length], [["HAUL-2"], [6], 1])
+Van.remove(camper)
+assert([Truck.length, Van.length], [1, 0])
+Truck("RIG-4", 6)
+tolls
+# return: [6,12]
+---
+# Nucleoid restores removed instances when the update that removes them fails
+
+class Task(name, hours, owner):
+    this.name = name
+    this.hours = hours
+    this.owner = owner
+$Task.cost = $Task.hours * 40
+plan = Task("plan", 3, "ana")
+build = Task("build", 8, "bo")
+review = Task("review", 2, "ana")
+budget = Task.map(task -> task.cost).reduce((total, cost) -> total + cost, 0)
+mine = Task.filter(task -> task.owner == "ana").length
+failure = ""
+try:
+    Task.remove(build)
+    reveiw.hours = 10
+catch error:
+    failure = error
+assert(failure, ReferenceError("reveiw is not defined"))
+assert([Task.length, budget, mine, build.cost], [3, 520, 2, 320])
+try:
+    Task.remove(plan)
+    Task.remove(review)
+    assert([Task.length, budget, mine], [1, 320, 0])
+    throw "UNDO"
+catch error:
+    assert(error, "UNDO")
+assert([Task.length, budget, mine, plan.owner], [3, 520, 2, "ana"])
+Task.remove(review)
+[Task.length, budget, mine]
+# return: [2,440,1]
+---
 # Nucleoid pads strings with Python's and Ruby's rjust and ljust
 
 orders = ["7", "42", "305"]
@@ -30699,6 +30805,100 @@ scale
   `Nucleoid keeps the distance between two instances live with Math.hypot`
   through `Nucleoid rolls back failed updates through Math.hypot` specify
   the executable behavior. `tests/math_hypot.rs` executes the rest.
+
+## Population instance removal
+
+- [NUC 162](docs/nuc-0162.md) adds `Name.remove(instance)` to class
+  populations. In one statement it deletes every property the instance
+  holds, its own and those that class-level rules derived, and then the
+  instance itself, as `delete instance.property` for each property and then
+  `delete instance` do. No token, keyword, syntax tree node or error type is
+  added, and `delete` keeps its rule.
+- **Receiver.** `Name` is any receiver that reads a declared class, as for
+  every population query: the class's name, unless a local, a parameter or
+  a variable of that name shadows it, or a variable that holds the class.
+  Every other receiver keeps its accepted reading.
+- **Evaluation.** The population and then every argument are evaluated
+  once, left to right, as for every population call, and an argument's
+  error propagates before anything is deleted. Arguments after the first
+  are evaluated and ignored.
+- **Membership.** The first argument must be an instance in `Name`'s own
+  population, the population that `Name.length`, `Name.map(...)` and
+  `x in Name` read, when the call runs after its arguments. Anything else
+  raises `TypeError("remove expects an instance of <Name>")` at the running
+  statement, before anything is deleted: no argument, `null`, an undefined
+  value, a number, a string, a list, a plain object, a class, a function, an
+  instance of another class, of a subclass or of a parent class, and an
+  instance already removed. A subclass instance leaves through its own
+  class, and the class-level rules of its ancestors, which still govern it,
+  lose the properties they derived for it. A plain object whose properties
+  equal an instance's satisfies `x in Name`, which compares objects by their
+  properties, but is not an instance, so it raises the same error.
+- **Properties first.** The instance's properties other than its `id` are
+  deleted one at a time, in the reverse of the order it holds them, so the
+  properties that class-level rules derived, which it gains after its
+  constructor runs, go first. Each is deleted as `delete instance.property`
+  deletes it: its node is left as a placeholder and what reads it
+  re-evaluates. An instance held in a property stays in its own population;
+  only the property is deleted.
+- **Then the instance.** It leaves its class's population as
+  `delete Name[index]` removes it: its node is removed, the variable named
+  by its id is unbound when one exists, and what reads its class
+  re-evaluates. A declaration that reads its variable re-evaluates as after
+  `delete`, so `r = a` becomes `null`, while a reference held without such
+  a dependency, such as the item that `xs.push(a)` added, stays and reads
+  its properties as undefined. If a class-level rule or a standing
+  statement gives the instance a property again while the others are
+  deleted, the removal raises `TypeError("Cannot delete object '<id>'")`,
+  as `delete` does.
+- **Result.** The call is undefined, `null` in JSON.
+- **Transactions.** The removal runs in the running statement's
+  transaction, so a failure while its changes propagate, later in the
+  statement or in an enclosing transaction restores the instance, its
+  properties, the variable and every dependent, as a failed `try` body or a
+  thrown block does.
+- **Equivalence.** Wherever `delete` names the instance, through its
+  variable or an index, the final state is the one that deleting each
+  property, in the same order, and then the instance gives. Inside a
+  function, a method, a lambda or a loop, `delete r` only unbinds the
+  parameter or loop variable `r`; there `Name.remove(r)` still removes the
+  instance, as `delete Name[r.id]` does.
+- **Liveness.** As for `delete`: population counts, mappings and filters,
+  reads of the removed instance's properties and class-level rules
+  re-evaluate, the rules of `Name` and its ancestors stop governing the
+  removed instance, and instances created later join the population as
+  before.
+- **Positions.** A call in a statement, a function, a method, a lambda or a
+  loop body removes once each time it runs. A declaration, a declared
+  mapping or a class-level rule that calls it is standing, as one that calls
+  `push` is: it reads the population and its arguments, and calls again when
+  they change. So after `gone = Robot.remove(a)`, a later change of
+  `Robot`'s population calls it again with `a` gone and raises
+  `TypeError("remove expects an instance of Robot")`, which fails and rolls
+  back that later statement: removals belong in statements. Inside
+  `suppose` the removal is hypothetical, as every deletion there is.
+- **Rendering.** Statements, `why`, `affects`, `--graph` and graph keys
+  show the call as written, as for every population call.
+- **Unchanged.** Only calls of `Name.remove` on a declared class's
+  population whose arguments evaluate without error change; each raised
+  `TypeError("<Name>.remove is not a function")` at column 1 of the running
+  statement, and a `try` that caught it now receives the removal.
+  - `delete instance` keeps raising
+    `TypeError("Cannot delete object '<id>'")` while the instance holds a
+    property other than `id`, and deletes one that holds none.
+  - The bare read `Name.remove` stays undefined. `Name.removeAll(a)`,
+    `Name.Remove(a)`, `xs.remove(x)`, `Name.list().remove(a)`,
+    `Math.remove(x)` and `String.remove(x)` keep their `TypeError`, and an
+    undeclared `Name` keeps `ReferenceError("<Name> is not defined")`.
+  - An instance method named `remove` runs, `a.remove()` on an instance
+    without one is undefined, and object members, functions and variables
+    named `remove` keep their values.
+- The four entries beginning
+  `Nucleoid removes orders and every property they hold from their population`
+  through
+  `Nucleoid restores removed instances when the update that removes them fails`
+  specify the executable behavior. `tests/population_removal.rs` executes
+  the rest.
 
 ## Deferred suites
 

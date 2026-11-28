@@ -3140,6 +3140,37 @@ hours
   holds at most 100,000 items, and `close..<open` is empty. See the
   [root contract](nucleoid.spec.md#integer-range-literals).
 
+## Population instance removal
+
+**Removing a car keeps a parking lot's free spaces live**
+
+```nuc
+class Car(plate, level):
+    this.plate = plate
+    this.level = level
+capacity = 3
+free = capacity - Car.length
+upstairs = Car.filter(car -> car.level == 2).map(car -> car.plate)
+van = Car("AB-12", 1)
+cab = Car("CD-34", 2)
+bus = Car("EF-56", 2)
+assert([free, upstairs], [0, ["CD-34", "EF-56"]])
+Car.remove(cab)
+assert([free, upstairs], [1, ["EF-56"]])
+Car.map(car -> car.plate)
+# return: ["AB-12","EF-56"]
+```
+
+- [NUC 162](docs/nuc-0162.md) adds `Name.remove(instance)`, which removes
+  an instance from its class's population in one statement: it deletes
+  every property the instance holds and then the instance, as
+  `delete cab.level`, `delete cab.plate` and `delete cab` do.
+- The free spaces and the cars upstairs are standing declarations over the
+  population, so they follow the departing car, while `delete cab` alone
+  would still raise `TypeError("Cannot delete object 'cab'")` as long as
+  the car holds its plate and level. See the
+  [root contract](nucleoid.spec.md#population-instance-removal).
+
 ## Padding method aliases
 
 **Padding aliases keep a help desk's ticket board aligned**

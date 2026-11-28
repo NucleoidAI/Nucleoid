@@ -1548,6 +1548,33 @@ counter.doubled()
 - `Name[1:]`, `Name.at(-1)`, `Name.list()` and `Name.all()` read them by range, by position from either end, and all at once, in population order ([NUC 61](nuc-0061.md)).
 - `Name.first()` and `Name.last()` are the first and latest created instances, exactly `Name.at(0)` and `Name.at(-1)`, and `Name.first(predicate)` and `Name.last(predicate)` are `Name.find(predicate)` and `Name.findLast(predicate)` ([NUC 117](nuc-0117.md)).
 
+### Population instance removal
+
+```
+class Robot(name, battery):
+    this.name = name
+    this.battery = battery
+$Robot.low = $Robot.battery < 20
+r1 = Robot("r1", 80)
+r2 = Robot("r2", 15)
+r3 = Robot("r3", 10)
+charging = Robot.filter(robot -> robot.low).map(robot -> robot.name)
+assert([Robot.length, charging], [3, ["r2", "r3"]])
+Robot.remove(r2)
+assert([Robot.length, charging], [2, ["r3"]])
+r1.battery = 5
+assert(charging, ["r1", "r3"])
+charging.length
+```
+
+- This is the complete `Nucleoid removes an instance with every property it holds through its class`
+  program in `tests/reference.md`, without title or expected-return metadata;
+  its expected return is `2`.
+- `Name.remove(instance)` ([NUC 162](nuc-0162.md)) removes an instance in `Name`'s own population, the one `Name.length` counts, in one statement. It deletes every property the instance holds, the most recently added first, so `r2.low`, which a class-level rule derived, goes before `r2.battery` and `r2.name`, and then the instance, which leaves its population as `delete Robot[1]` removes it. The variable named by its id, `r2`, is unbound.
+- `delete` keeps its rule: `delete r2` alone raises `TypeError("Cannot delete object 'r2'")` while `r2` holds a property.
+- Population counts, mappings, filters and class-level rules follow the removal, and a failure later in the statement or its transaction restores the instance, its properties, the variable and every dependent.
+- Any other first argument, a subclass instance through its parent class among them, raises `TypeError("remove expects an instance of <Name>")` before anything is deleted, and the call is undefined. A subclass instance leaves through its own class. See the [removal contract](../nucleoid.spec.md#population-instance-removal).
+
 ### Subtypes
 
 - A subtype names its supertype after the colon; `super(...)` invokes its constructor.
@@ -1610,6 +1637,7 @@ assert(child.code, 7)
 - New attributes are `null` on existing instances.
 - `delete` removes an instance and returns whether anything was removed.
 - Deletion is refused while the instance still has properties.
+- `Name.remove(instance)` deletes an instance's properties and then the instance in one statement; see [Population instance removal](#population-instance-removal) ([NUC 162](nuc-0162.md)).
 - A variable name is reusable after its instance is deleted.
 
 Full detail: [NUC 3](nuc-0003.md); accepted compact headers: [NUC 14](nuc-0014.md); candidate bare calls: [NUC 16](nuc-0016.md); extends clauses: [NUC 78](nuc-0078.md); initializing constructor parameters: [NUC 87](nuc-0087.md).
@@ -6491,6 +6519,7 @@ value[start:end]  value[-n:]           slice, negative counts from the end
 Name[start:end]  Name[:]  Name[-n:]    instance list range (NUC 61)
 value[start:stop:step]  value[::-1]    stepped slice; a negative step walks backward (NUC 125)
 Name.list()  Name.all()                every instance, in population order (NUC 61)
+Name.remove(instance)                  delete every property of an instance, then the instance (NUC 162)
 items.at(-1)  items.findLast(callback) read or search from the end (NUC 61)
 items.sum()  Name.sum(selector)        live numeric total (NUC 68)
 items.max()  Name.min(selector)        live numeric extreme (NUC 69)

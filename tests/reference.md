@@ -3093,6 +3093,24 @@ assert([exclusive.sum(), inclusive.length], [2, 5])
 inclusive
 # return: [-1,0,1,2,3]
 ---
+# Nucleoid removes an instance with every property it holds through its class
+
+class Robot(name, battery):
+    this.name = name
+    this.battery = battery
+$Robot.low = $Robot.battery < 20
+r1 = Robot("r1", 80)
+r2 = Robot("r2", 15)
+r3 = Robot("r3", 10)
+charging = Robot.filter(robot -> robot.low).map(robot -> robot.name)
+assert([Robot.length, charging], [3, ["r2", "r3"]])
+Robot.remove(r2)
+assert([Robot.length, charging], [2, ["r3"]])
+r1.battery = 5
+assert(charging, ["r1", "r3"])
+charging.length
+# return: 2
+---
 # Nucleoid pads strings with rjust, ljust, PadLeft and PadRight
 
 sku = "42"

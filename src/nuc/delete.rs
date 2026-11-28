@@ -69,11 +69,7 @@ impl Runtime {
                     return Ok(Value::Bool(false));
                 }
 
-                self.remove_property(&id, property);
-
-                let key = NodeKey::property(&id, property);
-                self.remove_node(&key);
-                self.cascade_removal(&key)?;
+                self.delete_property(&id, property)?;
 
                 Ok(Value::Bool(true))
             }
@@ -85,22 +81,79 @@ impl Runtime {
                     return Ok(Value::Bool(false));
                 };
 
-                self.delete_object(&id)?;
-
-                let key = NodeKey::object(&id);
-                self.remove_node(&key);
-
-                if self.state.has_variable(id.as_str()) {
-                    self.remove_variable(id.as_str());
-                }
-
-                self.cascade_removal(&key)?;
+                self.remove_instance_object(&id)?;
 
                 Ok(Value::Bool(true))
             }
 
             other => Err(Error::syntax(format!("Cannot delete {other}"))),
         }
+    }
+
+    pub(crate) fn remove_instance(
+        &mut self,
+        class: &str,
+        instance: Option<&Value>,
+    ) -> Result<Value> {
+        let Some(id) = self.population_member(class, instance) else {
+            return Err(Error::type_error(format!(
+                "remove expects an instance of {class}"
+            )));
+        };
+
+        let properties: Vec<String> = self.state.object(id).map_or_else(Vec::new, |data| {
+            data.properties
+                .keys()
+                .filter(|name| name.as_str() != "id")
+                .cloned()
+                .collect()
+        });
+
+        for property in properties.iter().rev() {
+            if self.state.property(id, property).is_some() {
+                self.delete_property(id, property)?;
+            }
+        }
+
+        self.remove_instance_object(id)?;
+
+        Ok(Value::Undefined)
+    }
+
+    fn population_member<'v>(
+        &self,
+        class: &str,
+        instance: Option<&'v Value>,
+    ) -> Option<&'v ObjectId> {
+        let Some(Value::Object(id)) = instance else {
+            return None;
+        };
+
+        self.state
+            .class(class)
+            .filter(|data| data.instances.contains(id))
+            .map(|_| id)
+    }
+
+    fn delete_property(&mut self, id: &ObjectId, property: &str) -> Result<()> {
+        self.remove_property(id, property);
+
+        let key = NodeKey::property(id, property);
+        self.remove_node(&key);
+        self.cascade_removal(&key)
+    }
+
+    fn remove_instance_object(&mut self, id: &ObjectId) -> Result<()> {
+        self.delete_object(id)?;
+
+        let key = NodeKey::object(id);
+        self.remove_node(&key);
+
+        if self.state.has_variable(id.as_str()) {
+            self.remove_variable(id.as_str());
+        }
+
+        self.cascade_removal(&key)
     }
 
     /// Removes a class-level rule and the values it produced.

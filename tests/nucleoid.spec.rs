@@ -22992,6 +22992,130 @@ days.sum()
 # return: 28"#);
 }
 
+/// Nucleoid removes orders and every property they hold from their population
+#[rustfmt::skip]
+#[test]
+fn removes_orders_and_every_property_they_hold_from_their_population() {
+    let mut run = runner();
+    run(r#"class Order(item, qty, price):
+    this.item = item
+    this.qty = qty
+    this.price = price
+$Order.total = $Order.qty * $Order.price
+tea = Order("tea", 2, 4)
+jam = Order("jam", 1, 6)
+rye = Order("rye", 3, 5)
+pending = Order.length
+items = Order.map(order -> order.item)
+large = Order.filter(order -> order.total > 7).map(order -> order.item)
+assert([pending, items, large], [3, ["tea", "jam", "rye"], ["tea", "rye"]])
+failure = ""
+try:
+    delete tea
+catch error:
+    failure = error
+assert(failure, TypeError("Cannot delete object 'tea'"))
+Order.remove(tea)
+assert([pending, items, large], [2, ["jam", "rye"], ["rye"]])
+Order.remove(rye)
+assert([pending, items, large], [1, ["jam"], []])
+Order("oat", 4, 2)
+assert([pending, items, large], [2, ["jam", "oat"], ["oat"]])
+items
+# return: ["jam","oat"]"#);
+}
+
+/// Nucleoid removes departing cars with the properties class level rules derive
+#[rustfmt::skip]
+#[test]
+fn removes_departing_cars_with_the_properties_class_level_rules_derive() {
+    let mut run = runner();
+    run(r#"class Car(plate, hours):
+    this.plate = plate
+    this.hours = hours"#);
+    run("rate = 3");
+    run("$Car.fee = $Car.hours * rate");
+    run(r#"$Car.ticket = $Car.plate + " " + $Car.fee"#);
+    run(r#"van = Car("VAN-1", 2)"#);
+    run(r#"bus = Car("BUS-2", 5)"#);
+    run("board = Car.map(car -> car.ticket)");
+    run("takings = Car.map(car -> car.fee).reduce((total, fee) -> total + fee, 0)");
+    run("receipt = bus.ticket");
+    assert_eq!(run("[board, takings, receipt]"), serde_json::json!([["VAN-1 6", "BUS-2 15"], 21, "BUS-2 15"]));
+    run("Car.remove(bus)");
+    assert_eq!(run("[board, takings, receipt]"), serde_json::json!([["VAN-1 6"], 6, null]));
+    run("rate = 4");
+    assert_eq!(run("[board, takings, receipt]"), serde_json::json!([["VAN-1 8"], 8, null]));
+    run(r#"Car("CAB-3", 1)"#);
+    assert_eq!(run("[board, takings]"), serde_json::json!([["VAN-1 8", "CAB-3 4"], 12]));
+    run(r#"takings
+
+# return: 12"#);
+}
+
+/// Nucleoid removes subclass instances with the properties their parent's rules derive
+#[rustfmt::skip]
+#[test]
+fn removes_subclass_instances_with_the_properties_their_parent_s_rules_derive() {
+    let mut run = runner();
+    run(r#"class Vehicle(plate, axles):
+    this.plate = plate
+    this.axles = axles"#);
+    run("$Vehicle.toll = $Vehicle.axles * 2");
+    run("class Truck extends Vehicle");
+    run("class Van extends Vehicle");
+    run(r#"rig = Truck("RIG-1", 5)"#);
+    run(r#"hauler = Truck("HAUL-2", 3)"#);
+    run(r#"camper = Van("CAMP-3", 2)"#);
+    run("trucks = Truck.map(truck -> truck.plate)");
+    run("tolls = Truck.map(truck -> truck.toll)");
+    assert_eq!(run("[trucks, tolls, Van.length]"), serde_json::json!([["RIG-1", "HAUL-2"], [10, 6], 1]));
+    run("Truck.remove(rig)");
+    assert_eq!(run("[trucks, tolls, Van.length]"), serde_json::json!([["HAUL-2"], [6], 1]));
+    run("Van.remove(camper)");
+    assert_eq!(run("[Truck.length, Van.length]"), serde_json::json!([1, 0]));
+    run(r#"Truck("RIG-4", 6)"#);
+    run(r#"tolls
+
+# return: [6,12]"#);
+}
+
+/// Nucleoid restores removed instances when the update that removes them fails
+#[rustfmt::skip]
+#[test]
+fn restores_removed_instances_when_the_update_that_removes_them_fails() {
+    let mut run = runner();
+    run(r#"class Task(name, hours, owner):
+    this.name = name
+    this.hours = hours
+    this.owner = owner
+$Task.cost = $Task.hours * 40
+plan = Task("plan", 3, "ana")
+build = Task("build", 8, "bo")
+review = Task("review", 2, "ana")
+budget = Task.map(task -> task.cost).reduce((total, cost) -> total + cost, 0)
+mine = Task.filter(task -> task.owner == "ana").length
+failure = ""
+try:
+    Task.remove(build)
+    reveiw.hours = 10
+catch error:
+    failure = error
+assert(failure, ReferenceError("reveiw is not defined"))
+assert([Task.length, budget, mine, build.cost], [3, 520, 2, 320])
+try:
+    Task.remove(plan)
+    Task.remove(review)
+    assert([Task.length, budget, mine], [1, 320, 0])
+    throw "UNDO"
+catch error:
+    assert(error, "UNDO")
+assert([Task.length, budget, mine, plan.owner], [3, 520, 2, "ana"])
+Task.remove(review)
+[Task.length, budget, mine]
+# return: [2,440,1]"#);
+}
+
 /// Nucleoid pads strings with Python's and Ruby's rjust and ljust
 #[rustfmt::skip]
 #[test]
