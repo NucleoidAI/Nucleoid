@@ -3077,6 +3077,22 @@ assert(shape1, {"id": "shape1", "type": "SQUARE", "color": "RED"})
 shape1.color
 # return: "RED"
 ---
+# Nucleoid writes consecutive integers as range literals
+
+first = 2
+last = 5
+exclusive = first..<last
+inclusive = first..=last
+assert([exclusive, inclusive], [[2, 3, 4], [2, 3, 4, 5]])
+last = 3
+assert([exclusive, inclusive], [[2], [2, 3]])
+first = 4
+assert([exclusive, inclusive], [[], []])
+first = -1
+assert([exclusive.sum(), inclusive.length], [2, 5])
+inclusive
+# return: [-1,0,1,2,3]
+---
 # Nucleoid separates two explanations with xor
 
 price = 10

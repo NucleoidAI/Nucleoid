@@ -200,7 +200,7 @@ impl Parser {
         self.expect(&Token::Keyword(Keyword::For))?;
 
         if let Some((key, value)) = self.entry_names() {
-            let iterable = self.clause_expression()?;
+            let iterable = self.reserved(Self::clause_expression)?;
             let body = self.suite()?;
             return Ok(Stmt::ForEntries {
                 key,
@@ -233,7 +233,7 @@ impl Parser {
             variable
         };
 
-        let iterable = self.clause_expression()?;
+        let iterable = self.reserved(Self::clause_expression)?;
         let body = if implicit {
             self.clause_suite()?
         } else {

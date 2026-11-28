@@ -3,6 +3,10 @@ use crate::error::{Error, Position, Result};
 use crate::lang::ast::lexer::{EXPECTED_VERSION_SELECTOR, Token};
 use crate::lang::ast::{Expr, Function, UnaryOp, VersionSelector};
 
+pub(super) fn expected_property(found: &Token) -> String {
+    format!("Expected a property but found {}", found.describe())
+}
+
 impl Parser {
     pub(super) fn postfix(&mut self) -> Result<Expr> {
         let mut chain = usize::from(self.reads_receiver());
@@ -26,6 +30,7 @@ impl Parser {
                         selector: self.version_selector()?,
                     };
                 }
+                Token::Dot if self.range_operator().is_some() => break,
                 Token::Dot => {
                     self.advance();
                     expression = Expr::Member {
@@ -78,10 +83,7 @@ impl Parser {
         match self.advance() {
             Token::Identifier(name) => Ok(name),
             Token::Keyword(keyword) => Ok(keyword.as_str().to_string()),
-            other => Err(self.error(format!(
-                "Expected a property but found {}",
-                other.describe()
-            ))),
+            other => Err(self.error(expected_property(&other))),
         }
     }
 
@@ -90,7 +92,7 @@ impl Parser {
             return self.slice(object, None);
         }
 
-        let index = self.clause_expression()?;
+        let index = self.reserved(Self::clause_expression)?;
 
         if self.eat(&Token::Colon) {
             return self.slice(object, Some(Box::new(index)));
@@ -132,10 +134,15 @@ impl Parser {
             return Ok(None);
         }
 
-        Ok(Some(Box::new(self.within(true, Self::expression)?)))
+        let part = self.reserved(|parser| parser.within(true, Self::expression))?;
+        Ok(Some(Box::new(part)))
     }
 
     pub(super) fn arguments(&mut self, context: ArgumentContext) -> Result<Vec<Expr>> {
+        self.unreserved(|parser| parser.argument_list(context))
+    }
+
+    fn argument_list(&mut self, context: ArgumentContext) -> Result<Vec<Expr>> {
         let mut arguments = Vec::new();
 
         while !self.check(&Token::RightParen) {

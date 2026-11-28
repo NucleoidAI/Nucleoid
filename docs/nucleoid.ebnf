@@ -645,7 +645,7 @@ equalityOperator
 
 /*
  * Membership contract (NUC 97, NUC 135):
- * - IN, and NOT directly followed by IN, after an additive operand build
+ * - IN, and NOT directly followed by IN, after a range operand build
  *   BinaryOp::In and BinaryOp::NotIn on the left-associative level of
  *   LESS, LESS_EQUAL, GREATER and GREATER_EQUAL, sharing its MAX_CHAIN
  *   operand limit. NOT before an operand stays a prefix, so
@@ -668,7 +668,7 @@ equalityOperator
  *   '}' but found '!'" for BANG IN, in an object value.
  */
 relational
-    ::= additive (relationalOperator additive)*              /* Expr::Binary, left */
+    ::= range (relationalOperator range)*                    /* Expr::Binary, left */
 
 relationalOperator
     ::= LESS
@@ -678,6 +678,34 @@ relationalOperator
       | IN                                                  /* BinaryOp::In */
       | NOT IN                                              /* BinaryOp::NotIn */
       | BANG IN                                             /* BinaryOp::NotIn */
+
+/*
+ * Range contract (NUC 148):
+ * - A rangeOperator is three adjacent tokens: each starts on the line of
+ *   the token before it, in the column right after it, so no whitespace,
+ *   comment or line break lies inside it. The lexer is unchanged.
+ * - It applies only in the range run of the parse-pass contract. Elsewhere
+ *   a postfix chain reads the first DOT as a member, so 'a..<b' keeps its
+ *   accepted "Expected a property but found '.'". In the range run a
+ *   postfix chain ends before an adjacent rangeOperator.
+ * - The level does not chain: a rangeOperator directly after the right
+ *   operand fails with "Unexpected '.'" at its first DOT.
+ * - Not at the top level, outside any LPAREN, LBRACK, LBRACE, call or stage
+ *   argument and statement, of a subscript's index, slice start, slice end
+ *   or slice step, or of a forStmt's source: there the postfix chain reads
+ *   DOT as a member and the accepted error stays. A repeatStmt whose count
+ *   holds a rangeOperator at that top level fails with the same error at
+ *   the operator's third token.
+ * - Bare '..' and '...', a rangeOperator without its left operand, and the
+ *   tokens of '..<=', '..==' and '..=>' are no ranges and keep their
+ *   accepted errors.
+ */
+range
+    ::= additive (rangeOperator additive)?                   /* Expr::Binary */
+
+rangeOperator
+    ::= DOT DOT LESS                                        /* BinaryOp::Range */
+      | DOT DOT ASSIGN                                      /* BinaryOp::RangeInclusive */
 
 additive
     ::= term ((PLUS | MINUS) term)*                          /* Expr::Binary, left */
@@ -1341,6 +1369,16 @@ REGEX_ESCAPE
  * sequence also fails, replace the original error only when its position
  * is further into the source. This adds one finite outer retry, not an
  * unbounded sequence or a different nesting/chain limit.
+ * Only when all of that fails, and the tokens hold an adjacent
+ * rangeOperator or a template whose text holds '..<' or '..=', the whole
+ * accepted sequence above, the section run and the listLineBreak run
+ * included, runs once more from a fresh parser that keeps the source's
+ * inter-token line breaks, starts again without listLineBreak and reads the
+ * range of the range contract. Its listLineBreak run follows the same
+ * condition as the accepted one. Every pass, probe, tentative statement and
+ * interpolation of that run reads the range. When it fails too, its error
+ * replaces the error above only when it lies further into the source, by
+ * line and column.
  *
  * Limits:
  * MAX_NESTING = 64, shared by statement/expression nesting:
@@ -1463,7 +1501,8 @@ REGEX_ESCAPE
  * Tokens/keywords: src\lang\ast\lexer\raw.rs and lexer\token.rs.
  * Regex/comments/version indexes: src\lang\ast\lexer\scanner.rs.
  * Layout: src\lang\ast\lexer\indentation.rs.
- * Passes/limits: src\lang\ast\parser.rs.
+ * Passes/limits: src\lang\ast\parser.rs and parser\source.rs, with the token
+ * cursor in parser\cursor.rs.
  * Programs/suites/statements: src\lang\ast\parser\statement.rs.
  * Conditions/loops/exceptions: src\lang\ast\parser\control.rs.
  * Header probes and colon statements: loop headers in parser\control.rs,
@@ -1510,4 +1549,14 @@ REGEX_ESCAPE
  * src\lang\ast\parser.rs, the argument and the pending left operand in
  * parser\postfix.rs, the mode carried into interpolations in
  * parser\template.rs and the function in src\lang\ast\function.rs.
+ * Integer ranges: parser\range.rs, with the range run started after the
+ * listLineBreak run in parser\source.rs, which saves the source's line breaks
+ * for it and carries the mode through every restart, the level in
+ * parser\precedence.rs, the postfix stop and the reserved subscript parts in
+ * parser\postfix.rs, the reserved forStmt source in parser\control.rs, the
+ * repeatStmt count check in parser\statement.rs, the top levels that
+ * grouping, lists, objects, arguments and statements open in
+ * parser\primary.rs, parser\postfix.rs, parser\expression.rs and
+ * parser\statement.rs, the mode carried into interpolations in
+ * parser\template.rs, and the evaluation in src\lang\ast\operator\range.rs.
  */

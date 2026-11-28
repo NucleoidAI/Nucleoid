@@ -22889,6 +22889,109 @@ assert(events.count, 0)
 assert(Shape.length, 0)"#);
 }
 
+/// Nucleoid builds half-open and closed integer ranges
+#[rustfmt::skip]
+#[test]
+fn builds_half_open_and_closed_integer_ranges() {
+    let mut run = runner();
+    run("lowest = -2");
+    run("highest = 3");
+    run("floors = lowest..=highest");
+    run("basement = lowest..<0");
+    run("upper = 1..=highest");
+    assert_eq!(run("floors"), serde_json::json!([-2, -1, 0, 1, 2, 3]));
+    assert_eq!(run("[basement, upper]"), serde_json::json!([[-2, -1], [1, 2, 3]]));
+    assert_eq!(run("[floors.length, floors.indexOf(0), floors.at(-1)]"), serde_json::json!([6, 2, 3]));
+    run("highest = 5");
+    assert_eq!(run("[floors.length, upper.sum()]"), serde_json::json!([8, 15]));
+    run("lowest = 0");
+    assert_eq!(run("[basement, floors]"), serde_json::json!([[], [0, 1, 2, 3, 4, 5]]));
+    run(r#"floors.length
+
+# return: 6"#);
+}
+
+/// Nucleoid keeps class-level integer range rules live
+#[rustfmt::skip]
+#[test]
+fn keeps_class_level_integer_range_rules_live() {
+    let mut run = runner();
+    run(r#"class Shift(start, end):
+    this.start = start
+    this.end = end"#);
+    run("early = Shift(6, 10)");
+    run("$Shift.hours = $Shift.start..<$Shift.end");
+    run("$Shift.lunch = 12 in $Shift.hours");
+    run("late = Shift(11, 15)");
+    assert_eq!(run("[early.hours, late.hours]"), serde_json::json!([[6, 7, 8, 9], [11, 12, 13, 14]]));
+    assert_eq!(run("[early.lunch, late.lunch]"), serde_json::json!([false, true]));
+    run("early.end = 13");
+    run("late.start = 13");
+    assert_eq!(run("[early.hours, late.hours]"), serde_json::json!([[6, 7, 8, 9, 10, 11, 12], [13, 14]]));
+    assert_eq!(run("[early.lunch, late.lunch]"), serde_json::json!([true, false]));
+    run("staffed = Shift.map(shift -> shift.hours.length).sum()");
+    assert_eq!(run("staffed"), 9);
+    run("Shift(20, 23)");
+    run(r#"staffed
+
+# return: 12"#);
+}
+
+/// Nucleoid maps integer ranges to positions and coordinates
+#[rustfmt::skip]
+#[test]
+fn maps_integer_ranges_to_positions_and_coordinates() {
+    let mut run = runner();
+    run(r#"columns = 3
+rows = 2
+cells = (0..<columns * rows).map(i -> [i % columns, Math.floor(i / columns)])
+assert(cells, [[0, 0], [1, 0], [2, 0], [0, 1], [1, 1], [2, 1]])
+columns = 4
+rows = 3
+assert([cells.length, cells[5], cells.at(-1)], [12, [1, 1], [3, 2]])
+row = "B"
+seats = 3
+labels = (1..=seats).map(n -> row + n)
+assert(labels, ["B1", "B2", "B3"])
+seats = 12
+row = "C"
+assert([labels.length, labels[9], labels.at(-1)], [12, "C10", "C12"])
+cells.length
+# return: 12"#);
+}
+
+/// Nucleoid rolls back failed integer range updates
+#[rustfmt::skip]
+#[test]
+fn rolls_back_failed_integer_range_updates() {
+    let mut run = runner();
+    run(r#"first = 1
+last = 4
+days = first..=last
+failure = ""
+try:
+    last = 4.5
+catch error:
+    failure = error
+assert(failure, TypeError("Range bounds must be integers"))
+assert([last, days], [4, [1, 2, 3, 4]])
+try:
+    first = -200000
+catch error:
+    failure = error
+assert([failure, first, days.length], [TypeError("Range is too large"), 1, 4])
+try:
+    last = 6
+    assert(days, [1, 2, 3, 4, 5, 6])
+    throw "UNDO"
+catch error:
+    failure = error
+assert([failure, last, days], ["UNDO", 4, [1, 2, 3, 4]])
+last = 7
+days.sum()
+# return: 28"#);
+}
+
 /// Nucleoid tells two explanations apart with xor
 #[rustfmt::skip]
 #[test]

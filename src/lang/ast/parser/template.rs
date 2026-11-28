@@ -123,6 +123,7 @@ impl Parser {
             receiver: self.receiver.clone(),
             selves: self.selves,
             sections: self.sections,
+            ranges: self.ranges,
             if_statements: self.if_statements,
             ..fresh
         };

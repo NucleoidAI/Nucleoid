@@ -996,7 +996,7 @@ fn only_the_appended_cases_use_self_parameters_and_they_run_every_assertion() {
         assert_eq!(matching, 1, "{title}");
     }
     assert_eq!(assertions, 22);
-    assert_eq!(cases, 1326);
+    assert_eq!(cases, 1333);
 }
 
 #[test]

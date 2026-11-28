@@ -3116,6 +3116,30 @@ item.total
   labels are unchanged. See the
   [root contract](nucleoid.spec.md#unknown-constructor-arguments-as-properties).
 
+## Integer range literals
+
+**Ranges keep a shift's hours in step with its bounds**
+
+```nuc
+open = 9
+close = 13
+hours = open..<close
+assert(hours, [9, 10, 11, 12])
+close = 15
+assert([hours.length, hours.sum()], [6, 69])
+hours
+# return: [9,10,11,12,13,14]
+```
+
+- [NUC 148](docs/nuc-0148.md) adds two range operators: `START..<END` lists
+  the integers from `START` up to, but not including, `END`, and
+  `START..=END` lists them through `END`. A range is an ordinary list, so
+  `hours.length` and `hours.sum()` read it as they read a list literal.
+- `hours = open..<close` is a standing declaration, so the hours follow the
+  shift's bounds when it is extended. Both bounds must be integers, a range
+  holds at most 100,000 items, and `close..<open` is empty. See the
+  [root contract](nucleoid.spec.md#integer-range-literals).
+
 ## Symmetric difference reasoning selections
 
 **Xor tells two alarms apart**

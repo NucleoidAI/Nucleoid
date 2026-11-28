@@ -4607,6 +4607,37 @@ heavy
   [root contract](../nucleoid.spec.md#unknown-constructor-arguments-as-properties)
   define. A vehicle built without a `color` label has none.
 
+## Integer range literals
+
+**Ranges keep every elevator's stops live**
+
+```nuc
+class Elevator(name, lowest, highest):
+    this.name = name
+    this.lowest = lowest
+    this.highest = highest
+$Elevator.stops = $Elevator.lowest..=$Elevator.highest
+low = Elevator("low", -1, 6)
+high = Elevator("high", 5, 12)
+call = 3
+serving = Elevator.filter(e -> call in e.stops).map(e -> e.name)
+assert(serving, ["low"])
+call = 5
+assert(serving, ["low", "high"])
+low.highest = 4
+assert([low.stops.length, serving], [6, ["high"]])
+serving
+# return: ["high"]
+```
+
+- Each elevator stops at the floors from its lowest through its highest,
+  `$Elevator.lowest..=$Elevator.highest`, a class-level rule that holds for
+  every elevator and follows a change of either floor, basements included.
+- The stops are an ordinary list, so `call in e.stops` tests them as it tests
+  any list, and the elevators that serve a call follow the call, the
+  elevators and their floors. See [NUC 148](nuc-0148.md) and the
+  [root contract](../nucleoid.spec.md#integer-range-literals).
+
 ## Symmetric difference reasoning selections
 
 **Xor lists what tells two diagnoses apart**

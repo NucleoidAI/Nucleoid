@@ -1,5 +1,7 @@
 //! Unary, binary, logical and conditional operators.
 
+mod range;
+
 use std::cmp::Ordering;
 
 use crate::builtins;
@@ -99,6 +101,8 @@ impl BinaryOp {
             BinaryOp::IsNot => "is not",
             BinaryOp::In => "in",
             BinaryOp::NotIn => "not in",
+            BinaryOp::Range => "..<",
+            BinaryOp::RangeInclusive => "..=",
         }
     }
 }
@@ -182,7 +186,24 @@ impl Runtime {
         };
         match operator {
             BinaryOp::In | BinaryOp::NotIn => self.membership(operator, &left, value, right),
-            _ => binary(operator, &left, &value),
+            BinaryOp::Add
+            | BinaryOp::Subtract
+            | BinaryOp::Multiply
+            | BinaryOp::Divide
+            | BinaryOp::Modulo
+            | BinaryOp::Power
+            | BinaryOp::Equal
+            | BinaryOp::NotEqual
+            | BinaryOp::StrictEqual
+            | BinaryOp::StrictNotEqual
+            | BinaryOp::Less
+            | BinaryOp::LessEqual
+            | BinaryOp::Greater
+            | BinaryOp::GreaterEqual
+            | BinaryOp::Is
+            | BinaryOp::IsNot
+            | BinaryOp::Range
+            | BinaryOp::RangeInclusive => binary(operator, &left, &value),
         }
     }
 
@@ -231,14 +252,15 @@ pub fn type_of(value: &Value) -> Value {
 pub fn binary(operator: BinaryOp, left: &Value, right: &Value) -> Result<Value> {
     use BinaryOp::{
         Add, Divide, Equal, Greater, GreaterEqual, In, Is, IsNot, Less, LessEqual, Modulo,
-        Multiply, NotEqual, NotIn, Power, StrictEqual, StrictNotEqual, Subtract,
+        Multiply, NotEqual, NotIn, Power, Range, RangeInclusive, StrictEqual, StrictNotEqual,
+        Subtract,
     };
 
     // A read of something undefined makes the whole expression undefined, which
     // an assignment then stores as null.
     if matches!(
         operator,
-        Add | Subtract | Multiply | Divide | Modulo | Power
+        Add | Subtract | Multiply | Divide | Modulo | Power | Range | RangeInclusive
     ) && (left.is_undefined() || right.is_undefined())
     {
         return Ok(Value::Undefined);
@@ -266,6 +288,9 @@ pub fn binary(operator: BinaryOp, left: &Value, right: &Value) -> Result<Value> 
         LessEqual => Value::Bool(compare(left, right).is_some_and(Ordering::is_le)),
         Greater => Value::Bool(compare(left, right).is_some_and(Ordering::is_gt)),
         GreaterEqual => Value::Bool(compare(left, right).is_some_and(Ordering::is_ge)),
+
+        Range => range::integers(left, right, range::End::Excluded)?,
+        RangeInclusive => range::integers(left, right, range::End::Included)?,
 
         In | NotIn => {
             return Err(Error::type_error(format!(

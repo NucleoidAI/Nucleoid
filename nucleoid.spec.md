@@ -6309,7 +6309,9 @@ t.promote(bob)
   `>=`, whose chain holds at most 128 of these operators. They bind more
   tightly than `==`, `!=`, `===`, `!==`, `is`, `is not`, `and`, `&&`, `or`,
   `||`, `??`, `|>`, the conditional forms and assignment, and more loosely
-  than `+`, `-`, `*`, `/`, `%`, `**` and the prefix operators. So
+  than the range operators `..<` and `..=` of
+  [Integer range literals](#integer-range-literals), `+`, `-`, `*`, `/`,
+  `%`, `**` and the prefix operators. So
   `x + 1 in xs` is `(x + 1) in xs`, `x in xs == true` is
   `(x in xs) == true`, `a < b in c` is `(a < b) in c`, `a is b in c` is
   `a is (b in c)`, `x in why c` tests the selection `why c`, and
@@ -7931,6 +7933,120 @@ t.promote(bob)
   `Nucleoid takes every other item of a list with stepped slices` through
   `Nucleoid rolls back failed updates through stepped slices` specify the
   executable behavior. `tests/stepped_slices.rs` executes the rest.
+
+## Integer range literals
+
+- [NUC 148](docs/nuc-0148.md) adds two range operators that build a list of
+  consecutive integers. `START..<END` holds the integers from `START` up to,
+  but not including, `END`, and `START..=END` holds the integers from
+  `START` through `END`. No keyword, token or error type is added; the
+  messages `Range bounds must be integers` and `Range is too large` are new.
+- **Spelling.** Each operator is three adjacent tokens: two dots and then
+  `<` or `=`, each on the line of the token before it and in the column
+  right after it, so no space, comment or line break stands inside the
+  operator. Space around it is free: `a..<b`, `a ..< b` and `a..< b` are the
+  same range, while `a. .<b`, `a.. <b`, `a..<=b`, `a..==b` and `a..=>b` keep
+  their accepted readings and errors.
+- **Precedence.** Both operators share one level between the comparisons
+  and `+` and `-`, and both operands are additive expressions, so
+  `0..<n + 1` is `0..<(n + 1)`, `-1..<2` is `(-1)..<2`, `a ** 2..=b` is
+  `(a ** 2)..=b`, `x in 1..=5` is `x in (1..=5)`, `a < 0..<3` is
+  `a < (0..<3)` and `0..<3 == xs` is `(0..<3) == xs`. The level does not
+  chain: a second range operator directly after the right operand, as in
+  `a..<b..<c`, raises a `SyntaxError`.
+- **Bounds.** `START` is evaluated first and then `END`, each once. When
+  either is undefined, such as a missing property, the range is undefined,
+  which a declaration stores as `null`, as for arithmetic. Otherwise each
+  bound must be a number whose value is an integer from
+  `-9007199254740991` to `9007199254740991`, and `-0` counts as `0`. Any
+  other bound raises `TypeError("Range bounds must be integers")`: `null`,
+  strings, numeric strings included, booleans, lists, objects, instances,
+  classes, functions, dates, regular expressions, NaN, `Infinity`,
+  `-Infinity`, fractions and integers beyond that interval.
+- **Items.** A range is a new list of the numbers `START`, `START + 1` and so
+  on, in ascending order, up to `END - 1` for `..<` and through `END` for
+  `..=`. It is empty when `START` is not below `END` for `..<`, or is above
+  it for `..=`: `5..<5`, `5..<2` and `5..=4` are `[]`, and `5..=5` is `[5]`.
+  A start of `-0` gives `0`. A range of more than 100,000 items raises
+  `TypeError("Range is too large")` before any item is built, the limit of
+  `while` loops and `repeat` counts: `1..=100000` holds 100,000 items and
+  `0..=100000` raises.
+- **A list like any other.** List methods and queries, membership tests,
+  deep equality, indexing, slicing, `push`, printing and JSON treat a range
+  exactly as they treat a list literal with the same items:
+  `(0..<3) == [0, 1, 2]` and `2 in 0..<3` are `true`, and `(1..=4).sum()`
+  is `10`. A range is truthy, as every list is, even when it is empty, so
+  `if 0..<0:` runs its body and `while a..<b:` runs until it raises
+  `TypeError("Loop did not terminate")`, as `while [0]:` does. Nothing else
+  about lists changes.
+- **Live.** A range is a binary expression. A declaration that holds one is
+  a standing declaration that depends on what both bounds read and
+  re-evaluates when they change, and `.value` freezes a bound. A class-level
+  rule with `$Class` bounds, such as
+  `$Shift.hours = $Shift.start..<$Shift.end`, holds for every instance,
+  created before or after it, follows each instance's bounds, and checks the
+  references in its bounds when it is declared. A bound error during a
+  re-evaluation fails and rolls back the statement that triggered it, so the
+  previous list stays, and `suppose` and transactions treat ranges as they
+  treat every operator.
+- **Where ranges are read.** An input first runs the whole accepted parse
+  sequence, the section run of
+  [Operator section arguments](#operator-section-arguments) and the
+  line-break run of
+  [Newline-separated list elements](#newline-separated-list-elements)
+  included. Only when all of it fails, and the tokens hold an adjacent `..<`
+  or `..=` or a template whose text holds `..<` or `..=`, does the same
+  sequence run once more, from a fresh parser that keeps the source's line
+  breaks and separates list elements by commas alone again, with ranges
+  read in every pass, probe, tentative statement and template
+  interpolation. Its own line-break run follows the same condition as the
+  accepted one, so an input that needs both newline-separated list elements
+  and ranges parses there. Its first success is the result; when it fails
+  too, the input reports whichever of the accepted error and its own lies
+  further into the source, the accepted one on a tie. So every input that
+  the accepted parser reads keeps its parse. A template interpolation still
+  ignores the tokens after the expression it reads, so
+  `` `${x |> why ..<3}` `` still reads `x |> why` alone and
+  `` `${x if true else 2 ..<3}` `` still renders `1`, and `parse_expression`
+  keeps every accepted result. Inside that run, ranges stand in every
+  expression position, template interpolations and `parse_expression`
+  included, apart from the reserved positions below.
+- **Reserved positions.** A range is not read at the top level, outside
+  any parentheses, brackets, braces or call arguments, of the index, slice
+  start, slice end or slice step of a subscript, as in `xs[0..<2]`,
+  `Seat[1..=3]`, `xs[a..<b:]` and `xs[::0..<2]`, of the source of a `for`
+  statement, as in `for i in 0..<3:`, `for i of 0..<3:` and
+  `for k, v in 0..<3:`, or of the count of a `repeat` statement, as in
+  `repeat 0..<3:`. A `repeat` header whose count holds such a range raises
+  the accepted error at the range, because the accepted parser reads a
+  failed header as the statement `repeat` followed by its count. Those
+  inputs keep their accepted errors, because a list there would silently
+  convert to a number, so that
+  `xs[[2]]` is `xs[2]`, `repeat [1, 2, 3]:` runs no iteration and
+  `repeat [3]:` runs three, or would run no iteration, as a `for` statement
+  over a list of numbers does. A parenthesized range is an ordinary list
+  there: `xs[(0..<2)]` indexes `xs` by a list, and `for i in (0..<3):` runs
+  no iteration. Take positions with `xs[a:b]`, and run over integers by
+  mapping a range, `(0..<3).map(i -> f(i))`, with a comprehension,
+  `[f(i) for i in 0..<3]`, whose source does read ranges, or with
+  `repeat 3:`.
+- **Rendering.** Statements, `why`, `affects`, graph keys and error messages
+  that quote an expression show a range as `START..<END` or `START..=END`.
+  A range that is the base of a postfix chain is grouped, as in
+  `(0..<n).length` and `(1..=k).map(f)`, so the rendering reads back as the
+  same chain; a range inside an operand of another binary operator is not,
+  as no binary operand is.
+- **Unchanged.** Bare `..` and `...`, a range operator without a left
+  operand, steps, descending ranges and ranges of strings, characters or
+  dates are not added and keep their accepted errors: `1..2` still raises
+  `SyntaxError("Expected a property but found number 0.2")`, and `a..b`,
+  `1...3` and `x = ..<3` still raise their accepted errors. A range
+  operator without a right operand stays an error, reported where the
+  parser stops: `x = 1..=` at the end of the input raises
+  `SyntaxError("Unexpected end of input")`. The four entries
+  beginning `Nucleoid builds half-open and closed integer ranges` through
+  `Nucleoid rolls back failed integer range updates` specify the executable
+  behavior. `tests/range_literals.rs` executes the rest.
 
 ## Object entry loops with ordered rollback
 
@@ -29403,6 +29519,91 @@ catch error:
     assert(error, ReferenceError("missing is not defined"))
 assert(events.count, 0)
 assert(Shape.length, 0)
+---
+# Nucleoid builds half-open and closed integer ranges
+
+lowest = -2
+highest = 3
+floors = lowest..=highest
+basement = lowest..<0
+upper = 1..=highest
+assert(floors, [-2, -1, 0, 1, 2, 3])
+assert([basement, upper], [[-2, -1], [1, 2, 3]])
+assert([floors.length, floors.indexOf(0), floors.at(-1)], [6, 2, 3])
+highest = 5
+assert([floors.length, upper.sum()], [8, 15])
+lowest = 0
+assert([basement, floors], [[], [0, 1, 2, 3, 4, 5]])
+floors.length
+# return: 6
+---
+# Nucleoid keeps class-level integer range rules live
+
+class Shift(start, end):
+    this.start = start
+    this.end = end
+early = Shift(6, 10)
+$Shift.hours = $Shift.start..<$Shift.end
+$Shift.lunch = 12 in $Shift.hours
+late = Shift(11, 15)
+assert([early.hours, late.hours], [[6, 7, 8, 9], [11, 12, 13, 14]])
+assert([early.lunch, late.lunch], [false, true])
+early.end = 13
+late.start = 13
+assert([early.hours, late.hours], [[6, 7, 8, 9, 10, 11, 12], [13, 14]])
+assert([early.lunch, late.lunch], [true, false])
+staffed = Shift.map(shift -> shift.hours.length).sum()
+assert(staffed, 9)
+Shift(20, 23)
+staffed
+# return: 12
+---
+# Nucleoid maps integer ranges to positions and coordinates
+
+columns = 3
+rows = 2
+cells = (0..<columns * rows).map(i -> [i % columns, Math.floor(i / columns)])
+assert(cells, [[0, 0], [1, 0], [2, 0], [0, 1], [1, 1], [2, 1]])
+columns = 4
+rows = 3
+assert([cells.length, cells[5], cells.at(-1)], [12, [1, 1], [3, 2]])
+row = "B"
+seats = 3
+labels = (1..=seats).map(n -> row + n)
+assert(labels, ["B1", "B2", "B3"])
+seats = 12
+row = "C"
+assert([labels.length, labels[9], labels.at(-1)], [12, "C10", "C12"])
+cells.length
+# return: 12
+---
+# Nucleoid rolls back failed integer range updates
+
+first = 1
+last = 4
+days = first..=last
+failure = ""
+try:
+    last = 4.5
+catch error:
+    failure = error
+assert(failure, TypeError("Range bounds must be integers"))
+assert([last, days], [4, [1, 2, 3, 4]])
+try:
+    first = -200000
+catch error:
+    failure = error
+assert([failure, first, days.length], [TypeError("Range is too large"), 1, 4])
+try:
+    last = 6
+    assert(days, [1, 2, 3, 4, 5, 6])
+    throw "UNDO"
+catch error:
+    failure = error
+assert([failure, last, days], ["UNDO", 4, [1, 2, 3, 4]])
+last = 7
+days.sum()
+# return: 28
 ---
 # Nucleoid tells two explanations apart with xor
 

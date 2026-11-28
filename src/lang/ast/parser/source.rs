@@ -13,7 +13,16 @@ impl Parser {
     }
 
     pub(super) fn attempt<T>(&mut self, parse: impl Fn(&mut Self) -> Result<T>) -> Result<T> {
-        let accepted = match self.attempt_original(&parse) {
+        let line_breaks = self.line_breaks.clone();
+        self.attempt_lines(&parse)
+            .or_else(|accepted| self.attempt_ranges(&parse, accepted, line_breaks))
+    }
+
+    pub(super) fn attempt_lines<T>(
+        &mut self,
+        parse: &impl Fn(&mut Self) -> Result<T>,
+    ) -> Result<T> {
+        let accepted = match self.attempt_original(parse) {
             Ok(parsed) => return Ok(parsed),
             Err(error) => error,
         };
@@ -24,7 +33,7 @@ impl Parser {
             list_separators: ListSeparators::PhysicalLines,
             ..self.restarted()
         };
-        self.attempt_original(&parse)
+        self.attempt_original(parse)
             .map_err(|error| furthest(accepted, error))
     }
 
@@ -37,6 +46,7 @@ impl Parser {
         Parser {
             line_breaks: std::mem::take(&mut self.line_breaks),
             list_separators: self.list_separators,
+            ranges: self.ranges,
             ..Self::new(std::mem::take(&mut self.tokens))
         }
     }

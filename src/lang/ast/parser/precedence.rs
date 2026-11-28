@@ -112,7 +112,7 @@ impl Parser {
     }
 
     fn relational(&mut self) -> Result<Expr> {
-        let mut left = self.additive()?;
+        let mut left = self.range()?;
 
         let mut chain = 0;
 
@@ -139,7 +139,7 @@ impl Parser {
                 return Err(self.error("Expression has too many operands"));
             }
 
-            let right = self.additive()?;
+            let right = self.range()?;
             if self.leaves_quantifier_colon(operator) {
                 self.position = start;
                 break;
@@ -184,6 +184,23 @@ impl Parser {
         matches!(operator, BinaryOp::In | BinaryOp::NotIn)
             && self.context != ExpressionContext::Clause
             && self.check(&Token::Colon)
+    }
+
+    fn range(&mut self) -> Result<Expr> {
+        let start = self.additive()?;
+        let Some(operator) = self.range_operator() else {
+            return Ok(start);
+        };
+        self.position += 3;
+        let end = self.additive()?;
+        if self.range_operator().is_some() {
+            return Err(self.error(format!("Unexpected {}", self.peek().describe())));
+        }
+        Ok(Expr::Binary {
+            operator,
+            left: Box::new(start),
+            right: Box::new(end),
+        })
     }
 
     fn additive(&mut self) -> Result<Expr> {

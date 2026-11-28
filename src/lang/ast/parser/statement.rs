@@ -124,12 +124,14 @@ impl Parser {
         }
 
         let depth = self.depth;
-        let result = self.within(false, |parser| {
-            match parser.destructuring()? {
-                Some(declarations) => statements.extend(declarations),
-                None => statements.push(parser.statement_inner()?),
-            }
-            Ok(())
+        let result = self.unreserved(|parser| {
+            parser.within(false, |parser| {
+                match parser.destructuring()? {
+                    Some(declarations) => statements.extend(declarations),
+                    None => statements.push(parser.statement_inner()?),
+                }
+                Ok(())
+            })
         });
         debug_assert_eq!(self.depth, depth);
         self.depth -= 1;
@@ -171,7 +173,9 @@ impl Parser {
             return self.repeat_until_statement();
         }
 
+        let start = self.position;
         if let Some(count) = self.repeat_count() {
+            self.reserve_count(start)?;
             let body = self.suite()?;
             return Ok(Stmt::Repeat { count, body });
         }

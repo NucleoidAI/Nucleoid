@@ -931,6 +931,9 @@ settings.size
   written `item !in collection` as in Kotlin, for lists, classes and
   strings, at the level of `<`; see [membership tests](#membership-tests)
   and [negated membership with `!in`](#negated-membership-with-in).
+- Ranges: `start..<end` and `start..=end` list consecutive integers, on one
+  level between the comparisons and `+` and `-`; see
+  [integer range literals](#integer-range-literals).
 - Logical: `and` / `&&`, `or` / `||`, `not` / `!`.
 - Conditional: `condition ? consequent : alternate` or
   `consequent if condition else alternate`; see below.
@@ -1233,6 +1236,66 @@ unlisted
 
 Full detail: [NUC 135](nuc-0135.md).
 
+### Integer range literals
+
+```
+first = 2
+last = 5
+exclusive = first..<last
+inclusive = first..=last
+assert([exclusive, inclusive], [[2, 3, 4], [2, 3, 4, 5]])
+last = 3
+assert([exclusive, inclusive], [[2], [2, 3]])
+first = 4
+assert([exclusive, inclusive], [[], []])
+first = -1
+assert([exclusive.sum(), inclusive.length], [2, 5])
+inclusive
+```
+
+- This is the complete `Nucleoid writes consecutive integers as range literals`
+  program in `tests/reference.md`, without its title and expected-return
+  metadata; it returns `[-1, 0, 1, 2, 3]`.
+- `start..<end` lists the integers from `start` up to, but not including,
+  `end`, and `start..=end` lists them through `end`, in ascending order. A
+  range with no integer between its bounds is empty, as `4..<3` and `4..=3`
+  are. A declaration that holds a range stays live: it follows its bounds,
+  and `$Shift.hours = $Shift.start..<$Shift.end` holds for every shift.
+- A range is an ordinary list, so list methods, membership tests,
+  equality, indexing and JSON treat it as they treat a list literal:
+  `(1..=4).sum()` is `10` and `2 in 0..<3` is `true`. Like every list, a
+  range is truthy even when it is empty, so `while a..<b:` runs until the
+  loop limit raises `Loop did not terminate`.
+- Both bounds must be integers within `Number.MAX_SAFE_INTEGER` of zero,
+  or the range raises `TypeError("Range bounds must be integers")`, and a
+  range of more than 100,000 items raises `TypeError("Range is too large")`.
+  An undefined bound, such as a missing property, makes the range
+  undefined, which a declaration stores as `null`.
+- The two dots and the `<` or `=` are written together, with nothing
+  between them; spaces around the operator are free. Ranges bind more
+  loosely than `+` and `-` and more tightly than comparisons and membership
+  tests: `0..<n + 1` is `0..<(n + 1)` and `x in 1..=5` is `x in (1..=5)`.
+  They do not chain, so `a..<b..<c` is a syntax error.
+- Ranges are read only in a run of the parse passes that starts after every
+  accepted pass, the section run and the
+  [newline-separated list](#newline-separated-list-elements) run included,
+  has failed, so every input the accepted grammar reads keeps its reading.
+  That run separates list elements by line breaks too when it needs to, so
+  a list written one element per line can hold ranges.
+- A range is not read at the top level of a subscript's index, slice bound
+  or step, of a `for` statement's source or of a `repeat` statement's
+  count: `xs[0..<2]`, `for i in 0..<3:` and `repeat 0..<3:` keep their
+  syntax errors. Write `xs[0:2]` for positions, and map a range,
+  `(0..<3).map(i -> i * i)`, use a comprehension, `[i * i for i in 0..<3]`,
+  or use `repeat 3:` to run over integers.
+- Bare `..` and `...`, open ranges such as `..<n`, steps and descending
+  ranges are not added. A range renders as `first..<last`. Grammar, errors
+  and edge cases are in the authoritative
+  [integer range literals](../nucleoid.spec.md#integer-range-literals)
+  section.
+
+Full detail: [NUC 148](nuc-0148.md).
+
 ### Indexing, slicing, and length
 
 - Lists and instance lists index with brackets; the index may be a variable.
@@ -1241,6 +1304,7 @@ Full detail: [NUC 135](nuc-0135.md).
 - A range on a class's instance list, such as `Task[-2:]` or `Task[:]`, returns its instances in population order with the same bound rules, and depends on the population ([NUC 61](nuc-0061.md)).
 - Both slice bounds are expressions whose references are checked when a class-level rule is declared.
 - A step after a second colon, `[start:stop:step]`, takes every step-th item, and a negative step walks backward, as in Python: `xs[::2]`, `xs[1::2]` and `s[::-1]` ([Stepped slices](#stepped-slices), [NUC 125](nuc-0125.md)).
+- A range literal is not read at the top level of an index, a slice bound or a step, so `xs[0..<2]` stays a syntax error; `xs[(0..<2)]` indexes by a list, which converts to a number as any index does ([Integer range literals](#integer-range-literals), [NUC 148](nuc-0148.md)).
 - `.length` is a dependency on the collection.
 
 ```
@@ -1973,6 +2037,11 @@ if $Device.profile:
   literal objects in lists are skipped; order and duplicates are retained.
 - Loops may nest, producing the cross product.
 - Explicit sources keep arbitrary expressions and inline/braced/indented suites.
+- A range literal is not read at the top level of a source, so
+  `for i in 0..<3:` stays a syntax error, and `for i in (0..<3):` iterates a
+  list of numbers, whose primitive elements are skipped. Map a range, `(0..<3).map(i -> ...)`, use a
+  comprehension or use `repeat` to run over integers
+  ([Integer range literals](#integer-range-literals)).
 - A String is evaluated once and fully snapshotted before the first body:
   each Unicode scalar becomes one String value, in source order. Empty
   Strings execute no bodies. No byte/UTF-16/grapheme splitting, normalization,
@@ -2155,6 +2224,9 @@ savings.balance
   or braced headers keep their accepted readings as separate statements, and
   names, calls and properties named `repeat` and the string method
   `"ab".repeat(2)` keep working.
+- A range literal is not read at the top level of the count, so
+  `repeat 0..<3:` stays a syntax error rather than converting a list to a
+  count ([Integer range literals](#integer-range-literals)).
 
 Normative detail: [count-controlled repeat loops](../nucleoid.spec.md#count-controlled-repeat-loops).
 
@@ -6012,6 +6084,8 @@ Messages are exact and are part of the observable behaviour of the language.
 | A `while` loop whose condition still holds after 100,000 iterations of one run | `Loop did not terminate` |
 | A repeat-until loop whose condition is still falsy after 100,000 iterations of one run | `Loop did not terminate` |
 | A `repeat` loop whose count converts to more than 100,000, `Infinity` included, raised before the first iteration | `Repeat count is too large` |
+| A range bound `start..<end` or `start..=end` that is defined but not an integer number from `-9007199254740991` to `9007199254740991`, including `null`, a string, a boolean, a list, NaN, an infinity or a fraction | `Range bounds must be integers` |
+| A range of more than 100,000 integers, raised before any item is built | `Range is too large` |
 | A repeated constructor binding, including positional plus named | `Duplicate constructor argument '<name>' for <class>` |
 | A positional constructor argument following a label | `Positional constructor argument after named arguments for <class>` |
 | A label targeting a rest formal | `Rest parameter '<name>' cannot be a named constructor argument for <class>` |
@@ -6179,6 +6253,8 @@ name **= exponent                      name = name ** (exponent) (NUC 64)
 item in collection                     list, class or string membership at the level of < (NUC 97)
 item not in collection                 its negation; not item in xs is (not item) in xs (NUC 97)
 item !in collection                    Kotlin spelling: exactly item not in collection, ! and in adjacent (NUC 135)
+start..<end                            the list of integers from start up to, not including, end (NUC 148)
+start..=end                            the list of integers from start through end; between comparisons and + (NUC 148)
 
 for name of source:                    class/object-list/scalar-string iteration
 for name in source:                    equivalent explicit iteration
