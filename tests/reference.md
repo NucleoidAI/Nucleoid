@@ -3107,6 +3107,20 @@ assert(legacy, tag)
 tag.length
 # return: 11
 ---
+# Nucleoid keeps Euclidean lengths live with Math.hypot
+
+velocity = {x: -3, y: 4, z: 12}
+speed = Math.hypot(velocity.x, velocity.y, velocity.z)
+dx = 5
+dy = -12
+ground = Math.hypot(dx, dy)
+assert([speed, ground], [13, 13])
+velocity.x = 6
+dx = -9
+assert([speed, ground], [14, 15])
+speed + ground
+# return: 29
+---
 # Nucleoid separates two explanations with xor
 
 price = 10

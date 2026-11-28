@@ -29822,6 +29822,89 @@ assert([ticket, fill, tags], ["0042", "0", ["a--", "bb-"]])
 ticket
 # return: "0042"
 ---
+# Nucleoid keeps the distance between two instances live with Math.hypot
+
+class Point(x, y):
+    this.x = x
+    this.y = y
+robot = Point(1, 2)
+charger = Point(9, 17)
+gap = Math.hypot(charger.x - robot.x, charger.y - robot.y)
+assert(gap, 17)
+charger.x = 21
+assert(gap, 25)
+robot.y = -4
+assert(gap, 29)
+gap
+# return: 29
+---
+# Nucleoid keeps Math.hypot distances live in class level rules
+
+class Drone(name, x, y):
+    this.name = name
+    this.x = x
+    this.y = y
+home = {x: 2, y: 1}
+$Drone.reach = Math.hypot($Drone.x - home.x, $Drone.y - home.y)
+scout = Drone("scout", -4, 9)
+hauler = Drone("hauler", 17, 9)
+assert([scout.reach, hauler.reach], [10, 17])
+near = Drone.filter(drone -> drone.reach <= 10).map(drone -> drone.name)
+assert(near, ["scout"])
+home.x = 11
+assert([scout.reach, hauler.reach], [17, 10])
+assert(near, ["hauler"])
+scout.x = 5
+Drone("relay", 14, 5)
+assert(near, ["scout", "hauler", "relay"])
+near.length
+# return: 3
+---
+# Nucleoid measures lengths in three dimensions with Math.hypot
+
+crate = {w: 2, d: 3, h: 6}
+diagonal = Math.hypot(crate.w, crate.d, crate.h)
+assert(diagonal, 7)
+crate.w = 6
+assert(diagonal, 9)
+crate.d = 7
+assert(diagonal, 11)
+moves = [{x: 1, y: 2, z: 2}]
+lengths = moves.map(move -> Math.hypot(move.x, move.y, move.z))
+assert(lengths, [3])
+moves.push({x: -2, y: 6, z: -9})
+assert(lengths, [3, 11])
+lengths
+# return: [3,11]
+---
+# Nucleoid rolls back failed updates through Math.hypot
+
+dx = 6
+dy = 8
+step = Math.hypot(dx, dy)
+legs = []
+lengths = legs.map(leg -> Math.hypot(leg.dx, leg.dy, rise))
+failure = ""
+try:
+    legs.push({dx: 2, dy: 3})
+catch error:
+    failure = error
+assert(failure, ReferenceError("rise is not defined"))
+assert([legs, lengths], [[], []])
+rise = 6
+legs.push({dx: 2, dy: 3}, {dx: 6, dy: 7})
+assert(lengths, [7, 11])
+try:
+    dx = 15
+    legs.push({dx: 2, dy: 9})
+    assert([step, lengths], [17, [7, 11, 11]])
+    throw "UNDO"
+catch error:
+    assert(error, "UNDO")
+assert([step, legs.length, lengths], [10, 2, [7, 11]])
+step
+# return: 10
+---
 # Nucleoid tells two explanations apart with xor
 
 price = 10
@@ -30478,6 +30561,72 @@ assert(input, 7)
   Their accepted square-call-times-repeated-pure-expression spelling is a
   fair ordered-arithmetic counterpart, not a promise to duplicate a future
   call argument's effects. Every historical executable case is unchanged.
+
+## Reactive hypotenuse
+
+- [NUC 159](docs/nuc-0159.md) adds `Math.hypot(value, ...)`, the square
+  root of the sum of the squares of its arguments: the length of a vector
+  from its components, or the distance between two points from the
+  differences of their coordinates, as JavaScript's `Math.hypot` and
+  Python's `math.hypot` compute it. `Math.hypot(3, 4)` is `5`,
+  `Math.hypot(1, 2, 2)` is `3`, `Math.hypot(-7)` is `7` and `Math.hypot()`
+  is `0`. No token, keyword, syntax tree node, error type or message is
+  added.
+- **Arguments.** It takes any number of arguments, none included. They are
+  evaluated once, left to right, as for every Math call, and an argument's
+  error propagates before the call runs. Then Math's undefined gate
+  applies: any undefined argument, such as a missing property, makes the
+  call undefined. Otherwise every argument converts as the arguments of
+  `Math.max` do, and none is ignored: `null` and an empty or blank string
+  are `0`, booleans `0` and `1`, a numeric string its trimmed value, an
+  empty list `0`, a one-item list its item, a date its milliseconds, and
+  everything else, such as `"x"`, a longer list, an object or a function,
+  NaN. The keyword `undefined` reads as `null`, so it converts to `0`.
+- **Result.** `Infinity` when any converted argument is infinite, of either
+  sign, even beside NaN; otherwise NaN when any is NaN; otherwise the
+  square root of the sum of the squares, which is never negative, so
+  `Math.hypot(-0)` and `Math.hypot(0, -0)` are `0`.
+- **Exactness.** While the largest magnitude lies between 2^-450 and
+  2^450, the result is exactly `Math.sqrt(a * a + b * b + ...)` over the
+  converted arguments, squared and summed in argument order. It is exact
+  whenever the squares and their sum are exact and the sum is a perfect
+  square, as for every integer Pythagorean tuple: `Math.hypot(20, 21)` is
+  `29` and `Math.hypot(2, 3, 6)` is `7`. Otherwise it rounds as that sum
+  and square root round.
+- **No overflow or underflow.** Outside that range every argument is first
+  multiplied by the same power of two, 2^-600 above it and 2^600 below it,
+  and the result is multiplied back, which keeps those results exact and
+  avoids squares that overflow or vanish: `Math.hypot(1e200, 1e200)` is
+  `1.414213562373095e200` and `Math.hypot(3e-200, 4e-200)` is `5e-200`,
+  where `(1e200 ** 2 + 1e200 ** 2) ** 0.5` is `Infinity` and
+  `(3e-200 ** 2 + 4e-200 ** 2) ** 0.5` is `0`. Only a result beyond the
+  largest number is `Infinity`.
+- **Live.** A declaration or class-level rule that calls `Math.hypot`
+  depends on what its arguments read, as every Math call does:
+  `gap = Math.hypot(charger.x - robot.x, charger.y - robot.y)` follows
+  writes of either point, and
+  `$Drone.reach = Math.hypot($Drone.x - home.x, $Drone.y - home.y)`
+  follows each drone and the home. A mapping that calls it follows its
+  list or population, and errors roll back through the existing
+  transaction.
+- **Rendering.** Statements, `why`, `affects`, `--graph` and graph keys
+  show the call as written, as for every Math call.
+- **Unchanged.** Only calls of `Math.hypot` whose arguments evaluate
+  without error and are not undefined change; each raised
+  `TypeError("Math.hypot is not a function")`.
+  - `Math.hypot` read without a call is undefined, as the read of every
+    Math function is, and so is `Math["hypot"]`; `f = Math.hypot` leaves
+    `f` `null`, and `typeof Math.hypot` stays `"undefined"`.
+  - Object members, instance methods, functions and variables named
+    `hypot` keep their values, and `hypot(3, 4)` without a definition keeps
+    raising `ReferenceError("hypot is not defined")`.
+  - `Math.Hypot`, `Math.hypotenuse`, `String.hypot` and `hypot` on numbers
+    and lists keep their `TypeError`, and `Math.hypot = 1` keeps raising
+    `ReferenceError("Math is not defined")`.
+- The four entries beginning
+  `Nucleoid keeps the distance between two instances live with Math.hypot`
+  through `Nucleoid rolls back failed updates through Math.hypot` specify
+  the executable behavior. `tests/math_hypot.rs` executes the rest.
 
 ## Deferred suites
 

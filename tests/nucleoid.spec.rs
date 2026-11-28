@@ -23100,6 +23100,108 @@ ticket
 # return: "0042""#);
 }
 
+/// Nucleoid keeps the distance between two instances live with Math.hypot
+#[rustfmt::skip]
+#[test]
+fn keeps_the_distance_between_two_instances_live_with_math_hypot() {
+    let mut run = runner();
+    run(r#"class Point(x, y):
+    this.x = x
+    this.y = y"#);
+    run("robot = Point(1, 2)");
+    run("charger = Point(9, 17)");
+    run("gap = Math.hypot(charger.x - robot.x, charger.y - robot.y)");
+    assert_eq!(run("gap"), 17);
+    run("charger.x = 21");
+    assert_eq!(run("gap"), 25);
+    run("robot.y = -4");
+    assert_eq!(run("gap"), 29);
+    run(r#"gap
+
+# return: 29"#);
+}
+
+/// Nucleoid keeps Math.hypot distances live in class level rules
+#[rustfmt::skip]
+#[test]
+fn keeps_math_hypot_distances_live_in_class_level_rules() {
+    let mut run = runner();
+    run(r#"class Drone(name, x, y):
+    this.name = name
+    this.x = x
+    this.y = y"#);
+    run("home = {x: 2, y: 1}");
+    run("$Drone.reach = Math.hypot($Drone.x - home.x, $Drone.y - home.y)");
+    run(r#"scout = Drone("scout", -4, 9)"#);
+    run(r#"hauler = Drone("hauler", 17, 9)"#);
+    assert_eq!(run("[scout.reach, hauler.reach]"), serde_json::json!([10, 17]));
+    run("near = Drone.filter(drone -> drone.reach <= 10).map(drone -> drone.name)");
+    assert_eq!(run("near"), serde_json::json!(["scout"]));
+    run("home.x = 11");
+    assert_eq!(run("[scout.reach, hauler.reach]"), serde_json::json!([17, 10]));
+    assert_eq!(run("near"), serde_json::json!(["hauler"]));
+    run("scout.x = 5");
+    run(r#"Drone("relay", 14, 5)"#);
+    assert_eq!(run("near"), serde_json::json!(["scout", "hauler", "relay"]));
+    run(r#"near.length
+
+# return: 3"#);
+}
+
+/// Nucleoid measures lengths in three dimensions with Math.hypot
+#[rustfmt::skip]
+#[test]
+fn measures_lengths_in_three_dimensions_with_math_hypot() {
+    let mut run = runner();
+    run("crate = {w: 2, d: 3, h: 6}");
+    run("diagonal = Math.hypot(crate.w, crate.d, crate.h)");
+    assert_eq!(run("diagonal"), 7);
+    run("crate.w = 6");
+    assert_eq!(run("diagonal"), 9);
+    run("crate.d = 7");
+    assert_eq!(run("diagonal"), 11);
+    run("moves = [{x: 1, y: 2, z: 2}]");
+    run("lengths = moves.map(move -> Math.hypot(move.x, move.y, move.z))");
+    assert_eq!(run("lengths"), serde_json::json!([3]));
+    run("moves.push({x: -2, y: 6, z: -9})");
+    assert_eq!(run("lengths"), serde_json::json!([3, 11]));
+    run(r#"lengths
+
+# return: [3,11]"#);
+}
+
+/// Nucleoid rolls back failed updates through Math.hypot
+#[rustfmt::skip]
+#[test]
+fn rolls_back_failed_updates_through_math_hypot() {
+    let mut run = runner();
+    run(r#"dx = 6
+dy = 8
+step = Math.hypot(dx, dy)
+legs = []
+lengths = legs.map(leg -> Math.hypot(leg.dx, leg.dy, rise))
+failure = ""
+try:
+    legs.push({dx: 2, dy: 3})
+catch error:
+    failure = error
+assert(failure, ReferenceError("rise is not defined"))
+assert([legs, lengths], [[], []])
+rise = 6
+legs.push({dx: 2, dy: 3}, {dx: 6, dy: 7})
+assert(lengths, [7, 11])
+try:
+    dx = 15
+    legs.push({dx: 2, dy: 9})
+    assert([step, lengths], [17, [7, 11, 11]])
+    throw "UNDO"
+catch error:
+    assert(error, "UNDO")
+assert([step, legs.length, lengths], [10, 2, [7, 11]])
+step
+# return: 10"#);
+}
+
 /// Nucleoid tells two explanations apart with xor
 #[rustfmt::skip]
 #[test]

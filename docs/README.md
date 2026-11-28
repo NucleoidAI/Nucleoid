@@ -3039,6 +3039,44 @@ Full detail: [NUC 9](nuc-0009.md), [NUC 46](nuc-0046.md), [NUC 119](nuc-0119.md)
   No aliases, receiver methods or syntax are added. See the
   [cubing contract](../nucleoid.spec.md#reactive-cubing).
 
+- [NUC 159](nuc-0159.md) adds native static `Math.hypot(value, ...)`, the
+  square root of the sum of the squares of its arguments: the length of a
+  vector from its components, or the distance between two points from the
+  differences of their coordinates. It takes any number of arguments, and
+  `Math.hypot()` is `0`. The arguments evaluate once, left to right, the
+  supplied-Undefined gate applies, and every argument then converts as the
+  arguments of `Math.max` do, none ignored. An infinite argument gives
+  `Infinity`, even beside NaN; otherwise a NaN gives NaN. Signs do not
+  matter, so `Math.hypot(-7)` is `7` and `Math.hypot(-0)` is `0`. While the
+  largest magnitude lies between 2^-450 and 2^450, the result is exactly
+  `Math.sqrt(a * a + b * b + ...)`, exact for every integer Pythagorean
+  tuple; outside that range the arguments are scaled by a power of two
+  first, so `Math.hypot(1e200, 1e200)` stays finite and
+  `Math.hypot(3e-200, 4e-200)` is `5e-200`. Dependencies, live-null
+  deferral and rollback are those of every Math call, and native
+  `Math.hypot` value reads stay Undefined. No alias, receiver method or
+  syntax is added. See the
+  [hypotenuse contract](../nucleoid.spec.md#reactive-hypotenuse).
+
+### Reactive hypotenuse
+
+```
+velocity = {x: -3, y: 4, z: 12}
+speed = Math.hypot(velocity.x, velocity.y, velocity.z)
+dx = 5
+dy = -12
+ground = Math.hypot(dx, dy)
+assert([speed, ground], [13, 13])
+velocity.x = 6
+dx = -9
+assert([speed, ground], [14, 15])
+speed + ground
+```
+
+- This is the complete `Nucleoid keeps Euclidean lengths live with Math.hypot`
+  program in `tests/reference.md`, without title or expected-return metadata;
+  its expected return is `29`.
+
 ### Reactive cubing argument dependencies
 
 ```
@@ -3221,7 +3259,7 @@ assert(copied, -3)
 | `Object` | `Object()` -- a plain object, not an instance of any type |
 | `Boolean` | `Boolean(value)` |
 | `Number` | `Number.MAX_INTEGER` |
-| `Math` | `pow`, `sqrt`, `floor`, `round`, `max`, `min`, `clamp` ([NUC 21](nuc-0021.md)), `lerp` ([NUC 22](nuc-0022.md)), `saturate` ([NUC 23](nuc-0023.md)), `smoothstep(lower, upper, value)` (accepted [NUC 33](nuc-0033.md)), `smootherstep(lower, upper, value)` (accepted [NUC 35](nuc-0035.md)), `remap(start, end, targetStart, targetEnd, value)` (accepted [NUC 39](nuc-0039.md)), `copySign(value, sign)` ([NUC 142](nuc-0142.md)) |
+| `Math` | `pow`, `sqrt`, `floor`, `round`, `max`, `min`, `clamp` ([NUC 21](nuc-0021.md)), `lerp` ([NUC 22](nuc-0022.md)), `saturate` ([NUC 23](nuc-0023.md)), `smoothstep(lower, upper, value)` (accepted [NUC 33](nuc-0033.md)), `smootherstep(lower, upper, value)` (accepted [NUC 35](nuc-0035.md)), `remap(start, end, targetStart, targetEnd, value)` (accepted [NUC 39](nuc-0039.md)), `copySign(value, sign)` ([NUC 142](nuc-0142.md)), `hypot(value, ...)` ([NUC 159](nuc-0159.md)) |
 | `String` | `String.fromCharCode`; instance `charAt`, `length`, `lower`, `trim` and `strip`, their C# alias `Trim()` ([NUC 160](nuc-0160.md)), `replace`, `replaceAll` (accepted [NUC 42](nuc-0042.md)), `repeat`, `split`, `padStart` and `padEnd` ([NUC 111](nuc-0111.md)), their padding aliases `rjust` and `PadLeft` of `padStart` and `ljust` and `PadRight` of `padEnd` ([NUC 157](nuc-0157.md)), Python's `startswith`, `endswith` and `join(items)`, with the separator as the receiver ([NUC 110](nuc-0110.md)), Rust's `starts_with(prefix)` and `ends_with(suffix)` ([NUC 132](nuc-0132.md)), the size and emptiness methods `length()`, `size()`, `len()`, `isEmpty()`, `is_empty()` and `isNotEmpty()` ([NUC 116](nuc-0116.md)), the case conversion aliases `uppercase()`, `to_uppercase()` and `uppercased()` of `toUpperCase()`, and `lowercase()`, `to_lowercase()` and `lowercased()` of `toLowerCase()` ([NUC 118](nuc-0118.md)), and the reversals `reverse()` and `reversed()`, exactly `text[::-1]` ([NUC 131](nuc-0131.md)) |
 | `Date` | `Date()`, `Date(string)`, `Date(number)`, `Date.now()`, `Date.parse()`; instance `getTime`, `getYear`, `toDateString` |
 | `List` | `push`, `pop`, `filter`, `map`, their Ruby aliases `select` and `collect` ([NUC 134](nuc-0134.md)), `flatMap` (accepted [NUC 41](nuc-0041.md)), `flat` ([NUC 103](nuc-0103.md)), `reduce`, `find`, `some`, `every`, `slice`, `reverse` (a new list in reverse order), `sort` (in place, [NUC 58](nuc-0058.md)), `join`, `length`, and the queries `at`, `includes`, `indexOf`, `lastIndexOf`, `findIndex`, `findLast`, `findLastIndex` and `concat` ([NUC 61](nuc-0061.md)), `sum` ([NUC 68](nuc-0068.md)), `max` and `min` ([NUC 69](nuc-0069.md)), `distinct` ([NUC 71](nuc-0071.md)), `count(predicate)` ([NUC 73](nuc-0073.md)), `mode` ([NUC 75](nuc-0075.md)), `maxBy` and `minBy` ([NUC 77](nuc-0077.md)), `average` ([NUC 80](nuc-0080.md)), `median` ([NUC 84](nuc-0084.md)), `sortBy` ([NUC 105](nuc-0105.md)), `partition` ([NUC 108](nuc-0108.md)), `product` ([NUC 114](nuc-0114.md)), `variance` and `stdev` ([NUC 123](nuc-0123.md)), `quantile` ([NUC 124](nuc-0124.md)), `zip(other)` and `zip(other, combine)` ([NUC 129](nuc-0129.md)), the size and emptiness aliases `size()`, `len()`, `isEmpty()`, `is_empty()` and `isNotEmpty()` ([NUC 116](nuc-0116.md)), the first and last element aliases `first()`, `last()`, `first(predicate)` and `last(predicate)` ([NUC 117](nuc-0117.md)), and the reversal aliases `reversed()` and `toReversed()` of `reverse()` ([NUC 131](nuc-0131.md)); `sum`, `max`, `min` and `mode` also read as `sum of list` ([NUC 75](nuc-0075.md) revision 2) |
@@ -6411,6 +6449,7 @@ Math.csc(value)                         static reciprocal of sine in radians (NU
 Math.copySign(value, sign)               static magnitude with the converted non-NaN sign bit (NUC 142)
 Math.square(value)                       static intrinsic first-value multiplication by itself (NUC 143)
 Math.cube(value)                         ordered square-then-multiply of the intrinsic first value (NUC 146 candidate)
+Math.hypot(value, ...)                   static square root of the sum of the squares, without overflow (NUC 159)
 Name[0]  Name["id"]  Name.find(...)    address an instance
 value[start:end]  value[-n:]           slice, negative counts from the end
 Name[start:end]  Name[:]  Name[-n:]    instance list range (NUC 61)

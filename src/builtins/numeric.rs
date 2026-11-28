@@ -11,6 +11,7 @@ pub fn math(name: &str, arguments: &[Value]) -> Result<Value> {
 
     let result = match name {
         "max" | "min" => numeric_extremum(arguments.iter().map(Value::to_number), name == "max"),
+        "hypot" => numeric_hypot(arguments.iter().map(Value::to_number)),
         "random" => return Err(Error::type_error("Math.random is not supported")),
         "PI" => std::f64::consts::PI,
         "E" => std::f64::consts::E,
@@ -193,6 +194,37 @@ fn numeric_extremum(numbers: impl IntoIterator<Item = f64>, maximum: bool) -> f6
     })
 }
 
+const HYPOT_DIRECT_MAX: f64 = 2.907_354_897_182_427_6e135;
+const HYPOT_DIRECT_MIN: f64 = 3.439_552_567_074_349_4e-136;
+const HYPOT_GROW: f64 = 4.149_515_568_880_993e180;
+const HYPOT_SHRINK: f64 = 2.409_919_865_102_884e-181;
+
+fn numeric_hypot(numbers: impl Iterator<Item = f64> + Clone) -> f64 {
+    let mut largest = 0.0_f64;
+    for number in numbers.clone() {
+        if number.is_infinite() {
+            return f64::INFINITY;
+        }
+        largest = largest.max(number.abs());
+    }
+    let (scale, unscale) = hypot_scale(largest);
+    let sum = numbers.fold(0.0, |total, number| {
+        let scaled = number * scale;
+        total + scaled * scaled
+    });
+    sum.sqrt() * unscale
+}
+
+fn hypot_scale(largest: f64) -> (f64, f64) {
+    if largest > HYPOT_DIRECT_MAX {
+        (HYPOT_SHRINK, HYPOT_GROW)
+    } else if largest < HYPOT_DIRECT_MIN {
+        (HYPOT_GROW, HYPOT_SHRINK)
+    } else {
+        (1.0, 1.0)
+    }
+}
+
 /// `Math.<name>` read as a value rather than called.
 #[must_use]
 pub fn math_constant(name: &str) -> Option<Value> {
@@ -205,3 +237,6 @@ pub fn math_constant(name: &str) -> Option<Value> {
         _ => return None,
     })
 }
+
+#[cfg(test)]
+mod tests;

@@ -4672,6 +4672,42 @@ receipt.length
   padded. See [NUC 157](nuc-0157.md) and the
   [root contract](../nucleoid.spec.md#padding-method-aliases).
 
+## Reactive hypotenuse
+
+**Math.hypot keeps the antennas that serve a moving phone live**
+
+```nuc
+class Antenna(name, x, y, reach):
+    this.name = name
+    this.x = x
+    this.y = y
+    this.reach = reach
+phone = {x: 3, y: 2}
+$Antenna.distance = Math.hypot($Antenna.x - phone.x, $Antenna.y - phone.y)
+tower = Antenna("tower", 15, 7, 13)
+mast = Antenna("mast", -9, -7, 14)
+assert([tower.distance, mast.distance], [13, 15])
+serving = Antenna.filter(antenna -> antenna.distance <= antenna.reach).map(antenna -> antenna.name)
+assert(serving, ["tower"])
+phone.y = -2
+assert([tower.distance, mast.distance], [15, 13])
+assert(serving, ["mast"])
+Antenna("relay", 6, 2, 5)
+assert(serving, ["mast", "relay"])
+serving
+# return: ["mast","relay"]
+```
+
+- Each antenna's class-level rule measures its distance to the phone,
+  `Math.hypot($Antenna.x - phone.x, $Antenna.y - phone.y)`, and an antenna
+  serves the phone while that distance is within its reach. The tower's
+  distance of exactly 13 is within its reach of 13, because `Math.hypot`
+  gives whole distances exactly.
+- When the phone moves, every antenna's distance follows, so the tower
+  hands the phone over to the mast, and the relay built last joins the
+  antennas that serve it. See [NUC 159](nuc-0159.md) and the
+  [root contract](../nucleoid.spec.md#reactive-hypotenuse).
+
 ## Symmetric difference reasoning selections
 
 **Xor lists what tells two diagnoses apart**

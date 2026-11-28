@@ -3166,6 +3166,36 @@ row
   already holds ten characters, such as `"Badge reader"`, is not padded.
   See the [root contract](nucleoid.spec.md#padding-method-aliases).
 
+## Reactive hypotenuse
+
+**Math.hypot keeps a drone's distance to its landing pad live**
+
+```nuc
+drone = {x: 7, y: 10}
+pad = {x: 1, y: 2}
+distance = Math.hypot(drone.x - pad.x, drone.y - pad.y)
+assert(distance, 10)
+drone.x = 16
+assert(distance, 17)
+drone.y = 22
+assert(distance, 25)
+distance
+# return: 25
+```
+
+- [NUC 159](docs/nuc-0159.md) adds `Math.hypot(value, ...)`, the square
+  root of the sum of the squares of its arguments: the straight-line
+  distance between two points from the differences of their coordinates,
+  or the length of a vector from its components, as JavaScript's
+  `Math.hypot` and Python's `math.hypot` compute it.
+- `distance` is a standing declaration, so it follows every move of the
+  drone. Each distance here is whole, as `Math.hypot` gives it exactly
+  for every integer Pythagorean triple, and it is what
+  `((drone.x - pad.x) ** 2 + (drone.y - pad.y) ** 2) ** 0.5` gives,
+  without squaring each difference by hand or overflowing for large
+  coordinates. See the
+  [root contract](nucleoid.spec.md#reactive-hypotenuse).
+
 ## Symmetric difference reasoning selections
 
 **Xor tells two alarms apart**

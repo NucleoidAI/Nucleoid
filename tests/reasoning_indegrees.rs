@@ -206,14 +206,14 @@ fn exactly_two_paired_document_cases_keep_all_six_assertions_and_returns() {
             SPEC_TITLE,
             "counts = total |> why |> indegrees",
             "counts = (total |> why).map(step -> step.from.length)",
-            894,
+            898,
         ),
         (
             include_str!("reference.md"),
             REFERENCE_TITLE,
             "impact = source |> affects |> indegrees",
             "impact = (source |> affects).map(step -> step.from.length)",
-            174,
+            175,
         ),
     ] {
         let cases = common::cases(document);
