@@ -91,7 +91,7 @@ fn string_transform(
         "upper" | "toUpperCase" | "uppercase" | "to_uppercase" | "uppercased" => {
             Value::String(receiver.to_uppercase())
         }
-        "trim" | "strip" => Value::String(receiver.trim().to_string()),
+        "trim" | "strip" | "Trim" => Value::String(receiver.trim().to_string()),
         "reverse" | "reversed" => Value::String(receiver.chars().rev().collect()),
         "split" => {
             let separator = first.to_string();

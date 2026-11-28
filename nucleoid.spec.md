@@ -925,6 +925,47 @@ operator-chain diagnostics and source positions are preserved.
   specify the executable behavior. `tests/padding_aliases.rs` executes the
   rest.
 
+## C# string trimming method alias
+
+- [NUC 160](docs/nuc-0160.md) adds only `TEXT.Trim()` on String receivers,
+  exactly the accepted `TEXT.trim()` and `TEXT.strip()` operation described
+  by [Python string method aliases](#python-string-method-aliases).
+  The three names share Rust's `str::trim`: remove leading and trailing
+  Unicode whitespace, return text, and preserve internal whitespace and
+  every remaining character without normalization. Empty or all-whitespace
+  text returns `""`; zero-width space and the byte-order-mark character
+  are not trimmed.
+- The receiver evaluates first, then every supplied argument once, left to
+  right. Arguments are evaluated and ignored, not character sets or
+  patterns: `"  xoxo  ".Trim("x")` returns `"xoxo"`. Argument errors
+  propagate before trimming, and null reads in standing declarations keep
+  their accepted hold-and-resume behavior.
+- Declarations and class-level rules depend on the receiver and arguments
+  as written: `clean = raw.Trim(ignored)` follows `raw` and `ignored`,
+  and `$Label.display = $Label.raw.Trim()` follows each label's `raw`.
+  Failed updates roll back through the existing transaction. Explanations,
+  statements and graph keys retain `Trim`, never rewrite it to `trim`.
+- Only a call on a String receiver changes from the existing
+  `TypeError("<text>.Trim is not a function")` to trimming. Every other
+  receiver keeps its route: callable object properties and instance
+  methods named `Trim` still run their own code, and ordinary fields,
+  variables, functions and member reads keep their meanings.
+  A null or undefined receiver skips arguments and returns undefined;
+  `text.Trim` without a call remains undefined.
+- Static `String.Trim(text)` keeps
+  `TypeError("String.Trim is not a function")`, `(5).Trim()` keeps
+  `TypeError("number.Trim is not a function")`, and `text.Trim = 1`
+  keeps `TypeError("Cannot assign 'Trim' on string")`. Replacing a standing
+  call's receiver re-evaluates its written method name on the new value;
+  a failed change to a number rolls back with the existing `number.Trim`
+  diagnostic. The old `trim` and `strip` names and NUC 157's padding
+  aliases remain unchanged.
+- This is one familiar C# spelling, not .NET overloads or complete C#
+  compatibility. No `TrimStart`, `TrimEnd`, case-insensitive dispatch,
+  character/pattern trimming, grammar, keyword, public item or dependency
+  is added. `tests/csharp_string_trimming_alias.rs` exercises the alias
+  without changing any existing executable specification program.
+
 ## Bare single-parameter named arrows
 
 A named arrow definition or method may spell `def double(amount) => amount * 2`
