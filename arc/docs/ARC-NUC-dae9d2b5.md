@@ -6,12 +6,12 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Item | Status |
 | --- | --- |
 | Puzzle | [`data/training/dae9d2b5.json`](../data/training/dae9d2b5.json) |
-| Instruction dataset | [`dataset.dae9d2b5.json`](../src/dataset/dataset.dae9d2b5.json): 5 original training pairs followed by 2 test pairs, 14 whole panel-figure instances, written on 8-Nov-2026; colors written as numbers instead of letters on 8-Nov-2026; `volume` added as the sixth standard entry on 17-Nov-2026; since 27-Nov-2026 every rule is guarded by kind, and one synthesized use case of kind `unknown` follows the last pair |
+| Instruction dataset | [`dataset.dae9d2b5.json`](../src/dataset/dataset.dae9d2b5.json): 5 original training pairs followed by 2 test pairs, 14 whole panel-figure instances, written on 8-Nov-2026; colors written as numbers instead of letters on 8-Nov-2026; `volume` added as the sixth standard entry on 17-Nov-2026; since 27-Nov-2026 every rule is guarded by kind; one synthesized use case of kind `unknown` followed the last pair from 27-Nov-2026 until the user removed it on 28-Nov-2026 |
 | Output canvas | `FIT` |
 | Nucleoid enhancements | None; accepted Nucleoid expresses the model |
 | Solver changes | JSON-only message construction suggested in `src/lib/llm.ts`, `src/analyzer.ts`, and `src/visualizer.ts`; not applied; since 17-Nov-2026 `Matrix.locate` measures each object's `volume`, which `object.implementation` receives as `input_volume` |
 | Solver runs | None; message-format and process-environment prerequisites blocked the run; difference unknown |
-| Updated | 27-Nov-2026 |
+| Updated | 28-Nov-2026 |
 
 ## Puzzle
 
@@ -257,6 +257,23 @@ first, as in
 Every snapshot replays unchanged, because the runtime orders a state's keys by
 name and every implementation names its arguments.
 
+### Unknown use case removed
+
+On 28-Nov-2026, at the user's request, the synthesized use case left the
+dataset, because not every dataset needs one. Its pair, which
+[Kind guards and unknown use case](#kind-guards-and-unknown-use-case)
+describes, held one object of kind `unknown`, `of927cf52fc5c`; no rule names
+`unknown`, so its output only repeated its input. The dataset again holds the
+puzzle's original pairs alone, its 5 training pairs and its 2 test pairs, with
+14 instances. Every remaining pair, instance, snapshot, and rule is unchanged
+byte for byte, and [`dataset.pdf`](../dataset.pdf) was regenerated. The
+[dataset grammar](../arc.ebnf) is unchanged, because the remaining
+implementations use every form that the use case's did. Only
+`dataset.27a28665.json` keeps one, because a rule of its own,
+`if $Object.kind is unknown:`, gives that use case's point color 0. No NUC was
+requested, so no proposal strategy was selected, and no solver run has measured
+this version, so its difference is unknown, not zero.
+
 ## Runs
 
 ### 8-Nov-2026 -- Run not started
@@ -297,3 +314,6 @@ remain unchanged. No NUC outcome exists.
 - **The kind-guard version is unmeasured.** No solver run has measured the
   27-Nov-2026 version with kind guards and its unknown use case, so its effect
   on this puzzle's result is unknown.
+- **The version without the use case is unmeasured.** No solver run has
+  measured the 28-Nov-2026 version, so whether dropping the use case changes
+  this puzzle's result is unknown.

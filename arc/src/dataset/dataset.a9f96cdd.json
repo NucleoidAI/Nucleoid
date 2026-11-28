@@ -154,36 +154,6 @@
           "output_value": {"corner_colors":[[3,6],[8,7]],"height":3,"id":"o1669859e3a8b","kind":"l7544","orientation":0,"volume":2,"width":1,"x":3,"y":0}
         }
       ]
-    },
-    {
-      "input_matrix": [
-        [0, 0, 0, 0, 0],
-        [0, 2, 2, 0, 0],
-        [0, 0, 0, 0, 0]
-      ],
-      "output_matrix": [
-        [0, 0, 0, 0, 0],
-        [0, 2, 2, 0, 0],
-        [0, 0, 0, 0, 0]
-      ],
-      "instances": [
-        {
-          "instance_name": "oe0e432fab7e5",
-          "input_instance_matrix": [
-            [0, 0, 0, 0, 0],
-            [0, 2, 2, 0, 0],
-            [0, 0, 0, 0, 0]
-          ],
-          "output_instance_matrix": [
-            [0, 0, 0, 0, 0],
-            [0, 2, 2, 0, 0],
-            [0, 0, 0, 0, 0]
-          ],
-          "implementation": "oe0e432fab7e5 is Object(kind=unknown, x=1, y=1, width=2, height=1, orientation=90, volume=2)",
-          "input_value": {"height":1,"id":"oe0e432fab7e5","kind":"unknown","orientation":90,"volume":2,"width":2,"x":1,"y":1},
-          "output_value": {"height":1,"id":"oe0e432fab7e5","kind":"unknown","orientation":90,"volume":2,"width":2,"x":1,"y":1}
-        }
-      ]
     }
   ]
 }

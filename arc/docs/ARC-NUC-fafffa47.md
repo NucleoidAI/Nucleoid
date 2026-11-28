@@ -6,12 +6,12 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Item | Status |
 | --- | --- |
 | Puzzle | [`data/training/fafffa47.json`](../data/training/fafffa47.json) |
-| Instruction dataset | [`dataset.fafffa47.json`](../src/dataset/dataset.fafffa47.json): 5 original training pairs followed by 1 test pair, 12 whole panel-figure instances, written on 9-Nov-2026; `volume` added as the sixth standard entry on 17-Nov-2026; since 27-Nov-2026 every rule is guarded by kind, and one synthesized use case of kind `unknown` follows the last pair; since 27-Nov-2026 no rule changes `kind`, so every output keeps its input kind |
+| Instruction dataset | [`dataset.fafffa47.json`](../src/dataset/dataset.fafffa47.json): 5 original training pairs followed by 1 test pair, 12 whole panel-figure instances, written on 9-Nov-2026; `volume` added as the sixth standard entry on 17-Nov-2026; since 27-Nov-2026 every rule is guarded by kind; since 27-Nov-2026 no rule changes `kind`, so every output keeps its input kind; one synthesized use case of kind `unknown` followed the last pair from 27-Nov-2026 until the user removed it on 28-Nov-2026 |
 | Output canvas | `FIT` |
 | Nucleoid enhancements | None requested; accepted Nucleoid expresses the model. A quote-free NUC for other datasets' quotes was drafted and then withdrawn before evaluation, once the accepted [NUC 95](../../docs/nuc-0095.md) made those quotes expressible |
 | Solver changes | Suggested, not applied: an output canvas mode that frames one panel, and class declarations that stay in `declarations[0]`; since 17-Nov-2026 `Matrix.locate` measures each object's `volume`, which `object.implementation` receives as `input_volume` |
 | Solver runs | 1 local run on 9-Nov-2026: exit 1, a failed run, `ReferenceError: Obj is not defined` in the analysis stage; difference unknown |
-| Updated | 27-Nov-2026 |
+| Updated | 28-Nov-2026 |
 
 ## Puzzle
 
@@ -327,6 +327,23 @@ and no other value changed. No NUC was requested, so no proposal strategy was
 selected, and no solver run has measured this version, so its difference is
 unknown, not zero.
 
+### Unknown use case removed
+
+On 28-Nov-2026, at the user's request, the synthesized use case left the
+dataset, because not every dataset needs one. Its pair, which
+[Kind guards and unknown use case](#kind-guards-and-unknown-use-case)
+describes, held one object of kind `unknown`, `o19bf1ed26969`; no rule names
+`unknown`, so its output only repeated its input. The dataset again holds the
+puzzle's original pairs alone, its 5 training pairs and its test pair, with 12
+instances. Every remaining pair, instance, snapshot, and rule is unchanged byte
+for byte, and [`dataset.pdf`](../dataset.pdf) was regenerated. The
+[dataset grammar](../arc.ebnf) is unchanged, because the remaining
+implementations use every form that the use case's did. Only
+`dataset.27a28665.json` keeps one, because a rule of its own,
+`if $Object.kind is unknown:`, gives that use case's point color 0. No NUC was
+requested, so no proposal strategy was selected, and no solver run has measured
+this version, so its difference is unknown, not zero.
+
 ## Runs
 
 | Date | Command | Runtime | Exit status | Difference | Elapsed |
@@ -393,3 +410,6 @@ run. The invocation authorizes one run, so none was repeated.
 - **The kind-guard version is unmeasured.** No solver run has measured the
   27-Nov-2026 version with kind guards and its unknown use case, so its effect
   on this puzzle's result is unknown.
+- **The version without the use case is unmeasured.** No solver run has
+  measured the 28-Nov-2026 version, so whether dropping the use case changes
+  this puzzle's result is unknown.

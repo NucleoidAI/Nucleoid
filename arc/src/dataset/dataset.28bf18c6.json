@@ -164,42 +164,6 @@
           "output_value": {"color":3,"height":3,"id":"o4b7b41624747","kind":"l9100","orientation":0,"repeat_count":2,"repeat_direction":"right","volume":10,"width":6,"x":0,"y":0}
         }
       ]
-    },
-    {
-      "input_matrix": [
-        [8, 8, 8, 8, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0]
-      ],
-      "output_matrix": [
-        [8, 8, 8, 8]
-      ],
-      "instances": [
-        {
-          "instance_name": "ocff6149c664f",
-          "input_instance_matrix": [
-            [8, 8, 8, 8, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0]
-          ],
-          "output_instance_matrix": [
-            [8, 8, 8, 8]
-          ],
-          "implementation": "ocff6149c664f is Object(kind=unknown, x=0, y=0, width=4, height=1, orientation=90, volume=4, color=8)",
-          "input_value": {"color":8,"height":1,"id":"ocff6149c664f","kind":"unknown","orientation":90,"volume":4,"width":4,"x":0,"y":0},
-          "output_value": {"color":8,"height":1,"id":"ocff6149c664f","kind":"unknown","orientation":90,"volume":4,"width":4,"x":0,"y":0}
-        }
-      ]
     }
   ]
 }

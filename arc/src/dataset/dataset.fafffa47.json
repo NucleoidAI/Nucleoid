@@ -406,42 +406,6 @@
           "output_value": {"fill_color":2,"height":2,"holes":[[0,0],[0,1],[2,1],[1,2],[2,2]],"id":"o89ee9fd110b1","kind":"l9100","orientation":0,"points":[[0,1],[1,2]],"volume":2,"width":2,"x":0,"y":1}
         }
       ]
-    },
-    {
-      "input_matrix": [
-        [9, 0, 9],
-        [9, 9, 9],
-        [9, 0, 9],
-        [0, 0, 0],
-        [0, 0, 0],
-        [0, 0, 0]
-      ],
-      "output_matrix": [
-        [9, 0, 9],
-        [9, 9, 9],
-        [9, 0, 9]
-      ],
-      "instances": [
-        {
-          "instance_name": "o19bf1ed26969",
-          "input_instance_matrix": [
-            [9, 0, 9],
-            [9, 9, 9],
-            [9, 0, 9],
-            [0, 0, 0],
-            [0, 0, 0],
-            [0, 0, 0]
-          ],
-          "output_instance_matrix": [
-            [9, 0, 9],
-            [9, 9, 9],
-            [9, 0, 9]
-          ],
-          "implementation": "o19bf1ed26969 is Object(kind=unknown, x=0, y=0, width=3, height=3, orientation=0, volume=7, holes=[[1, 0], [1, 2]])",
-          "input_value": {"height":3,"holes":[[1,0],[1,2]],"id":"o19bf1ed26969","kind":"unknown","orientation":0,"volume":7,"width":3,"x":0,"y":0},
-          "output_value": {"height":3,"holes":[[1,0],[1,2]],"id":"o19bf1ed26969","kind":"unknown","orientation":0,"volume":7,"width":3,"x":0,"y":0}
-        }
-      ]
     }
   ]
 }

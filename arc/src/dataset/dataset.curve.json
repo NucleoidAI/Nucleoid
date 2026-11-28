@@ -335,52 +335,6 @@
           "output_value": {"height":2,"id":"o5fb3f33a329f","kind":"l7544","orientation":180,"rim_color":8,"vertex_color":4,"volume":3,"width":3,"x":1,"y":4}
         }
       ]
-    },
-    {
-      "input_matrix": [
-        [0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 9, 0, 0, 0],
-        [0, 0, 0, 9, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0]
-      ],
-      "output_matrix": [
-        [0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 9, 0, 0, 0],
-        [0, 0, 0, 9, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0]
-      ],
-      "instances": [
-        {
-          "instance_name": "od02041afcbf9",
-          "input_instance_matrix": [
-            [0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 9, 0, 0, 0],
-            [0, 0, 0, 9, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0]
-          ],
-          "output_instance_matrix": [
-            [0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 9, 0, 0, 0],
-            [0, 0, 0, 9, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0]
-          ],
-          "implementation": "od02041afcbf9 is Object(kind=unknown, x=3, y=2, width=1, height=2, orientation=0, volume=2, vertex_color=9)",
-          "input_value": {"height":2,"id":"od02041afcbf9","kind":"unknown","orientation":0,"vertex_color":9,"volume":2,"width":1,"x":3,"y":2},
-          "output_value": {"height":2,"id":"od02041afcbf9","kind":"unknown","orientation":0,"vertex_color":9,"volume":2,"width":1,"x":3,"y":2}
-        }
-      ]
     }
   ]
 }

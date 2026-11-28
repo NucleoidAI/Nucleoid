@@ -411,34 +411,6 @@
           "output_value": {"fill_color":6,"height":3,"id":"o187535fe2ed0","kind":"l9100","orientation":0,"volume":5,"width":3,"x":0,"y":0}
         }
       ]
-    },
-    {
-      "input_matrix": [
-        [4, 0, 4, 0, 0, 0],
-        [4, 4, 4, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0]
-      ],
-      "output_matrix": [
-        [4, 0, 4],
-        [4, 4, 4]
-      ],
-      "instances": [
-        {
-          "instance_name": "of927cf52fc5c",
-          "input_instance_matrix": [
-            [4, 0, 4, 0, 0, 0],
-            [4, 4, 4, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0]
-          ],
-          "output_instance_matrix": [
-            [4, 0, 4],
-            [4, 4, 4]
-          ],
-          "implementation": "of927cf52fc5c is Object(kind=unknown, x=0, y=0, width=3, height=2, orientation=0, volume=5)",
-          "input_value": {"height":2,"id":"of927cf52fc5c","kind":"unknown","orientation":0,"volume":5,"width":3,"x":0,"y":0},
-          "output_value": {"height":2,"id":"of927cf52fc5c","kind":"unknown","orientation":0,"volume":5,"width":3,"x":0,"y":0}
-        }
-      ]
     }
   ]
 }

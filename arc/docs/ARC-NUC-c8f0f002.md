@@ -6,12 +6,12 @@ the solver and Nucleoid changes it needed, its runs, and what is still open.
 | Item | Status |
 | --- | --- |
 | Puzzle | [`data/training/c8f0f002.json`](../data/training/c8f0f002.json) |
-| Instruction dataset | [`dataset.c8f0f002.json`](../src/dataset/dataset.c8f0f002.json): the puzzle's 3 original training pairs and its test pair, 12 color-region instances, 3 in each pair; committed with this record; condition respelled with `is` later on 6-Nov-2026; shared orientation comment added on 6-Nov-2026; descriptive `implementation` comments added on 7-Nov-2026; colors written as letters on 8-Nov-2026; respelled on 8-Nov-2026 with the `is` assignments of NUC 93 and bare words, every snapshot unchanged; colors written as numbers again on 8-Nov-2026; `volume` added as the sixth standard entry on 17-Nov-2026; since 27-Nov-2026 every rule is guarded by kind, and one synthesized use case of kind `unknown` follows the last pair |
+| Instruction dataset | [`dataset.c8f0f002.json`](../src/dataset/dataset.c8f0f002.json): the puzzle's 3 original training pairs and its test pair, 12 color-region instances, 3 in each pair; committed with this record; condition respelled with `is` later on 6-Nov-2026; shared orientation comment added on 6-Nov-2026; descriptive `implementation` comments added on 7-Nov-2026; colors written as letters on 8-Nov-2026; respelled on 8-Nov-2026 with the `is` assignments of NUC 93 and bare words, every snapshot unchanged; colors written as numbers again on 8-Nov-2026; `volume` added as the sixth standard entry on 17-Nov-2026; since 27-Nov-2026 every rule is guarded by kind; one synthesized use case of kind `unknown` followed the last pair from 27-Nov-2026 until the user removed it on 28-Nov-2026 |
 | Output canvas | `EXACT` |
 | Nucleoid enhancements | None requested, so no proposal strategy was selected and strategy learning did not apply; the rule uses the class-level `@first` anchor of [NUC 55](../../docs/nuc-0055.md), built on the state versions of [NUC 53](../../docs/nuc-0053.md), and the accepted `is` of [NUC 86](../../docs/nuc-0086.md) |
 | Solver changes | None applied or suggested; the JSON-only message question carried over from earlier records stays open; since 8-Nov-2026 every respelled dataset needs `is` assignments, which `src/lib/nucleoid.ts` enabled with `--is-assignment` until `d945213` made them the default; since 17-Nov-2026 `Matrix.locate` measures each object's `volume`, which `object.implementation` receives as `input_volume` |
 | Solver runs | 1 local run on 6-Nov-2026: exit 0, difference 0, before the `is` respelling; none of the current version; none of the 8-Nov-2026 `is` version |
-| Updated | 27-Nov-2026 |
+| Updated | 28-Nov-2026 |
 
 ## Puzzle
 
@@ -431,6 +431,23 @@ first, as in
 Every snapshot replays unchanged, because the runtime orders a state's keys by
 name and every implementation names its arguments.
 
+### Unknown use case removed
+
+On 28-Nov-2026, at the user's request, the synthesized use case left the
+dataset, because not every dataset needs one. Its pair, which
+[Kind guards and unknown use case](#kind-guards-and-unknown-use-case)
+describes, held one object of kind `unknown`, `oe1767cd89f3c`; no rule names
+`unknown`, so its output only repeated its input. The dataset again holds the
+puzzle's original pairs alone, its 3 training pairs and its test pair, with 12
+instances. Every remaining pair, instance, snapshot, and rule is unchanged byte
+for byte, and [`dataset.pdf`](../dataset.pdf) was regenerated. The
+[dataset grammar](../arc.ebnf) is unchanged, because the remaining
+implementations use every form that the use case's did. Only
+`dataset.27a28665.json` keeps one, because a rule of its own,
+`if $Object.kind is unknown:`, gives that use case's point color 0. No NUC was
+requested, so no proposal strategy was selected, and no solver run has measured
+this version, so its difference is unknown, not zero.
+
 ## Runs
 
 | Date | Command | Runtime | Exit status | Difference | Elapsed |
@@ -502,3 +519,6 @@ zero.
 - **The kind-guard version is unmeasured.** No solver run has measured the
   27-Nov-2026 version with kind guards and its unknown use case, so its effect
   on this puzzle's result is unknown.
+- **The version without the use case is unmeasured.** No solver run has
+  measured the 28-Nov-2026 version, so whether dropping the use case changes
+  this puzzle's result is unknown.

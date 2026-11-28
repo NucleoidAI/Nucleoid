@@ -375,14 +375,15 @@ are additional entries at the same level as the training pairs, in the same
 preserve every original cell, color, position, zero border, and canvas
 dimension. `/arc-dataset` infers one rule set from the training pairs and
 annotates every pair with it, rather than synthesizing varieties or creating
-numbered copies. The one exception, at the user's request, is that every
-dataset ends with one synthesized use case after its last pair: an object
-whose shape the dataset's pairs never show, constructed with `kind=unknown`
-and annotated by the same rules, as each dataset's paragraph below describes.
-The rules transform only the kinds they are written for, so they leave that
-object unchanged and its output repeats its input, except in
-`dataset.27a28665.json`, whose own `unknown` case gives its point color 0 and
-no cell. `document()` includes a puzzle's own dataset in that puzzle's
+numbered copies. The one exception, at the user's request, is
+`dataset.27a28665.json`, which ends with one synthesized use case after its
+last pair: a block whose shape none of its pairs shows, constructed with
+`kind=unknown` and annotated by the same rules, as its paragraph below
+describes. Its own `unknown` case gives that block's point color 0 and no
+cell. No other puzzle dataset has a rule for the unknown kind, and none has a
+use case: its rules transform only the kinds they are written for, so such an
+object would only repeat its input.
+`document()` includes a puzzle's own dataset in that puzzle's
 runs, so a run of a puzzle that has a dataset receives its expected test
 output in the few-shot context. That is intended: the datasets are being
 prepared as few-shot examples, and these runs are not yet held-out tests.
@@ -392,7 +393,7 @@ The genesis datasets are `dataset.core.json`, `dataset.extension.json`,
 the genesis puzzle `3aa6fb7a`, which has no `dataset.3aa6fb7a.json`, and every
 run receives them, with or without `--only-puzzle-dataset`. Their pairs are
 synthesized varieties of corners, curves, and lines rather than original
-training or test pairs, so they contain no test pair. Each ends with three
+training or test pairs, so they contain no test pair. Each ends with two
 synthesized pairs on
 the genesis puzzle's 7 by 7 canvas, annotated with that dataset's own
 declarations. The first holds a single object: a color-9 corner at
@@ -400,23 +401,18 @@ orientation 135 with its outside color-4 marker (`dataset.core.json`), a
 color-4 corner at orientation 45 with its inside color-7 marker
 (`dataset.extension.json`), a color-9 point with its color-2 rim below
 (`dataset.curve.json`), and a vertical line that extends down from its top
-endpoint (`dataset.line.json`). The second holds two objects: color-9 corners
+endpoint (`dataset.line.json`). The last holds two objects: color-9 corners
 at orientations 45 and 315 with their outside color-4 markers, color-4
 corners at orientations 225 and 135 with their inside color-7 markers, a
 color-9 point with its color-2 rim below and a color-4 point with its color-8
 rim above, and a vertical line that extends up from its bottom endpoint with
-a horizontal line that extends left from its right endpoint. The third, at
-the user's request, is the dataset's use case: one object in the dataset's
-colors whose shape no other pair of the dataset shows, under any turn or
-mirror, constructed with `kind=unknown`, which no rule changes, so its output
-repeats its input, as the sentence on each dataset below describes.
+a horizontal line that extends left from its right endpoint.
 Each genesis class takes the optional `kind` first, then the standard entries
 `x`, `y`, `width`, `height`, `orientation`, and `volume`, then its descriptive
 properties in their existing order, and every implementation passes its object's
 kind first, as a bare word, `kind=l6747` for a corner, `kind=l7544` for a point,
-`kind=l8001` for a line, and `kind=unknown` for the object of the use case, and
-then the input shape's bounding-box `width` and `height` and its input mask's
-`volume`, its number of nonzero cells. The class
+or `kind=l8001` for a line, and then the input shape's bounding-box `width` and
+`height` and its input mask's `volume`, its number of nonzero cells. The class
 default `kind: str = 'default'` names no geometry and applies to no pair.
 Every rule transforms only the objects of its dataset's kind: each `if` opens
 with `$Object.kind is` and that kind, joined to its other conditions with `and`, as
@@ -424,8 +420,8 @@ in `if $Object.kind is l7544 and $Object.vertex_color is 4:`, and the line's vol
 rule sits under `if $Object.kind is l8001:`. No rule assigns `kind`, so every
 object keeps its input kind in its output, and each guard reads the live kind,
 which never changes. No
-rule reads other objects, and an object of any other kind, `unknown`, the
-default `default`, or an invented one, matches no rule and keeps its input
+rule reads other objects, and an object of any other kind, such as the
+default `default` or an invented one, matches no rule and keeps its input
 state, so it needs no rule of its own. A rule
 that grows a shape computes its new size
 from its first values in its kind's branch: a core corner
@@ -433,21 +429,9 @@ grows from 2 by 2 to 3 by 3 with its outside marker, and its origin moves one
 column left when it points west, at orientation 225 or 315, and one row up
 when it points north, at orientation 45 or 315; a curve point grows from
 1 by 1 to 3 by 2 with its rim; and a line of 3 or 4 cells grows by one cell,
-one column wider when horizontal and one row taller when vertical.
-`dataset.core.json` ends with its use case, a straight bar of three color-9
-cells in one row, the tromino that is no corner, at orientation 90 as a
-horizontal line without a head. Its implementation passes `kind=unknown` and
-colors 9, which meet the corner rule's color condition, but the rule's guard
-`$Object.kind is l6747` leaves the bar out, so it gains no marker and its
-output repeats its input. An
+one column wider when horizontal and one row taller when vertical. An
 extension corner keeps its 3 by 3 size, because its inside marker fills a
-cell of its own box. `dataset.extension.json` ends with its use case, a
-color-4 T of five cells in a 3 by 3 box, its full top row and the two cells
-below its middle, which has a full edge row but no full edge column, so it is
-no corner and takes orientation 0. Its implementation passes `kind=unknown`
-and colors 4, which meet the corner rule's color condition, but the rule's guard
-`$Object.kind is l6747` leaves the T out: it gains no marker, and its
-output repeats its input. The core and extension markers each add one cell with
+cell of its own box. The core and extension markers each add one cell with
 `$Object.volume is $Object.volume@first + 1`, and the curve rim adds two with
 `$Object.volume is $Object.volume@first + 2`, in the same branches; a line, a box
 one cell thick that its cells fill, takes
@@ -458,28 +442,15 @@ number of nonzero cells, so `output_value.x` and `output_value.y` equal
 `output_x` and `output_y`. A line points toward its color-8 endpoint: its
 orientation is 270, 90, 0, or 180 when the endpoint is on the left, on the
 right, at the top, or at the bottom, and it keeps that orientation as it grows
-away from the endpoint. `dataset.line.json` ends with its use case, a line
-that bends: a color-8 cell and two color-6 cells along a row, with one more
-color-6 cell below the last, a corner at orientation 45, where its top row and
-right column meet. Its implementation passes `kind=unknown`, so every rule's
-guard, `$Object.kind is l8001`, the volume rule's included,
-leaves it out: no rule extends it or sets
-its `volume`, 4, to the 6 cells of its box, and its output repeats its
-input. A curve point, a single cell, is at orientation 0, and
+away from the endpoint. A curve point, a single cell, is at orientation 0, and
 its rim makes a V that points toward the point, its vertex: the color-4 rule
 sets `$Object.orientation is 180`, because its color-8 arms go up and the V points
 down, while a color-9 point keeps 0, because its color-2 arms go down and the
-V points up. `dataset.curve.json` ends with its use case, a vertical domino of
-two color-9 cells, which is no single point and takes orientation 0 as a
-vertical line without a head. Its implementation passes `kind=unknown` and
-`vertex_color=9`, which meets the color-9 rule's condition, but the rule's guard
-`$Object.kind is l7544` leaves the domino out: it gains no rim, and
-its output repeats its
-input. The genesis rules match kinds, categorical colors, and orientations with
-`is`, the spelling of `==` that [NUC 86](../docs/nuc-0086.md) adds, as in the
-line header `if $Object.kind is l8001 and $Object.orientation is 270:`, and the line
-rules assign bare
-words with `is`, as in `$Object.extension_direction is right`.
+V points up. The genesis rules match kinds, categorical colors, and
+orientations with `is`, the spelling of `==` that
+[NUC 86](../docs/nuc-0086.md) adds, as in the line header
+`if $Object.kind is l8001 and $Object.orientation is 270:`, and the line rules
+assign bare words with `is`, as in `$Object.extension_direction is right`.
 
 Instance `implementation` snippets use named constructor arguments whose names
 match the parameters in their class declarations. The canvas size is not one
@@ -493,8 +464,8 @@ Every class takes `kind` first as an optional parameter whose
 default, `kind: str = 'default'`, names no geometry, and its constructor stores
 it first, with `this.kind is kind`. Every implementation passes its object's
 kind, such as `kind=l9100`, `kind=l4262` for a block shape of
-`dataset.27a28665.json`, or `kind=unknown` for the object of a dataset's use
-case, so no pair's object takes the default. In every dataset but
+`dataset.27a28665.json`, or `kind=unknown` for the object of its use case, so
+no pair's object takes the default. In every dataset but
 `dataset.27a28665.json`, whose size rules shrink every block to its output
 point, each rule transforms only the kinds it is written for: it sits in an
 `if` that opens with the kind, as in `if $Object.kind is l9100:`, joined to the
@@ -504,7 +475,7 @@ its output, and each guard reads the live kind, which never changes. Rules that 
 in one `if` block,
 because a class-level `if` replaces an earlier one with the same condition
 text, and the statements of a block run in order. An object of any other
-kind, `unknown`, `default`, or an invented one, matches no rule and keeps
+kind, such as `default` or an invented one, matches no rule and keeps
 its input state. The parameter comes before the standard entries and the
 descriptive parameters, in the order of the constructor's assignments: Nucleoid
 lets a default occupy any parameter slot, the first included, and every
@@ -621,13 +592,10 @@ shows no diff. `/arc-dataset` regenerates it whenever it writes or changes a
 dataset; never edit it by hand.
 
 `dataset.017c7c7b.json` annotates the three original training pairs from
-`data\training\017c7c7b.json`, in order, followed by its test pair and, at
-the user's request, one synthesized use case with a diagonal line of unknown
-kind, five instances in total, one per pair. Every input of the four original
-pairs retains its 6 by 3 canvas, colors, positions, and zero cells, and every
-output its original 9 by 3 canvas, while the use case takes the same 6 by 3
-canvas for its input and its output. Each original input holds one color-1
-pattern whose cells touch
+`data\training\017c7c7b.json`, in order, followed by its test pair, four
+pattern instances in total, one per pair. Every input retains its original
+6 by 3 canvas, colors, positions, and zero cells, and every output its
+original 9 by 3 canvas. Each input holds one color-1 pattern whose cells touch
 through edges or corners, only through corners in the second training pair;
 each object is that whole pattern, 9, 9, 8, and 10 cells, and zero cells are
 background. Each pattern's box starts at the canvas's top-left corner and is
@@ -656,8 +624,7 @@ optional parameter, here with the default `default`, which names no geometry,
 but every implementation passes its object's kind there: `kind=l9100` for
 each pattern, as in
 `kind=l9100, x=0, y=0, width=3, height=6, orientation=0, volume=9, color=1, period=4`
-for the first training input, and
-`kind=unknown` for the use case's line, so no instance takes the default.
+for the first training input, so no instance takes the default.
 One class-level `if` block holds every rule and selects the patterns by their
 kind, `if $Object.kind is l9100:`, with the comparison `is` of
 [NUC 86](../docs/nuc-0086.md); the condition reads the live kind, which never
@@ -673,58 +640,40 @@ the pattern keeps its top-left origin. The training pairs alone also fit a
 fixed 9-row output; the rules scale the pattern's height instead. The three
 rules share one block because separate `if` rules with the same condition
 text replace each other, so three blocks headed `if $Object.kind is l9100:`
-would keep only the last rule. An object of any other kind, such as the use
-case's `unknown`, the default `default`, or an invented kind such as `l5555`,
-matches no guard, so no rule changes it, and its output state equals its
-input state. The use case, the dataset's last pair, shows a shape that no
-pair shows: a diagonal line of three color-1 cells from the canvas's top-left
-corner down to the right, which touch only through corners. Its rows never
-repeat, so its `period` is its height, 3, and as a straight line without a
-head that falls to the right, it takes orientation 135. Its implementation is
-`oc86db86eda32 is Object(kind=unknown, x=0, y=0, width=3, height=3, orientation=135, volume=3, color=1, period=3)`,
-and its output is its input grid unchanged: the line keeps color 1, its 3
-rows, and its 3 cells. Native
+would keep only the last rule. An object of any other kind, such as the
+default `default` or an invented kind such as `l5555`, matches no guard, so no
+rule changes it, and its output state equals its input state. Native
 output snapshots are captured with the pair's implementation followed by
 `Object[:]`. Kinds identify the geometry: `l9100` is a single shape, as in
 `dataset.28bf18c6.json` and `dataset.6150a2bd.json`, here a pattern whose rows
-repeat every `period` rows, in its input and in its output, while `unknown`
-names a shape that the rules do not know. Input masks retain
+repeat every `period` rows, in its input and in its output. Input masks retain
 each pair's full-size 6 by 3 input canvas, with zero cells padded `0`, and
-output masks the complete output, 9 by 3 in the original pairs and 6 by 3 in
-the use case; merging them reproduces each pair's
+output masks the complete 9 by 3 output; merging them reproduces each pair's
 input and output. The `output_x`/`output_y` fields record the grown pattern's
 nonzero bounding-box origin, equal to `output_value.x`/`output_value.y`, and
 each output state's `width` and `height` are the grown pattern's bounding box.
-The use case's output state, equal to its input state, gives its output mask's
-nonzero bounding box, 3 by 3 at column 0 and row 0, and its 3 cells.
 `output_canvas` is `EXACT`: the composed canvas starts at the input's 6 by 3
 dimensions and grows only to retain the pattern placed down to row 8, giving
 the 9 by 3 outputs, while `FIT` would crop the empty right column of the third
-training output; the use case's unchanged line keeps the 6 by 3 canvas, whose
-three empty bottom rows `FIT` would crop. Orientation is 0 in both states of
-each pattern because the pattern is not turned, and the use case's line keeps
-135 in both. The test pair follows the training pairs at the same level, and
-the use case follows the test pair, all annotated by the same rules. The
-guard's kind and the implementations' kinds are bare words, `unknown`
-included, so the class default `'default'` is the dataset's only quote.
+training output. Orientation is 0 in both states because the pattern is not
+turned. The test pair follows the training pairs at the same level and is
+annotated by the same rules. The guard's kind and the implementations' kinds
+are bare words, so the class default `'default'` is the dataset's only quote.
 
 `dataset.0ca9ddb6.json` annotates the three training pairs from
-`data\training\0ca9ddb6.json`, followed by its test pair and, at the user's
-request, one synthesized use case with a block of unknown kind, with sixteen
-instances in total (2, 5, 3, 5, and 1 per pair): fifteen points and the
-block.
+`data\training\0ca9ddb6.json`, followed by its test pair, with fifteen point
+instances in total (2, 5, 3, and 5 per pair).
 Color-1 points gain color-7 orthogonal neighbors; color-2 points gain color-4
 diagonal neighbors. Color-6 and color-8 points remain unchanged.
 The class takes the standard entries `x`, `y`, `width`, `height`,
 `orientation`, and `volume`, then `vertex_color`; every point is 1 by 1, so
-each point's implementation passes `width=1, height=1` and `volume=1`.
+each implementation passes `width=1, height=1` and `volume=1`.
 The class, like every class, takes `kind` first as an
 optional parameter, here with the default `default`, which names no geometry,
 but every implementation passes its object's kind there: `kind=l7544` for
 each point, as in
 `kind=l7544, x=2, y=3, width=1, height=1, orientation=0, volume=1, vertex_color=2`,
-and `kind=unknown` for the use case's
-block, so no instance takes the default.
+so no instance takes the default.
 The declarative rules introduce `marker_color`, which is absent before the
 rules run, and, in the same branches that shift the origin, grow each cross
 to 3 by 3 with `$Object.width is $Object.width@first + 2` and
@@ -738,39 +687,27 @@ points of one color, and its kind test reads the live kind, which never
 changes, because no rule assigns `kind`. Their conditions differ in the
 color, so both branches stand, while separate `if` rules with the same
 condition text would replace each other. An object of any other kind, such
-as the use case's `unknown`, the default `default`, or an invented kind,
-matches neither branch, whatever its color, so no rule changes it, and its
-output state equals its input state. The use case, the dataset's last pair,
-shows a shape that no pair shows: a 2 by 2 block of four color-1 cells whose
-top-left cell is at column 3 and row 3 of the 9 by 9 canvas, constructed as
-`o52f7ad44890b is Object(kind=unknown, x=3, y=3, width=2, height=2, orientation=0, volume=4, vertex_color=1)`.
-Its color would give a point color-7 neighbors, but the block gains none, so
-its output is its input grid unchanged.
+as the default `default` or an invented kind, matches neither branch,
+whatever its color, so no rule changes it, and its output state equals its
+input state.
 Kinds identify the geometry: `l7544` is a single point, and every point keeps
-that kind in its output, its cross included, while `unknown` names a shape that
-the rules do not know.
+that kind in its output, its cross included.
 Every instance mask retains the complete 9 by 9 canvas. The x/y metadata
 records each mask's nonzero bounding-box origin. Native output snapshots carry
 the shifted pattern origin, derived from the original point coordinates with
 `@first` anchors, the pattern's size, equal to its output mask's bounding
-box, and its volume, the output mask's number of nonzero cells; the block's
-output state keeps its origin, its 2 by 2 size, and its 4 cells, its output
-mask's bounding box and count. Orientation is 0 in both states because
-the patterns are symmetric, and the block reads 0 by the shape convention.
-The test pair follows the training pairs at the same level, and the use case
-follows the test pair, all annotated by the same rules. The guards' kind and
-the implementations' kinds are bare words, `unknown` included, so the class
-default `'default'` is the dataset's only quote.
+box, and its volume, the output mask's number of nonzero cells. Orientation
+is 0 in both states because the patterns are symmetric.
+The test pair follows the training pairs at the same level and is annotated by
+the same rules. The guards' kind and the implementations' kinds are bare
+words, so the class default `'default'` is the dataset's only quote.
 `document()` includes it in the shared few-shot context for every run by
 default.
 
 `dataset.0d3d703e.json` annotates the four original training pairs from
-`data\training\0d3d703e.json`, in order, followed by its test pair and, at
-the user's request, one synthesized use case with a corner of unknown kind,
-sixteen instances in total: fifteen stripes, three per original pair, and the
-use case's corner. Every input and output retains its original 3 by 3 canvas,
-colors, and positions, and the use case takes the same 3 by 3 canvas. Each
-original input is three vertical
+`data\training\0d3d703e.json`, in order, followed by its test pair, fifteen
+stripe instances in total, three per pair. Every input and output retains its
+original 3 by 3 canvas, colors, and positions. Each input is three vertical
 stripes side by side, each one column wide and three rows tall and each of its
 own color, so no cell is zero; each object is one stripe, 3 cells of one
 color, listed from left to right. Each output keeps every stripe in place and
@@ -791,8 +728,7 @@ like every class, takes `kind` first as an optional parameter,
 here with the default `default`, which names no geometry, but every
 implementation passes its object's kind there: `kind=l6953` for each stripe,
 as in
-`kind=l6953, x=0, y=0, width=1, height=3, orientation=0, volume=3, color=3`, and
-`kind=unknown` for the use case's corner,
+`kind=l6953, x=0, y=0, width=1, height=3, orientation=0, volume=3, color=3`,
 so no instance takes the default. One class-level `if` block,
 `if $Object.kind is l6953:`, selects the stripes with the comparison `is` and
 holds the one rule, which rewrites `color` as
@@ -806,44 +742,30 @@ rewrites `color` itself; a dictionary from every color to its partner would
 state each pair twice. The two callbacks are chained rather than nested, so
 each reads only its own parameter and the stripe. The guard reads the kind
 without an `@first` anchor because no rule rewrites it. An object of any
-other kind, such as the use case's `unknown`, the default `default`, or an
-invented kind, matches no guard, so it keeps its color, even one that a pair
-swaps, and its output state equals its input state. The rules create no
+other kind, such as the default `default` or an invented kind, matches no
+guard, so it keeps its color, even one that a pair swaps, and its output
+state equals its input state. The rules create no
 property and leave `x`, `y`, `width`, `height`, `orientation`, and the kind
 unchanged, since a stripe keeps its size when it changes color, so input
-and output states share the same keys. The use case, the dataset's last pair,
-shows a shape that no pair shows, under any turn or mirror: a corner of three
-color-3 cells, the top row and the left column of a 2 by 2 box at the canvas's
-top-left corner, as many cells as a stripe but bent, constructed as
-`o35566b551391 is Object(kind=unknown, x=0, y=0, width=2, height=2, orientation=315, volume=3, color=3)`.
-It keeps color 3, which a stripe would swap for 4, so its output is its input
-grid unchanged. Native output snapshots are captured
+and output states share the same keys. Native output snapshots are captured
 with all of the same pair's implementations together, followed by `Object[:]`.
-The kind `l6953` is a vertical bar, in both states, while `unknown` names a shape that
-the rules do not know. Input masks retain each pair's
+The kind `l6953` is a vertical bar, in both states.
+Input masks retain each pair's
 full-size 3 by 3 input canvas and output masks the complete 3 by 3 output,
 each padded with `0` outside its object; merging them reproduces each pair's
 input and output. The `output_x`/`output_y` fields record the stripe's
-nonzero bounding-box origin, equal to `output_value.x`/`output_value.y`, and
-the corner's output state keeps its origin, its 2 by 2 size, and its 3 cells,
-its output mask's bounding box and count.
+nonzero bounding-box origin, equal to `output_value.x`/`output_value.y`.
 `output_canvas` is `EXACT` because each output keeps its input's canvas.
-Orientation is 0 in both states of each stripe because the stripes are
-vertical and not turned, and the corner points toward its vertex at the top
-left, 315, in both. The test pair follows the training pairs at the same
-level, and the use case follows the test pair, all annotated by the same
-rules. The guard's kind and the implementations' kinds are bare words,
-`unknown` included, so the class default `'default'` is the dataset's only
-quote.
+Orientation is 0 in both states because the stripes are vertical and not
+turned. The test pair follows the training pairs at the same level and is
+annotated by the same rules. The guard's kind and the implementations' kinds
+are bare words, so the class default `'default'` is the dataset's only quote.
 
 `dataset.25d8a9c8.json` annotates the four original training pairs from
-`data\training\25d8a9c8.json`, in order, followed by its test pair and, at
-the user's request, one synthesized use case with a corner of unknown kind,
-sixteen instances in total: fifteen rows, three per original pair, and the
-use case's corner. Every input and output retains its original 3 by 3 canvas,
-colors, and positions, including the zero cells of the outputs, and the use
-case takes the same 3 by 3 canvas. Each original input is three full-width
-rows stacked from top to bottom,
+`data\training\25d8a9c8.json`, in order, followed by its test pair, fifteen
+row instances in total, three per pair. Every input and output retains its
+original 3 by 3 canvas, colors, and positions, including the zero cells of
+the outputs. Each input is three full-width rows stacked from top to bottom,
 with no zero cell; each object is one row, 3 cells wide and 1 cell tall,
 listed from top to bottom. Some rows hold a single color, and the others mix
 two colors. Each output keeps every row in place: a row whose cells all share
@@ -871,8 +793,7 @@ an optional parameter, here with the default `default`, which names no
 geometry, but every implementation passes its object's kind there:
 `kind=l3058` for each row, as in
 `kind=l3058, x=0, y=0, width=3, height=1, orientation=90, volume=3, parts=[4, 4, 4]`,
-and `kind=unknown`
-for the use case's corner, so no instance takes the default. One class-level
+so no instance takes the default. One class-level
 `if` block, `if $Object.kind is l3058:`, selects the rows with the comparison
 `is` and holds both rules. Its first rule introduces `fill_color`, which is
 absent before the rules run, as
@@ -889,25 +810,16 @@ separate `if` rules with the same condition text replace each other, so a
 second block headed `if $Object.kind is l3058:` would drop the first rule, and
 no row would get `fill_color`. The guard reads the kind without an `@first`
 anchor because no rule rewrites it. An object of any other kind, such as the
-use case's `unknown`, the default `default`, or an invented kind, matches no
-guard, so it gets no `fill_color` and keeps its cells, and its output state
-equals its input state. The rules create no other property and
+default `default` or an invented kind, matches no guard, so it gets no
+`fill_color` and keeps its cells, and its output state equals its input
+state. The rules create no other property and
 leave `x`, `y`, `width`, `height`, `orientation`, and the kind unchanged, since
-a row keeps its size whether it becomes a bar or is cleared, so each row's
-output state adds only `fill_color` to its input state's keys. The use case,
-the dataset's last pair, shows a shape that no pair shows, under any turn or
-mirror: a corner of three color-4 cells, the bottom row and the right column
-of a 2 by 2 box at the canvas's bottom-right corner, as many cells as a row
-but bent, constructed as
-`o5cf3c6a27d12 is Object(kind=unknown, x=1, y=1, width=2, height=2, orientation=135, volume=3, parts=[4, 4, 4])`,
-where `parts` lists the colors of its cells row by row, each from left to
-right. Its single color would turn a row into a color-5 bar, but the corner
-keeps color 4, so its output is its input grid unchanged. Native
+a row keeps its size whether it becomes a bar or is cleared, so each output
+state adds only `fill_color` to its input state's keys. Native
 snapshots start with the pair's `canvas_width` and `canvas_height`, and
 output snapshots are captured with all of the same pair's implementations
 together, followed by `Object[:]`. The kind `l3058` is a horizontal bar, as in
-`dataset.e9afcf9a.json`, in both states, while `unknown` names a shape that
-the rules do not know. Input masks retain each pair's
+`dataset.e9afcf9a.json`, in both states. Input masks retain each pair's
 full-size 3 by 3 input canvas and output masks the complete 3 by 3 output,
 each padded with `0` outside its object, so a cleared row's output mask is all
 zero; merging them reproduces each pair's input and output. The
@@ -915,12 +827,9 @@ zero; merging them reproduces each pair's input and output. The
 equal to `output_value.x`/`output_value.y`. A cleared row has no nonzero
 output cell, so its fields record its explicit output position instead, the
 row's unchanged origin, as an erased output object keeps one in
-[composition](#8-visualize-output-instance). The corner's output state keeps
-its origin, its 2 by 2 size, and its 3 cells, its output mask's bounding box
-and count. `output_canvas` is `EXACT`
+[composition](#8-visualize-output-instance). `output_canvas` is `EXACT`
 because each output keeps its input's canvas, including the cleared top or
-bottom rows that `FIT` would crop from every training output and the use
-case's empty top row and left column. Orientation is
+bottom rows that `FIT` would crop from every training output. Orientation is
 the direction each row points as a straight line of 3 cells. A row of exactly
 two colors in which one end cell alone has its color has that cell as its head
 and points toward it: 270 for the left end cells of `[2, 3, 3]`, `[7, 3, 3]`,
@@ -929,19 +838,15 @@ row, of one color or with its lone color in the middle cell, has no head and
 takes the horizontal axis, 90. The rules leave `orientation` unchanged: each
 bar keeps 90, and each cleared row, which has no output cell, keeps its input
 orientation, 270 for three of the cleared rows and 90 for the other five. The
-use case's corner points toward its vertex at the bottom right, 135, in both
-states. The test pair follows the training pairs at the same level, and the
-use case follows the test pair, all annotated by the same rules. The guard's
-kind and the implementations' kinds are bare words, `unknown` included, so
+test pair follows the training pairs at the same level and is annotated by the
+same rules. The guard's kind and the implementations' kinds are bare words, so
 the class default `'default'` is the dataset's only quote.
 
 `dataset.25ff71a9.json` annotates the four original training pairs from
-`data\training\25ff71a9.json`, in order, followed by its two test pairs and,
-at the user's request, one synthesized use case with a figure of unknown
-shape, seven figure instances in total, one per pair. Every training input and
-output retains its original 3 by 3 canvas, colors, positions, and zero cells,
-the test pairs keep their original grids as well, and the use case takes the
-same 3 by 3 canvas for its input and its output. Each training input holds one
+`data\training\25ff71a9.json`, in order, followed by its two test pairs, six
+figure instances in total, one per pair. Every training input and output
+retains its original 3 by 3 canvas, colors, positions, and zero cells, and the
+test pairs keep their original grids as well. Each training input holds one
 figure, 3 cells of a single color that touch through edges; each object is
 that whole figure, and zero cells are background. The first two figures are
 full-width horizontal bars of color 1, 1 by 3, on the top row and on the
@@ -963,55 +868,44 @@ and row counts of the figure's bounding box, are 3 and 1 for the bars and 2
 and 2 for the trominoes, and `volume`, the number of its nonzero cells, is 3
 for both. Like every class, it takes `kind` first, here with
 the default `default`, which names no geometry, but every implementation
-passes its figure's kind there: `kind=l9100`, a single shape, for the figures
-of the six original pairs, as in
+passes its figure's kind there: `kind=l9100`, a single shape, for each figure,
+as in
 `kind=l9100, x=0, y=0, width=3, height=1, orientation=90, volume=3` for the
-first training
-bar, and `kind=unknown` for the use case's figure, so no instance takes the
+first training bar, so no instance takes the
 default. One class-level rule, `if $Object.kind is l9100:`, selects the figures
 of kind `l9100` with the comparison `is` of [NUC 86](../docs/nuc-0086.md) and
 rewrites `y` in its body as `$Object.y@first + 1`, the row below the figure's
 input origin, anchored with `@first` because the rule rewrites `y` itself. The
 condition reads the kind without an `@first` anchor, because no rule rewrites
-it. An object of any other kind, such as the use case's `unknown`, the default
-`default`, or an invented kind such as `l5555`, matches no guard, so no rule
-changes it, its output state equals its input state, and the rules raise no
-error; the dataset needs no rule for `unknown`. The default applies to no
-pair, and `unknown` only to the use case. The use case, the dataset's last
-pair, shows a shape that no pair shows: a 2 by 2 square of four color-1 cells
-in the canvas's top-left corner, with more cells than any figure of the six
-original pairs, whose figures are bars, trominoes, and the test pairs'
-vertical 2-cell bar and single cell. Its implementation is
-`occ66431f8c5b is Object(kind=unknown, x=0, y=0, width=2, height=2, orientation=0, volume=4)`,
-and its output is its input grid unchanged: the square stays on the top two
-rows, where a figure of kind `l9100` would move down one row. Each training
+it. An object of any other kind, such as the default `default` or an invented
+kind such as `l5555`, matches no guard, so no rule changes it, its output
+state equals its input state, and the rules raise no error. The default
+applies to no pair. Each training
 grid holds a single figure and shows no relation between objects, so no
 population operation appears; the class-level rule moves every figure of kind
 `l9100` on its own. The rules create no property and leave `x`, `width`,
 `height`, `orientation`, `volume`, and the kind unchanged, since the figure
 moves without changing its size, so input and output states share the same
-keys and differ only in `y`, and the use case's states not at all. Native
+keys and differ only in `y`. Native
 snapshots start with the pair's `canvas_width` and `canvas_height`, and output
 snapshots are captured with the pair's implementation followed by `Object[:]`.
-Kinds identify the geometry: `l9100` is a single shape, as in
-`dataset.28bf18c6.json` and `dataset.6150a2bd.json`, in both states, while
-`unknown` marks a shape that no pair shows. Input masks retain each pair's
+The kind `l9100` is a single shape, as in `dataset.28bf18c6.json` and
+`dataset.6150a2bd.json`, in both states. Input masks retain each pair's
 full-size input canvas and output masks the complete output, each padded with
-`0` outside its figure; merging them reproduces each pair's input and output,
-and the use case's output mask equals its input mask. Each output state's `x`
+`0` outside its figure; merging them reproduces each pair's input and output.
+Each output state's `x`
 and `y` give the nonzero bounding-box origin of its figure's output mask, and
 its `width`, `height`, and `volume` that mask's box and number of nonzero
 cells. The kinds of the guard and of the implementations are bare words,
-`unknown` included, so the class default `'default'` is the dataset's only
+so the class default `'default'` is the dataset's only
 quote. `output_canvas` is `EXACT` because each training output keeps its
 input's 3 by 3 canvas, including the empty top row that `FIT` would crop from
 every one of them. Orientation is the direction each figure points, the same
 in both states because no figure turns: 90 for the bars, horizontal lines
 without a head; 135 and 45 for the trominoes, corners that point toward their
 vertex, the bottom-right cell of the third figure's box and the top-right cell
-of the fourth's; 0 for the test pairs' vertical 2-cell bar and single cell;
-and 0 for the use case's square, a block. The test pairs follow the training
-pairs at the same level, and the use case follows the test pairs, all
+of the fourth's; and 0 for the test pairs' vertical 2-cell bar and single
+cell. The test pairs follow the training pairs at the same level and are
 annotated by the same rules.
 
 `dataset.27a28665.json` annotates the seven original training pairs from
@@ -1139,11 +1033,9 @@ pairs follow the training pairs at the same level, and the use case follows
 the test pairs, all annotated by the same rules.
 
 `dataset.28bf18c6.json` annotates the three original training pairs from
-`data\training\28bf18c6.json`, followed by its test pair and, at the user's
-request, one synthesized use case with a shape of unknown kind, one shape
-instance per pair, five in total. Every input of the four original pairs
-retains its original 8 by 8 canvas and 3 by 3 shape, including its color and
-position, and the use case's input takes the same 8 by 8 canvas. Each original
+`data\training\28bf18c6.json`, followed by its test pair, one shape instance
+per pair, four in total. Every input retains its original 8 by 8 canvas and
+3 by 3 shape, including its color and position. Each
 shape is left-right asymmetric, so the pairs distinguish repeating from
 mirroring. Each output places two copies of the shape's crop side by side on a
 new canvas twice as wide as the crop: the original 3 by 6 output. The class
@@ -1151,15 +1043,14 @@ takes the optional `kind` first, then the standard entries `x`, `y`, `width`,
 `height`, `orientation`, and `volume`, in that order, where `width` and `height`
 are the column and
 row counts of the shape's box, the nonzero bounding box of its input mask, 3
-and 3 in every original pair, and `volume` the number of its nonzero cells, and
+and 3 in every pair, and `volume` the number of its nonzero cells, and
 then `color`; each implementation passes `width`
-and `height` right after `y`, as `width=3, height=3` in every original pair.
+and `height` right after `y`, as `width=3, height=3` in every pair.
 Like every class, it takes `kind` first, here with the default
 `default`, which names no geometry, but every implementation passes its
-shape's kind there: `kind=l9100` for the four original shapes, as in
+shape's kind there: `kind=l9100` for each shape, as in
 `kind=l9100, x=1, y=1, width=3, height=3, orientation=0, volume=6, color=8` for
-the first training input, and
-`kind=unknown` for the use case's shape, so no instance takes the default. One
+the first training input, so no instance takes the default. One
 class-level `if` block holds every rule and selects the shapes by their kind,
 `if $Object.kind is l9100:`, with the comparison `is` of
 [NUC 86](../docs/nuc-0086.md); the condition reads the live kind, which never
@@ -1177,41 +1068,27 @@ the repeated shape's bounding box, the whole 3 by 6 output, and its `volume`
 the output's number of nonzero cells. The six rules share one block because
 separate `if` rules with the same condition text replace each other, so six
 blocks headed `if $Object.kind is l9100:` would keep only the last rule. An
-object of any other kind, such as the use case's `unknown`, the default
-`default`, or an invented kind such as `l5555`, matches no guard, so no rule
-changes it, its output state equals its input state, and the rules raise no
-error; the dataset needs no rule for `unknown`. The default applies to no
-pair, and `unknown` only to the use case. The use case, the dataset's last
-pair, shows a shape that no pair shows: a horizontal bar of four color-8 cells
-along the top row from the canvas's top-left corner, 4 columns wide and 1 row
-tall, where every original shape fills a 3 by 3 box. Its implementation is
-`ocff6149c664f is Object(kind=unknown, x=0, y=0, width=4, height=1, orientation=90, volume=4, color=8)`,
-and its output is the bar alone, `[[8, 8, 8, 8]]`, neither repeated nor moved:
-the bar sits at the canvas origin, so the `FIT` crop to its 1 by 4 box keeps
-its position, 0 and 0, which its unchanged output state records. Kinds
-identify the geometry: `l9100` is a single shape, which keeps that kind when it
-is repeated side by side, while `unknown` marks a shape that no pair shows. Input
+object of any other kind, such as the default `default` or an invented kind
+such as `l5555`, matches no guard, so no rule changes it, its output state
+equals its input state, and the rules raise no error. The default applies to
+no pair. Kinds identify the geometry: `l9100` is a single shape, which keeps
+that kind when it is repeated side by side. Input
 masks retain each pair's input canvas and output masks its output canvas, and
 each output mask's nonzero bounding box and number of nonzero cells equal its
 output state's. The kinds of the guard, the rules, and the implementations are
-bare words, `unknown` included, so the class default `'default'` is the
-dataset's only quote. Orientation is 0 in both states of the four original
-pairs because the shapes are not rotated, and 90 in both states of the use
-case, whose bar is a horizontal line without a head. The test pair follows the
-training pairs at the same level, and the use case follows the test pair, all
-annotated by the same rules.
+bare words, so the class default `'default'` is the dataset's only quote.
+Orientation is 0 in both states because the shapes are not rotated.
+The test pair follows the training pairs at the same level and is annotated
+by the same rules.
 
 `dataset.3aa6fb7a.json` annotates the two original training pairs from
 `data\training\3aa6fb7a.json`, in order, followed by its test pair at the same
-level and, at the user's request, one synthesized use case with a figure of
-unknown shape, in the single canonical `src\dataset\dataset.3aa6fb7a.json`,
-ten instances in total: two, three, and four corners in the original pairs and
-one bar in the use case. The three original pairs are the genesis puzzle's own
-exact pairs; the four shared genesis datasets keep their synthesized varieties
-unchanged, and this file adds no pair to them. Every input and output of the
-original pairs retains its original 7 by 7 canvas, with its colors, positions,
-and zero cells, and the use case takes the same 7 by 7 canvas for its input
-and its output. Each original input shows separate color-8 corners on a zero
+level, in the single canonical `src\dataset\dataset.3aa6fb7a.json`, nine
+corner instances in total: two, three, and four per pair. These are the
+genesis puzzle's own exact pairs; the four shared genesis datasets keep their
+synthesized varieties unchanged, and this file adds no pair to them. Every
+input and output retains its original 7 by 7 canvas, with its colors,
+positions, and zero cells. Each input shows separate color-8 corners on a zero
 background, none touching another even at a corner; each object is one whole
 corner, three cells of a 2 by 2 box that meet at its vertex. Each output keeps
 every corner in place and paints color 1 into the open cell of its box,
@@ -1223,13 +1100,12 @@ are the column and row counts
 of the object's box, the nonzero bounding box of its input mask, 2 and 2 for
 every corner, and `volume` the number of its nonzero cells, 3, and then `color`,
 8 for every object; each implementation
-passes `width` and `height` right after `y`, as `width=2, height=2` for every
-corner. Like every class, it takes `kind` first, here with the
+passes `width=2, height=2` right after `y`. Like every class, it takes `kind`
+first, here with the
 default `default`, which names no geometry, but every implementation passes
 its object's kind there: `kind=l6747` for the nine corners, as in
 `kind=l6747, x=1, y=1, width=2, height=2, orientation=225, volume=3, color=8`
-for the first training corner, and
-`kind=unknown` for the use case's bar, so no instance takes the default. One
+for the first training corner, so no instance takes the default. One
 class-level `if` block holds every rule and selects the objects by their kind,
 `if $Object.kind is l6747:`, with the comparison `is` of
 [NUC 86](../docs/nuc-0086.md), with no color condition and no population
@@ -1242,54 +1118,39 @@ cell, 4 in all. The two rules share one block because separate `if` rules
 with the same condition text replace each other, so two blocks headed
 `if $Object.kind is l6747:` would keep only the last rule. The marker fills
 a cell of the corner's own box, so the rules leave `x`, `y`, `width`,
-`height`, `orientation`, and `color` unchanged; each corner's output state
-changes only `volume`, keeps its input kind, and adds `marker_color` to its input
-state's keys. An object of any other kind, such as the use case's `unknown`,
-the default `default`, or an invented kind such as `l5555`, matches no guard,
-so no rule changes it, its output state equals its input state, and the rules
-raise no error; the dataset needs no rule for `unknown`. The default applies
-to no pair, and `unknown` only to the use case. The use case, the dataset's
-last pair, shows a shape that no pair shows: a vertical bar of three color-8
-cells in the canvas's middle column, rows 2 to 4, as many cells as a corner
-but in a straight line, with no open cell in a 2 by 2 box to mark. Its
-implementation is
-`o18d3a786f518 is Object(kind=unknown, x=3, y=2, width=1, height=3, orientation=0, volume=3, color=8)`,
-and its output is its input grid unchanged, with no color-1 marker. Native
+`height`, `orientation`, and `color` unchanged; each output state changes
+only `volume`, keeps its input kind, and adds `marker_color` to its input
+state's keys. An object of any other kind, such as the default `default` or
+an invented kind such as `l5555`, matches no guard, so no rule changes it,
+its output state equals its input state, and the rules raise no error. The
+default applies to no pair. Native
 snapshots start with the pair's `canvas_width` and `canvas_height`; input
 states run the class alone, and output states run each pair's implementations
 together with all declarations, followed by `Object[:]`. Kinds identify the
 geometry: `l6747` is a corner, as in `dataset.core.json` and
-`dataset.extension.json`, which keeps that kind with its inside marker, while
-`unknown` marks a shape that no pair shows.
+`dataset.extension.json`, which keeps that kind with its inside marker.
 Input masks retain each pair's full 7 by 7 input canvas and output masks its
 full 7 by 7 output, padded with `0` outside the object and its marker; merging
-them reproduces each pair's input and output. The nine corners'
-`output_x`/`output_y` fields equal the input box's origin and
-`output_value.x`/`output_value.y`, and each corner's output state's `width`
-and `height` are the completed square's box; the use case's instance carries
-only `instance_name`, its two masks, `implementation`, `input_value`, and
-`output_value`, without those fields, and its output mask equals its input
-mask. `output_canvas` is `EXACT`, because every output keeps its input's 7 by
+them reproduces each pair's input and output. The `output_x`/`output_y` fields
+equal the input box's origin and `output_value.x`/`output_value.y`, and each
+output state's `width` and `height` are the completed square's box.
+`output_canvas` is `EXACT`, because every output keeps its input's 7 by
 7 canvas. Each corner points toward its vertex, at 45 when the vertex is at
 the top right of its box, 135 at the bottom right, 225 at the bottom left, and
 315 at the top left, and keeps that orientation with its inside marker: the
 training corners point at 225 and 45, and at 45, 225, and 135, and the test
 corners at 45, 315, 225, and 135, so only the test pair has a corner at 315.
-The use case's bar, a vertical line without a head, is at 0 in both states.
 The declarations write their assignments with `is` and their kinds as bare
 words, with no quoted string, and the implementations pass their kinds as bare
-words too, `unknown` included, so the class default `'default'` is the
-dataset's only quote. The test pair follows the training pairs at the same
-level, and the use case follows the test pair, all annotated by the same
-rules.
+words too, so the class default `'default'` is the dataset's only quote. The
+test pair follows the training pairs at the same level and is annotated by the
+same rules.
 
 `dataset.3c9b0459.json` annotates the four original training pairs from
-`data\training\3c9b0459.json`, in order, followed by its test pair and, at the
-user's request, one synthesized use case with a mosaic of unknown shape, six
-mosaic instances in total, one per pair. Every input and output of the five
-original pairs retains its original 3 by 3 canvas, colors, and positions, and
-none of their grids has a zero cell; the use case takes the same 3 by 3 canvas
-for its input and its output. Each original input is one mosaic of 9 cells
+`data\training\3c9b0459.json`, in order, followed by its test pair, five
+mosaic instances in total, one per pair. Every input and output retains its
+original 3 by 3 canvas, colors, and positions, and no grid has a zero cell.
+Each input is one mosaic of 9 cells
 that fills its canvas, in two or three colors: 1, 2, and 8; 2, 4, and 9; 5 and
 8; and 2, 3, and 9 in the training pairs. Each object is that whole mosaic,
 the figure seen first, whose 3 by 3 box spans the canvas from its origin, 0
@@ -1305,29 +1166,22 @@ color, parts list, canvas size, or matrix of cells, because the rule needs
 none: the mosaic's cells travel in its masks, and its turn is its orientation.
 `width` and `height`, the column and row counts of the mosaic's bounding box,
 and `volume`, the number of its nonzero cells, are 3, 3, and 9 for every
-mosaic of the original pairs. Like every class, it takes `kind` first, here with
+mosaic. Like every class, it takes `kind` first, here with
 the default `default`, which names no geometry, but every
 implementation passes its mosaic's kind there: `kind=l9100`, a single shape,
-for the five original mosaics, as in
+for the five mosaics, as in
 `kind=l9100, x=0, y=0, width=3, height=3, orientation=0, volume=9` for the first
-training input, and `kind=unknown` for the use case's mosaic, so no instance
+training input, so no instance
 takes the default. One class-level rule, `if $Object.kind is l9100:`, selects the
 mosaics of kind `l9100` with the comparison `is` of
 [NUC 86](../docs/nuc-0086.md) and rewrites `orientation` in its body as
 `($Object.orientation@first + 180) % 360`, the half-turn rule of
 `dataset.6150a2bd.json`, anchored with `@first` because the rule rewrites
 `orientation` itself. The condition reads the kind without an `@first` anchor,
-because no rule rewrites it. An object of any other kind, such as the use
-case's `unknown`, the default `default`, or an invented kind such as `l5555`,
-matches no guard, so no rule changes it, its output state equals its input
-state, and the rules raise no error; the dataset needs no rule for `unknown`.
-The default applies to no pair, and `unknown` only to the use case. The use
-case, the dataset's last pair, shows a shape that no pair shows: a 2 by 2
-mosaic in the canvas's top-left corner, two color-2 cells over a color-1 and a
-color-8 cell, with zero cells around it, where every original mosaic fills its
-canvas. Its implementation is
-`o551a87cab7fc is Object(kind=unknown, x=0, y=0, width=2, height=2, orientation=0, volume=4)`,
-and its output is its input grid unchanged, not turned. The rules leave `x`
+because no rule rewrites it. An object of any other kind, such as the default
+`default` or an invented kind such as `l5555`, matches no guard, so no rule
+changes it, its output state equals its input state, and the rules raise no
+error. The default applies to no pair. The rules leave `x`
 and `y` unchanged: a mosaic that fills its canvas keeps its box in place under
 a half turn, whether about its own center or the canvas's. The two further
 rules of `dataset.6150a2bd.json`, which move the box about the canvas center
@@ -1341,40 +1195,36 @@ between objects, so no population operation appears. The rules create no
 property and leave `x`, `y`, `width`, `height`, `volume`, and the kind
 unchanged, since a turn changes the orientation alone, not the mosaic's size,
 so input and output states share the same keys and differ only in
-`orientation`, and the use case's states not at all. Native snapshots start
+`orientation`. Native snapshots start
 with the pair's `canvas_width` and `canvas_height`, and output snapshots are
 captured with the pair's implementation followed by `Object[:]`. The kind `l9100`
 is a single shape, as in `dataset.28bf18c6.json` and `dataset.6150a2bd.json`,
-in both states, while `unknown` marks a shape that no pair shows. Input masks
+in both states. Input masks
 retain each pair's full-size 3 by 3 input canvas and output masks the complete
 3 by 3 output; with one mosaic per grid, each mask equals its pair's grid, and
 merging them reproduces each pair's input and output. Each output state's `x`
 and `y`, 0 and 0, give the nonzero bounding-box origin of its mosaic's output
 mask, and its `width`, `height`, and `volume` that mask's box and number of
 nonzero cells. The kinds of the guard and of the implementations are bare
-words, `unknown` included, so the class default `'default'` is the dataset's
+words, so the class default `'default'` is the dataset's
 only quote. `output_canvas` is `EXACT` because each output keeps its input's 3
-by 3 canvas; with no zero cell to crop, `FIT` would frame the same grids of
-the original pairs. Orientation is 0 in every input state, where the mosaic is
-not turned, and 180 in every output state of the original pairs, while the use
-case's mosaic, a block, keeps 0 in both states. The test pair follows the
-training pairs at the same level, and the use case follows the test pair, all
-annotated by the same rules.
+by 3 canvas; with no zero cell to crop, `FIT` would frame the same grids.
+Orientation is 0 in every input state, where the mosaic is not turned, and
+180 in every output state. The test pair follows the training pairs at the
+same level and is annotated by the same rules.
 
 `dataset.44f52bb0.json` annotates the six original training pairs from
-`data\training\44f52bb0.json`, in order, followed by its two test pairs and,
-at the user's request, one synthesized use case with a pattern of unknown
-shape, nine pattern instances in total, one per pair. Every original input
-retains its 3 by 3 canvas, colors, positions, and zero cells, and every
-original output its 1 by 1 grid; the use case takes the same 3 by 3 input
-canvas. Each input holds one pattern of color-2 cells, whether or not they
-touch; each object is that whole pattern, 5, 3, 6, 2, 4, and 3 cells in the
-training pairs, 7 and 2 in the test pairs, and 5 in the use case, and zero
+`data\training\44f52bb0.json`, in order, followed by its two test pairs,
+eight pattern instances in total, one per pair. Every input retains its
+original 3 by 3 canvas, colors, positions, and zero cells, and every output
+its original 1 by 1 grid. Each input holds one pattern of color-2 cells,
+whether or not they touch; each object is that whole pattern, 5, 3, 6, 2, 4,
+and 3 cells in the training pairs and 7 and 2 in the test pairs, and zero
 cells are background. Each pattern's box starts at the canvas's left column,
 and at its top row except in the fourth training pair and the second test
 pair, where it starts one row down; the boxes are 3 by 3, 3 by 2, 3 by 3,
-1 by 3, 2 by 3, 2 by 2, 3 by 3, 2 by 1, and 3 by 3, rows by columns. Each
-original output is a single cell: color 1 when the pattern is left-right
+1 by 3, 2 by 3, 2 by 2, 3 by 3, and 2 by 1, rows by columns. Each output is a
+single cell: color 1 when the pattern is left-right
 mirror symmetric, the same after a flip across the vertical center line of
 the canvas, and color 7 otherwise; the first, third, and fourth training
 patterns are symmetric. No cell count separates the outputs: 5, 6, and 2
@@ -1400,14 +1250,8 @@ symmetry or the answer; the rules read the canvas's width from the solver's
 `canvas_width`, not the pattern's own `width`. Like every class, it takes `kind`
 first as an optional parameter, here with the default
 `default`, which names no geometry, but every implementation passes its
-pattern's kind there, `kind=l9100` for the eight original patterns, so no
-instance takes the default. A pattern whose shape no original pair shows,
-under any turn or mirror, is constructed with `kind=unknown`, a pattern of
-unknown shape. The use case, the dataset's last pair, shows one: a T of five
-color-2 cells, the full top row and the two cells below its middle, whose
-3 by 3 box spans the canvas from its origin. Its implementation is
-`o69fa9a05ccce is Object(kind=unknown, x=0, y=0, width=3, height=3, orientation=0, volume=5, points=[[0, 0], [1, 0], [2, 0], [1, 1], [1, 2]])`,
-and its output is the T itself. One class-level `if` case,
+pattern's kind there, `kind=l9100` for the eight patterns, so no instance
+takes the default. One class-level `if` case,
 `if $Object.kind is l9100:`, selects the patterns of kind `l9100`, and the rules of
 its body shrink the pattern to
 the output point's size, `width` 1 and `height` 1, and introduce two
@@ -1430,59 +1274,49 @@ All eight rules share
 the one case because separate `if` rules with the same condition text replace
 each other, as [Control Flow](../docs/README.md#8-control-flow) in the
 language reference states, so a case per rule would keep only the last. A
-pattern of any other kind, `unknown`, the default `default`, or an invented
+pattern of any other kind, the default `default` or an invented
 kind such as `l5555`, matches no case, so
-the rules leave it unchanged and create no property on it: the use case's
-output state equals its input state, and no rule names `unknown`. No rule
+the rules leave it unchanged and create no property on it. No rule
 reads another object, so the case needs no exclusion of other kinds. Native
 output snapshots are captured with the pair's implementation followed by
 `Object[:]`. Kinds identify the geometry: `l9100` is a single shape, as in
 `dataset.28bf18c6.json` and `dataset.017c7c7b.json`, which each pattern keeps as
-its output point's kind, while
-`unknown` names no geometry that the dataset knows and stays the use case's
-kind in both states. Input masks retain each pair's full-size, zero-padded
-3 by 3 input canvas, and output masks the complete output, 1 by 1 in the
-original pairs and 3 by 3 in the use case; merging them reproduces each pair's
+its output point's kind. Input masks retain each pair's full-size, zero-padded
+3 by 3 input canvas, and output masks the complete 1 by 1 output; merging
+them reproduces each pair's
 input and output. The `output_x`/`output_y` fields record the cell's nonzero
 bounding-box origin, equal to `output_value.x`/`output_value.y`, and
-`output_value.width`/`output_value.height` equal its 1 by 1 size; the use
-case's output mask measures its unchanged state's `x`, `y`, `width`,
-`height`, and `volume`, 0, 0, 3, 3, and 5. `output_canvas` is `FIT` because
-each original output is cropped to its single cell instead of keeping the
-3 by 3 input canvas; the use case's T sits at the canvas origin and spans the
-canvas, so the crop keeps its position and its whole 3 by 3 grid. Orientation
+`output_value.width`/`output_value.height` equal its 1 by 1 size.
+`output_canvas` is `FIT` because each output is cropped to its single cell
+instead of keeping the 3 by 3 input canvas. Orientation
 follows each state's own shape. In the inputs it is 45 for the sixth training
 pattern, an L-shaped corner whose full top row and full right column meet at
 the top-right vertex of its 2 by 2 box, toward which it points; 0 for the
 second test pattern, a vertical line of one color with no head, by its axis;
-and 0 for the other six original patterns and the use case's T, which are
-neither lines, corners, nor chevrons. Every original output is a single point,
+and 0 for the other six patterns, which are neither lines, corners, nor
+chevrons. Every output is a single point,
 whose orientation is 0, so one more rule of the case sets `orientation` to 0,
-replacing the corner's 45 in the sixth training pair, while the T keeps its 0
-in both states. The test pairs follow the training pairs at the same level,
-and the use case follows the test pairs, all annotated by the same rules.
+replacing the corner's 45 in the sixth training pair. The test pairs follow
+the training pairs at the same level and are annotated by the same rules.
 
 `dataset.5582e5ca.json` annotates the three original training pairs from
-`data\training\5582e5ca.json`, in order, followed by its test pair and, at the
-user's request, one synthesized use case with a block of unknown shape, five
-block instances in total, one per pair. Every original input and output
-retains its 3 by 3 canvas, colors, and positions, including the zero cell at
-the bottom right of the first training input and of the test input, and the
-use case takes the same 3 by 3 canvas. Each input holds one multicolored block
+`data\training\5582e5ca.json`, in order, followed by its test pair, four
+block instances in total, one per pair. Every input and output retains its
+original 3 by 3 canvas, colors, and positions, including the zero cell at the
+bottom right of the first training input and of the test input. Each input
+holds one multicolored block
 whose nonzero cells are edge-connected across colors and whose 3 by 3 bounding
-box spans the canvas; each object is that whole block, 8 or 9 cells in the
-original pairs and 5 in the use case, and zero cells are background. Each
-original output fills the block's whole 3 by 3 footprint, zero cell included,
-with the color that has the most cells in the block: three cells in every
-original pair, a unique maximum, giving the colors 4, 9, 6, and 8. The
+box spans the canvas; each object is that whole block, 8 or 9 cells, and zero
+cells are background. Each output fills the block's whole 3 by 3 footprint,
+zero cell included, with the color that has the most cells in the block: three
+cells in every pair, a unique maximum, giving the colors 4, 9, 6, and 8. The
 numerically largest color, 8, 9, 9, and 9, differs from the fill in the first
 and third training pairs and the test pair, so the rules maximize a count, not
 a color. The class takes the standard entries
 `x`, `y`, `width`, `height`, `orientation`, and `volume` first; `width` and
 `height`, the column and row counts of the block's bounding box, are 3 and 3
 for every block, with or without zero cells, while `volume`, the number of its
-nonzero cells, is 8 with one zero cell, 9 without, and 5 for the use case's
-block. It then takes `parts`, a
+nonzero cells, is 8 with one zero cell and 9 without. It then takes `parts`, a
 flat list of the block's nonzero cell colors in reading order, such as
 `[4, 4, 8, 6, 4, 3, 6, 3]` for the first training input, as its only
 descriptive property, with no other count, histogram, fill color, canvas size,
@@ -1490,14 +1324,7 @@ or matrix of cells, so no input property names a color's count or
 the fill color. Like every class, it takes `kind` first as an
 optional parameter, here with the default `default`, which names no geometry,
 but every implementation passes its block's kind there, `kind=l9100` for the
-four original blocks, so no instance takes the default. A block whose shape no
-original pair shows, under any turn or mirror, is constructed with
-`kind=unknown`, a block of unknown shape. The use case, the dataset's last
-pair, shows one: a plus of five cells, the center in color 8, the cells left
-and right of it in color 6, and the cells above and below it in colors 4 and
-3, whose 3 by 3 box spans the canvas from its origin. Its implementation is
-`oe40312ecead9 is Object(kind=unknown, x=0, y=0, width=3, height=3, orientation=0, volume=5, parts=[4, 6, 8, 6, 3])`,
-and its output is its input, unchanged. One class-level `if` case,
+four blocks, so no instance takes the default. One class-level `if` case,
 `if $Object.kind is l9100:`, selects the blocks of kind `l9100`, and the rules of
 its body introduce one
 property, `fill_color`, which is absent before the rules run, as
@@ -1515,41 +1342,34 @@ the one case because separate
 `if` rules with the same condition text replace each other, as
 [Control Flow](../docs/README.md#8-control-flow) in the language reference
 states, so a case per rule would keep only the last. A block
-of any other kind, `unknown`, the default `default`, or an invented kind such
-as `l5555`, matches no case, so the rules leave it unchanged and give it no
-`fill_color`: the use case's output state equals its input state, and no rule
-names `unknown`. No rule reads another object, so the case needs no exclusion
-of other kinds. The rules create no other properties, so each original output
+of any other kind, the default `default` or an invented kind such as `l5555`,
+matches no case, so the rules leave it unchanged and give it no `fill_color`.
+No rule reads another object, so the case needs no exclusion of other kinds.
+The rules create no other properties, so each output
 state adds only `fill_color` to its input state's keys, and they leave `x` and
 `y` unchanged because the fill starts at the block's origin, 0 and 0, and
 `width` and `height` unchanged because the fill covers the block's 3 by 3
 bounding box.
 Native output snapshots are captured with the pair's implementation followed
 by `Object[:]`. Kinds identify the geometry: `l9100` is a single shape, as in
-`dataset.28bf18c6.json`, which each block keeps as its fill's kind, while
-`unknown` names no geometry that the dataset knows and stays the
-use case's kind in both states. Input masks retain each pair's full-size
+`dataset.28bf18c6.json`, which each block keeps as its fill's kind.
+Input masks retain each pair's full-size
 3 by 3 input canvas, with zero cells padded `0`, and output masks the complete
 3 by 3 output; merging them reproduces each pair's input and output. The
 `output_x`/`output_y` fields record the fill's nonzero bounding-box origin,
-equal to `output_value.x`/`output_value.y`, and the use case's output mask
-measures its unchanged state's `x`, `y`, `width`, `height`, and `volume`, 0,
-0, 3, 3, and 5. `output_canvas` is `EXACT` because each output keeps its
-input's canvas. Orientation is 0 in both states because no block is rotated,
-the fill is symmetric, and the use case's plus is neither a line, a corner, nor
-a chevron. The test pair follows the training pairs at the same level, and the
-use case follows the test pair, all annotated by the same rules.
+equal to `output_value.x`/`output_value.y`. `output_canvas` is `EXACT` because
+each output keeps its input's canvas. Orientation is 0 in both states because
+no block is rotated and the fill is symmetric. The test pair follows the
+training pairs at the same level and is annotated by the same rules.
 
 `dataset.6150a2bd.json` annotates the two original training pairs from
-`data\training\6150a2bd.json`, in order, followed by its test pair and, at the
-user's request, one synthesized use case with a block of unknown shape, four
-block instances in total, one per pair. Every original input and output
-retains its 3 by 3 canvas, colors, positions, and zero cells, and the use case
-takes the same 3 by 3 canvas. Each object is the whole block of its grid's
+`data\training\6150a2bd.json`, in order, followed by its test pair, three
+block instances in total, one per pair. Every input and output retains its
+original 3 by 3 canvas, colors, positions, and zero cells. Each object is the
+whole block of its grid's
 nonzero cells, edge-connected across colors: 6, 4, and 6 cells of four, three,
-and five colors in the original pairs and 5 cells of four colors in the use
-case, and zero cells are background. Each original block's bounding box is
-3 cells wide and 3, 2, and 3 cells tall. Each original output turns its input
+and five colors, and zero cells are background. Each block's bounding box is
+3 cells wide and 3, 2, and 3 cells tall. Each output turns its input
 block a half turn about the canvas center, so the block keeps its colors and
 cell count while it turns 180 degrees and its bounding box moves to the
 opposite side of the canvas. The 3 by 3 boxes span the canvas and keep their
@@ -1566,14 +1386,8 @@ second training input, and the rules read the canvas's size from the solver's
 `canvas_width` and `canvas_height`. Like every class, it also takes `kind` first
 as an optional parameter, here with the default
 `default`, which names no geometry, but every implementation passes its
-block's kind there, `kind=l9100` for the three original blocks, so no instance
-takes the default. A block whose shape no original pair shows, under any turn
-or mirror, is constructed with `kind=unknown`, a block of unknown shape. The
-use case, the dataset's last pair, shows one: a T of five cells, the full top
-row in colors 2, 5, and 5 and the two cells below its middle in colors 7 and
-3, whose 3 by 3 box spans the canvas from its origin. Its implementation is
-`o637cf3b66051 is Object(kind=unknown, x=0, y=0, width=3, height=3, orientation=0, volume=5)`,
-and its output is its input, unchanged. One class-level `if` case,
+block's kind there, `kind=l9100` for the three blocks, so no instance takes
+the default. One class-level `if` case,
 `if $Object.kind is l9100:`, selects the blocks of kind `l9100`, and the rules of
 its body read the block's input state with `@first` anchors:
 `($Object.orientation@first + 180) % 360` gives `orientation`,
@@ -1583,24 +1397,21 @@ the kind without an `@first` anchor, because no rule rewrites it. The three
 rules share the one case because separate `if` rules with the same condition
 text replace each other, as [Control Flow](../docs/README.md#8-control-flow)
 in the language reference states, so a case per rule would keep only the
-last. A block of any other kind, `unknown`,
-the default `default`, or an invented kind such as `l5555`, matches no case,
-so the rules leave it unchanged: the use case's output state equals its input
-state, and no rule names `unknown`. No rule reads another object, so the case
+last. A block of any other kind,
+the default `default` or an invented kind such as `l5555`, matches no case,
+so the rules leave it unchanged. No rule reads another object, so the case
 needs no exclusion of other kinds. The rules leave `width` and `height`
 unchanged, because a half turn keeps the box's size while `orientation`
 carries the turn, and create no other properties, so input and output states
 share the same keys. Native output snapshots are captured with the pair's
 implementation followed by `Object[:]`. The kind `l9100` is a single shape, as in
-`dataset.28bf18c6.json` and `dataset.5582e5ca.json`, in both states of the
-original pairs, while `unknown` names no geometry that the dataset knows and
-stays the use case's kind in both states. Input masks retain each pair's
+`dataset.28bf18c6.json` and `dataset.5582e5ca.json`, in both states.
+Input masks retain each pair's
 full-size 3 by 3 input canvas, with its zero cells padded `0`, and output masks
 the complete 3 by 3 output; merging them reproduces each pair's input and
 output. The `output_x`/`output_y` fields record the turned block's nonzero
-bounding-box origin, equal to `output_value.x`/`output_value.y`, and the use
-case's output mask measures its unchanged state's `x`, `y`, `width`,
-`height`, and `volume`, 0, 0, 3, 3, and 5. `output_canvas` is `EXACT` because
+bounding-box origin, equal to `output_value.x`/`output_value.y`.
+`output_canvas` is `EXACT` because
 each output keeps its input's canvas, including the empty top row of the
 second training output. Orientation is each block's direction, and the half
 turn adds 180 to it. The second training block is a corner of three colors,
@@ -1608,28 +1419,24 @@ whose full top row and left column meet at the top-left vertex of its box, so
 it points 315 in its input state and 135 in its output state, where its bottom
 row and right column meet at the bottom-right vertex. The first training block
 and the test block are neither lines, corners, nor chevrons, so they are 0 in
-their input states and 180 in their output states, while the use case's T,
-none of them either, is 0 in both. The test pair follows the training pairs at
-the same level, and the use case follows the test pair, all annotated by the
-same rules.
+their input states and 180 in their output states. The test pair follows the
+training pairs at the same level and is annotated by the same rules.
 
 `dataset.6d0aefbc.json` annotates the four original training pairs from
-`data\training\6d0aefbc.json`, in order, followed by its test pair and, at the
-user's request, one synthesized use case with a block of unknown shape, six
-block instances in total, one per pair. Every original input retains its
-3 by 3 canvas and every original output its 3 by 6 canvas, 3 rows of 6
-columns, with their colors and positions, and the use case takes the same
-3 by 3 input canvas, which its output keeps. No cell of an original pair is
+`data\training\6d0aefbc.json`, in order, followed by its test pair, five
+block instances in total, one per pair. Every input retains its original
+3 by 3 canvas and every output its original 3 by 6 canvas, 3 rows of 6
+columns, with their colors and positions. No cell is
 zero: each grid is one block of colors 1, 6, and 8, only 1 and 6 in the fourth
 training pair, so each object is that whole block, the figure seen first, and
-its box is the whole canvas. Each original output sets the block beside its
+its box is the whole canvas. Each output sets the block beside its
 left-right mirror image: the input reappears unchanged in the left three
 columns, and its column c reappears as column 5 - c, so every output row reads
 the same from right to left as from left to right. Repeating the block to the
 right without mirroring it reproduces no training output, because no training
 block is left-right symmetric, and neither does setting its half turn or its
 top-bottom mirror image to the right, or its mirror image on its left. Every
-original block fills its canvas, so its own right edge is the canvas's right
+block fills its canvas, so its own right edge is the canvas's right
 edge: the canvas-edge rule of `dataset.c9e6f938.json`,
 `$Object.width is 2 * (canvas_width - $Object.x@first)`, and doubling the block's
 own width give the same 6 columns in every training pair, and the rules take
@@ -1639,21 +1446,15 @@ left-right symmetric, and the same rules annotate it. The class takes the
 standard entries `x`, `y`, `width`, `height`, `orientation`, and `volume`, in
 that order, where `width` and `height` are the column and row counts of the
 block's box, the nonzero bounding box of its input mask, and `volume` the
-number of its nonzero cells, 3, 3, and 9 in every original pair, with no
+number of its nonzero cells, 3, 3, and 9 in every pair, with no
 color, parts list, canvas size, or matrix of cells, because the rules need
 none: the block's cells travel in its masks. Its class declaration is that of
 `dataset.6150a2bd.json`. Like every class, it takes `kind` first as an optional
 parameter, here with the default `default`, which
 names no geometry, but every implementation passes its block's kind there, so
-no instance takes the default: each implementation of an original pair passes
-`kind=l9100, x=0, y=0, width=3, height=3, orientation=0, volume=9`. A block
-whose shape no original pair shows, under any turn or mirror, is constructed
-with `kind=unknown`, a block of unknown shape. The use case, the dataset's
-last pair, shows one: a plus of five cells, the center in color 1, the cells
-above, below, and right of it in color 6, and the cell left of it in color 8,
-whose 3 by 3 box spans the canvas from its origin. Its implementation is
-`o1a9bda272b62 is Object(kind=unknown, x=0, y=0, width=3, height=3, orientation=0, volume=5)`,
-and its output is its input, unchanged. One class-level `if` case,
+no instance takes the default: each implementation passes
+`kind=l9100, x=0, y=0, width=3, height=3, orientation=0, volume=9`.
+One class-level `if` case,
 `if $Object.kind is l9100:`, selects the blocks of kind `l9100`, and the two
 rules of its body turn each such block into the figure
 it forms with its mirror image:
@@ -1667,53 +1468,46 @@ share the one case because
 separate `if` rules with the same condition text replace each other, as
 [Control Flow](../docs/README.md#8-control-flow) in the language reference
 states, so a case per rule would keep only the last. A block of any other
-kind, `unknown`, the default `default`, or an
-invented kind such as `l5555`, matches no case, so the rules leave it
-unchanged: the use case's output state equals its input state, and no rule
-names `unknown`. The rules leave `x`, `y`, `height`, and `orientation`
+kind, the default `default` or an invented kind such as `l5555`, matches no
+case, so the rules leave it unchanged: its output state equals its input state.
+The rules leave `x`, `y`, `height`, and `orientation`
 unchanged, because the figure keeps the block's top-left corner and rows, and
 state no `mirror_axis`, because the box grows only in `width`, to the right. Each grid holds a single block and
 shows no relation between objects, so no population operation appears, and
 the case needs no exclusion of other kinds. The rules create no property, so
-input and output states share the same keys; in the original pairs they
-differ only in `width` and `volume`, and in the use case not at
-all, and the rules give the same states with the case's rules in reverse order
-and with the case declared after the instance. Native snapshots start with the
+input and output states share the same keys and differ only in `width` and
+`volume`, and the rules give the same states with the case's rules in reverse
+order and with the case declared after the instance.
+Native snapshots start with the
 pair's `canvas_width` and `canvas_height`, and output snapshots are captured
 with the pair's implementation followed by `Object[:]`. Kinds identify the
 geometry: `l9100` is a single shape, as in `dataset.6150a2bd.json`, which each
-block keeps when it grows into its figure, as in `dataset.c9e6f938.json`, while
-`unknown` names no geometry that the dataset knows and stays the use case's
-kind in both states. Input masks retain each pair's full 3 by 3 input canvas
-and output masks the complete output, 3 by 6 in the original pairs and 3 by 3
-in the use case; with one block per grid, each mask equals its pair's grid,
-and merging them reproduces each pair's input and output. Each original output
+block keeps when it grows into its figure, as in `dataset.c9e6f938.json`. Input
+masks retain each pair's full 3 by 3 input canvas and output masks the complete
+3 by 6 output; with one block per grid, each mask equals its pair's grid, and
+merging them reproduces each pair's input and output. Each output
 state's `x`, `y`, `width`, and `height`, 0, 0, 6, and 3, are the figure's
-nonzero bounding box in its output mask, and the use case's 0, 0, 3, and 3,
-with `volume` 5, are its unchanged block's. `output_canvas` is `EXACT`: the
+nonzero bounding box in its output mask. `output_canvas` is `EXACT`: the
 composed canvas starts at the input's 3 by 3 dimensions and grows right to
 retain the figure placed from column 0, giving the 3 by 6 outputs, as
-`dataset.c9e6f938.json` grows its canvas right, while the use case's unchanged
-block keeps the 3 by 3 canvas. `FIT` would compose the same outputs, because
+`dataset.c9e6f938.json` grows its canvas right.
+`FIT` would compose the same outputs, because
 each output's nonzero cells span its canvas, but the outputs keep the input's
 origin and cut nothing from a larger canvas. Orientation is 0 in both states:
-each original block, every cell of its box colored, is neither a line, a
-corner, nor a chevron, and its mirror image is part of the figure, not a
-turn, and the use case's plus is none of them either. The test
-pair follows the training pairs at the same level, and the use case follows
-the test pair, all annotated by the same rules.
+each block, every cell of its box colored, is neither a line, a corner, nor a
+chevron, and its mirror image is part of the figure, not a turn.
+The test pair follows the training pairs at the same level and is annotated by
+the same rules.
 
 `dataset.6e02f1e3.json` annotates the five original training pairs from
-`data\training\6e02f1e3.json`, in order, followed by its test pair and, at
-the user's request, one synthesized use case with a mosaic of unknown shape,
-seven mosaic instances in total, one per pair. Every original input and output
-retains its original 3 by 3 canvas, colors, positions, and zero cells; no
-original input has a zero cell, and the use case takes the same 3 by 3 canvas.
-Each original input is one mosaic of 9 cells that fills its canvas, in one,
+`data\training\6e02f1e3.json`, in order, followed by its test pair, six mosaic
+instances in total, one per pair. Every input and output retains its original
+3 by 3 canvas, colors, positions, and zero cells; no input has a zero cell.
+Each input is one mosaic of 9 cells that fills its canvas, in one,
 two, or three colors: 2 and 3; 3, 4, and 2; 4; 3; and 4 and 3 in the training
 pairs, and 4, 2, and 3 in the test pair. Each object is that whole mosaic, the
 figure seen first, whose 3 by 3 box spans the canvas from its origin, 0 and 0.
-Each original output replaces the mosaic with one straight line of three
+Each output replaces the mosaic with one straight line of three
 color-5 cells across the canvas, on a background of zero cells, and the number
 of colors in the mosaic decides the line: one color gives the top row, two
 colors the main diagonal, from the top-left corner to the bottom-right, and
@@ -1739,7 +1533,7 @@ the mosaic's `width`, which spans the canvas. The class takes the optional
 `orientation`, and `volume`, in that order, where `width` and `height` are the
 column and row counts of the mosaic's
 box, the nonzero bounding box of its input mask, and `volume` the number of its
-nonzero cells, 3, 3, and 9 in every original pair, and then `parts`, a flat list
+nonzero cells, 3, 3, and 9 in every pair, and then `parts`, a flat list
 of the mosaic's nonzero cell colors in reading
 order, as in `dataset.5582e5ca.json`, such as `[2, 2, 2, 3, 2, 3, 3, 3, 3]`
 for the first training input, as its only descriptive property, with no color
@@ -1747,7 +1541,7 @@ list, color count, line direction, canvas size, or matrix of cells, so no
 input property names the count or the line. Like every class, it takes `kind`
 first as an optional parameter, here with the default
 `default`, which names no geometry, but every implementation passes its
-mosaic's kind, so no instance takes the default. Each original implementation
+mosaic's kind, so no instance takes the default. Each implementation
 passes `kind=l9100` first and `width=3, height=3` right after `y`, as in
 `of30b9a69fe75 is Object(kind=l9100, x=0, y=0, width=3, height=3, orientation=0, volume=9, parts=[2, 2, 2, 3, 2, 3, 3, 3, 3])`
 for the first training input. Two `if` cases turn a mosaic of kind `l9100`,
@@ -1787,58 +1581,42 @@ no population operation appears; the count is a list query over the mosaic's
 own cells. The rules leave `x` and `y` unchanged, because every line's box
 starts at the canvas's origin, 0 and 0, where the mosaic's box starts, also
 for the other diagonal, whose cells run from the top-right corner. They create
-no other property, so each original output state adds only `fill_color` to its
+no other property, so each output state adds only `fill_color` to its
 input state's keys, keeps its input kind, its orientation turns 90, 135, or
 45, and its `height` turns 1 for the top-row line, so its `width` and `height`
 are the line's bounding box: 3 and 1 for the top row and 3 and 3 for a
 diagonal, and its `volume` turns 3.
-Every mosaic of the six original pairs fills its canvas, so the use case, the
-dataset's last pair, shows a shape they never show: an I of seven cells, the
-full top row in color 2, the middle cell in color 3, and the full bottom row
-in color 4, with the two side cells of the middle row zero. Its implementation
-is
-`o75c19d1f341f is Object(kind=unknown, x=0, y=0, width=3, height=3, orientation=0, volume=7, parts=[2, 2, 2, 3, 4, 4, 4])`,
-whose `parts` lists its seven nonzero cells. A mosaic of kind `unknown`
-matches neither case, so no rule touches it: its output state equals its input
-state, and its output is its unchanged input. A mosaic with the default
-`default` or an invented kind such as `l5555` stays unchanged the same way, so
-the rules raise no error and need no rule for unknown kinds.
+A mosaic with the default `default` or an invented kind such as `l5555` matches
+neither case, so no rule touches it: its output state equals its input state,
+and the rules raise no error and need no rule for other kinds.
 Native snapshots start with the pair's `canvas_width` and `canvas_height`, and
 output snapshots are captured with the pair's implementation followed by
 `Object[:]`. Kinds identify the geometry: `l9100` is a single shape, as in
 `dataset.28bf18c6.json` and `dataset.3c9b0459.json`, which each mosaic keeps as
-its line's kind, while `unknown` names no geometry: the use case's mosaic has a shape that no
-original pair shows.
+its line's kind.
 Input masks retain each pair's full-size 3 by 3 input canvas and output masks
 the complete 3 by 3 output, padded with `0` outside the object; with one
 object per grid, each mask equals its pair's grid, and merging them reproduces
 each pair's input and output. Each output mask's nonzero bounding box and
 number of nonzero cells equal its output state's `x`, `y`, `width`, `height`,
-and `volume`: the line's box from 0 and 0 with its 3 cells in the original
-pairs, and the unchanged I's 3 by 3 box with its 7 cells in the use case.
+and `volume`: the line's box from 0 and 0 with its 3 cells.
 `output_canvas` is `EXACT` because each output keeps its input's 3 by 3
 canvas, including the two empty rows below the top-row line that `FIT` would
-crop from the third and fourth training outputs, and the use case's output,
-its unchanged input, keeps that canvas too. Orientation is 0 in every input
-state, where the mosaic is not turned, and the line's axis, 90, 135, or 45, in
-every original output state; the use case's I is neither a line, a corner, nor
-a chevron, so it is 0 in both states. The test pair follows the training pairs
-at the same level, and the use case follows the test pair, all annotated by
-the same rules.
+crop from the third and fourth training outputs. Orientation is 0 in every
+input state, where the mosaic is not turned, and the line's axis, 90, 135, or
+45, in every output state. The test pair follows the training pairs at the same
+level and is annotated by the same rules.
 
 `dataset.6fa7a44f.json` annotates the four original training pairs from
-`data\training\6fa7a44f.json`, in order, followed by its test pair and, at
-the user's request, one synthesized use case with a figure of unknown shape,
-six instances in total, one per pair: the five blocks of the original pairs
-and the use case's figure. Every original input retains its original 3 by 3
-canvas and every original output its original 6 by 3 canvas, 6 rows of 3
-columns, with their colors and positions, and the use case's input and output
-take the inputs' 3 by 3 canvas. No cell of an original grid is zero: each
-original grid is one block of three or four colors, 9, 1, 4, and 2; 4, 8, 7,
+`data\training\6fa7a44f.json`, in order, followed by its test pair, five
+block instances in total, one per pair. Every input retains its original
+3 by 3 canvas and every output its original 6 by 3 canvas, 6 rows of 3
+columns, with their colors and positions. No cell is zero: each grid is one
+block of three or four colors, 9, 1, 4, and 2; 4, 8, 7,
 and 6; 7, 9, 5, and 1; and 2, 6, and 9 in the training pairs, in reading
 order, and 2, 9, 8, and 5
 in the test pair, so each object is that whole block, the figure seen first,
-and its box is the whole canvas. Each original output stacks the block over
+and its box is the whole canvas. Each output stacks the block over
 its top-bottom mirror image: the input reappears unchanged in the top three
 rows, and its row r reappears as row 5 - r, so the output reads the same from
 the bottom up as from the top down. Repeating the block below without
@@ -1861,13 +1639,13 @@ the standard entries `x`, `y`, `width`, `height`, `orientation`, and `volume`,
 in that order, where `width`
 and `height` are the column and row counts of the block's box, the nonzero
 bounding box of its input mask, and `volume` the number of its nonzero cells,
-3, 3, and 9 in every original pair, with no color,
+3, 3, and 9 in every pair, with no color,
 parts list, canvas size, or matrix of cells, because the rules need none: the
 block's cells travel in its masks. Like every class, it takes `kind` first as an
 optional parameter, here with the default `default`,
 which names no geometry, but every implementation passes its object's kind,
 so no instance takes the default. Its declaration is that of
-`dataset.6d0aefbc.json`, and each original implementation passes
+`dataset.6d0aefbc.json`, and each implementation passes
 `kind=l9100, x=0, y=0, width=3, height=3, orientation=0, volume=9`. One `if`
 case, `if $Object.kind is l9100:`, turns every block of kind `l9100`, and
 no other object, into the figure it forms with its mirror image, with two
@@ -1883,58 +1661,44 @@ with their mirror images, anchored the same way. The rules leave `x`, `y`,
 top-left corner and columns, and state no `mirror_axis`, the property of
 `dataset.74dd1130.json`, because the box grows only in `height`, down. Each grid holds a single block
 and shows no relation between objects, so no population operation appears.
-The rules create no property, so input and output states share the same keys,
-and an original pair's differ only in `height` and `volume`; the
+The rules create no property, so input and output states share the same keys
+and differ only in `height` and `volume`; the
 case gives the same states with its rules in reverse order and when declared
-after the instance. Every block of the five original pairs fills its canvas,
-so the use case, the dataset's last pair, shows a shape they never show: a T
-of five cells, the full top row in color 7 and, below its middle, a color-9
-cell over a color-5 cell, the shape of the use case of `dataset.27a28665.json`.
-Its implementation is
-`od025b1701492 is Object(kind=unknown, x=0, y=0, width=3, height=3, orientation=0, volume=5)`.
-A figure of kind `unknown` does not match the case, so no rule touches it: its
-output state equals its input state, and its output is its unchanged input on
-the 3 by 3 canvas, with no mirror image below it. A figure with the default
-`default` or an invented kind such as `l5555` stays unchanged the same way, so
-the rules raise no error and need no rule for unknown kinds. Native snapshots
+after the instance. A figure with the default `default` or an invented kind
+such as `l5555` does not match the case, so no rule touches it: its output
+state equals its input state, and the rules raise no error and need no rule
+for other kinds. Native snapshots
 start with the pair's `canvas_width` and `canvas_height`, and output
 snapshots are captured with the pair's
 implementation followed by `Object[:]`. Kinds identify the geometry: `l9100` is
 a single shape, as in `dataset.6d0aefbc.json` and `dataset.3c9b0459.json`,
 which each block keeps when it grows into its figure, as in
-`dataset.8be77c9e.json`, while
-`unknown` names no geometry. Input masks retain each pair's full 3 by 3 input
-canvas and output masks the complete output, 6 by 3 in the original pairs and
-3 by 3 in the use case; with one object per grid, each mask equals its pair's
-grid, and merging them reproduces each pair's input and output. Each original
+`dataset.8be77c9e.json`. Input masks retain each pair's full 3 by 3 input
+canvas and output masks the complete 6 by 3 output; with one object per
+grid, each mask equals its pair's grid, and merging them reproduces each
+pair's input and output. Each
 output state's `x`, `y`, `width`, and `height`, 0, 0, 3, and 6, are the
-figure's nonzero bounding box in its output mask, and the use case's, 0, 0, 3,
-and 3, are the T's, whose 5 cells are its `volume`. `output_canvas` is `EXACT`:
+figure's nonzero bounding box in its output mask. `output_canvas` is `EXACT`:
 the composed canvas starts at the input's 3 by 3 dimensions and grows down to
 retain the figure placed from row 0, giving the 6 by 3 outputs, as
 `dataset.8be77c9e.json` grows its canvas down; every block starts on the top
-row, so the composed canvas reaches all 6 rows, while the use case's unchanged
-T keeps the 3 by 3 canvas. `FIT` would compose the same outputs, because no
-original output cell is zero and the T spans its canvas, but the outputs keep
+row, so the composed canvas reaches all 6 rows. `FIT` would compose the same
+outputs, because no output cell is zero, but the outputs keep
 the input's origin and cut nothing from a larger canvas. Orientation is 0 in
 both states: each block, every cell of its box colored, is neither a line, a
 corner, nor a chevron, and its mirror image is part of the figure, not a
-turn, and the use case's T, neither a line, a corner, nor a
-chevron either, is 0 as well. The test pair follows the training pairs at the
-same level, and the use case follows the test pair, all annotated by the same
-rules.
+turn. The test pair follows the training pairs at the same level and is
+annotated by the same rules.
 
 `dataset.74dd1130.json` annotates the four original training pairs from
-`data\training\74dd1130.json`, in order, followed by its test pair and, at
-the user's request, one synthesized use case with a mosaic of unknown shape,
-six mosaic instances in total, one per pair. Every original input and output
-retains its original 3 by 3 canvas, colors, and positions, and no original
-grid has a zero cell, while the use case takes the same 3 by 3 canvas. Each
-original input is one mosaic of 9 cells that fills its canvas, in three
+`data\training\74dd1130.json`, in order, followed by its test pair, five
+mosaic instances in total, one per pair. Every input and output retains its
+original 3 by 3 canvas, colors, and positions, and no grid has a zero cell.
+Each input is one mosaic of 9 cells that fills its canvas, in three
 colors: 1, 2, and 5; 2, 5, and 6; 5, 8, and 9; and 1, 2, and 6 in the
 training pairs.
 Each object is that whole mosaic, the figure seen first, whose 3 by 3 box
-spans the canvas from its origin, 0 and 0. Each original output mirrors the
+spans the canvas from its origin, 0 and 0. Each output mirrors the
 whole mosaic across its main diagonal, the line from its top-left corner to
 its bottom-right corner, so the cell in row r and column c moves to row c and
 column r: each input row becomes the output column of the same index, read
@@ -1952,11 +1716,11 @@ standard entries `x`, `y`, `width`, `height`, `orientation`, and `volume`, in
 that order, where `width`
 and `height` are the column and row counts of the mosaic's box, the nonzero
 bounding box of its input mask, and `volume` the number of its nonzero cells,
-3, 3, and 9 in every original pair, so each original implementation passes
+3, 3, and 9 in every pair, so each implementation passes
 `width=3, height=3` right after `y`. Like every
 class, it takes `kind` first as an optional parameter, here
 with the default `default`, which names no geometry, but every implementation
-passes its mosaic's kind first, `kind=l9100` in the original pairs, so no
+passes its mosaic's kind first, `kind=l9100`, so no
 instance takes the default. It takes no descriptive property,
 with no color, parts list, canvas size, or matrix of cells, because the rule
 needs none: the mosaic's cells travel in its masks, and its box gives its
@@ -1987,53 +1751,40 @@ before the test pair was read. Each training grid holds a single mosaic and
 shows no relation between objects, so no population operation appears. The
 rules create no other property and leave `x`, `y`, `width`, `height`,
 `orientation`, and the kind unchanged, because the flip keeps the square box's
-size and `mirror_axis` carries it, so each original output state adds only
+size and `mirror_axis` carries it, so each output state adds only
 `mirror_axis` to its input state's keys, as
-`{"end":{"x":2,"y":2},"start":{"x":0,"y":0}}` in every original pair, its keys
+`{"end":{"x":2,"y":2},"start":{"x":0,"y":0}}` in every pair, its keys
 in the runtime's order. The case gives the same states when declared after the
-instances. Every mosaic of the five original pairs fills its canvas, so the
-use case, the dataset's last pair, shows a shape they never show: an H of
-seven cells, the full left column in color 2, the middle cell in color 5, and
-the full right column in color 1, with the top and bottom cells of the middle
-column zero. Its implementation is
-`o1abbe3ea84c5 is Object(kind=unknown, x=0, y=0, width=3, height=3, orientation=0, volume=7)`.
-A mosaic of kind `unknown` does not match the case, so no rule touches it: it
-gains no `mirror_axis`, its output state equals its input state, and its
-output is its unchanged input rather than its flip, an I of the same colors. A
-mosaic with the default `default` or an invented kind such as `l5555` stays
-unchanged the same way, so the rules raise no error and need no rule for
-unknown kinds. Native snapshots start with the
+instances. A mosaic with the default `default` or an invented kind such as
+`l5555` does not match the case, so no rule touches it: it gains no
+`mirror_axis`, its output state equals its input state, and the rules raise no
+error and need no rule for other kinds. Native snapshots start with the
 pair's `canvas_width` and `canvas_height`, and output snapshots are captured
 with the pair's implementation followed by `Object[:]`. The kind `l9100` is a
 single shape, as in `dataset.28bf18c6.json` and `dataset.3c9b0459.json`, in
-both states of the original pairs, while `unknown` names no geometry. Input
+both states. Input
 masks retain each pair's full-size 3 by 3 input canvas and output masks the
 complete 3 by 3 output; with one mosaic per grid, each mask equals its pair's
 grid, and merging them reproduces each pair's input and output. Each output
-state's `x`, `y`, `width`, and `height`, 0, 0, 3, and 3, are the nonzero
-bounding box in its output mask, of the mirrored mosaic in the original pairs
-and of the unchanged H in the use case. `output_canvas` is `EXACT` because
-each output keeps its input's 3 by 3 canvas; `FIT` would frame the same grids,
-because no original grid has a zero cell to crop and the use case's H spans
-its canvas. Orientation is 0 in both states: each original mosaic, every cell
-of its box colored, is neither a line, a corner, nor a chevron, and a mirror
-is not a turn, so `mirror_axis` states the flip, and the use case's H, neither
-a line, a corner, nor a chevron either, is 0 as well. The test pair follows
-the training pairs at the same level, and the use case follows the test pair,
-all annotated by the same rules.
+state's `x`, `y`, `width`, and `height`, 0, 0, 3, and 3, are the mirrored
+mosaic's nonzero bounding box in its output mask. `output_canvas` is `EXACT`
+because each output keeps its input's 3 by 3 canvas; `FIT` would frame the same
+grids, because no grid has a zero cell to crop. Orientation is 0 in both
+states: each mosaic, every cell of its box colored, is neither a line, a
+corner, nor a chevron, and a mirror is not a turn, so `mirror_axis` states the
+flip. The test pair follows the training pairs at the same level and is
+annotated by the same rules.
 
 `dataset.794b24be.json` annotates the ten original training pairs from
-`data\training\794b24be.json`, in order, followed by its two test pairs and,
-at the user's request, one synthesized use case with a pattern of unknown
-shape, thirteen pattern instances in total, one per pair. Every original input
-and output retains its original 3 by 3 canvas, colors, positions, and zero
-cells, and the use case takes the same 3 by 3 canvas. Each input holds a few
-blue cells of color 1 on a background of zero cells: 1, 2, 2, 2, 1, 3, 3, 4,
-4, and 4 cells in the training pairs, 2 and 4 in the test pairs, and 3 in the
-use case. Each object is that whole pattern, all the input's color-1 cells,
+`data\training\794b24be.json`, in order, followed by its two test pairs,
+twelve pattern instances in total, one per pair. Every input and output
+retains its original 3 by 3 canvas, colors, positions, and zero cells. Each
+input holds a few blue cells of color 1 on a background of zero cells: 1, 2,
+2, 2, 1, 3, 3, 4, 4, and 4 cells in the training pairs and 2 and 4 in the
+test pairs. Each object is that whole pattern, all the input's color-1 cells,
 whether or not they touch, as in `dataset.d631b094.json`: the eighth training
 input's four cells lie in three pieces, the ninth's form one zigzag, and the
-tenth's are a corner cell and an L-shaped piece. Each original output replaces
+tenth's are a corner cell and an L-shaped piece. Each output replaces
 the pattern with a red tally of color 2, as many cells as the pattern has, in
 the canvas's top-left corner: a bar along the top row, filled from the left,
 and, once the bar spans the canvas, a stem down from the bar's middle cell. One
@@ -2092,74 +1843,60 @@ when it is declared after the instances, but its rules keep their order:
 Nucleoid runs an `if` body from top to bottom, so the `height` rule reads the
 `width` that the rule before it sets, and the `orientation` rule the `width`
 and `height` set before it. In reverse order they would read the pattern's
-input box instead, and seven of the twelve original output states would
+input box instead, and seven of the twelve output states would
 change. `$Object.x is 0` and `$Object.y is 0` move the
 tally to the canvas's top-left corner, wherever the pattern lies, which
 changes `x` in the fourth and fifth training pairs and the first test pair,
 and `y` in the first training pair. Each grid holds a single pattern and
 shows no relation between objects, so no population operation appears; the
 count is the pattern's own scalar. The rules create no other property, so
-each original output state adds only `fill_color` to its input state's keys,
+each output state adds only `fill_color` to its input state's keys,
 keeps its input kind, and its `width` and `height` are the tally's box:
-1 and 1, 2 and 1, 3 and 1, or 3 and 2. No original pattern holds three cells
-in a straight line, so the use case, the dataset's last pair, shows one: a
-vertical line of three color-1 cells down the canvas's right column. Its
-implementation is
-`o2c3b0e7ee1bf is Object(kind=unknown, x=2, y=0, width=1, height=3, orientation=0, volume=3)`.
-A pattern of kind `unknown` does not match the case, so no rule touches it: it
-gains no `fill_color` and keeps its place and size, so its output state equals
-its input state, and its output is its unchanged input, still color 1, rather
-than a tally. A pattern with the default `default` or an invented kind such as
-`l5555` stays unchanged the same way, so the rules raise no error and need no
-rule for unknown kinds. Native snapshots start with the pair's
+1 and 1, 2 and 1, 3 and 1, or 3 and 2. A pattern with the default `default`
+or an invented kind such as `l5555` does not match the case and keeps its
+input state, so the rules raise no error and need no rule for such kinds.
+Native snapshots start with the pair's
 `canvas_width` and `canvas_height`, and output snapshots are captured with the
 pair's implementation followed by `Object[:]`. Kinds identify the geometry:
 `l9100` is a single shape, as in `dataset.28bf18c6.json` and
 `dataset.d631b094.json`, which each pattern keeps as its tally's kind: a bar
 along the top row filled from the left up to the canvas's width, with the
 remaining cells as a stem down from the bar's middle cell, a T once it has a
-stem, while `unknown` names no geometry. Input masks retain each pair's full-size 3 by 3 input
+stem. Input masks retain each pair's full-size 3 by 3 input
 canvas and output masks the complete 3 by 3 output, padded with `0` outside
 the pattern and the tally; with one object per grid, each mask equals its
 pair's grid, and merging them reproduces each pair's input and output. Each
 output mask's nonzero bounding box and number of nonzero cells equal its
 output state's `x`, `y`, `width`, `height`, and `volume`: the tally's box from
-0 and 0 in the original pairs, and in the use case the unchanged line's box,
-1 column wide and 3 rows tall from column 2 and row 0, with its 3 cells.
+0 and 0.
 `output_canvas` is `EXACT` because each output keeps its input's 3 by 3
 canvas, including the empty bottom row that `FIT` would crop from every
-original output and the two empty left columns that it would crop from the
-use case's. Each state's orientation follows its own
+output. Each state's orientation follows its own
 shape. In the input, a single cell is a point, 0, in the first and fifth
 training pairs; two cells that touch at a corner form a diagonal line, which
 rises to the right, at 45, in the second training pair and falls to the
 right, at 135, in the fourth; the seventh training pattern is a corner of
 three cells, which points toward its bottom-right vertex, at 135; and every
 other pattern, whose cells lie apart or form no line or corner, is 0. In the
-original outputs, the tally is a point, 0, for one cell, a horizontal bar, 90,
+output, the tally is a point, 0, for one cell, a horizontal bar, 90,
 for two or three cells, and 0 as a T, which is neither a line nor a corner.
-The use case's vertical line has no head, no end cell with a color of its own,
-so it takes its axis, 0, in both states. The test pairs follow the training
-pairs at the same level, and the use case follows the test pairs, all
-annotated by the same rules.
+The test pairs follow the training pairs at the same level and are annotated
+by the same rules.
 
 `dataset.8be77c9e.json` annotates the three original training pairs from
-`data\training\8be77c9e.json`, in order, followed by its test pair and, at
-the user's request, one synthesized use case with a pattern of unknown shape,
-five pattern instances in total, one per pair. Every original input retains
-its original 3 by 3 canvas and every original output its original 6 by 3
-canvas, 6 rows of 3 columns, with their colors, positions, and zero cells;
-the use case takes the same 3 by 3 canvas for its input and its output. Each
-input holds one pattern of color-1 cells on a background of zero cells: 5, 4,
-and 2 cells in the training pairs, 2 in the test pair, and 5 in the use case.
-Each object is that whole pattern,
+`data\training\8be77c9e.json`, in order, followed by its test pair, four
+pattern instances in total, one per pair. Every input retains its original
+3 by 3 canvas and every output its original 6 by 3 canvas, 6 rows of 3
+columns, with their colors, positions, and zero cells. Each input holds one
+pattern of color-1 cells on a background of zero cells: 5, 4, and 2 cells in
+the training pairs and 2 in the test pair. Each object is that whole pattern,
 the figure seen first, whether or not its cells touch: the second training
 pattern's top-right cell touches the rest only at a corner, and the test
 pattern's two cells do not touch at all; the same rules would mirror each
-separate piece as well. Each original output stacks the whole input grid over
+separate piece as well. Each output stacks the whole input grid over
 its top-bottom mirror image on a canvas twice as tall: the input reappears
 unchanged in the top three rows, and its row r reappears as row 5 - r, so the
-output reads the same from the bottom up as from the top down. Each original
+output reads the same from the bottom up as from the top down. Each
 pattern is therefore joined by its mirror image across the canvas's bottom
 edge, the line between rows 2 and 3, and keeps its color, its columns, and its
 place. The
@@ -2176,8 +1913,8 @@ takes the optional `kind` first, then the standard entries `x`, `y`, `width`,
 `height`, `orientation`, and `volume`, in that order, where `width` and
 `height` are the column and row counts of the pattern's box, the nonzero
 bounding box of its input mask: 3 and 2 for the first and second training
-patterns and the test pattern, 1 and 2 for the third training pattern, and
-3 and 3 for the use case's pattern; `volume` is the number of the pattern's
+patterns and the test pattern, and 1 and 2 for the third training pattern;
+`volume` is the number of the pattern's
 cells. It takes no descriptive property, with
 no color, parts list, canvas size, or matrix of cells, because the rules need
 none: the pattern's cells travel in its masks, and the rules read the canvas's
@@ -2185,9 +1922,8 @@ height from the solver's `canvas_height`. Each implementation passes the
 pattern's kind first and `width` and `height` right after `y`, such as
 `kind=l9100, x=0, y=0, width=3, height=2, orientation=0, volume=5` for the
 first training input. The class defaults `kind` to `default`, which names no
-geometry, but every implementation passes its pattern's kind, `l9100` in the
-original pairs and `unknown` in the use case, so no instance takes the
-default.
+geometry, but every implementation passes its pattern's kind, `l9100`, so no
+instance takes the default.
 One class-level conditional, `if $Object.kind is l9100:`, selects every pattern of
 kind `l9100`, a single shape, and the two rules of
 its body turn each of them into the figure it forms with its mirror image.
@@ -2213,61 +1949,45 @@ so an axis would restate it. Each grid holds a single pattern and shows no relat
 so no population operation appears. The rules give the same states with the
 body's rules in reverse order and with the conditional declared after the
 instances. They create no property, so the input and output states of every
-original pair share the same keys and differ only in `height` and
+pair share the same keys and differ only in `height` and
 `volume`.
-A pattern that shows none of the shapes of the original pairs, under any turn
-or mirror, is constructed with `kind=unknown`, a pattern of unknown shape.
-Every pattern of the four original pairs takes `l9100`, so the use case, the
-dataset's last pair, shows one: a plus of five color-1 cells, the middle row
-and the middle column of the 3 by 3 canvas. Its implementation is
-`obe03859f875d is Object(kind=unknown, x=0, y=0, width=3, height=3, orientation=0, volume=5)`,
-and its output is its input grid: the conditional selects no pattern of kind
-`unknown`, so no rule touches the plus, and its output state equals its input
-state. A pattern of a kind that the conditional does not name, such as the
+A pattern of a kind that the conditional does not name, such as the
 default `default` of an implementation that leaves out `kind`, or an invented
-kind such as `l5555`, likewise keeps its input state, and the rules raise no
-error.
+kind such as `l5555`, keeps its input state, and the rules raise no error.
 Native snapshots start with the pair's `canvas_width` and `canvas_height`, and
 output snapshots are captured with the pair's implementation followed by
 `Object[:]`. Kinds identify the geometry: `l9100` is a single shape, as in
 `dataset.28bf18c6.json` and `dataset.25ff71a9.json`, which each pattern keeps
-when it grows into its figure, and `unknown` is a pattern whose shape no original pair shows. Input
+when it grows into its figure. Input
 masks retain each pair's full-size 3 by 3 input canvas and output masks the
-complete output, 6 by 3 in the original pairs and 3 by 3 in the use case,
+complete 6 by 3 output,
 with zero cells padded `0`; with one pattern per grid, each mask equals its
 pair's grid, and merging them reproduces each pair's input and output. The
 `output_x`/`output_y` fields
 record the figure's nonzero bounding-box origin, 0 and 0 in the first
 training pair, 2 and 1 in the third, and 0 and 1 in the second and the test
 pair, equal to `output_value.x`/`output_value.y`, and
-`output_value.width`/`output_value.height` equal its size. The use case's
-output mask is its input mask, so its output state keeps the plus's `x`, `y`,
-`width`, `height`, and `volume`, 0, 0, 3, 3, and 5. `output_canvas` is
+`output_value.width`/`output_value.height` equal its size. `output_canvas` is
 `EXACT`, which keeps the input's 3 columns and grows the composed canvas down
 to retain the figure, as in `dataset.017c7c7b.json`, while `FIT` would crop
 the empty top row from the second and third training outputs and the two
 empty left columns from the third. The composed canvas grows only to the
-figure's lowest cell, though, so it reaches the original outputs' 6 rows only
+figure's lowest cell, though, so it reaches the outputs' 6 rows only
 when the pattern starts on the top row, as in the first training pair. The
 second and third training patterns, like the test pattern, start one row
 down, so their outputs end in an empty row that neither mode frames: `EXACT`
-composes them 5 rows tall. Framing each original output on the world model's
+composes them 5 rows tall. Framing each output on the world model's
 canvas, `canvas_width` columns by twice `canvas_height` rows, needs a solver
-change. For the use case, whose pattern keeps its input state, `EXACT`
-composes the unchanged 3 by 3 grid. Orientation is 0 in both states because
+change. Orientation is 0 in both states because
 the pattern is not turned: its mirror image is part of the figure, not a
-turn, and the use case's plus, a pattern, reads 0 by the
-shape convention. The test pair follows the training pairs at the same level,
-and the use case follows the test pair, all annotated by the same rules.
+turn. The test pair follows the training pairs at the same level and is
+annotated by the same rules.
 
 `dataset.9565186b.json` annotates the four original training pairs from
-`data\training\9565186b.json`, in order, followed by its test pair and, at
-the user's request, one synthesized use case with a region of unknown shape,
-seventeen region instances in total (3, 4, 2, and 4 per training pair, 3 in
-the test pair, and 1 in the use case). Every original input and output
-retains its original 3 by 3 canvas, colors, and positions, the use case takes
-the same 3 by 3 canvas, and no grid has a zero cell. Each original input is a
-mosaic of two to four
+`data\training\9565186b.json`, in order, followed by its test pair, sixteen
+region instances in total (3, 4, 2, and 4 per training pair and 3 in the test
+pair). Every input and output retains its original 3 by 3 canvas, colors, and
+positions, and no grid has a zero cell. Each input is a mosaic of two to four
 colors, and each object is one color region, all the cells of one color,
 whether or not they touch, as in `dataset.d631b094.json`: 5, 1, and 3 cells of
 colors 2, 1, and 8 in the first training pair; 4, 2, 1, and 2 cells of colors
@@ -2296,8 +2016,7 @@ as its only descriptive scalar, as in `dataset.9af7a82c.json`, with no
 parts list, histogram, rank, output color, canvas size, or matrix of cells, so
 no input property names the kept color. The class defaults `kind` to
 `default`, which names no geometry, but every implementation passes its region's
-kind first, `kind=l9100` in the original pairs and
-`kind=unknown` in the use case, so no instance takes the default.
+kind first, `kind=l9100`, so no instance takes the default.
 `width` and `height` are the column
 and row counts of the region's bounding box, from a single cell to the
 whole 3 by 3 canvas, and `volume` is the region's number of cells. They do not
@@ -2327,19 +2046,9 @@ in `color`. Native snapshots start with the pair's `canvas_width` and
 implementations together, followed by `Object[:]`, so every region is compared
 with its whole pair. The kind `l9100` is a single shape, as in
 `dataset.9af7a82c.json` and `dataset.d631b094.json`, in both states of every
-original region, and `unknown` is a region whose shape no original pair shows.
-A region that shows none of the shapes of the original pairs, under any turn
-or mirror, is constructed with `kind=unknown`. Every region of the five
-original pairs takes `l9100`, so the use case, the dataset's last pair, shows
-one: the whole canvas in color 2, a 3 by 3 block of 9 cells, more than any
-original region has. Its implementation is
-`o75f18a68e44b is Object(kind=unknown, x=0, y=0, width=3, height=3, orientation=0, volume=9, color=2)`,
-and its output is its input grid: the rule selects no region of kind
-`unknown`, so the block's output state equals its input state. Alone in its
-pair, the block would keep its color as an `l9100` region too, because no
-other region outnumbers it. A region of a kind that the rule does not name,
+region. A region of a kind that the rule does not name,
 such as the default `default` of an implementation that leaves out `kind`, or
-an invented kind, likewise keeps its color, and the rules raise no error. Input
+an invented kind, keeps its color, and the rules raise no error. Input
 masks retain each pair's full-size 3 by 3 input canvas and output masks the
 complete 3 by 3 output, each padded with `0` outside its region; merging them
 reproduces each pair's input and output. The `output_x`/`output_y` fields
@@ -2351,21 +2060,17 @@ the same in both states because a region keeps its cells when it turns gray:
 315 and 135 for the first training pair's color-2 and color-8 regions,
 corners that point toward the top-left and bottom-right vertices of their
 boxes; 90 for the five horizontal rows of 2 or 3 cells, lines without a head;
-and 0 for the vertical lines, the single cells, the T and C shapes, the
-regions split into separate cells, and the use case's block. The test pair
-follows the training pairs at the same level, and the use case follows the
-test pair, all annotated by the same rules.
+and 0 for the vertical lines, the single cells, the T and C shapes, and the
+regions split into separate cells. The test pair follows the training pairs at
+the same level and is annotated by the same rules.
 
 `dataset.9af7a82c.json` annotates the four original training pairs from
-`data\training\9af7a82c.json`, followed by its test pair and, at the user's
-request, one synthesized use case with a region of unknown shape, twenty
-region instances in total (3, 4, 4, 3, and 5 per original pair and 1 in the
-use case). The fully colored input canvases retain their original sizes:
-3 by 3, 3 by 4, 4 by 3, 4 by 3, and 4 by 4, rows by columns, and the use case
-takes a fully colored 3 by 4 canvas. Each color is one region,
-with its original cells and position. In the original pairs, cell counts
-range from 1 to 6 and are distinct within each pair. Each original output is
-a histogram: the region
+`data\training\9af7a82c.json`, followed by its test pair, nineteen region
+instances in total (3, 4, 4, 3, and 5 per pair). The fully colored input
+canvases retain their original sizes: 3 by 3, 3 by 4, 4 by 3, 4 by 3, and
+4 by 4, rows by columns. Each color is one region,
+with its original cells and position. Cell counts range from 1 to 6 and are
+distinct within each pair. Each output is a histogram: the region
 with the r-th largest cell count becomes a vertical bar of its color in
 column r, starting at the top row and as tall as the region's cell count,
 giving the original 5 by 3, 6 by 4, 5 by 4, 6 by 3, and 6 by 5 outputs. The
@@ -2375,9 +2080,8 @@ the column and row counts of the
 region's bounding box, 1 to 4 each, and `volume` the region's number of cells,
 followed by `color` as a scalar rather than a
 matrix of cells. The class defaults `kind` to `default`, which names no
-geometry, but every implementation passes its region's kind first, `kind=l9100`
-in the original pairs and `kind=unknown` in the use
-case, so no instance takes the default.
+geometry, but every implementation passes its region's kind first,
+`kind=l9100`, so no instance takes the default.
 One class-level conditional, `if $Object.kind is l9100:`, selects every region of
 kind `l9100`, a single shape, and the five rules of its
 body resize each of them into its bar:
@@ -2400,60 +2104,45 @@ per rule would keep only the last rule. The bar's size is the object's own
 states share the same keys. Each pair lists its instances largest first.
 Native output snapshots are captured with all of the same pair's
 implementations together, followed by `Object[:]`, so every recorded `x` counts
-all larger regions of its pair. A region that shows none of the shapes of the
-original pairs, under any turn or mirror, is constructed with `kind=unknown`.
-Every region of the five original pairs takes `l9100`, so the use case, the
-dataset's last pair, shows one: the whole 3 by 4 canvas in color 4, a block
-of 12 cells, more than any original region has. Its implementation is
-`oc65079c49656 is Object(kind=unknown, x=0, y=0, width=4, height=3, orientation=0, volume=12, color=4)`,
-and its output is its input grid: the conditional selects no region of kind
-`unknown`, so the block turns into no bar, and its output state equals its
-input state. A region of a kind that the conditional does not name, such as
+all larger regions of its pair.
+A region of a kind that the conditional does not name, such as
 the default `default` of an implementation that leaves out `kind`, or an
-invented kind, likewise keeps its input state, and the rules raise no error.
+invented kind, keeps its input state, and the rules raise no error.
 Kinds identify the geometry: `l9100` is a single shape, as in
-`dataset.28bf18c6.json`, which each region keeps as its bar's kind, and
-`unknown` is a region
-whose shape no original pair shows. Input masks retain each pair's full-size,
-zero-padded input canvas; output masks retain each pair's full-size output
-canvas padded with `0` outside the bar, and the use case's output mask is its
-whole block. The
+`dataset.28bf18c6.json`, which each region keeps as its bar's kind. Input
+masks retain each pair's full-size, zero-padded input canvas; output masks
+retain each pair's full-size output canvas padded with `0` outside the bar. The
 `output_x`/`output_y` fields record the bar's nonzero bounding-box world origin,
 equal to `output_value.x`/`output_value.y`, not offsets to apply again, and
 `output_value.width`/`output_value.height` equal that bounding box's size.
 `output_canvas` is `FIT` because each histogram fills its nonzero bounding box,
-and two outputs are wider than their inputs; the use case's block starts at
-the canvas origin and fills its canvas, so the `FIT` crop keeps it whole and
-in place. Each state's orientation follows its own shape. Seven original
+and two outputs are wider than their inputs. Each state's orientation follows
+its own shape. Seven
 input regions are corners, a full edge row and a full edge column of their
 box, which point toward the box corner where the two meet: 45 at the top
 right, 135 at the bottom right, 225 at the bottom left, and 315 at the top
 left. Three regions are horizontal bars of two or three cells, at 90; the
 two vertical bars and the four single cells are at 0, and so are the three
-remaining original regions, a notched block and two zigzags, which have no
-direction, as is the use case's block in both of its states. Every original
+remaining regions, a notched block and two zigzags, which have no
+direction. Every
 output state is a vertical bar, at 0 by its vertical axis, or a single cell,
 also 0, so the rule `$Object.orientation is 0` in the conditional's body stands
 every bar upright, whatever its region's orientation. The test pair follows
-the training pairs at the same level, and the use case follows the test pair,
-all annotated by the same rules.
+the training pairs at the same level and is annotated by the same rules.
 
 `dataset.a85d4709.json` annotates the four original training pairs from
-`data\training\a85d4709.json`, in order, followed by its test pair and, at the
-user's request, one synthesized use case with an object of unknown shape,
-sixteen instances in total: fifteen markers, three per original pair, and the
-use case's one object. Every input and output retains its original 3 by 3
-canvas, colors, positions, and zero cells, and the use case takes the same
-3 by 3 canvas. Each original input holds three gray cells of color 5, one in
-each row, on a background of zero cells.
+`data\training\a85d4709.json`, in order, followed by its test pair, fifteen
+marker instances in total, three per pair. Every input and output retains its
+original 3 by 3 canvas, colors, positions, and zero cells. Each input holds
+three gray cells of color 5, one in each row, on a background of zero cells.
 In the training pairs they form one figure from the top row to the bottom row
 whose cells touch through edges or corners: a diagonal line from the top-right
 corner to the bottom-left corner, a vertical line down the right column, and,
 in the third and fourth pairs, the same chevron pointing right, in the left
-two columns and in the right two. Each original output paints every row as a
+two columns and in the right two. Each output paints every row as a
 solid horizontal bar, 1 cell tall and as wide as the canvas, whose color is
 decided by the column of that row's gray cell: 2 for the left column, 4 for
-the middle column, and 3 for the right column, so no original output cell is
+the middle column, and 3 for the right column, so no output cell is
 zero. The whole gray
 figure, the figure seen first, does not change as one: each of its rows takes
 its own color, which no scalar property of a single figure object can state.
@@ -2461,20 +2150,19 @@ Its shape does not decide the colors either: the third and fourth training
 figures are the same chevron one column apart, yet their rows turn 2, 4, and
 2 and 4, 3, and 4. Each column instead gives the same color in every training
 pair where it holds a gray cell, whichever figure that cell belongs to. Each
-object is therefore the gray cells of one row, in the original pairs one gray
-cell, the marker of its row, a single 1 by 1 point, listed from top to
-bottom, because the row is the unit in which every output changes: each
-output row is a single color. The training pairs alone
+object is therefore one gray cell, the marker of its row, a single 1 by 1
+point, listed from top to bottom, because the row is the unit in which every
+output changes: each output row is a single color. The training pairs alone
 also fit reading the vertical line of the second training pair as one
 edge-connected object that widens into a solid 3 by 3 block, and reading the
 colors by the canvas's edges, 2 at the left edge, 3 at the right edge, and 4
 between them, because every canvas is 3 columns wide; the rules take one
-marker per row in every original pair and look the color up by column instead,
+marker per row in every pair and look the color up by column instead,
 choices fixed from the training pairs before the test pair was read. The
 class takes the standard entries `x`, `y`, `width`, `height`, `orientation`, and
 `volume`, where `width` and `height` are the column and row counts of the
-object's box and `volume` the number of its nonzero cells, each 1 for a
-marker, and no descriptive property, with no color, column list, canvas size,
+object's box and `volume` the number of its nonzero cells, each 1, and no
+descriptive property, with no color, column list, canvas size,
 or matrix of cells: every marker is gray, which the rules never read, and the
 marker's column is its `x`. Like every class, it takes `kind` first as an
 optional parameter, here with the default `default`, which
@@ -2482,13 +2170,7 @@ names no geometry, but every implementation passes its object's kind,
 `kind=l7544` for each marker, as in
 `oa98bf6900c1c is Object(kind=l7544, x=2, y=0, width=1, height=1, orientation=0, volume=1)`
 for the top marker of the first training input, so no instance takes the
-default. A row whose gray cells form any other shape holds no marker, and its
-object is constructed with `kind=unknown`. Every row of the five original
-pairs holds a single gray cell, so the use case, the dataset's last pair,
-shows one: two gray cells side by side in the left two columns of the middle
-row, a horizontal domino, with the other rows empty, which
-`o35a9e700bb1d is Object(kind=unknown, x=0, y=1, width=2, height=1, orientation=90, volume=2)`
-constructs. One class-level `if`, `if $Object.kind is l7544:`, selects the markers
+default. One class-level `if`, `if $Object.kind is l7544:`, selects the markers
 and holds all five rules, which set the
 orientation, introduce one property, `fill_color`, absent before the rules
 run, widen the marker into its bar, and move `x` to the left edge, 0, while
@@ -2512,10 +2194,9 @@ cell. The bar's ends come from the canvas, not the population: in the second
 training pair every marker lies in the right column, yet every bar spans the
 whole row. Each bar depends only on its own marker, and the training pairs
 show no relation between markers, so no population operation appears. The
-guard selects no object of another kind, so no rule touches the use case's
-domino: its output state equals its input state, and its output keeps the
-domino in place. An object that keeps the default `default`, or takes an
-invented kind such as `l5555`, is left unchanged in the same way, and the
+guard selects no object of another kind, so an object that keeps the default
+`default`, or takes an invented kind such as `l5555`, is left unchanged: its
+output state equals its input state, and the
 rules raise no error. The rules create no other property and leave `y` and
 `height` unchanged, so each marker's output state adds only `fill_color` to
 its input state's keys, keeps its input kind, its `width` and `volume` turn
@@ -2526,36 +2207,30 @@ are captured with all of the same pair's implementations together, followed by
 `Object[:]`. Kinds
 identify the geometry: `l7544` is a single point, as in
 `dataset.0ca9ddb6.json` and `dataset.d037b0a7.json`, which each marker keeps as
-its bar's kind, while `unknown` marks an object whose shape the rules do not know. Input
+its bar's kind. Input
 masks retain each pair's full-size 3 by 3 input canvas, padded with `0`
-outside the marker or the domino, and output masks the complete 3 by 3
-output, padded with `0` outside the bar or the domino; merging them
-reproduces each pair's input and output. The
+outside the marker, and output masks the complete 3 by 3 output, padded with
+`0` outside the bar; merging them reproduces each pair's input and output. The
 `output_x`/`output_y` fields record the bar's nonzero bounding-box origin, the
 left end of its marker's row, equal to `output_value.x`/`output_value.y`, and
 `output_value.width`/`output_value.height`, 3 and 1, equal the bar's size.
 `output_canvas` is `EXACT` because each output keeps its input's 3 by 3
-canvas; with no zero cell in any original output, `FIT` would frame the same
-original grids, but it would crop the use case's output to its domino.
-Orientation is 0 in a marker's input state because the marker is a single
-point, and 90 in its output state, where `$Object.orientation is 90` sets it,
+canvas; with no zero cell in any output, `FIT` would frame the same grids.
+Orientation is 0 in the input state because the marker is a single
+point, and 90 in the output state, where `$Object.orientation is 90` sets it,
 because the bar is a horizontal line without a head, which points along its
-horizontal axis. The use case's domino, a horizontal line of two cells
-without a head, is 90 in both states. The test pair follows the training
-pairs at the same level, and the use case follows the test pair, all
-annotated by the same rules.
+horizontal axis. The test pair follows the training pairs at the same level and
+is annotated by the same rules.
 
 `dataset.a9f96cdd.json` annotates the four original training pairs from
-`data\training\a9f96cdd.json`, in order, followed by its test pair and, at the
-user's request, one synthesized use case with an object of unknown shape, six
-instances in total, one per pair: five points and the use case's one object.
-Every input and output retains its original 3 by 5 canvas, 3 rows of 5
-columns, with its colors, positions, and zero cells, and the use case takes
-the same 3 by 5 canvas. Each original input holds a single color-2 point on a
+`data\training\a9f96cdd.json`, in order, followed by its test pair, five
+point instances in total, one per pair. Every input and output retains its
+original 3 by 5 canvas, 3 rows of 5 columns, with its colors, positions, and
+zero cells. Each input holds a single color-2 point on a
 background of zero cells: in the second column of the middle row, at the
 right end of the bottom row, in the middle of the top row, and in the fourth
 column of the middle row in the training pairs, and at the right end of the
-middle row in the test pair. Each original output replaces the point with its
+middle row in the test pair. Each output replaces the point with its
 four diagonal neighbors, the
 corners of the 3 by 3 box centered on it, each in a color of its own: 3 at the
 top left, 6 at the top right, 8 at the bottom left, and 7 at the bottom right,
@@ -2564,8 +2239,8 @@ are cut off: all four remain in the first and fourth training pairs, only the
 top-left corner in the second, whose point sits in the canvas's bottom-right
 corner, the two bottom corners in the third, whose point sits on the top row,
 and the two left corners in the test pair, whose point sits on the right edge.
-Each object is therefore the input's color-2 figure, the figure seen first, in
-the original pairs a single point, which becomes the ring of its remaining
+Each object is therefore the input's color-2 figure, the figure seen first, a
+single point, which becomes the ring of its remaining
 corners: every corner's position and color follow from
 the point and the canvas alone, and no corner exists in the input, so no
 corner is an object of its own. The figure's box is the bounding box of the
@@ -2575,20 +2250,15 @@ row, which holds no corner, while its corners lie only in the row below. The
 class takes the standard entries `x`, `y`, `width`, `height`, `orientation`,
 and `volume`, in that order, where `width` and `height` are the column and
 row counts of the object's box and `volume` the number of its nonzero cells,
-each 1 for a point, and no descriptive property, with no color, canvas size,
+each 1, and no descriptive property, with no color, canvas size,
 or matrix of cells: every object has color 2, which the rules never read.
 Like every class, it takes `kind` first as an optional
 parameter, here with the default `default`, which names no geometry, but
-every implementation passes its object's kind. Each point's implementation
+every implementation passes its object's kind. Each implementation
 passes `kind=l7544` first and `width=1, height=1` right after `y`, such as
 `kind=l7544, x=1, y=1, width=1, height=1, orientation=0, volume=1` for the
-first training input, so no instance takes the default. A color-2 figure of
-any other shape is constructed with `kind=unknown`. Every original input
-holds a single point, so the use case, the dataset's last pair, shows one:
-two color-2 cells side by side in the second and third columns of the middle
-row, a horizontal domino, which
-`oe0e432fab7e5 is Object(kind=unknown, x=1, y=1, width=2, height=1, orientation=90, volume=2)`
-constructs. One class-level `if`, `if $Object.kind is l7544:`, selects the points
+first training input, so no instance takes the default.
+One class-level `if`, `if $Object.kind is l7544:`, selects the points
 and holds six rules that turn every point into its figure. Its condition reads
 the live kind, which never changes, because no rule assigns `kind`, so each
 point keeps its input kind in its output, and the rules
@@ -2625,10 +2295,9 @@ so no population operation appears. The training pairs alone also fit
 clipping at fixed rows and columns, because every canvas is 3 by 5; the rules
 read `canvas_width` and `canvas_height` instead, a choice fixed from the
 training pairs before the test pair was read. The guard selects no object of
-another kind, so no rule touches the use case's domino: its output state
-equals its input state, and its output keeps the domino in place. An object
-that keeps the default `default`, or takes an invented kind such as `l5555`,
-is left unchanged in the same way, and the rules raise no error. The rules
+another kind, so an object that keeps the default `default`, or takes an
+invented kind such as `l5555`, is left unchanged: its output state equals its
+input state, and the rules raise no error. The rules
 create no other property, so each point's output state adds only
 `corner_colors` to its input state's keys, keeps its input kind, its
 `volume` counts the remaining corners, and its `x`, `y`, `width`, and
@@ -2646,37 +2315,30 @@ together, followed by `Object[:]`. Kinds identify the geometry: `l7544` is a
 single point, as in `dataset.0ca9ddb6.json`, `dataset.d037b0a7.json`, and
 `dataset.a85d4709.json`, which each point keeps as the kind of its figure,
 the four corners of a 3 by 3 box around its empty center, in the colors of
-`corner_colors`, while `unknown` marks an object whose shape the rules
-do not know. Input masks retain each pair's full-size 3 by 5 input canvas,
-padded with `0` outside the point or the domino, and output masks the
-complete 3 by 5 output, padded with `0` outside the remaining corners or the
-domino; merging them reproduces each pair's input and output. The
+`corner_colors`. Input masks retain each pair's full-size 3 by 5 input canvas,
+padded with `0` outside the point, and output masks the complete 3 by 5
+output, padded with `0` outside the remaining corners; merging them
+reproduces each pair's input and output. The
 `output_x`/`output_y` fields
 record the figure's nonzero bounding-box origin, equal to
 `output_value.x`/`output_value.y`, and
 `output_value.width`/`output_value.height` equal its size, so the solver
 places each crop without a negative offset or a grown canvas.
 `output_canvas` is `EXACT` because each output keeps its input's 3 by 5
-canvas, while `FIT` would crop every original output to its corners, such as
-the single cell of the second training output, and the use case's output to
-its domino. Orientation is 0 in both states of every point because the point
-is symmetric and the figure is not turned: its corner colors keep their
-places on the canvas in every original pair, so `corner_colors`, not
-`orientation`, records them. The use case's domino, a horizontal line of two
-cells without a head, is 90 in both states. The test pair follows the
-training pairs at the same level, and the use case follows the test pair, all
-annotated by the same rules.
+canvas, while `FIT` would crop every output to its corners, such as the
+single cell of the second training output. Orientation is 0 in both states
+because the point is symmetric and the figure is not turned: its corner
+colors keep their places on the canvas in every pair, so `corner_colors`, not
+`orientation`, records them. The test pair follows the training pairs at the
+same level and is annotated by the same rules.
 
 `dataset.c8f0f002.json` annotates the three original training pairs from
-`data\training\c8f0f002.json`, in order, followed by its test pair and, at
-the user's request, one synthesized use case with a region of unknown shape,
-thirteen region instances in total, three per original pair and one in the
-use case. Every input and output retains its original canvas, colors, and
-positions: 3 by 6, 3 by 4, and 3 by 5 in the training pairs and 3 by 5 in
-the test pair, rows by columns, and no original grid has a zero cell; the use
-case takes a 3 by 5 canvas as well, whose zero cells are background. Each
-original input is a mosaic of the same three colors, 1, 7, and 8, that fills
-its canvas. Each original output turns every color-7 cell gray, color 5, and
+`data\training\c8f0f002.json`, in order, followed by its test pair, twelve
+region instances in total, three per pair. Every input and output retains
+its original canvas, colors, and positions: 3 by 6, 3 by 4, and 3 by 5 in
+the training pairs and 3 by 5 in the test pair, rows by columns, and no grid
+has a zero cell. Each input is a mosaic of the same three colors, 1, 7, and 8,
+that fills its canvas. Each output turns every color-7 cell gray, color 5, and
 keeps every color-1 and color-8 cell, so 3 of the 9 training regions turn
 gray, one per pair. The whole mosaic, the figure seen first in
 `dataset.3c9b0459.json` and `dataset.74dd1130.json`, does not change as one:
@@ -2710,16 +2372,11 @@ size, or matrix of cells, so no input property names the output color.
 box, the nonzero bounding box of its input mask, from the single color-8 cell
 of the second training pair, 1 by 1, to 5 columns by 3 rows, and `volume` is
 the region's number of cells; each implementation passes the region's kind
-first, `kind=l9100` for every original region, and `width` and `height` right
+first, `kind=l9100` for every region, and `width` and `height` right
 after `y`, such as
 `kind=l9100, x=1, y=0, width=5, height=3, orientation=0, volume=5, color=8`
 for the color-8 region of the first training input, so no instance takes the
-default. A region whose shape the rules do not know is constructed with
-`kind=unknown`. The use case, the dataset's last pair, shows one: a solid
-2 by 2 square of four color-7 cells in the top two rows of the second and
-third columns, which no original region or piece of one forms, constructed by
-`oe1767cd89f3c is Object(kind=unknown, x=1, y=0, width=2, height=2, orientation=0, volume=4, color=7)`.
-One conditional class-level rule,
+default. One conditional class-level rule,
 `if $Object.kind is l9100 and $Object.color@first is 7:` with the body
 `$Object.color is 5`, turns every color-7 region of kind `l9100` gray. Its
 condition joins a kind guard and the color test with `and`, and both use
@@ -2734,11 +2391,9 @@ states only the change; the conditional expression
 would give the same states but restate every other region's color. Each
 region's change depends only on its own kind and color, and no relation
 between regions decides it, so no population operation appears. The guard
-selects no region of another kind, so the use case's color-7 square, of kind
-`unknown`, keeps its color: its output state equals its input state, and its
-output keeps the square in place, where a color-7 region of kind `l9100`
-would turn gray. A region that keeps the default `default`, or takes an
-invented kind such as `l5555`, keeps its color in the same way, and the rules
+selects no region of another kind, so a region that keeps the default
+`default`, or takes an invented kind such as `l5555`, keeps its color: its
+output state equals its input state, and the rules
 raise no error. The rule gives the same states when it is declared after
 the instances. The rules create no property and leave `x`, `y`, `width`,
 `height`, `orientation`, and the kind unchanged, since a region keeps its cells
@@ -2748,38 +2403,30 @@ snapshots start with the pair's `canvas_width` and `canvas_height`, and output
 snapshots are captured with all of the same pair's implementations together,
 followed by `Object[:]`. The kind `l9100` is a single shape, as in
 `dataset.28bf18c6.json`, `dataset.9565186b.json`, and `dataset.d631b094.json`,
-in both states, while `unknown` marks a region whose shape the rules do not
-know. Input masks retain each pair's full-size input canvas and
+in both states. Input masks retain each pair's full-size input canvas and
 output masks the complete output, each padded with `0` outside its region;
 merging them reproduces each pair's input and output. The
 `output_x`/`output_y` fields record the region's nonzero bounding-box origin,
 unchanged from its input and equal to `output_value.x`/`output_value.y`.
 `output_canvas` is `EXACT` because each output keeps its input's canvas; with
-no zero cell to crop in any original grid, `FIT` would frame the same
-original grids, but it would crop the use case's output to its square.
-Orientation is 0 in both states because no region is turned, and the use
-case's square, a block, reads 0 by the shape convention. The test pair
-follows the training pairs at the same level, and the use case follows the
-test pair, all annotated by the same rules.
+no zero cell to crop, `FIT` would frame the same grids. Orientation is 0 in
+both states because no region is turned. The test pair follows the training
+pairs at the same level and is annotated by the same rules.
 
 `dataset.c9e6f938.json` annotates the three original training pairs from
-`data\training\c9e6f938.json`, in order, followed by its test pair and, at
-the user's request, one synthesized use case with a pattern of unknown shape,
-five pattern instances in total, one per pair. Every original input retains
-its original 3 by 3 canvas and every original output its original 3 by 6
-canvas, 3 rows of 6 columns, with their colors, positions, and zero cells;
-the use case takes the same 3 by 3 canvas for both its input and its output.
-Each input holds one pattern of color-7 cells on a background of zero cells:
-4, 2, and 1 cells in the training pairs, 4 in the test pair, and 4 in the use
-case. Each object is that whole pattern,
+`data\training\c9e6f938.json`, in order, followed by its test pair, four
+pattern instances in total, one per pair. Every input retains its original
+3 by 3 canvas and every output its original 3 by 6 canvas, 3 rows of 6
+columns, with their colors, positions, and zero cells. Each input holds one
+pattern of color-7 cells on a background of zero cells: 4, 2, and 1 cells in
+the training pairs and 4 in the test pair. Each object is that whole pattern,
 the figure seen first, whether or not its cells touch: the first training
 pattern's top cell touches the rest only at a corner, and so does the test
 pattern's bottom-right cell; the same rules would mirror each separate piece
-as well. Each original output sets the whole input grid beside its left-right
-mirror image on a canvas twice as wide: the input reappears unchanged in the
-left three columns, and its column c reappears as column 5 - c, so every
-output row reads the same from right to left as from left to right. Each
-original pattern is
+as well. Each output sets the whole input grid beside its left-right mirror
+image on a canvas twice as wide: the input reappears unchanged in the left
+three columns, and its column c reappears as column 5 - c, so every output
+row reads the same from right to left as from left to right. Each pattern is
 therefore joined by its mirror image across the canvas's right edge, the line
 between columns 2 and 3, and keeps its color, its rows, and its place. The
 mirror line is the canvas's edge, not the pattern's own: the third training
@@ -2797,13 +2444,12 @@ image. The class takes only the standard entries `x`, `y`, `width`,
 `height`, `orientation`, and `volume`, in that order, where `width` and
 `height` are the column and row counts of the pattern's box, the nonzero
 bounding box of its input mask: 2 and 3 for the first training pattern, 2 and 1
-for the second, 1 and 1 for the third, 3 and 3 for the test pattern, and 3 and
-2 for the use case's; `volume` is the number of the pattern's cells. Like
+for the second, 1 and 1 for the third, and 3 and 3 for the test pattern;
+`volume` is the number of the pattern's cells. Like
 every class, it takes `kind` first as an optional parameter,
 here with the default `default`, which names no geometry, but every
-implementation passes its pattern's kind, `kind=l9100` for the four original
-patterns and `kind=unknown` for the use case's, so no instance takes the
-default. It takes no
+implementation passes its pattern's kind, `kind=l9100` for the four patterns,
+so no instance takes the default. It takes no
 descriptive property, with no color, parts list, canvas size, or matrix of
 cells, because the rules need none: the pattern's cells travel in its masks,
 and the rules read the canvas's width from the solver's `canvas_width`. Each
@@ -2832,40 +2478,31 @@ mirror images. The rules leave `x`, `y`, `height`, and `orientation`
 unchanged, because the mirror image keeps the pattern's rows and the figure
 starts at the pattern's left column. They state no `mirror_axis`, the property
 of `dataset.74dd1130.json`: the box grows only in `width`, to the right, so
-an axis would restate it. A pattern of any other kind, such as `unknown`, the default `default`,
-or an invented kind such as `l5555`, is left unchanged: the condition selects
-no such pattern and no other rule exists, so its output state equals its input
-state, and the dataset needs no rule for `unknown`. The use case, the
-dataset's last pair, shows one: a Z of four color-7 cells, the left two cells
-of the top row and the right two cells of the middle row, a shape that no
-original pattern or figure shows under any turn or mirror. Its implementation
-is
-`od353418bb9f4 is Object(kind=unknown, x=0, y=0, width=3, height=2, orientation=0, volume=4)`,
-and its output is its input grid unchanged, with no mirror image. Each grid
+an axis would restate it. A pattern of any other kind, such as the default
+`default` or an invented kind such as `l5555`, is left unchanged: the condition
+selects no such pattern and no other rule exists, so its output state equals
+its input state. Each grid
 holds a single pattern and shows no relation between objects, so no
 population operation appears, and no rule reads an object of another kind.
 The guard's statements give the same states in reverse order, and the guard
 gives them when it is declared after the instances. The rules create no
 property, so input and output states share the same keys, and they differ
-only in `width` and `volume` of each original pattern, while the
-use case's states are equal. Native snapshots start with the pair's
+only in `width` and `volume`. Native snapshots start with the pair's
 `canvas_width`
 and `canvas_height`, and output snapshots are captured with the pair's
 implementation followed by `Object[:]`. Kinds identify the geometry: `l9100` is a
 single shape, as in `dataset.28bf18c6.json` and `dataset.8be77c9e.json`, which
-each pattern keeps when it grows into its figure, while `unknown` marks a pattern of unknown shape.
+each pattern keeps when it grows into its figure.
 Input masks retain each pair's full-size 3 by 3
-input canvas and output masks the complete output, 3 by 6 in the original
-pairs and 3 by 3 in the use case, with zero cells
+input canvas and output masks the complete 3 by 6 output, with zero cells
 padded `0`; with one pattern per grid, each mask equals its pair's grid, and
 merging them reproduces each pair's input and output. The
 `output_x`/`output_y` fields record the figure's nonzero bounding-box origin,
 1 and 0 in the first training pair, 1 and 1 in the second, 0 and 1 in the
-third, 0 and 0 in the test pair, and 0 and 0 in the use case, equal to
+third, and 0 and 0 in the test pair, equal to
 `output_value.x`/`output_value.y`, and
 `output_value.width`/`output_value.height` equal its size, 4 and 3, 4 and 1,
-6 and 1, 6 and 3, and 3 and 2. `output_canvas` is `EXACT`, which keeps the
-input's
+6 and 1, and 6 and 3. `output_canvas` is `EXACT`, which keeps the input's
 3 rows and grows the composed canvas right to retain the figure, as
 `dataset.8be77c9e.json` grows its canvas down, while `FIT` would crop the
 empty left and right columns from the first and second training outputs and
@@ -2874,44 +2511,36 @@ grows only to the figure's rightmost cell, though, so it reaches the outputs'
 6 columns only when the pattern starts in the left column, as in the third
 training pair and the test pair. The first and second training patterns start
 one column right, so their outputs end in an empty column that neither mode
-frames: `EXACT` composes them 5 columns wide. The use case's pattern keeps its
-cells, so the composed canvas stays at the input's 3 by 3, the use case's
-output. Framing each original output on the world
+frames: `EXACT` composes them 5 columns wide. Framing each output on the world
 model's canvas, twice `canvas_width` columns by `canvas_height` rows, needs a
 solver change. Orientation is the same in both states because the pattern is
 not turned: its mirror image is part of the figure, not a
 turn. It is 90 in the second training pair, whose 2-cell row and 4-cell
 figure are horizontal lines without a head, and 0 in the other pairs, where
 the third training pattern is a single cell and the other patterns and
-figures, the use case's Z among them, are neither lines, corners, nor
-chevrons.
-The test pair follows the training pairs at the same level, and the use case
-follows the test pair, all annotated by the same rules.
+figures are neither lines, corners, nor chevrons.
+The test pair follows the training pairs at the same level and is annotated by
+the same rules.
 
 `dataset.d037b0a7.json` annotates the three original training pairs from
-`data\training\d037b0a7.json`, in order, followed by its test pair and, at
-the user's request, one synthesized use case with a shape of unknown kind,
-twelve instances in total (3, 3, 2, 3, and 1 per pair): eleven points and the
-use case's shape. Every original input and output retains its original 3 by 3
-canvas, colors, positions, and zero cells, and the use case takes the same
-3 by 3 canvas. Each object of the original pairs is one nonzero input cell, a
-single 1 by 1 point of its own color,
+`data\training\d037b0a7.json`, in order, followed by its test pair, eleven
+point instances in total (3, 3, 2, and 3 per pair). Every input and output
+retains its original 3 by 3 canvas, colors, positions, and zero cells. Each
+object is one nonzero input cell, a single 1 by 1 point of its own color,
 listed in reading order; no two points of a pair share a column, so their bars
-never overlap. Each original output extends every point downward into a
-vertical bar of
+never overlap. Each output extends every point downward into a vertical bar of
 its color, from the point's row to the bottom row of the canvas, so each bar is
 1 to 3 cells tall and a point on the bottom row stays a single cell. The class
 takes the standard entries `x`, `y`, `width`, `height`, `orientation`, and
 `volume`, where `width` and `height` are the column and row counts of the
-object's box and `volume` the number of its nonzero cells, each 1 for a
-point, and `color`
+object's box and `volume` the number of its nonzero cells, each 1, and `color`
 as its only descriptive scalar, with no canvas size or
 matrix of cells. Like every class, it takes `kind` first as an
 optional parameter, here with the default `default`, which names no geometry,
 but every implementation passes its object's kind, `kind=l7544` for the
 eleven points, as in
 `o7ed0b8b9b5eb is Object(kind=l7544, x=2, y=0, width=1, height=1, orientation=0, volume=1, color=6)`,
-and `kind=unknown` for the use case's shape, so no instance takes the default.
+so no instance takes the default.
 One class-level `if`, `if $Object.kind is l7544:`, selects the points, of kind
 `l7544`, and its statements
 grow the point's `height` into the bar's, `canvas_height - $Object.y@first`,
@@ -2934,44 +2563,31 @@ comes from the canvas, not the
 population: the second training pair's lowest point lies on the middle row,
 yet its bars reach the bottom row. No rule reads another object, so none
 needs to leave out objects of another kind. An object of any other kind, such
-as `unknown`, the default `default`, or an invented kind such as `l5555`, is
+as the default `default` or an invented kind such as `l5555`, is
 left unchanged: the condition selects no such object and no other rule
-exists, so its output state equals its input state, and the dataset needs no
-rule for `unknown`. The use case, the dataset's last pair, shows one: an H of
-seven color-4 cells, the full left and right columns joined by the middle
-row, a shape that no original pair shows, whose objects are single points
-and whose bars are vertical. Its implementation is
-`od85b9ccde050 is Object(kind=unknown, x=0, y=0, width=3, height=3, orientation=0, volume=7, color=4)`,
-and its output is its input grid unchanged, with no bar. Native output
+exists, so its output state equals its input state. Native output
 snapshots are captured with
 all of the same pair's implementations together, followed by `Object[:]`. Kinds
 identify the geometry: `l7544` is a single point, as in
-`dataset.0ca9ddb6.json`, which each point keeps as its bar's kind, while
-`unknown` marks a shape of unknown kind. Input
+`dataset.0ca9ddb6.json`, which each point keeps as its bar's kind. Input
 masks retain each pair's full-size,
 zero-padded input canvas; output masks retain each pair's full-size output
-canvas padded with `0` outside the bar, or outside the use case's H. The
-`output_x`/`output_y` fields
+canvas padded with `0` outside the bar. The `output_x`/`output_y` fields
 record the bar's nonzero bounding-box origin, equal to
 `output_value.x`/`output_value.y`, and
-`output_value.width`/`output_value.height` equal the bar's size, while the
-use case's H keeps its input box, 3 by 3 at 0 and 0.
+`output_value.width`/`output_value.height` equal the bar's size.
 `output_canvas` is `EXACT` because each output keeps its input's canvas,
 including the empty right column of the third training output. Orientation is
-0 in both states because the points are symmetric, the bars are vertical,
-and the use case's H is neither a line, a corner, nor a chevron.
-The test pair follows the training pairs at the same level, and the use case
-follows the test pair, all annotated by the same rules.
+0 in both states because the points are symmetric and the bars are vertical.
+The test pair follows the training pairs at the same level and is annotated by
+the same rules.
 
 `dataset.d631b094.json` annotates the four original training pairs from
-`data\training\d631b094.json`, in order, followed by its test pair and, at
-the user's request, one synthesized use case with a region of unknown shape,
-six region instances in total, one per pair. Every original input retains its
-original 3 by 3 canvas, colors, positions, and zero cells, and the use case's
-input takes the same 3 by 3 canvas. Each input holds a single
+`data\training\d631b094.json`, in order, followed by its test pair, five
+region instances in total, one per pair. Every input retains its original
+3 by 3 canvas, colors, positions, and zero cells. Each input holds a single
 nonzero color, and all cells of that color form one region, whether or not
-they touch: 2, 3, 1, 4, and 5 cells in the original pairs and 4 in the use
-case. Each original output is a horizontal bar
+they touch: 2, 3, 1, 4, and 5 cells per pair. Each output is a horizontal bar
 of the region's color, one row high and as wide as the region's cell count,
 giving the original 1 by 2, 1 by 3, 1 by 1, 1 by 4, and 1 by 5 outputs. The
 class takes the standard entries `x`, `y`, `width`, `height`, `orientation`,
@@ -2980,9 +2596,9 @@ region's bounding box, 1 to 3 each, and `volume` the region's number of cells,
 followed by `color` as a scalar rather than a matrix of cells. Like every
 class, it takes `kind` first as an optional parameter, here
 with the default `default`, which names no geometry, but every implementation
-passes its region's kind, `kind=l9100` for the five original regions, as in
+passes its region's kind, `kind=l9100` for each region, as in
 `oe6495176f8fb is Object(kind=l9100, x=0, y=1, width=2, height=2, orientation=135, volume=2, color=1)`,
-and `kind=unknown` for the use case's, so no instance takes the default.
+so no instance takes the default.
 One class-level `if`, `if $Object.kind is l9100:`, selects the regions of kind
 `l9100`, and its statements
 resize each region into its bar, with `width`
@@ -2997,34 +2613,25 @@ would keep only the last statement.
 The bar's size is the object's own `width` and `height`, so the rules create
 no property, and input and output states share the same keys. No rule reads
 another object, so none needs to leave out regions of another kind. A region
-of any other kind, such as `unknown`, the default `default`, or an invented
+of any other kind, such as the default `default` or an invented
 kind such as `l5555`, is left unchanged: the condition selects no such region
-and no other rule exists, so its output state equals its input state, and the
-dataset needs no rule for `unknown`. The use case, the dataset's last pair,
-shows one: a 2 by 2 block of four color-2 cells at the canvas's top-left
-corner, a shape that no original region or bar shows under any turn or
-mirror. Its implementation is
-`oce4e301bd614 is Object(kind=unknown, x=0, y=0, width=2, height=2, orientation=0, volume=4, color=2)`,
-and its output is the block itself, `[[2, 2], [2, 2]]`, not a bar. Kinds
+and no other rule exists, so its output state equals its input state. Kinds
 identify the geometry:
 `l9100` is a single shape, as in `dataset.28bf18c6.json`, which each region
-keeps as its bar's kind, while `unknown` marks a region of unknown shape. Input masks
+keeps as its bar's kind. Input masks
 retain each pair's full-size, zero-padded 3 by 3
 input canvas; output masks retain each pair's full-size output canvas. The
 `output_x`/`output_y` fields record the bar's nonzero bounding-box origin,
 equal to `output_value.x`/`output_value.y`, and
-`output_value.width`/`output_value.height` equal the bar's size, while the
-use case's block keeps its input box, 2 by 2 at 0 and 0.
-`output_canvas` is `FIT` because each original output is cropped to the bar.
-The use case's block starts at the canvas's origin, so the crop to the block
-keeps it at its state's `x` and `y`, 0 and 0, as its output mask records.
+`output_value.width`/`output_value.height` equal the bar's size.
+`output_canvas` is `FIT` because each output is cropped to the bar.
 Orientation follows each state's own shape, in degrees clockwise from north.
 In the inputs, the first training region, two cells on a falling diagonal
 from top left to bottom right, is a line without a head, 135; the second, a
 three-cell chevron with its vertex on the left and both arms going right,
 points left, 270; the single cell of the third is a point, 0; and the fourth
 training region and the test region, neither a line, a corner, nor a chevron,
-are 0, as is the use case's block in both states. The guard's orientation
+are 0. The guard's orientation
 statement,
 `$Object.orientation is 90 if $Object.width > 1 else 0`, a conditional expression of
 [NUC 59](../docs/nuc-0059.md), sets each bar's orientation from the bar's own
@@ -3032,19 +2639,16 @@ statement,
 2, 3, 4, and 5 cells are horizontal lines, 90, and the one-cell bar of the
 third training pair is a point, 0. The statement reads no input orientation, so it rewrites
 `orientation` without an `@first` anchor. The test pair follows the training
-pairs at the same level, and the use case follows the test pair, all
-annotated by the same rules.
+pairs at the same level and is annotated by the same rules.
 
 `dataset.dae9d2b5.json` annotates the five exact original training pairs from
 `data\training\dae9d2b5.json`, in order, followed by its two test pairs at the
-same level and, at the user's request, one synthesized use case with a figure
-of unknown shape, in the single canonical `src\dataset\dataset.dae9d2b5.json`,
-fifteen whole panel-figure instances in total, two per original pair and one in
-the use case. Every training input retains its original 3 by 6 canvas and every
+same level, in the single canonical `src\dataset\dataset.dae9d2b5.json`,
+fourteen whole panel-figure instances in total, two per pair.
+Every training input retains its original 3 by 6 canvas and every
 training output its original 3 by 3 canvas; the test pairs also retain their
 exact source grids, and every pair keeps its colors, positions, and zero cells.
-The use case takes a 3 by 6 input canvas as well. Each original input shows
-two equal-width panels side by side, a
+Each input shows two equal-width panels side by side, a
 color-4 figure on the left and a color-3 figure on the right; each object is
 the whole occupied figure of one panel, including disconnected pieces, and
 zero cells are background. Each output overlays the panels at matching panel
@@ -3056,8 +2660,8 @@ only the standard entries `x`, `y`, `width`, `height`, `orientation`, and
 no color, panel index, cell list, or canvas-size parameter. Like every class,
 it takes `kind` first as an optional parameter, here with the
 default `default`, which names no geometry, but every implementation passes
-its figure's kind as a bare word, `kind=l9100` for every figure of the seven
-original pairs, so no instance takes the default. The class, the rules, and the
+its figure's kind as a bare word, `kind=l9100` for every figure, so no
+instance takes the default. The class, the rules, and the
 implementations write every assignment with `is`, as the other datasets do: a
 bare kind reads as its own text only inside the value of an `is` assignment,
 as the item words of [NUC 95](../docs/nuc-0095.md), so an implementation
@@ -3087,48 +2691,31 @@ snapshots start with the pair's input `canvas_width` and `canvas_height`;
 input states
 run the class alone, and output states run both implementations together with
 all declarations, followed by `Object[:]`. The kind `l9100` is a single shape,
-as in `dataset.28bf18c6.json`, in both states. A figure whose shape no figure
-of the original pairs shows, under any turn or mirror, is constructed with
-`kind=unknown`, a figure of unknown shape. Every figure of the seven original
-pairs takes `l9100`, so the use case, the dataset's last pair, shows one: a U
-of five color-4 cells at the canvas origin, a full bottom row of three cells
-and one cell above each of its ends. Its implementation is
-`of927cf52fc5c is Object(kind=unknown, x=0, y=0, width=3, height=2, orientation=0, volume=5)`.
-No rule names `unknown`, so the figure's output state equals its input state:
-it keeps color 4, its position, size, and five cells, and gains no
-`fill_color`. Its output is the U itself, `[[4, 0, 4], [4, 4, 4]]`, the `FIT`
-crop of a composed canvas whose only figure starts at the origin, so the crop
-keeps its position. A kind that no rule names, such as the default `default`
-of an implementation that leaves out `kind`, or an invented one, is left alone
-in the same way; the default applies to no pair, and `unknown` only to the use
-case. Both instance masks retain their respective pair's complete canvas and
+as in `dataset.28bf18c6.json`, in both states. A kind that no rule names, such
+as the default `default` of an implementation that leaves out `kind`, or an
+invented one, is left alone; the default applies to no pair.
+Both instance masks retain their respective pair's complete canvas and
 pad every other cell with `0`; merging the input masks and the overlapping
 output masks reproduces every pair. Each output state's position equals its
-mask's nonzero bounding-box origin, and the use case's output mask also
-measures its state's box, 3 columns wide and 2 rows tall, and its five cells.
+mask's nonzero bounding-box origin.
 `output_canvas` is `FIT`, because each training output is the union's tight
 crop rather than the larger two-panel input canvas. The two training corners
 point northwest, at 315, and the other training figures take 0; every figure
-keeps its orientation because none turns, and the use case's U, neither a
-line, a corner, nor a chevron, takes 0 as well. The seven original pairs keep
+keeps its orientation because none turns. The seven pairs keep
 the older instance fields `input_x`, `output_x`, `input_y`, `output_y`,
-`input_orientation`, and `output_orientation`, which the use case leaves out,
-as most datasets do. The test pairs use these same training-derived
-declarations without revision, and the use case follows them, annotated by the
-same rules.
+`input_orientation`, and `output_orientation`, which most datasets leave out.
+The test pairs use these same training-derived declarations without revision.
 
 `dataset.e9afcf9a.json` annotates the two original training pairs from
-`data\training\e9afcf9a.json`, in order, followed by its test pair and, at the
-user's request, one synthesized use case with an object of unknown shape, seven
-instances in total, two bars per original pair and one object in the use case.
+`data\training\e9afcf9a.json`, in order, followed by its test pair, six bar
+instances in total, two per pair.
 Every input and output retains its original 2 by 6 canvas, 2 rows of 6
-columns, with its colors and positions, and no grid of the original pairs has a
-zero cell; the use case takes the same 2 by 6 canvas. Each original input is
-two horizontal bars, one on top of the other,
+columns, with its colors and positions, and no grid has a zero cell.
+Each input is two horizontal bars, one on top of the other,
 each 6 cells of one color, one row tall and as wide as the canvas: color 3
 over color 9 and 4 over 8 in the training pairs, and 6 over 2 in the test
-pair. Each of their objects is one bar, the figure seen first, listed from
-top to bottom. Each of their outputs weaves the two bars into a checkerboard
+pair. Each object is one bar, the figure seen first, listed from
+top to bottom. Each output weaves the two bars into a checkerboard
 of their two
 colors that fills the canvas: each bar keeps its cells in its own row in every
 other column, starting with the left column, and moves its cells in the
@@ -3152,7 +2739,7 @@ the rules need none: the bar's color travels in its masks, and its share of
 the checkerboard follows from its row. Like every class, it takes `kind` first
 as an optional parameter, here with the default `default`,
 which names no geometry, but every implementation passes its object's kind as
-a bare word, so no instance takes the default. Each bar's implementation passes
+a bare word, so no instance takes the default. Each implementation passes
 `kind=l3058` first and `width=6, height=1` right after `y`, such as
 `kind=l3058, x=0, y=1, width=6, height=1, orientation=90, volume=6` for the
 bottom bar of the first training input. One class-level conditional,
@@ -3178,14 +2765,14 @@ and `width` unchanged, because the checkerboard spans the bars' six columns.
 Each bar's share depends only on its own row and
 the canvas, so no population operation appears: the two shares interlock
 because the bars lie in rows of different parity, not because a rule compares
-them. The two bars fill the canvas in every original pair, so the training
+them. The two bars fill the canvas in every pair, so the training
 pairs alone also fit a checkerboard over only the rows the bars cover; the
 rules cover the
 canvas instead, a choice fixed from the training pairs before the test pair
 was read. The four rules read only constants, the canvas, and the fixed
 `@first` anchor of `y`, so they give the same states in reverse order, in
 either instance order, and when the conditional is declared after the
-instances. They create no other property, so each bar's output state adds only
+instances. They create no other property, so each output state adds only
 `parity` to its input state's keys, keeps its input kind, its `orientation`
 becomes 0, its `height` turns 2, and its `y` turns 0. Native
 snapshots start with the pair's
@@ -3195,51 +2782,39 @@ identify the geometry: `l3058` is a horizontal bar, as in
 `dataset.25d8a9c8.json`, which each bar keeps as the kind of its share of the
 checkerboard, the cells of its box whose row plus column, counted from the
 canvas's top-left corner, has the parity `parity`, so they alternate along
-each row and down each column. An object that is not a horizontal bar is constructed with
-`kind=unknown`, an object of unknown shape. Every object of the three original
-pairs is a bar, so the use case, the dataset's last pair, shows one: a 2 by 2
-square of four color-3 cells in the canvas's third and fourth columns, whose
-implementation is
-`o6fbe0ce4857e is Object(kind=unknown, x=2, y=0, width=2, height=2, orientation=0, volume=4)`.
-No rule names `unknown`, so its output state equals its input state, without
-`parity`, and its output grid equals its input grid. A kind that no rule
+each row and down each column. A kind that no rule
 names, such as the default `default` of an implementation that leaves out
-`kind`, or an invented one, is left alone in the same way; the default applies
-to no pair, and `unknown` only to the use case. Input masks retain each pair's
+`kind`, or an invented one, is left alone; the default applies
+to no pair. Input masks retain each pair's
 full-size 2 by 6 input canvas and output masks the complete 2 by 6 output, each
-padded with `0` outside its bar, its share of the checkerboard, or the use
-case's square; merging them reproduces each pair's input and output. Each
+padded with `0` outside its bar or its share of the checkerboard; merging them
+reproduces each pair's input and output. Each
 share's output mask has its nonzero bounding-box origin at 0 and 0, equal to
 `output_value.x`/`output_value.y`, and
 `output_value.width`/`output_value.height`, 6 and 2, equal its size, the whole
-canvas, while the square's output mask measures its state's 2 by 2 box at 2
-and 0 and its four cells. `output_canvas` is `EXACT` because each output keeps
-its input's 2 by 6 canvas; with no zero cell in any original output, `FIT`
-would frame the same grids of the original pairs, though it would crop the use
-case's output to its square. Orientation is 90 in every bar's input state,
+canvas. `output_canvas` is `EXACT` because each output keeps its input's
+2 by 6 canvas; with no zero cell in any output, `FIT` would frame the same
+grids. Orientation is 90 in every input state,
 because each bar is a straight horizontal line without a head, and 0 in every
-bar's output state, because each share of the checkerboard is a two-row
-pattern that points no way; the use case's square is a block, 0 in both
-states. The two
+output state, because each share of the checkerboard is a two-row
+pattern that points no way. The two
 shares of a pair are mirror images of each other, but no turn carries one onto
 the other, since a half turn leaves each of them unchanged and a quarter turn
 stands it upright, so `parity`, not `orientation`, tells them apart. The
-test pair follows the training pairs at the same level, and the use case
-follows the test pair, all annotated by the same rules.
+test pair follows the training pairs at the same level and is annotated by the
+same rules.
 
 `dataset.ed36ccf7.json` annotates the four original training pairs from
-`data\training\ed36ccf7.json`, in order, followed by its test pair and, at the
-user's request, one synthesized use case with a pattern of unknown shape, six
+`data\training\ed36ccf7.json`, in order, followed by its test pair, five
 pattern instances in total, one per pair. Every input and output retains its
-original 3 by 3 canvas, colors, positions, and zero cells, and the use case
-takes the same 3 by 3 canvases. Each original input holds one
+original 3 by 3 canvas, colors, positions, and zero cells. Each input holds one
 pattern of a single color on a background of zero cells: 7 cells of color 9,
 5 of color 6, 5 of color 9, and 5 of color 2 in the training pairs, and 3 of
 color 5 in the test pair. Each object is that whole pattern, the figure seen
 first, whether or not its cells touch: the second training pattern is two
 bars, the fourth a lone corner cell and a hook of four cells, and the test
 pattern a single cell that touches a two-cell bar only at a corner. Each
-original output turns the whole grid a quarter turn counterclockwise, so the
+output turns the whole grid a quarter turn counterclockwise, so the
 cell in row r and
 column c moves to row 2 - c and column r: the right column becomes the top row,
 the top row becomes the left column, read from the bottom up, and every color
@@ -3261,14 +2836,14 @@ implementation passes `width` and `height` right after `y`,
 such as `width=3, height=3` for the first training input. Like every class, it
 takes `kind` first as an optional parameter, here with the
 default `default`, which names no geometry, but every implementation passes its
-pattern's kind as a bare word, `kind=l9100` for each pattern of the five
-original pairs, so no instance takes the default. Every training
+pattern's kind as a bare word, `kind=l9100` for each pattern, so no
+instance takes the default. Every training
 pattern's box spans its canvas, 3 by 3 from the origin, 0 and 0, before and
 after the turn, so the training pairs alone also fit turning the pattern in
 place, with `orientation` alone, as `dataset.3c9b0459.json` states its half
 turn. The rules turn it about the canvas center instead, as
 `dataset.6150a2bd.json` turns its block a half turn, a choice fixed from the
-training pairs before the test pair was read: unlike the original mosaics of
+training pairs before the test pair was read: unlike the mosaics of
 `dataset.3c9b0459.json` and `dataset.74dd1130.json`, which have no zero cell
 and always fill their canvases, these patterns lie on a background, so their
 boxes need not span the canvas, and a turn of the whole grid carries a box
@@ -3311,32 +2886,20 @@ instances. Each
 training grid holds a single pattern and shows no relation between objects,
 so no population operation appears. The rules create no property, so input
 and output states share the same keys; they differ only in `orientation` in
-the training pairs, also in `x` and `y` in the test pair, and not at all in the
-use case. Native
+the training pairs, and also in `x` and `y` in the test pair. Native
 snapshots start with the pair's `canvas_width` and `canvas_height`, and output
 snapshots are captured with the pair's implementation followed by `Object[:]`.
 The kind `l9100` is a single shape, as in `dataset.28bf18c6.json`,
-`dataset.3c9b0459.json`, and `dataset.6150a2bd.json`, in both states. A
-pattern whose shape no pattern of the original pairs shows, under any turn or
-mirror, is constructed with `kind=unknown`, a pattern of unknown shape. Every
-pattern of the five original pairs takes `l9100`, so the use case, the
-dataset's last pair, shows one: a Z of five color-9 cells, the top row's left
-two cells, the center, and the bottom row's right two cells, which a quarter
-turn counterclockwise would carry to `[[0, 0, 9], [9, 9, 9], [9, 0, 0]]`. Its
-implementation is
-`o000d5e66bfbf is Object(kind=unknown, x=0, y=0, width=3, height=3, orientation=0, volume=5)`.
-No rule names `unknown`, so its output state equals its input state, at
-orientation 0, and its output grid equals its input grid, unturned. A kind
+`dataset.3c9b0459.json`, and `dataset.6150a2bd.json`, in both states. A kind
 that no rule names, such as the default `default` of an implementation that
-leaves out `kind`, or an invented one, is left alone in the same way; the
-default applies to no pair, and `unknown` only to the use case. Input
+leaves out `kind`, or an invented one, is left alone; the
+default applies to no pair. Input
 masks retain each pair's full-size 3 by 3 input canvas and output masks the
 complete 3 by 3 output, with zero cells padded `0`; with one pattern per grid,
 each mask equals its pair's grid, and merging them reproduces each pair's
 input and output. Each output mask's nonzero bounding-box origin, 0 and 0 in
-the training pairs and the use case and 1 and 0 in the test pair, equals
-`output_value.x`/`output_value.y`, and the use case's output mask also
-measures its state's 3 by 3 box and five cells.
+the training pairs and 1 and 0 in the test pair, equals
+`output_value.x`/`output_value.y`.
 `output_canvas` is `EXACT` because each output keeps its input's 3 by 3
 canvas, as a turn of the whole square grid does; every training output's
 pattern spans its canvas, so `FIT` would frame the same training grids, but
@@ -3345,26 +2908,22 @@ pattern's direction, and the quarter turn adds 270 to it. The third training
 pattern is a corner, whose full bottom row and right column meet at the
 bottom-right vertex of its box, so it points 135 in its input state and 45 in
 its output state, where its top row and right column meet at the top-right
-vertex. Every other pattern of the original pairs is neither a line, a corner,
-nor a chevron, so it is 0 in its input state and 270 in its output state; the
-use case's Z is no line, corner, or chevron either, and no rule turns it, so it
-is 0 in both states. The test pair follows the training pairs at the same
-level, and the use case follows the test pair, all annotated by the same rules.
+vertex. Every other pattern is neither a line, a corner, nor a chevron, so it
+is 0 in its input state and 270 in its output state. The test pair follows the
+training pairs at the same level and is annotated by the same rules.
 
 `dataset.fafffa47.json` annotates the five exact original training pairs from
 `data\training\fafffa47.json`, in order, followed by its test pair at the same
-level and, at the user's request, one synthesized use case with a figure of
-unknown shape, in the single canonical `src\dataset\dataset.fafffa47.json`,
-thirteen whole panel-figure instances in total, two per original pair and one
-in the use case. Every input retains its original 6 by 3 canvas, 6 rows of 3
+level, in the single canonical `src\dataset\dataset.fafffa47.json`, twelve
+whole panel-figure instances in total, two per pair.
+Every input retains its original 6 by 3 canvas, 6 rows of 3
 columns, and every output its original 3 by 3 canvas, with their colors,
-positions, and zero cells, and the use case takes a 6 by 3 input canvas and a
-3 by 3 output as well. Each original input shows
+positions, and zero cells. Each input shows
 two equal 3 by 3 panels stacked vertically, a color-9 figure in the top half of
 the canvas and a color-1 figure in the bottom half; each object is the whole
 figure of one panel, including disconnected pieces, as in the bottom figures of
 the second and third training pairs, and zero cells are background. Each
-original output is one panel: it lays the two panels over each other at
+output is one panel: it lays the two panels over each other at
 matching panel
 coordinates and paints color 2 every cell that both leave empty, the complement
 of the figures' union, while every other cell is 0. The panels' colors do not
@@ -3389,7 +2948,7 @@ top figure of the fifth, 3 by 2 at `x` 1; each implementation passes `width`
 and `height` right after `y`. Like every class, it takes `kind` first as an
 optional parameter, here with the default `default`, which names
 no geometry, but every implementation passes its figure's kind as a bare word,
-`kind=l9100` for each figure of the six original pairs, so no instance takes the
+`kind=l9100` for each figure, so no instance takes the
 default. The figures' own cells would serve as well only
 if a rule could list a panel's cells, and accepted Nucleoid has no integer
 range: `range`, `Array`, and `Object` are undefined, lists have no `keys` or
@@ -3423,7 +2982,7 @@ figures of a pair thus reach the same output state apart from their `id` and
 compose to the output. The
 `points` rule reads the holes of every panel figure, so it needs the whole
 world, while objects of any other kind take no part in it: without the filter,
-an object of kind `unknown` beside the two figures, such as a ring of eight
+an object of another kind beside the two figures, such as a ring of eight
 cells whose panel is empty only at its center, would share no hole with them
 and leave their `points` empty and their boxes `null`. The rules give the same
 states in either instance order and with the conditional declared after the
@@ -3432,35 +2991,23 @@ instances. The body runs its rules in order, and the rules for `x`, `y`,
 before them set, so the rules keep their order; in reverse order they would
 read those properties before the body sets them, and most states would differ.
 They leave `orientation` and `holes` unchanged and create no other property, so
-each figure's output state adds `points` and `fill_color` to its input state's
+each output state adds `points` and `fill_color` to its input state's
 keys. Native snapshots start with the pair's `canvas_width` and
 `canvas_height`; input states run the class alone, and output states run both
 implementations together with all declarations, followed by `Object[:]`. Kinds
 identify the geometry: `l9100` is a single shape, as in
 `dataset.28bf18c6.json` and `dataset.dae9d2b5.json`, which each figure keeps
 when it becomes the empty space that every panel shares, the cells listed in
-`points`. A figure whose
-shape no figure of the original pairs shows, under any turn or mirror, is
-constructed with `kind=unknown`, a figure of unknown shape. Every figure of
-the six original pairs takes `l9100`, so the use case, the dataset's last
-pair, shows one: an H of seven color-9 cells in the top panel, its full left
-and right columns and its center cell, the only figure of its canvas. Its
-implementation is
-`o19bf1ed26969 is Object(kind=unknown, x=0, y=0, width=3, height=3, orientation=0, volume=7, holes=[[1, 0], [1, 2]])`,
-whose `holes` are the two cells of its panel that the H leaves empty. No rule
-names `unknown`, so its output state equals its input state, without `points`
-or `fill_color`, and its output is the H itself in color 9, the 3 by 3 `FIT`
-crop of a composed canvas whose only figure starts at the origin. A kind that
+`points`. A kind that
 no rule names, such as the default `default` of an implementation that leaves
-out `kind`, or an invented one, is left alone in the same way; the default
-applies to no pair, and `unknown` only to the use case. Input masks
+out `kind`, or an invented one, is left alone; the default
+applies to no pair. Input masks
 retain each pair's full-size 6 by 3 input canvas and output masks the complete
 3 by 3 output, padded with `0` outside the figure or the shared empty space;
-the two figures of an original pair share one output mask, and merging the
-masks reproduces each pair's input and output. The use case's output mask
-measures its state's 3 by 3 box at the origin and its seven cells. The six
-original pairs keep the older instance fields `input_x` through
-`output_orientation`, which the use case leaves out, as most datasets do.
+the two figures of a pair share one output mask, and merging the
+masks reproduces each pair's input and output. The six
+pairs keep the older instance fields `input_x` through
+`output_orientation`, which most datasets leave out.
 Their `output_x`/`output_y` fields
 record the shared space's nonzero bounding-box origin, 0 and 0 except 1 and 0
 in the second training pair and 0 and 1 in the test pair, equal to
@@ -3484,7 +3031,7 @@ so its output state keeps 0. The declarations write their assignments with
 `is` and their kinds as bare words, with no quoted string, and the
 implementations pass bare kinds, so the class default `'default'` is the
 dataset's only quote. The test pair follows the training pairs at the same
-level, and the use case follows the test pair, all annotated by the same rules.
+level and is annotated by the same rules.
 
 ## ARC proposal agent
 

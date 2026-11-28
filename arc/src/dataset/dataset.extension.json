@@ -440,52 +440,6 @@
           "output_value": {"height":3,"horizontal_segment_color":4,"id":"o6977f002d257","kind":"l6747","marker_color":7,"orientation":135,"vertex_color":4,"vertical_segment_color":4,"volume":6,"width":3,"x":4,"y":3}
         }
       ]
-    },
-    {
-      "input_matrix": [
-        [0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 4, 4, 4, 0, 0],
-        [0, 0, 0, 4, 0, 0, 0],
-        [0, 0, 0, 4, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0]
-      ],
-      "output_matrix": [
-        [0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 4, 4, 4, 0, 0],
-        [0, 0, 0, 4, 0, 0, 0],
-        [0, 0, 0, 4, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0]
-      ],
-      "instances": [
-        {
-          "instance_name": "o48fc7a1eab07",
-          "input_instance_matrix": [
-            [0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 4, 4, 4, 0, 0],
-            [0, 0, 0, 4, 0, 0, 0],
-            [0, 0, 0, 4, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0]
-          ],
-          "output_instance_matrix": [
-            [0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 4, 4, 4, 0, 0],
-            [0, 0, 0, 4, 0, 0, 0],
-            [0, 0, 0, 4, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0]
-          ],
-          "implementation": "o48fc7a1eab07 is Object(kind=unknown, x=2, y=2, width=3, height=3, orientation=0, volume=5, vertex_color=4, vertical_segment_color=4, horizontal_segment_color=4)",
-          "input_value": {"height":3,"horizontal_segment_color":4,"id":"o48fc7a1eab07","kind":"unknown","orientation":0,"vertex_color":4,"vertical_segment_color":4,"volume":5,"width":3,"x":2,"y":2},
-          "output_value": {"height":3,"horizontal_segment_color":4,"id":"o48fc7a1eab07","kind":"unknown","orientation":0,"vertex_color":4,"vertical_segment_color":4,"volume":5,"width":3,"x":2,"y":2}
-        }
-      ]
     }
   ]
 }

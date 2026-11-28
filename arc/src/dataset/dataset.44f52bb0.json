@@ -212,36 +212,6 @@
           "output_value": {"fill_color":7,"height":1,"id":"o7170e5f9a58a","kind":"l9100","orientation":0,"points":[[0,1],[0,2]],"symmetric":false,"volume":1,"width":1,"x":0,"y":0}
         }
       ]
-    },
-    {
-      "input_matrix": [
-        [2, 2, 2],
-        [0, 2, 0],
-        [0, 2, 0]
-      ],
-      "output_matrix": [
-        [2, 2, 2],
-        [0, 2, 0],
-        [0, 2, 0]
-      ],
-      "instances": [
-        {
-          "instance_name": "o69fa9a05ccce",
-          "input_instance_matrix": [
-            [2, 2, 2],
-            [0, 2, 0],
-            [0, 2, 0]
-          ],
-          "output_instance_matrix": [
-            [2, 2, 2],
-            [0, 2, 0],
-            [0, 2, 0]
-          ],
-          "implementation": "o69fa9a05ccce is Object(kind=unknown, x=0, y=0, width=3, height=3, orientation=0, volume=5, points=[[0, 0], [1, 0], [2, 0], [1, 1], [1, 2]])",
-          "input_value": {"height":3,"id":"o69fa9a05ccce","kind":"unknown","orientation":0,"points":[[0,0],[1,0],[2,0],[1,1],[1,2]],"volume":5,"width":3,"x":0,"y":0},
-          "output_value": {"height":3,"id":"o69fa9a05ccce","kind":"unknown","orientation":0,"points":[[0,0],[1,0],[2,0],[1,1],[1,2]],"volume":5,"width":3,"x":0,"y":0}
-        }
-      ]
     }
   ]
 }
