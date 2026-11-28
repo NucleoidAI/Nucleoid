@@ -395,7 +395,7 @@ fn no_other_document_case_writes_a_range() {
         with_range += usize::from(writes);
     }
     assert_eq!(with_range, 7);
-    assert_eq!(cases, 1333);
+    assert_eq!(cases, 1340);
 }
 
 #[test]

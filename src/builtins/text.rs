@@ -122,8 +122,12 @@ fn string_transform(
             receiver,
             number::repetitions(first.to_number()),
         )?),
-        "padStart" => Value::String(string_pad(receiver, first, arguments.get(1), Side::Start)?),
-        "padEnd" => Value::String(string_pad(receiver, first, arguments.get(1), Side::End)?),
+        "padStart" | "rjust" | "PadLeft" => {
+            Value::String(string_pad(receiver, first, arguments.get(1), Side::Start)?)
+        }
+        "padEnd" | "ljust" | "PadRight" => {
+            Value::String(string_pad(receiver, first, arguments.get(1), Side::End)?)
+        }
         "substring" | "slice" | "substr" => {
             let end = arguments
                 .get(1)

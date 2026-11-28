@@ -22992,6 +22992,114 @@ days.sum()
 # return: 28"#);
 }
 
+/// Nucleoid pads strings with Python's and Ruby's rjust and ljust
+#[rustfmt::skip]
+#[test]
+fn pads_strings_with_python_s_and_ruby_s_rjust_and_ljust() {
+    let mut run = runner();
+    run(r#"orders = ["7", "42", "305"]"#);
+    run(r#"numbers = orders.map(order -> order.rjust(4, "0"))"#);
+    run(r#"item = "tea""#);
+    run("width = 8");
+    run(r#"row = item.ljust(width, ".") + "|""#);
+    assert_eq!(run("numbers"), serde_json::json!(["0007", "0042", "0305"]));
+    assert_eq!(run("row"), "tea.....|");
+    run(r#"orders.push("1234")"#);
+    run(r#"item = "honey""#);
+    run("width = 7");
+    assert_eq!(run("numbers"), serde_json::json!(["0007", "0042", "0305", "1234"]));
+    assert_eq!(run("row"), "honey..|");
+    assert_eq!(run(r#"["ab".rjust(7, "xy"), "ab".ljust(7, "xy"), "5".rjust(3), "long".ljust(2)]"#), serde_json::json!(["xyxyxab", "abxyxyx", "  5", "long"]));
+    run(r#"row
+
+# return: "honey..|""#);
+}
+
+/// Nucleoid pads strings with C#'s PadLeft and PadRight
+#[rustfmt::skip]
+#[test]
+fn pads_strings_with_c_s_padleft_and_padright() {
+    let mut run = runner();
+    run(r#"name = "Zoë""#);
+    run(r#"code = "7""#);
+    run(r#"cell = name.PadRight(6, "·") + code.PadLeft(3, "0")"#);
+    assert_eq!(run("cell"), "Zoë···007");
+    run(r#"name = "Ana""#);
+    run(r#"code = "12""#);
+    assert_eq!(run("cell"), "Ana···012");
+    assert_eq!(run(r#"["😀".PadLeft(3), "añejo".PadRight(7, "*"), "x".PadLeft(4, "😀é")]"#), serde_json::json!(["  😀", "añejo**", "😀é😀x"]));
+    run("mark = String.fromCharCode(101, 769)");
+    {
+        let actual = run(r#"[mark.PadLeft(3, "-"), mark.PadLeft(3, "-").length]"#);
+        let expected = run(r#"(["-" + mark, 3])"#);
+        assert_eq!(actual, expected);
+    }
+    run(r#"cell.length
+
+# return: 9"#);
+}
+
+/// Nucleoid keeps padding aliases live in class level rules
+#[rustfmt::skip]
+#[test]
+fn keeps_padding_aliases_live_in_class_level_rules() {
+    let mut run = runner();
+    run(r#"class Room(floor, number):
+    this.floor = floor
+    this.number = number"#);
+    run(r#"$Room.label = String($Room.floor).rjust(2, "0") + "-" + String($Room.number).PadLeft(3, "0")"#);
+    run("suite = Room(3, 7)");
+    run("hall = Room(12, 45)");
+    assert_eq!(run("[suite.label, hall.label]"), serde_json::json!(["03-007", "12-045"]));
+    run("suite.number = 120");
+    run("hall.floor = 4");
+    assert_eq!(run("[suite.label, hall.label]"), serde_json::json!(["03-120", "04-045"]));
+    run(r#"signs = Room.map(room -> room.label.ljust(8, "."))"#);
+    run("Room(1, 1)");
+    assert_eq!(run("signs"), serde_json::json!(["03-120..", "04-045..", "01-001.."]));
+    run(r#"signs.length
+
+# return: 3"#);
+}
+
+/// Nucleoid rolls back failed updates through padding aliases
+#[rustfmt::skip]
+#[test]
+fn rolls_back_failed_updates_through_padding_aliases() {
+    let mut run = runner();
+    run(r#"width = 4
+fill = "0"
+ticket = "42".rjust(width, fill)
+failure = ""
+try:
+    width = 1 / 0
+catch error:
+    failure = error
+assert(failure, TypeError("Padded string is too large"))
+assert([width, ticket], [4, "0042"])
+ids = []
+tags = ids.map(id -> id.PadRight(size, "-"))
+try:
+    ids.push("a")
+catch error:
+    failure = error
+assert(failure, ReferenceError("size is not defined"))
+assert([ids, tags], [[], []])
+size = 3
+ids.push("a", "bb")
+assert(tags, ["a--", "bb-"])
+try:
+    fill = "*"
+    size = 4
+    assert([ticket, tags], ["**42", ["a---", "bb--"]])
+    throw "UNDO"
+catch error:
+    assert(error, "UNDO")
+assert([ticket, fill, tags], ["0042", "0", ["a--", "bb-"]])
+ticket
+# return: "0042""#);
+}
+
 /// Nucleoid tells two explanations apart with xor
 #[rustfmt::skip]
 #[test]

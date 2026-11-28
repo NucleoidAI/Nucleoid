@@ -834,6 +834,97 @@ operator-chain diagnostics and source positions are preserved.
   `Nucleoid rolls back failed updates through padded strings` specify the
   executable behavior. `tests/string_padding.rs` executes the rest.
 
+## Padding method aliases
+
+- [NUC 157](docs/nuc-0157.md) adds the padding methods that Python, Ruby
+  and C# write, as aliases of the accepted `padStart` and `padEnd` of
+  [Reactive string padding](#reactive-string-padding) on strings. They join
+  the accepted string aliases `lower`, `upper`, `strip`, `find`,
+  `contains`, `substr`, `startswith`, `endswith`, `join`, `starts_with`,
+  `ends_with` and the size, case conversion and reversal aliases. No token,
+  keyword, syntax tree node, error type or message format is added.
+- `TEXT.rjust(length, fill)`, Python's and Ruby's, and
+  `TEXT.PadLeft(length, fill)`, C#'s, are `TEXT.padStart(length, fill)`,
+  and `TEXT.ljust(length, fill)` and `TEXT.PadRight(length, fill)` are
+  `TEXT.padEnd(length, fill)`: the same length and fill conversions, the
+  same fill of one space when it is missing, the same padding repeated and
+  cut to the gap, the same counting of Unicode scalar values and the same
+  `TypeError("Padded string is too large")`. So `"7".rjust(3, "0")` is
+  `"007"`, `"ab".PadRight(4, ".")` is `"ab.."`, `"5".ljust(4, "ab")` is
+  `"5aba"` and `"😀".PadLeft(3)` is `"  😀"`. Further arguments are evaluated
+  and ignored.
+- **Receivers.** A string however it is reached, including a literal, a
+  name, a property, an index, a call or query result, a template, a
+  `.value` snapshot, `$Name.property` inside a class-level rule and the
+  empty string.
+- **Evaluation.** The receiver is read first, then every argument once, left
+  to right, as for every call. An argument's error, such as
+  `ReferenceError("missing is not defined")`, propagates before the alias
+  runs, and a declaration whose receiver or argument reads a `null` binding
+  holds `null` until it is defined, as for `padStart`.
+- **Live.** A declaration or class-level rule that calls an alias depends on
+  what its accepted spelling depends on: `shown = label.rjust(width, fill)`
+  follows writes of `label`, `width` and `fill`,
+  `$Room.label = String($Room.number).PadLeft(3, "0")` follows each room's
+  number, and `signs = Room.map(room -> room.label.ljust(8, "."))` follows
+  new instances. Errors roll back through the existing transaction.
+- **Per evaluation.** An alias gives its spelling's result whenever its
+  receiver evaluates to a string. A later write that replaces a held
+  receiver with another kind of value re-evaluates the call on that value,
+  which reads the alias's name as it reads any other method name: after
+  `out = label.ljust(4, ".")`, writing `label = 7` raises
+  `TypeError("number.ljust is not a function")` and rolls back, where the
+  spelling raises `TypeError("number.padEnd is not a function")`; writing a
+  list raises `TypeError("label.ljust is not a function")`, where the
+  spelling names `padEnd`; and writing an object or instance whose `ljust`
+  member is a function runs it, where the spelling gives undefined.
+- **Rendering.** Statements, `why`, `affects`, `--graph` and graph keys show
+  the call as written. Its dependencies are those of the accepted spelling,
+  in reading order, so `why shown` after `shown = label.rjust(width, fill)`
+  shows `shown` read from `label`, `width` and `fill`, as after
+  `shown = label.padStart(width, fill)`.
+- **Unchanged.** Only calls of the four names on a string receiver change;
+  each raised `TypeError("<text>.<name> is not a function")`, or an
+  argument's error first, which stays.
+  - Lists, class populations, numbers, booleans, functions, dates and
+    regular expressions keep their `TypeError`: `(5).rjust(3, "0")` raises
+    `TypeError("number.rjust is not a function")`.
+  - Objects and instances keep their routing: instance methods and callable
+    properties named like the aliases keep running, a property of that name
+    that is not a function keeps its `TypeError`, and a missing member stays
+    undefined.
+  - `String.rjust("7", 3)` keeps raising
+    `TypeError("String.rjust is not a function")`.
+  - A `null` or undefined receiver stays undefined without evaluating the
+    arguments. Reads without a call, such as `text.ljust`, stay undefined,
+    and `text.ljust = 1` keeps raising
+    `TypeError("Cannot assign 'ljust' on string")`. Functions and variables
+    named like the aliases keep their readings, such as `ljust(text)`.
+  - Python's and Ruby's `center`, Python's `zfill`, `padLeft`, `padRight`,
+    `pad`, `PadStart` and other spellings such as `LJust` keep raising
+    `TypeError("<text>.<name> is not a function")`.
+- **Source-language differences.** The aliases keep the accepted
+  conversions and the rule of Ruby's `rjust` and `ljust` for longer fills.
+  Python's `rjust` and `ljust` raise `TypeError` for a fill that is not
+  exactly one character, and C#'s `PadLeft` and `PadRight` take one `char`,
+  while the aliases repeat and cut any fill; an empty fill returns the text,
+  where Ruby raises `ArgumentError`. A negative length returns the text,
+  where C# raises `ArgumentOutOfRangeException`. C# counts UTF-16 code
+  units, so an emoji takes two places there, while Python and Ruby count
+  code points, as the aliases count Unicode scalar values. A string or
+  boolean length and a fill that is not a string convert as for
+  `padStart`, where Python and Ruby raise `TypeError`, and a fractional
+  length truncates, as in Ruby, where Python raises `TypeError`. Python's
+  and Ruby's `center`, Python's `zfill`, which puts
+  its zeros after a sign, and Swift's `padding(toLength:withPad:startingAt:)`,
+  which needs argument labels, are not added; Kotlin's `padStart` and
+  `padEnd` are the accepted names.
+- The four entries beginning
+  `Nucleoid pads strings with Python's and Ruby's rjust and ljust`
+  through `Nucleoid rolls back failed updates through padding aliases`
+  specify the executable behavior. `tests/padding_aliases.rs` executes the
+  rest.
+
 ## Bare single-parameter named arrows
 
 A named arrow definition or method may spell `def double(amount) => amount * 2`
@@ -29604,6 +29695,91 @@ assert([failure, last, days], ["UNDO", 4, [1, 2, 3, 4]])
 last = 7
 days.sum()
 # return: 28
+---
+# Nucleoid pads strings with Python's and Ruby's rjust and ljust
+
+orders = ["7", "42", "305"]
+numbers = orders.map(order -> order.rjust(4, "0"))
+item = "tea"
+width = 8
+row = item.ljust(width, ".") + "|"
+assert(numbers, ["0007", "0042", "0305"])
+assert(row, "tea.....|")
+orders.push("1234")
+item = "honey"
+width = 7
+assert(numbers, ["0007", "0042", "0305", "1234"])
+assert(row, "honey..|")
+assert(["ab".rjust(7, "xy"), "ab".ljust(7, "xy"), "5".rjust(3), "long".ljust(2)], ["xyxyxab", "abxyxyx", "  5", "long"])
+row
+# return: "honey..|"
+---
+# Nucleoid pads strings with C#'s PadLeft and PadRight
+
+name = "Zoë"
+code = "7"
+cell = name.PadRight(6, "·") + code.PadLeft(3, "0")
+assert(cell, "Zoë···007")
+name = "Ana"
+code = "12"
+assert(cell, "Ana···012")
+assert(["😀".PadLeft(3), "añejo".PadRight(7, "*"), "x".PadLeft(4, "😀é")], ["  😀", "añejo**", "😀é😀x"])
+mark = String.fromCharCode(101, 769)
+assert([mark.PadLeft(3, "-"), mark.PadLeft(3, "-").length], ["-" + mark, 3])
+cell.length
+# return: 9
+---
+# Nucleoid keeps padding aliases live in class level rules
+
+class Room(floor, number):
+    this.floor = floor
+    this.number = number
+$Room.label = String($Room.floor).rjust(2, "0") + "-" + String($Room.number).PadLeft(3, "0")
+suite = Room(3, 7)
+hall = Room(12, 45)
+assert([suite.label, hall.label], ["03-007", "12-045"])
+suite.number = 120
+hall.floor = 4
+assert([suite.label, hall.label], ["03-120", "04-045"])
+signs = Room.map(room -> room.label.ljust(8, "."))
+Room(1, 1)
+assert(signs, ["03-120..", "04-045..", "01-001.."])
+signs.length
+# return: 3
+---
+# Nucleoid rolls back failed updates through padding aliases
+
+width = 4
+fill = "0"
+ticket = "42".rjust(width, fill)
+failure = ""
+try:
+    width = 1 / 0
+catch error:
+    failure = error
+assert(failure, TypeError("Padded string is too large"))
+assert([width, ticket], [4, "0042"])
+ids = []
+tags = ids.map(id -> id.PadRight(size, "-"))
+try:
+    ids.push("a")
+catch error:
+    failure = error
+assert(failure, ReferenceError("size is not defined"))
+assert([ids, tags], [[], []])
+size = 3
+ids.push("a", "bb")
+assert(tags, ["a--", "bb-"])
+try:
+    fill = "*"
+    size = 4
+    assert([ticket, tags], ["**42", ["a---", "bb--"]])
+    throw "UNDO"
+catch error:
+    assert(error, "UNDO")
+assert([ticket, fill, tags], ["0042", "0", ["a--", "bb-"]])
+ticket
+# return: "0042"
 ---
 # Nucleoid tells two explanations apart with xor
 

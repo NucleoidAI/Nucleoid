@@ -451,7 +451,7 @@ fn no_earlier_document_case_writes_a_xor_stage() {
         with_stage += usize::from(uses);
     }
     assert_eq!(with_stage, 7);
-    assert_eq!(cases, 1333);
+    assert_eq!(cases, 1340);
 }
 
 #[test]

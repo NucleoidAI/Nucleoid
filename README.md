@@ -3140,6 +3140,32 @@ hours
   holds at most 100,000 items, and `close..<open` is empty. See the
   [root contract](nucleoid.spec.md#integer-range-literals).
 
+## Padding method aliases
+
+**Padding aliases keep a help desk's ticket board aligned**
+
+```nuc
+ticket = "7"
+title = "Printer"
+row = ticket.rjust(4, "0") + " " + title.ljust(10, ".") + "|"
+assert(row, "0007 Printer...|")
+ticket = "128"
+title = "Badge reader"
+assert(row, "0128 Badge reader|")
+row
+# return: "0128 Badge reader|"
+```
+
+- [NUC 157](docs/nuc-0157.md) adds the padding names of Python and Ruby,
+  `rjust` and `ljust`, and of C#, `PadLeft` and `PadRight`, as aliases of
+  `padStart` and `padEnd`: `ticket.rjust(4, "0")` is
+  `ticket.padStart(4, "0")` and `title.ljust(10, ".")` is
+  `title.padEnd(10, ".")`, so the row gives exactly what its accepted
+  spelling gives.
+- `row` stays live, so a new ticket and title realign it, and a title that
+  already holds ten characters, such as `"Badge reader"`, is not padded.
+  See the [root contract](nucleoid.spec.md#padding-method-aliases).
+
 ## Symmetric difference reasoning selections
 
 **Xor tells two alarms apart**
